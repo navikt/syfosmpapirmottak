@@ -9,7 +9,7 @@ data class Environment(
     val mqQueueManagerName: String = getEnvVar("MQGATEWAY03_NAME"),
     val mqHostname: String = getEnvVar("MQGATEWAY03_HOSTNAME"),
     val mqPort: Int = getEnvVar("MQGATEWAY03_PORT").toInt(),
-    val mqChannelName: String = getEnvVar("SYFOSMPAPIRMOTTAK"),
+    val mqChannelName: String = getEnvVar("SYFOSMPAPIRMOTTAK_CHANNEL_NAME"),
     val srvappserverUsername: String = getEnvVar("SRVAPPSERVER_USERNAME", "srvappserver"),
     val srvappserverPassword: String = getEnvVar("SRVAPPSERVER_PASSWORD", ""),
     val syfosmpapirmottakinputQueueName: String = getEnvVar("SYFSMPAPIROMOTTAK_INPUT_QUEUENAME"),
