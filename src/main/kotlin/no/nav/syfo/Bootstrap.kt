@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import no.nav.syfo.api.Status
@@ -70,22 +71,33 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
                     try {
                         while (applicationState.running) {
                             val message = messageConsumer.receive()
-                            val inputMessageText = when (message) {
-                                is TextMessage -> message.text
-                                else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
+                            if (message == null) {
+                                delay(100)
+                                continue
                             }
-                            val validationResult = httpClient.executeRuleValidation(env, message.text)
-                            when {
-                                validationResult.status == Status.OK -> {
-                                    producer.send(ProducerRecord(env.kafkaSM2013PapirmottakTopic, inputMessageText))
+                            try {
+                                val inputMessageText = when (message) {
+                                    is TextMessage -> message.text
+                                    else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
                                 }
-                                validationResult.status == Status.MANUAL_PROCESSING -> {
-                                    producer.send(ProducerRecord(env.kafkaSM2013OppgaveGsakTopic, inputMessageText))
+                                val validationResult = httpClient.executeRuleValidation(env, inputMessageText)
+                                when {
+                                    validationResult.status == Status.OK -> {
+                                        log.info("Rule ValidationResult = OK")
+                                        producer.send(ProducerRecord(env.kafkaSM2013PapirmottakTopic, inputMessageText))
+                                    }
+                                    validationResult.status == Status.MANUAL_PROCESSING -> {
+                                        log.info("Rule ValidationResult = MAN")
+                                        producer.send(ProducerRecord(env.kafkaSM2013OppgaveGsakTopic, inputMessageText))
+                                    }
+                                    validationResult.status == Status.INVALID -> {
+                                        log.error("Rule validation is Invaldid sending to backout")
+                                        backoutProducer.send(message)
+                                    }
                                 }
-                                validationResult.status == Status.INVALID -> {
-                                    log.error("Exception caught while handling message, sending to backout")
-                                    backoutProducer.send(message)
-                                }
+                            } catch (e: Exception) {
+                                log.error("Exception caught while handling message, sending to backout")
+                                backoutProducer.send(message)
                             }
                         }
                     } finally {
