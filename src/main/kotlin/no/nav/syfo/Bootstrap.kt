@@ -13,13 +13,14 @@ import no.nav.syfo.api.createHttpClient
 import no.nav.syfo.api.executeRuleValidation
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.util.initMqConnection
-import no.nav.syfo.util.numListeners
 import no.nav.syfo.util.readProducerConfig
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
+import javax.jms.MessageConsumer
+import javax.jms.MessageProducer
 import javax.jms.Session
 import javax.jms.TextMessage
 
@@ -41,8 +42,13 @@ fun main(args: Array<String>) {
                 val producerProperties = readProducerConfig(env, valueSerializer = StringSerializer::class)
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
                 val httpClient = createHttpClient(env)
+                val session = initMqConnection(env).createSession(false, Session.AUTO_ACKNOWLEDGE)
+                val inputQueue = session.createQueue(env.syfosmpapirmottakinputQueueName)
+                val backoutQueue = session.createQueue(env.syfosmpapirmottakBackoutQueueName)
+                val backoutProducer = session.createProducer(backoutQueue)
+                val messageConsumer = session.createConsumer(inputQueue)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, env, httpClient)
+                blockingApplicationLogic(applicationState, kafkaproducer, env, httpClient, messageConsumer, backoutProducer)
             }
         }.toList()
 
@@ -57,60 +63,39 @@ fun main(args: Array<String>) {
     }
 }
 
-suspend fun blockingApplicationLogic(applicationState: ApplicationState, producer: KafkaProducer<String, String>, env: Environment, httpClient: HttpClient) {
+suspend fun blockingApplicationLogic(applicationState: ApplicationState, producer: KafkaProducer<String, String>, env: Environment, httpClient: HttpClient, consumer: MessageConsumer, backoutProducer: MessageProducer) {
     while (applicationState.running) {
-        initMqConnection(env).use {
-            val session = it.createSession(false, Session.AUTO_ACKNOWLEDGE)
-            val inputQueue = session.createQueue(env.syfosmpapirmottakinputQueueName)
-            val backoutQueue = session.createQueue(env.syfosmpapirmottakBackoutQueueName)
-            val backoutProducer = session.createProducer(backoutQueue)
-
-            val listeners = (1..numListeners).map {
-                launch {
-                    val messageConsumer = session.createConsumer(inputQueue)
-                    try {
-                        while (applicationState.running) {
-                            val message = messageConsumer.receive()
-                            if (message == null) {
-                                delay(100)
-                                continue
-                            }
-                            try {
-                                val inputMessageText = when (message) {
-                                    is TextMessage -> message.text
-                                    else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
-                                }
-                                val validationResult = httpClient.executeRuleValidation(env, inputMessageText)
-                                when {
-                                    validationResult.status == Status.OK -> {
-                                        log.info("Rule ValidationResult = OK")
-                                        producer.send(ProducerRecord(env.kafkaSM2013PapirmottakTopic, inputMessageText))
-                                    }
-                                    validationResult.status == Status.MANUAL_PROCESSING -> {
-                                        log.info("Rule ValidationResult = MAN")
-                                        producer.send(ProducerRecord(env.kafkaSM2013OppgaveGsakTopic, inputMessageText))
-                                    }
-                                    validationResult.status == Status.INVALID -> {
-                                        log.error("Rule validation is Invaldid sending to backout")
-                                        backoutProducer.send(message)
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                log.error("Exception caught while handling message, sending to backout")
-                                backoutProducer.send(message)
-                            }
-                        }
-                    } finally {
-                        // Make sure we handle exiting the loop
-                        applicationState.running = false
-                    }
-                }
-            }.toList()
-
-            runBlocking {
-                listeners.forEach { it.join() }
-            }
+        val message = consumer.receiveNoWait()
+        if (message == null) {
+            delay(100)
+            continue
         }
+
+        try {
+            val inputMessageText = when (message) {
+                is TextMessage -> message.text
+                else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
+            }
+
+            val validationResult = httpClient.executeRuleValidation(env, inputMessageText)
+            when {
+                validationResult.status == Status.OK -> {
+                    log.info("Rule ValidationResult = OK")
+                    producer.send(ProducerRecord(env.kafkaSM2013PapirmottakTopic, inputMessageText))
+                }
+                validationResult.status == Status.MANUAL_PROCESSING -> {
+                    log.info("Rule ValidationResult = MAN")
+                    producer.send(ProducerRecord(env.kafkaSM2013OppgaveGsakTopic, inputMessageText))
+                }
+                validationResult.status == Status.INVALID -> {
+                    log.error("Rule validation is Invaldid sending to backout")
+                    backoutProducer.send(message)
+                }
+            }
+        } catch (e: Exception) {
+                log.error("Exception caught while handling message, sending to backout", e)
+                backoutProducer.send(message)
+            }
     }
 }
 
