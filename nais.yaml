@@ -1,0 +1,33 @@
+name: "syfosmpapirmottak"
+image: "repo.adeo.no:5443/syfo/syfosmpapirmottak"
+replicas:
+  min: 1
+  max: 2
+  cpuThresholdPercentage: 90
+port: 8080
+healthcheck:
+  liveness:
+    path: /is_Alive
+    initialDelay: 60
+    timeout: 1
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    path: /is_Ready
+    initialDelay: 60
+    timeout: 1
+prometheus:
+  enabled: true
+  path: /prometheus
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 500m
+    memory: 384Mi
+fasitResources:
+  exposed:
+used:
+  - alias: srvsyfosmpapirmottak
+    resourceType: Credential
