@@ -27,17 +27,16 @@ resources:
     cpu: 500m
     memory: 384Mi
 fasitResources:
-  exposed:
-used:
-  - alias: srvsyfosmpapirmottak
-    resourceType: Credential
-  - alias: kafka_bootstrap_servers
-    resourceType: baseurl
-  - alias: mqGateway03
-    resourceType: QueueManager
-  - alias: syfosmpapirmottak_channel
-    resourceType: Channel
-  - alias: syfosmpapirmottak_backout
-    resourceType: queue
-  - alias: syfosmpapirmottak_input
-    resourceType: Queue
+  used:
+    - alias: srvsyfosmpapirmottak
+      resourceType: Credential
+    - alias: kafka_bootstrap_servers
+      resourceType: baseurl
+    - alias: mqGateway03
+      resourceType: QueueManager
+    - alias: syfosmpapirmottak_channel
+      resourceType: Channel
+    - alias: syfosmpapirmottak_backout
+      resourceType: queue
+    - alias: syfosmpapirmottak_input
+      resourceType: Queue
