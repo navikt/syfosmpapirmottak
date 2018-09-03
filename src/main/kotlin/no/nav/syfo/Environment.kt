@@ -4,7 +4,7 @@ data class Environment(
     val applicationPort: Int = getEnvVar("APPLICATION_PORT", "8080").toInt(),
     val applicationThreads: Int = getEnvVar("APPLICATION_THREADS", "4").toInt(),
     val srvsyfosmpapirmottakUsername: String = getEnvVar("SRVSYFOSMPAPIRMOTTAK_USERNAME"),
-    val srvsyfosmpapirmottakPassword: String = getEnvVar("SRVSYFOSMPAPIRMOTTAK__PASSWORD"),
+    val srvsyfosmpapirmottakPassword: String = getEnvVar("SRVSYFOSMPAPIRMOTTAK_PASSWORD"),
     val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL"),
     val mqQueueManagerName: String = getEnvVar("MQGATEWAY03_NAME"),
     val mqHostname: String = getEnvVar("MQGATEWAY03_HOSTNAME"),
