@@ -24,7 +24,7 @@ object SelftestSpek : Spek({
                 applicationState.running = true
 
                 with(handleRequest(HttpMethod.Get, "/is_alive")) {
-                    response.status()?.isSuccess() shouldEqual  true
+                    response.status()?.isSuccess() shouldEqual true
                     response.content shouldNotEqual null
                 }
             }
@@ -33,7 +33,7 @@ object SelftestSpek : Spek({
 
                 with(handleRequest(HttpMethod.Get, "/is_ready")) {
                     println(response.status())
-                    response.status()?.isSuccess() shouldEqual  true
+                    response.status()?.isSuccess() shouldEqual true
                     response.content shouldNotEqual null
                 }
             }
@@ -43,7 +43,6 @@ object SelftestSpek : Spek({
                 with(handleRequest(HttpMethod.Get, "/is_alive")) {
                     response.status()?.isSuccess() shouldNotEqual true
                     response.content shouldNotEqual null
-
                 }
             }
             it("Returns error on failed is_ready") {
@@ -52,7 +51,6 @@ object SelftestSpek : Spek({
                 with(handleRequest(HttpMethod.Get, "/is_ready")) {
                     response.status()?.isSuccess() shouldNotEqual true
                     response.content shouldNotEqual null
-
                 }
             }
         }

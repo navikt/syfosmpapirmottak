@@ -14,7 +14,9 @@ data class Environment(
     val srvappserverPassword: String = getEnvVar("SRVAPPSERVER_PASSWORD", ""),
     val syfosmpapirmottakinputQueueName: String = getEnvVar("SYFSMPAPIROMOTTAK_INPUT_QUEUENAME"),
     val kafkaSM2013PapirmottakTopic: String = getEnvVar("KAFKA_SM2013_PAPIR_MOTTAK_TOPIC", "privat-syfosmpapirmottak-sm2013"),
-    val syfomottakinputBackoutQueueName: String = getEnvVar("SYFOMOTTAK_BACKOUT_QUEUENAME")
+    val syfosmpapirmottakBackoutQueueName: String = getEnvVar("SYFOMOTTAK_BACKOUT_QUEUENAME"),
+    val syfoSykemeldingRegelerApiURL: String = getEnvVar("SYFO_SYKEMELDINGREGLER_API_URL", "syfosykemeldingregler"),
+    val kafkaSM2013OppgaveGsakTopic: String = getEnvVar("KAFKA_SM2013_OPPGAVE_TOPIC", "privat-syfomottak-sm2013-oppgaveGsak")
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
