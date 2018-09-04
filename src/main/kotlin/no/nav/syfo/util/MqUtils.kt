@@ -5,8 +5,6 @@ import com.ibm.msg.client.wmq.WMQConstants
 import com.ibm.msg.client.wmq.compat.base.internal.MQC
 import no.nav.syfo.Environment
 
-const val numListeners = 5
-
 fun initMqConnectionFactory(env: Environment) = MQConnectionFactory().apply {
     hostName = env.mqHostname
     port = env.mqPort
