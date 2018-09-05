@@ -37,17 +37,20 @@ fun main(args: Array<String>) {
     }.start(wait = false)
 
     try {
+        val httpClient = createHttpClient(env)
+        val connection = initMqConnection(env)
+        connection.start()
+
+        val producerProperties = readProducerConfig(env, valueSerializer = StringSerializer::class)
+
+        val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+        val inputQueue = session.createQueue(env.syfosmpapirmottakinputQueueName)
+        val backoutQueue = session.createQueue(env.syfosmpapirmottakBackoutQueueName)
+        session.close()
+
         val listeners = (1..env.applicationThreads).map {
             launch {
-                val producerProperties = readProducerConfig(env, valueSerializer = StringSerializer::class)
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
-                val httpClient = createHttpClient(env)
-                val connection = initMqConnection(env)
-                connection.start()
-                val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-                val inputQueue = session.createQueue(env.syfosmpapirmottakinputQueueName)
-                val backoutQueue = session.createQueue(env.syfosmpapirmottakBackoutQueueName)
-                session.close()
 
                 blockingApplicationLogic(applicationState, kafkaproducer, env, httpClient, inputQueue, backoutQueue, connection)
             }
@@ -98,9 +101,9 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
                 }
             }
         } catch (e: Exception) {
-                log.error("Exception caught while handling message, sending to backout", e)
-                backoutProducer.send(message)
-            }
+            log.error("Exception caught while handling message, sending to backout", e)
+            backoutProducer.send(message)
+        }
     }
 }
 
