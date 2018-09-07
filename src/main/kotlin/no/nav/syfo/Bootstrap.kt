@@ -57,7 +57,6 @@ fun main(args: Array<String>) {
         }.toList()
 
         applicationState.initialized = true
-
         Runtime.getRuntime().addShutdownHook(Thread {
             applicationServer.stop(10, 10, TimeUnit.SECONDS)
         })
@@ -68,10 +67,11 @@ fun main(args: Array<String>) {
 }
 
 suspend fun blockingApplicationLogic(applicationState: ApplicationState, producer: KafkaProducer<String, String>, env: Environment, httpClient: HttpClient, inputQueue: Queue, backoutQueue: Queue, connection: Connection) {
+    val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+    val inputConsumer = session.createConsumer(inputQueue)
+    val backoutProducer = session.createProducer(backoutQueue)
+
     while (applicationState.running) {
-        val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-        val inputConsumer = session.createConsumer(inputQueue)
-        val backoutProducer = session.createProducer(backoutQueue)
 
         val message = inputConsumer.receiveNoWait()
         if (message == null) {
@@ -104,7 +104,6 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
             log.error("Exception caught while handling message, sending to backout", e)
             backoutProducer.send(message)
         }
-        connection.close()
     }
 }
 
