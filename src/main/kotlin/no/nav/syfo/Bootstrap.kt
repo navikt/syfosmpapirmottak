@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
 
     try {
         val httpClient = createHttpClient(env)
-        val connection = initMqConnection(env)
+        initMqConnection(env).use{ connection ->
         connection.start()
 
         val producerProperties = readProducerConfig(env, valueSerializer = StringSerializer::class)
@@ -61,6 +61,8 @@ fun main(args: Array<String>) {
             applicationServer.stop(10, 10, TimeUnit.SECONDS)
         })
         runBlocking { listeners.forEach { it.join() } }
+    }
+
     } finally {
         applicationState.running = false
     }
