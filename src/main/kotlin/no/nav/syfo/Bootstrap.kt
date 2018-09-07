@@ -104,6 +104,7 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
             log.error("Exception caught while handling message, sending to backout", e)
             backoutProducer.send(message)
         }
+        connection.close()
     }
 }
 
