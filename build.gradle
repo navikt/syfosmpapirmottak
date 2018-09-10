@@ -11,6 +11,8 @@ buildscript {
     ext.logstash_logback_encoder = '5.2'
     ext.prometheus_version = '0.5.0'
     ext.spek_version = "2.0.0-alpha.1"
+    ext.jaxb_api_version = '2.1'
+    ext.jaxb_version = '2.3.0.1'
 }
 
 plugins {
@@ -84,6 +86,9 @@ dependencies {
 
     testRuntimeOnly "org.spekframework.spek2:spek-runtime-jvm:$spek_version"
     testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:$spek_version"
+
+    implementation "javax.xml.bind:jaxb-api:$jaxb_api_version"
+    implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
 }
 
 compileKotlin {
