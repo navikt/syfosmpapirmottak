@@ -23,6 +23,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.io.StringReader
+import java.io.StringWriter
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.jms.Connection
@@ -88,7 +89,6 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
     // TODO: use journalpostId
     val smId = UUID.randomUUID().toString()
 
-
     val logValues = arrayOf(
             keyValue("smId", smId),
             keyValue("organizationNumber", "TODO"),
@@ -115,15 +115,20 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
             fellesformat.get<XMLMottakenhetBlokk>().ediLoggId = smId
             fellesformat.get<XMLMsgHead>().msgInfo.msgId = smId
 
-            val validationResult = httpClient.executeRuleValidation(env, inputMessageText)
+            val text = StringWriter().use {
+                marshaller.marshal(fellesformat, it)
+                it.toString()
+            }
+
+            val validationResult = httpClient.executeRuleValidation(env, text)
             when {
                 validationResult.status == Status.OK -> {
                     log.info("Rule ValidationResult = OK, $logKeys", *logValues)
-                    producer.send(ProducerRecord(env.kafkaSM2013PapirmottakTopic, inputMessageText))
+                    producer.send(ProducerRecord(env.kafkaSM2013PapirmottakTopic, text))
                 }
                 validationResult.status == Status.MANUAL_PROCESSING -> {
                     log.info("Rule ValidationResult = MAN $logKeys", *logValues)
-                    producer.send(ProducerRecord(env.kafkaSM2013OppgaveGsakTopic, inputMessageText))
+                    producer.send(ProducerRecord(env.kafkaSM2013OppgaveGsakTopic, text))
                 }
                 validationResult.status == Status.INVALID -> {
                     log.error("Rule validation is Invaldid sending to backout $logKeys", logValues)
