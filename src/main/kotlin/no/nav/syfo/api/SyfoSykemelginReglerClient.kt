@@ -35,7 +35,7 @@ suspend fun HttpClient.executeRuleValidation(env: Environment, payload: String):
     body = payload
 
     url {
-        host = env.syfoSykemeldingRegelerApiURL
+        host = env.syfoSmRegelerApiURL
         path("v1", "rules", "validate")
     }
 }
