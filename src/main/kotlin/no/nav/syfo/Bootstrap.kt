@@ -98,7 +98,7 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
 
         val logValues = arrayOf(
                 keyValue("smId", smId),
-                keyValue("organizationNumber", "TODO"),
+                keyValue("orgNr", "TODO"),
                 keyValue("msgId", smId)
         )
         val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") {
