@@ -85,19 +85,6 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
     val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
     val inputConsumer = session.createConsumer(inputQueue)
     val backoutProducer = session.createProducer(backoutQueue)
-
-    // TODO: use journalpostId
-    val smId = UUID.randomUUID().toString()
-
-    val logValues = arrayOf(
-            keyValue("smId", smId),
-            keyValue("organizationNumber", "TODO"),
-            keyValue("msgId", smId)
-    )
-    val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") {
-        "{}"
-    }
-
     while (applicationState.running) {
 
         val message = inputConsumer.receiveNoWait()
@@ -111,6 +98,19 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
                 is TextMessage -> message.text
                 else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
             }
+
+            // TODO: use journalpostId
+            val smId = UUID.randomUUID().toString()
+
+            val logValues = arrayOf(
+                    keyValue("smId", smId),
+                    keyValue("organizationNumber", "TODO"),
+                    keyValue("msgId", smId)
+            )
+            val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") {
+                "{}"
+            }
+
             val fellesformat = unmarshaller.unmarshal(StringReader(inputMessageText)) as XMLEIFellesformat
             fellesformat.get<XMLMottakenhetBlokk>().ediLoggId = smId
             fellesformat.get<XMLMsgHead>().msgInfo.msgId = smId
