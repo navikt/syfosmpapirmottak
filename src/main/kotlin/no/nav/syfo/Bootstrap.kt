@@ -110,7 +110,7 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
                 is TextMessage -> message.text
                 else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
             }
-
+            log.info("Received a SM2013, $logKeys", *logValues)
             val fellesformat = unmarshaller.unmarshal(StringReader(inputMessageText)) as XMLEIFellesformat
             fellesformat.get<XMLMottakenhetBlokk>().ediLoggId = smId
             fellesformat.get<XMLMsgHead>().msgInfo.msgId = smId
