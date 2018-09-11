@@ -93,22 +93,22 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
             continue
         }
 
+        // TODO: use journalpostId
+        val smId = UUID.randomUUID().toString()
+
+        val logValues = arrayOf(
+                keyValue("smId", smId),
+                keyValue("organizationNumber", "TODO"),
+                keyValue("msgId", smId)
+        )
+        val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") {
+            "{}"
+        }
+
         try {
             val inputMessageText = when (message) {
                 is TextMessage -> message.text
                 else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
-            }
-
-            // TODO: use journalpostId
-            val smId = UUID.randomUUID().toString()
-
-            val logValues = arrayOf(
-                    keyValue("smId", smId),
-                    keyValue("organizationNumber", "TODO"),
-                    keyValue("msgId", smId)
-            )
-            val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") {
-                "{}"
             }
 
             val fellesformat = unmarshaller.unmarshal(StringReader(inputMessageText)) as XMLEIFellesformat
