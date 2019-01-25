@@ -6,6 +6,7 @@
         {"member":"srvsyfosmjoark", "role":"CONSUMER"},
         {"member":"srvsyfosminfotrygd", "role":"CONSUMER"},
         {"member":"srvsyfosmregister", "role":"CONSUMER"},
+        {"member":"srvsyfosmarena", "role":"CONSUMER"},
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"}
       ],
       "numPartitions": 3
@@ -14,6 +15,7 @@
       "topicName": "privat-syfo-smpapir-manuellBehandling",
       "members": [
         {"member":"srvsyfosmgsak", "role":"CONSUMER"},
+        {"member":"srvsyfosmarena", "role":"CONSUMER"},
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"}
       ],
       "numPartitions": 3
