@@ -14,39 +14,27 @@ import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import net.logstash.logback.argument.StructuredArguments.keyValue
-import no.kith.xmlstds.msghead._2006_05_24.XMLMsgHead
 import no.nav.syfo.api.Status
 import no.nav.syfo.api.createHttpClient
 import no.nav.syfo.api.executeRuleValidation
 import no.nav.syfo.api.registerNaisApi
-import no.nav.syfo.util.initMqConnection
+import no.nav.syfo.util.readConsumerConfig
 import no.nav.syfo.util.readProducerConfig
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
-import no.trygdeetaten.xml.eiff._1.XMLMottakenhetBlokk
+import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.StringReader
-import java.io.StringWriter
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import javax.jms.Connection
-import javax.jms.Queue
-import javax.jms.Session
-import javax.jms.TextMessage
-import javax.xml.bind.JAXBContext
-import javax.xml.bind.Marshaller
-import javax.xml.bind.Unmarshaller
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
 
 private val log = LoggerFactory.getLogger("nav.syfo.papirmottak")
-val jaxbContext: JAXBContext = JAXBContext.newInstance(XMLEIFellesformat::class.java, XMLMsgHead::class.java,
-        XMLMottakenhetBlokk::class.java)
-val marshaller: Marshaller = jaxbContext.createMarshaller()
-val unmarshaller: Unmarshaller = jaxbContext.createUnmarshaller()
 
 val objectMapper: ObjectMapper = ObjectMapper().apply {
     registerKotlinModule()
@@ -65,21 +53,17 @@ fun main(args: Array<String>) {
 
     try {
         val httpClient = createHttpClient(config, credentials)
-        initMqConnection(credentials, config).use { connection ->
-        connection.start()
 
+        val consumerProperties = readConsumerConfig(config, credentials, valueDeserializer = StringDeserializer::class)
         val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
-
-        val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-        val inputQueue = session.createQueue(config.syfosmpapirmottakinputQueueName)
-        val backoutQueue = session.createQueue(config.syfosmpapirmottakBackoutQueueName)
-        session.close()
+        val kafkaconsumer = KafkaConsumer<String, String>(consumerProperties)
+        kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
 
         val listeners = (1..config.applicationThreads).map {
             launch {
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, config, httpClient, inputQueue, backoutQueue, connection)
+                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, httpClient)
             }
         }.toList()
 
@@ -88,50 +72,37 @@ fun main(args: Array<String>) {
             applicationServer.stop(10, 10, TimeUnit.SECONDS)
         })
         runBlocking { listeners.forEach { it.join() } }
-    }
     } finally {
         applicationState.running = false
     }
 }
 
-suspend fun blockingApplicationLogic(applicationState: ApplicationState, producer: KafkaProducer<String, String>, config: ApplicationConfig, httpClient: HttpClient, inputQueue: Queue, backoutQueue: Queue, connection: Connection) {
-    val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-    val inputConsumer = session.createConsumer(inputQueue)
-    val backoutProducer = session.createProducer(backoutQueue)
+suspend fun blockingApplicationLogic(
+    applicationState: ApplicationState,
+    producer: KafkaProducer<String, String>,
+    consumer: KafkaConsumer<String, String>,
+    config: ApplicationConfig,
+    httpClient: HttpClient
+) {
     while (applicationState.running) {
+        consumer.poll(Duration.ofMillis(0)).forEach {
+            val journarlpost: String = objectMapper.readValue(it.value())
 
-        val message = inputConsumer.receiveNoWait()
-        if (message == null) {
-            delay(100)
-            continue
-        }
+            val logValues = arrayOf(
+                    keyValue("smId", ""),
+                    keyValue("msgId", ""),
+                    keyValue("orgNr", "")
+            )
 
-        // TODO: use journalpostId
-        val smId = UUID.randomUUID().toString()
+            val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
+            log.info("Received a SM2013, going through rules and persisting in infotrygd $logKeys", *logValues)
 
-        val logValues = arrayOf(
-                keyValue("smId", smId),
-                keyValue("orgNr", "TODO"),
-                keyValue("msgId", smId)
-        )
-        val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") {
-            "{}"
-        }
+            // TODO get the journalpostid, from the kafa topic, and rember to only take out papir sykmeldinger
 
-        try {
-            val inputMessageText = when (message) {
-                is TextMessage -> message.text
-                else -> throw RuntimeException("Incoming message needs to be a byte message or text message")
-            }
-            log.info("Received a SM2013, $logKeys", *logValues)
-            val fellesformat = unmarshaller.unmarshal(StringReader(inputMessageText)) as XMLEIFellesformat
-            fellesformat.get<XMLMottakenhetBlokk>().ediLoggId = smId
-            fellesformat.get<XMLMsgHead>().msgInfo.msgId = smId
+            // TODO: use journalpostId
+            val smId = UUID.randomUUID().toString()
 
-            val text = StringWriter().use {
-                marshaller.marshal(fellesformat, it)
-                it.toString()
-            }
+            val text = ""
 
             val validationResult = httpClient.executeRuleValidation(config, text)
             when {
@@ -144,14 +115,11 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
                     producer.send(ProducerRecord(config.kafkaSM2013OppgaveGsakTopic, text))
                 }
                 validationResult.status == Status.INVALID -> {
-                    log.error("Rule validation is Invaldid sending to backout $logKeys", logValues)
-                    backoutProducer.send(message)
+                    log.error("Rule validation is Invaldid $logKeys", logValues)
                 }
             }
-        } catch (e: Exception) {
-            log.error("Exception caught while handling message, sending to backout $logKeys", e, *logValues)
-            backoutProducer.send(message)
         }
+        delay(100)
     }
 }
 

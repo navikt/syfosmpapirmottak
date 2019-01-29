@@ -9,13 +9,7 @@ data class ApplicationConfig(
     val applicationPort: Int = 8080,
     val applicationThreads: Int = 1,
     val kafkaBootstrapServers: String,
-    val mqQueueManagerName: String,
-    val mqHostname: String,
-    val mqPort: Int,
-    val mqChannelName: String,
-    val syfosmpapirmottakinputQueueName: String,
     val kafkaSM2013PapirmottakTopic: String = "privat-syfo-smpapir-automatiskBehandling",
-    val syfosmpapirmottakBackoutQueueName: String,
     val syfoSmRegelerApiURL: String = "syfosmregler",
     val kafkaSM2013OppgaveGsakTopic: String = "privat-syfo-smpapir-manuellBehandling",
     val dokJournalfoeringV1: String
@@ -24,7 +18,5 @@ data class ApplicationConfig(
 
 data class VaultCredentials(
     val serviceuserUsername: String,
-    val serviceuserPassword: String,
-    val mqUsername: String,
-    val mqPassword: String
+    val serviceuserPassword: String
 )

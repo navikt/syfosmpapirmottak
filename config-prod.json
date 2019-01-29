@@ -1,10 +1,4 @@
 {
   "kafkaBootstrapServers": "SASL_SSL://a01apvl00145.adeo.no:8443,SASL_SSL://a01apvl00146.adeo.no:8443,SASL_SSL://a01apvl00147.adeo.no:8443,SASL_SSL://a01apvl00149.adeo.no:8443",
-  "mqQueueManagerName": "MPLSC03",
-  "mqHostname": "a01apvl062.adeo.no",
-  "mqPort": "1414",
-  "mqChannelName": "P_SYFOSMPAPIRMOTTAK",
-  "syfosmpapirmottakinputQueueName": "QA.P_SYFOSMPAPIRMOTTAK.INPUT",
-  "syfosmpapirmottakBackoutQueueName": "QA.P_SYFOSMPAPIRMOTTAK.BACKOUT",
   "dokJournalfoeringV1" : "aapen-dok-journalfoering-v1-p"
 }
