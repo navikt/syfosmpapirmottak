@@ -5,5 +5,6 @@
   "mqPort": "1414",
   "mqChannelName": "P_SYFOSMPAPIRMOTTAK",
   "syfosmpapirmottakinputQueueName": "QA.P_SYFOSMPAPIRMOTTAK.INPUT",
-  "syfosmpapirmottakBackoutQueueName": "QA.P_SYFOSMPAPIRMOTTAK.BACKOUT"
+  "syfosmpapirmottakBackoutQueueName": "QA.P_SYFOSMPAPIRMOTTAK.BACKOUT",
+  "dokJournalfoeringV1" : "aapen-dok-journalfoering-v1-p"
 }
