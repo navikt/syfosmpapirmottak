@@ -37,7 +37,8 @@ object KafkaITSpek : Spek({
             kafkaSM2013PapirmottakTopic = "",
             syfosmpapirmottakBackoutQueueName = "",
             syfoSmRegelerApiURL = "",
-            kafkaSM2013OppgaveGsakTopic = ""
+            kafkaSM2013OppgaveGsakTopic = "",
+            dokJournalfoeringV1 = ""
     )
 
     val credentials = VaultCredentials(
