@@ -54,15 +54,14 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
     }.start(wait = false)
 
     try {
-        val httpClient = createHttpClient(credentials)
-
-        val consumerProperties = readConsumerConfig(config, credentials, valueDeserializer = StringDeserializer::class)
-        val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
-        val kafkaconsumer = KafkaConsumer<String, String>(consumerProperties)
-        kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
-
         val listeners = (1..config.applicationThreads).map {
             launch {
+                val httpClient = createHttpClient(credentials)
+                // TODO fix the valueDeserializer, is avro schema, find it could be no.nav.dok:dok-journalfoering-hendelse-v1
+                val consumerProperties = readConsumerConfig(config, credentials, valueDeserializer = StringDeserializer::class)
+                val kafkaconsumer = KafkaConsumer<String, String>(consumerProperties)
+                kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
+                val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
                 blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, httpClient)
