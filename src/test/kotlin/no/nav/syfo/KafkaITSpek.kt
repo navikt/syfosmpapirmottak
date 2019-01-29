@@ -29,13 +29,7 @@ object KafkaITSpek : Spek({
             applicationPort = getRandomPort(),
             kafkaBootstrapServers = embeddedEnvironment.brokersURL,
             applicationThreads = 1,
-            mqQueueManagerName = "",
-            mqHostname = "",
-            mqPort = 1,
-            mqChannelName = "",
-            syfosmpapirmottakinputQueueName = "",
             kafkaSM2013PapirmottakTopic = "",
-            syfosmpapirmottakBackoutQueueName = "",
             syfoSmRegelerApiURL = "",
             kafkaSM2013OppgaveGsakTopic = "",
             dokJournalfoeringV1 = ""
@@ -43,9 +37,7 @@ object KafkaITSpek : Spek({
 
     val credentials = VaultCredentials(
             serviceuserUsername = " ",
-            serviceuserPassword = "",
-            mqUsername = "",
-            mqPassword = ""
+            serviceuserPassword = ""
     )
 
     val producer = KafkaProducer<String, String>(readProducerConfig(config, credentials, StringSerializer::class).apply {

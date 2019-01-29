@@ -9,11 +9,8 @@ import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.post
 import no.nav.syfo.ApplicationConfig
 import no.nav.syfo.VaultCredentials
-import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("no.nav.syfo.http")
-
-fun createHttpClient(config: ApplicationConfig, credentials: VaultCredentials) = HttpClient(CIO.config {
+fun createHttpClient(credentials: VaultCredentials) = HttpClient(CIO.config {
     maxConnectionsCount = 1000 // Maximum number of socket connections.
     endpoint.apply {
         maxConnectionsPerRoute = 100

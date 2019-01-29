@@ -10,9 +10,10 @@ import io.ktor.client.HttpClient
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.syfo.api.Status
 import no.nav.syfo.api.createHttpClient
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Duration
 import java.util.UUID
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
@@ -42,7 +44,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 }
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCoroutineDispatcher()) {
     val config: ApplicationConfig = objectMapper.readValue(File(System.getenv("CONFIG_FILE")))
     val credentials: VaultCredentials = objectMapper.readValue(vaultApplicationPropertiesPath.toFile())
     val applicationState = ApplicationState()
@@ -52,7 +54,7 @@ fun main(args: Array<String>) {
     }.start(wait = false)
 
     try {
-        val httpClient = createHttpClient(config, credentials)
+        val httpClient = createHttpClient(credentials)
 
         val consumerProperties = readConsumerConfig(config, credentials, valueDeserializer = StringDeserializer::class)
         val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
