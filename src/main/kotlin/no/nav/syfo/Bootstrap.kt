@@ -1,5 +1,10 @@
 package no.nav.syfo
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.application.Application
 import io.ktor.client.HttpClient
 import io.ktor.routing.routing
@@ -22,6 +27,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.io.StringReader
 import java.io.StringWriter
 import java.util.UUID
@@ -42,31 +48,38 @@ val jaxbContext: JAXBContext = JAXBContext.newInstance(XMLEIFellesformat::class.
 val marshaller: Marshaller = jaxbContext.createMarshaller()
 val unmarshaller: Unmarshaller = jaxbContext.createUnmarshaller()
 
+val objectMapper: ObjectMapper = ObjectMapper().apply {
+    registerKotlinModule()
+    registerModule(JavaTimeModule())
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+}
+
 fun main(args: Array<String>) {
-    val env = Environment()
+    val config: ApplicationConfig = objectMapper.readValue(File(System.getenv("CONFIG_FILE")))
+    val credentials: VaultCredentials = objectMapper.readValue(vaultApplicationPropertiesPath.toFile())
     val applicationState = ApplicationState()
 
-    val applicationServer = embeddedServer(Netty, env.applicationPort) {
+    val applicationServer = embeddedServer(Netty, config.applicationPort) {
         initRouting(applicationState)
     }.start(wait = false)
 
     try {
-        val httpClient = createHttpClient(env)
-        initMqConnection(env).use { connection ->
+        val httpClient = createHttpClient(config, credentials)
+        initMqConnection(credentials, config).use { connection ->
         connection.start()
 
-        val producerProperties = readProducerConfig(env, valueSerializer = StringSerializer::class)
+        val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
 
         val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-        val inputQueue = session.createQueue(env.syfosmpapirmottakinputQueueName)
-        val backoutQueue = session.createQueue(env.syfosmpapirmottakBackoutQueueName)
+        val inputQueue = session.createQueue(config.syfosmpapirmottakinputQueueName)
+        val backoutQueue = session.createQueue(config.syfosmpapirmottakBackoutQueueName)
         session.close()
 
-        val listeners = (1..env.applicationThreads).map {
+        val listeners = (1..config.applicationThreads).map {
             launch {
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, env, httpClient, inputQueue, backoutQueue, connection)
+                blockingApplicationLogic(applicationState, kafkaproducer, config, httpClient, inputQueue, backoutQueue, connection)
             }
         }.toList()
 
@@ -81,7 +94,7 @@ fun main(args: Array<String>) {
     }
 }
 
-suspend fun blockingApplicationLogic(applicationState: ApplicationState, producer: KafkaProducer<String, String>, env: Environment, httpClient: HttpClient, inputQueue: Queue, backoutQueue: Queue, connection: Connection) {
+suspend fun blockingApplicationLogic(applicationState: ApplicationState, producer: KafkaProducer<String, String>, config: ApplicationConfig, httpClient: HttpClient, inputQueue: Queue, backoutQueue: Queue, connection: Connection) {
     val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
     val inputConsumer = session.createConsumer(inputQueue)
     val backoutProducer = session.createProducer(backoutQueue)
@@ -120,15 +133,15 @@ suspend fun blockingApplicationLogic(applicationState: ApplicationState, produce
                 it.toString()
             }
 
-            val validationResult = httpClient.executeRuleValidation(env, text)
+            val validationResult = httpClient.executeRuleValidation(config, text)
             when {
                 validationResult.status == Status.OK -> {
                     log.info("Rule ValidationResult = OK, $logKeys", *logValues)
-                    producer.send(ProducerRecord(env.kafkaSM2013PapirmottakTopic, text))
+                    producer.send(ProducerRecord(config.kafkaSM2013PapirmottakTopic, text))
                 }
                 validationResult.status == Status.MANUAL_PROCESSING -> {
                     log.info("Rule ValidationResult = MAN $logKeys", *logValues)
-                    producer.send(ProducerRecord(env.kafkaSM2013OppgaveGsakTopic, text))
+                    producer.send(ProducerRecord(config.kafkaSM2013OppgaveGsakTopic, text))
                 }
                 validationResult.status == Status.INVALID -> {
                     log.error("Rule validation is Invaldid sending to backout $logKeys", logValues)

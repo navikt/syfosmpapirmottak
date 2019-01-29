@@ -1,0 +1,9 @@
+{
+  "kafkaBootstrapServers": "SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443",
+  "mqQueueManagerName": "MQ1LSC03",
+  "mqHostname": "b27apvl173.preprod.local",
+  "mqPort": "1413",
+  "mqChannelName": "Q1_SYFOSMPAPIRMOTTAK",
+  "syfosmpapirmottakinputQueueName": "QA.Q1_SYFOSMPAPIRMOTTAK.INPUT",
+  "syfosmpapirmottakBackoutQueueName": "QA.Q1_SYFOSMPAPIRMOTTAK.BACKOUT"
+}

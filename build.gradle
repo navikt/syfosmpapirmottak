@@ -14,6 +14,8 @@ buildscript {
     ext.jaxb_api_version = '2.1'
     ext.jaxb_version = '2.3.0.1'
     ext.javax_activation_version = '1.1.1'
+    ext.papirSykemelding_version = '1.0.0-SNAPSHOT'
+    ext.jackson_version = '2.9.6'
 }
 
 plugins {
@@ -34,6 +36,7 @@ repositories {
     maven { url "https://dl.bintray.com/kotlin/ktor" }
     maven { url = "http://packages.confluent.io/maven/" }
     maven { url 'https://repo.adeo.no/repository/maven-releases/' }
+    maven { url 'https://repo.adeo.no/repository/maven-snapshots/' }
     maven { url "https://dl.bintray.com/spekframework/spek-dev" }
 }
 
@@ -49,6 +52,11 @@ test {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
+    implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:$jackson_version"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
+
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
     implementation "io.prometheus:simpleclient_hotspot:$prometheus_version"
     implementation "io.prometheus:simpleclient_common:$prometheus_version"
@@ -62,6 +70,7 @@ dependencies {
 
     implementation "no.nav.syfo.tjenester:fellesformat:$fellesformat_version"
     implementation "no.nav.syfo.tjenester:kith-hodemelding:$kith_hodemelding_version"
+    implementation "no.nav.helse.xml:papirSykemelding:$papirSykemelding_version"
 
     testImplementation "org.amshove.kluent:kluent:$kluent_version"
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"

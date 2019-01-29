@@ -7,12 +7,13 @@ import io.ktor.client.features.auth.basic.BasicAuth
 import io.ktor.client.features.json.GsonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.post
-import no.nav.syfo.Environment
+import no.nav.syfo.ApplicationConfig
+import no.nav.syfo.VaultCredentials
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("no.nav.syfo.http")
 
-fun createHttpClient(env: Environment) = HttpClient(CIO.config {
+fun createHttpClient(config: ApplicationConfig, credentials: VaultCredentials) = HttpClient(CIO.config {
     maxConnectionsCount = 1000 // Maximum number of socket connections.
     endpoint.apply {
         maxConnectionsPerRoute = 100
@@ -23,19 +24,19 @@ fun createHttpClient(env: Environment) = HttpClient(CIO.config {
     }
 }) {
     install(BasicAuth) {
-        username = env.srvsyfosmpapirmottakUsername
-        password = env.srvsyfosmpapirmottakPassword
+        username = credentials.serviceuserUsername
+        password = credentials.serviceuserPassword
     }
     install(JsonFeature) {
         serializer = GsonSerializer()
     }
 }
 
-suspend fun HttpClient.executeRuleValidation(env: Environment, payload: String): ValidationResult = post {
+suspend fun HttpClient.executeRuleValidation(config: ApplicationConfig, payload: String): ValidationResult = post {
     body = payload
 
     url {
-        host = env.syfoSmRegelerApiURL
+        host = config.syfoSmRegelerApiURL
         path("v1", "rules", "validate")
     }
 }

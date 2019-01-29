@@ -1,6 +1,7 @@
 package no.nav.syfo
 
 import no.nav.common.KafkaEnvironment
+import no.nav.syfo.util.readConsumerConfig
 import no.nav.syfo.util.readProducerConfig
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -24,18 +25,34 @@ object KafkaITSpek : Spek({
             topics = listOf(topic)
     )
 
-    val env = Environment(
+    val config = ApplicationConfig(
             applicationPort = getRandomPort(),
-            srvsyfosmpapirmottakUsername = "unused",
-            srvsyfosmpapirmottakPassword = "unused",
-            kafkaBootstrapServers = embeddedEnvironment.brokersURL
+            kafkaBootstrapServers = embeddedEnvironment.brokersURL,
+            applicationThreads = 1,
+            mqQueueManagerName = "",
+            mqHostname = "",
+            mqPort = 1,
+            mqChannelName = "",
+            syfosmpapirmottakinputQueueName = "",
+            kafkaSM2013PapirmottakTopic = "",
+            syfosmpapirmottakBackoutQueueName = "",
+            syfoSmRegelerApiURL = "",
+            kafkaSM2013OppgaveGsakTopic = ""
     )
-    val producer = KafkaProducer<String, String>(readProducerConfig(env, StringSerializer::class).apply {
+
+    val credentials = VaultCredentials(
+            serviceuserUsername = " ",
+            serviceuserPassword = "",
+            mqUsername = "",
+            mqPassword = ""
+    )
+
+    val producer = KafkaProducer<String, String>(readProducerConfig(config, credentials, StringSerializer::class).apply {
         remove("security.protocol")
         remove("sasl.mechanism")
     })
 
-    val consumer = KafkaConsumer<String, String>(readConsumerConfig(env, StringDeserializer::class).apply {
+    val consumer = KafkaConsumer<String, String>(readConsumerConfig(config, credentials, StringDeserializer::class).apply {
         remove("security.protocol")
         remove("sasl.mechanism")
     })
