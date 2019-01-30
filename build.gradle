@@ -2,7 +2,7 @@ buildscript {
     ext.coroutines_version = '1.0.0'
     ext.fellesformat_version = '1.0'
     ext.kafka_version = '2.0.0'
-    ext.kafka_embedded_version = '1.0.0'
+    ext.kafka_embedded_version = '2.0.2'
     ext.kith_hodemelding_version = '1.1'
     ext.kluent_version = '1.39'
     ext.ktor_version = '1.0.0'
@@ -17,6 +17,7 @@ buildscript {
     ext.jackson_version = '2.9.6'
     ext.joark_hendelse_version = '0.0.3'
     ext.confluent_version = "4.0.0"
+    ext.jetty_version = '9.4.11.v20180605'
 }
 
 plugins {
@@ -79,6 +80,7 @@ dependencies {
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
     testImplementation "io.ktor:ktor-server-test-host:$ktor_version"
     testImplementation "no.nav:kafka-embedded-env:$kafka_embedded_version"
+    testImplementation "org.eclipse.jetty:jetty-servlet:$jetty_version"
 
     implementation "io.ktor:ktor-client-cio:$ktor_version"
     implementation "io.ktor:ktor-client-auth-basic:$ktor_version"

@@ -1,14 +1,15 @@
 package no.nav.syfo
 
+import io.confluent.kafka.serializers.KafkaAvroSerializer
+import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
+import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.util.readConsumerConfig
 import no.nav.syfo.util.readProducerConfig
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.kafka.common.serialization.StringSerializer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
@@ -20,10 +21,17 @@ object KafkaITSpek : Spek({
         it.localPort
     }
 
+    val credentials = VaultCredentials(
+            serviceuserUsername = " ",
+            serviceuserPassword = ""
+    )
     val embeddedEnvironment = KafkaEnvironment(
             autoStart = false,
-            topics = listOf(topic)
-    )
+            topics = listOf(topic),
+            withSchemaRegistry = true,
+            withSecurity = true,
+            users = listOf(JAASCredential(credentials.serviceuserUsername, credentials.serviceuserPassword))
+            )
 
     val config = ApplicationConfig(
             applicationPort = getRandomPort(),
@@ -35,17 +43,12 @@ object KafkaITSpek : Spek({
             dokJournalfoeringV1 = ""
     )
 
-    val credentials = VaultCredentials(
-            serviceuserUsername = " ",
-            serviceuserPassword = ""
-    )
-
-    val producer = KafkaProducer<String, String>(readProducerConfig(config, credentials, StringSerializer::class).apply {
+    val producer = KafkaProducer<String, JournalfoeringHendelseRecord>(readProducerConfig(config, credentials, KafkaAvroSerializer::class).apply {
         remove("security.protocol")
         remove("sasl.mechanism")
     })
 
-    val consumer = KafkaConsumer<String, String>(readConsumerConfig(config, credentials, StringDeserializer::class).apply {
+    val consumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(readConsumerConfig(config, credentials).apply {
         remove("security.protocol")
         remove("sasl.mechanism")
     })
@@ -56,22 +59,12 @@ object KafkaITSpek : Spek({
     }
 
     afterGroup {
-        embeddedEnvironment.stop()
+        embeddedEnvironment.tearDown()
     }
 
     describe("Push a message on a topic") {
-        val message = "Test message"
-        it("Can read the messages from the kafka topic") {
-            producer.send(ProducerRecord(topic, message))
+        val message = JournalfoeringHendelseRecord()
 
-            val messages = consumer.poll(Duration.ofMillis(10000)).toList()
-            messages.size shouldEqual 1
-            messages[0].value() shouldEqual message
-        }
-    }
-
-    describe("Push a message on a topic") {
-        val message = "Test message"
         it("Can read the messages from the kafka topic") {
             producer.send(ProducerRecord(topic, message))
 

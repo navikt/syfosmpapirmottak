@@ -24,7 +24,7 @@ fun readConsumerConfig(
     config: ApplicationConfig,
     credentials: VaultCredentials
 ) = Properties().apply {
-    load(Properties::class.java.getResourceAsStream("/kafka_consumer.properties"))
+    load(ApplicationConfig::class.java.getResourceAsStream("/kafka_consumer.properties"))
     this["sasl.jaas.config"] = "org.apache.kafka.common.security.plain.PlainLoginModule required " +
             "username=\"${credentials.serviceuserUsername}\" password=\"${credentials.serviceuserPassword}\";"
     this["bootstrap.servers"] = config.kafkaBootstrapServers
