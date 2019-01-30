@@ -7,6 +7,7 @@ import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -44,7 +45,7 @@ object KafkaITSpek : Spek({
         remove("sasl.mechanism")
     })
 
-    val consumer = KafkaConsumer<String, String>(readConsumerConfig(config, credentials).apply {
+    val consumer = KafkaConsumer<String, String>(readConsumerConfig(config, credentials, StringDeserializer::class).apply {
         remove("security.protocol")
         remove("sasl.mechanism")
     })
@@ -56,6 +57,17 @@ object KafkaITSpek : Spek({
 
     afterGroup {
         embeddedEnvironment.stop()
+    }
+
+    describe("Push a message on a topic") {
+        val message = "Test message"
+        it("Can read the messages from the kafka topic") {
+            producer.send(ProducerRecord(topic, message))
+
+            val messages = consumer.poll(Duration.ofMillis(10000)).toList()
+            messages.size shouldEqual 1
+            messages[0].value() shouldEqual message
+        }
     }
 
     describe("Push a message on a topic") {
