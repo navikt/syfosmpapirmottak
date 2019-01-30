@@ -68,8 +68,8 @@ object KafkaITSpek : Spek({
             producer.send(ProducerRecord(topic, message))
 
             val messages = consumer.poll(Duration.ofMillis(10000)).toList()
-           // TODO messages.size shouldEqual 1
-           // TODO messages[0].value() shouldEqual message
+            // TODO messages.size shouldEqual 1
+            // TODO messages[0].value() shouldEqual message
         }
     }
 })
