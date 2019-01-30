@@ -69,7 +69,7 @@ dependencies {
 
     implementation "org.apache.kafka:kafka_2.12:$kafka_version"
     implementation "io.confluent:kafka-avro-serializer:$confluent_version"
-    // implementation "no.nav.dok:dok-journalfoering-hendelse-v1:$joark_hendelse_version"
+    implementation "no.nav.dok:dok-journalfoering-hendelse-v1:$joark_hendelse_version"
 
     implementation "no.nav.syfo.tjenester:fellesformat:$fellesformat_version"
     implementation "no.nav.syfo.tjenester:kith-hodemelding:$kith_hodemelding_version"

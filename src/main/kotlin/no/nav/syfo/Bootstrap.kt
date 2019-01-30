@@ -10,11 +10,13 @@ import io.ktor.client.HttpClient
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments.keyValue
+import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.Status
 import no.nav.syfo.api.createHttpClient
 import no.nav.syfo.api.executeRuleValidation
@@ -25,7 +27,6 @@ import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -44,6 +45,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 }
 
+@KtorExperimentalAPI
 fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCoroutineDispatcher()) {
     val config: ApplicationConfig = objectMapper.readValue(File(System.getenv("CONFIG_FILE")))
     val credentials: VaultCredentials = objectMapper.readValue(vaultApplicationPropertiesPath.toFile())
@@ -58,8 +60,8 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
             launch {
                 val httpClient = createHttpClient(credentials)
                 // TODO fix the valueDeserializer, is avro schema, find it could be no.nav.dok:dok-journalfoering-hendelse-v1
-                val consumerProperties = readConsumerConfig(config, credentials, valueDeserializer = StringDeserializer::class)
-                val kafkaconsumer = KafkaConsumer<String, String>(consumerProperties)
+                val consumerProperties = readConsumerConfig(config, credentials)
+                val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
                 val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
@@ -81,13 +83,14 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     producer: KafkaProducer<String, String>,
-    consumer: KafkaConsumer<String, String>,
+    consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     config: ApplicationConfig,
     httpClient: HttpClient
 ) {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
-            val journarlpost: String = objectMapper.readValue(it.value())
+            // TODO get the journalpostid, from the kafa topic, and rember to only take out papir sykmeldinger
+            val journalfoeringHendelseRecord = it.value()
 
             val logValues = arrayOf(
                     keyValue("smId", ""),
@@ -96,9 +99,7 @@ suspend fun blockingApplicationLogic(
             )
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
-            log.info("Received a SM2013, going through rules and persisting in infotrygd $logKeys", *logValues)
-
-            // TODO get the journalpostid, from the kafa topic, and rember to only take out papir sykmeldinger
+            log.info("Received a SM2013, $logKeys", *logValues)
 
             // TODO: use journalpostId
             val smId = UUID.randomUUID().toString()

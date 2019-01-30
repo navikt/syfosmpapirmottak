@@ -7,9 +7,11 @@ import io.ktor.client.features.auth.basic.BasicAuth
 import io.ktor.client.features.json.GsonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.post
+import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.ApplicationConfig
 import no.nav.syfo.VaultCredentials
 
+@KtorExperimentalAPI
 fun createHttpClient(credentials: VaultCredentials) = HttpClient(CIO.config {
     maxConnectionsCount = 1000 // Maximum number of socket connections.
     endpoint.apply {

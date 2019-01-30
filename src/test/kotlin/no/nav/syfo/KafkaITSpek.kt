@@ -7,7 +7,6 @@ import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -45,7 +44,7 @@ object KafkaITSpek : Spek({
         remove("sasl.mechanism")
     })
 
-    val consumer = KafkaConsumer<String, String>(readConsumerConfig(config, credentials, StringDeserializer::class).apply {
+    val consumer = KafkaConsumer<String, String>(readConsumerConfig(config, credentials).apply {
         remove("security.protocol")
         remove("sasl.mechanism")
     })
