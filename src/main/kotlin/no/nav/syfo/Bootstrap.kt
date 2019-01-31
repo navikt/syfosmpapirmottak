@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.StringWriter
 import java.time.Duration
-import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.xml.bind.Marshaller
@@ -90,25 +89,26 @@ suspend fun blockingApplicationLogic(
 
             val journalfoeringHendelseRecord = it.value()
 
-            val logValues = arrayOf(
-                    keyValue("smId", ""),
-                    keyValue("msgId", ""),
-                    keyValue("orgNr", "")
-            )
+            // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and "mottaksKanal"
+            if (journalfoeringHendelseRecord.behandlingstema == "SYM" &&
+                    journalfoeringHendelseRecord.mottaksKanal == "mottaksKanal") {
+                    val logValues = arrayOf(
+                            keyValue("smId", ""),
+                            keyValue("msgId", ""),
+                            keyValue("orgNr", "")
+                    )
 
-            val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
-            log.info("Received a SM2013, $logKeys", *logValues)
+                    val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
+                    log.info("Received a papir SM, $logKeys", *logValues)
 
-            // TODO Filter the kafa topic, only get the right "Team"
-
-            log.info("Incoming JoarkHendelse")
-            log.info(journalfoeringHendelseRecord.toString())
-            val journalpostid = UUID.randomUUID().toString()
+                log.info(journalfoeringHendelseRecord.toString())
+            } else {
+                log.info("Incoming JoarkHendelse, NOT papir SM ")
+                log.info(journalfoeringHendelseRecord.toString())
+            }
 
             // TODO call JOARK, with the journalpostid from the kafa topic
             // And get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
-
-            val text = ""
 
             /*
             val validationResult = httpClient.executeRuleValidation(config, text)
