@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
+import no.nav.syfo.api.JournalfoerInngaaendeV1Client
+import no.nav.syfo.api.StsOidcClient
 import no.nav.syfo.api.createHttpClient
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.util.readConsumerConfig
@@ -63,7 +65,10 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
                 val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, httpClient)
+                val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+                val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(config.journalfoerInngaaendeV1URL, oidcClient)
+
+                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, httpClient, journalfoerInngaaendeV1Client)
             }
         }.toList()
 
@@ -82,7 +87,8 @@ suspend fun blockingApplicationLogic(
     producer: KafkaProducer<String, String>,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     config: ApplicationConfig,
-    httpClient: HttpClient
+    httpClient: HttpClient,
+    journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client
 ) {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {

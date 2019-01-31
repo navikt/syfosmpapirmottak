@@ -11,6 +11,7 @@ import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.ApplicationConfig
 import no.nav.syfo.VaultCredentials
 
+// TODO fix this make all rest clients look the same
 @KtorExperimentalAPI
 fun createHttpClient(credentials: VaultCredentials) = HttpClient(CIO.config {
     maxConnectionsCount = 1000 // Maximum number of socket connections.

@@ -12,7 +12,8 @@ data class ApplicationConfig(
     val kafkaSM2013PapirmottakTopic: String = "privat-syfo-smpapir-automatiskBehandling",
     val syfoSmRegelerApiURL: String = "syfosmregler",
     val kafkaSM2013OppgaveGsakTopic: String = "privat-syfo-smpapir-manuellBehandling",
-    val dokJournalfoeringV1: String
+    val dokJournalfoeringV1: String,
+    val journalfoerInngaaendeV1URL: String = "dokarkiv"
 
 )
 
