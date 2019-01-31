@@ -17,23 +17,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.api.Status
 import no.nav.syfo.api.createHttpClient
-import no.nav.syfo.api.executeRuleValidation
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.util.readConsumerConfig
 import no.nav.syfo.util.readProducerConfig
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.StringWriter
 import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.xml.bind.Marshaller
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
 
@@ -101,6 +100,9 @@ suspend fun blockingApplicationLogic(
             log.info("Received a SM2013, $logKeys", *logValues)
 
             // TODO Filter the kafa topic, only get the right "Team"
+
+            log.info("Incoming JoarkHendelse")
+            log.info(journalfoeringHendelseRecord.toString())
             val journalpostid = UUID.randomUUID().toString()
 
             // TODO call JOARK, with the journalpostid from the kafa topic
@@ -108,6 +110,7 @@ suspend fun blockingApplicationLogic(
 
             val text = ""
 
+            /*
             val validationResult = httpClient.executeRuleValidation(config, text)
             when {
                 validationResult.status == Status.OK -> {
@@ -122,12 +125,18 @@ suspend fun blockingApplicationLogic(
                     log.error("Rule validation is Invaldid $logKeys", logValues)
                 }
             }
+            */
         }
         delay(100)
     }
 }
 
 inline fun <reified T> XMLEIFellesformat.get(): T = any.find { it is T } as T
+
+fun Marshaller.toString(input: Any): String = StringWriter().use {
+    marshal(input, it)
+    it.toString()
+}
 
 fun Application.initRouting(applicationState: ApplicationState) {
     routing {
