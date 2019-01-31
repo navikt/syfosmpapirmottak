@@ -59,7 +59,6 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
         val listeners = (1..config.applicationThreads).map {
             launch {
                 val httpClient = createHttpClient(credentials)
-                // TODO fix the valueDeserializer, is avro schema, find it could be no.nav.dok:dok-journalfoering-hendelse-v1
                 val consumerProperties = readConsumerConfig(config, credentials)
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
@@ -89,7 +88,7 @@ suspend fun blockingApplicationLogic(
 ) {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
-            // TODO get the journalpostid, from the kafa topic, and rember to only take out papir sykmeldinger
+
             val journalfoeringHendelseRecord = it.value()
 
             val logValues = arrayOf(
@@ -101,8 +100,11 @@ suspend fun blockingApplicationLogic(
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
             log.info("Received a SM2013, $logKeys", *logValues)
 
-            // TODO: use journalpostId
-            val smId = UUID.randomUUID().toString()
+            // TODO Filter the kafa topic, only get the right "Team"
+            val journalpostid = UUID.randomUUID().toString()
+
+            // TODO call JOARK, with the journalpostid from the kafa topic
+            // And get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
 
             val text = ""
 
