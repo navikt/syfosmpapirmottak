@@ -32,10 +32,6 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
-        install(BasicAuth) {
-            this.username = username
-            this.password = password
-        }
         install(Logging) {
             logger = Logger.DEFAULT
             level = LogLevel.ALL
