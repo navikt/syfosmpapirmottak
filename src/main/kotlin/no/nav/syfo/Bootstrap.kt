@@ -81,6 +81,7 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
     }
 }
 
+@KtorExperimentalAPI
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     producer: KafkaProducer<String, String>,
@@ -96,11 +97,13 @@ suspend fun blockingApplicationLogic(
 
             // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and "mottaksKanal"
             if (journalfoeringHendelseRecord.behandlingstema == "SYM" &&
-                    journalfoeringHendelseRecord.mottaksKanal == "mottaksKanal") {
+                    journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                     val logValues = arrayOf(
-                            keyValue("smId", ""),
-                            keyValue("msgId", ""),
-                            keyValue("orgNr", "")
+                            keyValue("smId", "missing"),
+                            keyValue("msgId", "missing"),
+                            keyValue("orgNr", "missing"),
+                            keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
+                            keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
                     )
 
                     val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
@@ -115,12 +118,12 @@ suspend fun blockingApplicationLogic(
             // TODO Remove after we get the SYM tema
             if (journalfoeringHendelseRecord.behandlingstema == "SYK") {
             // TODO call JOARK, with the journalpostid from the kafa topic
-            journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
-            }
+                log.info("Incoming JoarkHendelse, tema SYK")
+            val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
             // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
-
+            // journalpost
             // TODO map the xml file to the healthInformation format
-
+            }
             /*
             val validationResult = syfoSykemelginReglerClient.executeRuleValidation(config, text)
             when {

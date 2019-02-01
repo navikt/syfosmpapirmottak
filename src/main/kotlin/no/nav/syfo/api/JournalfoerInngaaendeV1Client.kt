@@ -15,6 +15,7 @@ import io.ktor.client.request.headers
 import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
+import no.nav.syfo.model.Journalpost
 
 @KtorExperimentalAPI
 class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val stsClient: StsOidcClient) {
@@ -38,7 +39,7 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
     }
 
     // TODO https://confluence.adeo.no/pages/viewpage.action?pageId=287444683
-    suspend fun getJournalpostMetadata(journalpostId: Long): Map<String, String> =
+    suspend fun getJournalpostMetadata(journalpostId: Long): Journalpost =
             client.get("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/") {
                 accept(ContentType.Application.Json)
                 val oidcToken = stsClient.oidcToken()
