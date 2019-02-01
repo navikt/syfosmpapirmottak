@@ -1,5 +1,6 @@
 {
   "kafkaBootstrapServers": "SASL_SSL://a01apvl00145.adeo.no:8443,SASL_SSL://a01apvl00146.adeo.no:8443,SASL_SSL://a01apvl00147.adeo.no:8443,SASL_SSL://a01apvl00149.adeo.no:8443",
   "dokJournalfoeringV1" : "aapen-dok-journalfoering-v1-p",
-  "journalfoerInngaaendeV1URL" : "https://dokarkiv.nais.prod.local"
+  "journalfoerInngaaendeV1URL" : "https://dokarkiv.nais.prod.local",
+  "safURL" : "https://saf.nais.prod.local"
 }

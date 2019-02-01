@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.JournalfoerInngaaendeV1Client
+import no.nav.syfo.api.SafClient
 import no.nav.syfo.api.StsOidcClient
 import no.nav.syfo.api.SyfoSykemelginReglerClient
 import no.nav.syfo.api.registerNaisApi
@@ -66,8 +67,9 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
 
                 val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
                 val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(config.journalfoerInngaaendeV1URL, oidcClient)
+                val safClient = SafClient(config.journalfoerInngaaendeV1URL, oidcClient)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client)
+                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient)
             }
         }.toList()
 
@@ -88,7 +90,8 @@ suspend fun blockingApplicationLogic(
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     config: ApplicationConfig,
     syfoSykemelginReglerClient: SyfoSykemelginReglerClient,
-    journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client
+    journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client,
+    safClient: SafClient
 ) {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
@@ -117,15 +120,13 @@ suspend fun blockingApplicationLogic(
                         // TODO call JOARK, with the journalpostid from the kafa topic
                         log.info("Incoming JoarkHendelse, tema SYK")
                         val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
+                        val dokumentInfoId = journalpost.dokumentListe.first().dokumentId
 
-                        log.info("First document tittle, ${journalpost.dokumentListe.first().tittel}")
                         // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
-                        // journalpost
+                val paperSickLave = safClient.getdokument(journalfoeringHendelseRecord.journalpostId, dokumentInfoId, "PDFA")
                         // TODO map the xml file to the healthInformation format
-                } else {
-                log.info("Incoming JoarkHendelse, NOT papir SM ")
-                log.info(journalfoeringHendelseRecord.toString())
-            }
+                        // mappapirsykemeldingtosm2013(paperSickLave)
+                }
 
             /*
             val validationResult = syfoSykemelginReglerClient.executeRuleValidation(config, text)
