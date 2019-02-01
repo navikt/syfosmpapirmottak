@@ -95,20 +95,20 @@ suspend fun blockingApplicationLogic(
 
             val journalfoeringHendelseRecord = it.value()
 
+            val logValues = arrayOf(
+                    keyValue("smId", "missing"),
+                    keyValue("msgId", "missing"),
+                    keyValue("orgNr", "missing"),
+                    keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
+                    keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
+            )
+
+            val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
+
             // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and "mottaksKanal"
             if (journalfoeringHendelseRecord.temaNytt == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal == "skanning") {
-                val logValues = arrayOf(
-                        keyValue("smId", "missing"),
-                        keyValue("msgId", "missing"),
-                        keyValue("orgNr", "missing"),
-                        keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
-                        keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
-                )
-
-                val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
                 log.info("Received a papir SM, $logKeys", *logValues)
-
                 log.info(journalfoeringHendelseRecord.toString())
             }
                 // TODO Remove after we get the SYM tema
