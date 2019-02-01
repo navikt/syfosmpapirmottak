@@ -96,7 +96,7 @@ suspend fun blockingApplicationLogic(
             val journalfoeringHendelseRecord = it.value()
 
             // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and "mottaksKanal"
-            if (journalfoeringHendelseRecord.behandlingstema == "SYM" &&
+            if (journalfoeringHendelseRecord.temaNytt == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                     val logValues = arrayOf(
                             keyValue("smId", "missing"),
@@ -116,10 +116,12 @@ suspend fun blockingApplicationLogic(
             }
 
             // TODO Remove after we get the SYM tema
-            if (journalfoeringHendelseRecord.behandlingstema == "SYK") {
+            if (journalfoeringHendelseRecord.temaNytt == "SYK") {
             // TODO call JOARK, with the journalpostid from the kafa topic
                 log.info("Incoming JoarkHendelse, tema SYK")
             val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
+
+                log.info("First document tittle, ${journalpost.dokumentListe.first().tittel}")
             // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
             // journalpost
             // TODO map the xml file to the healthInformation format
