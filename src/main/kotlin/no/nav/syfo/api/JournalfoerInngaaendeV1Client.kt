@@ -6,6 +6,10 @@ import io.ktor.client.engine.config
 import io.ktor.client.features.auth.basic.BasicAuth
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.logging.DEFAULT
+import io.ktor.client.features.logging.LogLevel
+import io.ktor.client.features.logging.Logger
+import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
@@ -32,20 +36,20 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
             this.username = username
             this.password = password
         }
+        install(Logging) {
+            logger = Logger.DEFAULT
+            level = LogLevel.ALL
+        }
     }
 
     // TODO https://confluence.adeo.no/pages/viewpage.action?pageId=287444683
-    suspend fun getAktoerIds(personNumbers: List<String>, trackingId: String, username: String): Map<String, String> =
-            client.get("$endpointUrl/identer") {
+    suspend fun getJournalpostMetadata(journalpostId: String): Map<String, String> =
+            client.get("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/") {
                 accept(ContentType.Application.Json)
                 val oidcToken = stsClient.oidcToken()
                 headers {
                     append("Authorization", "Bearer ${oidcToken.access_token}")
-                    append("Nav-Consumer-Id", username)
-                    append("Nav-Call-Id", trackingId)
-                    append("Nav-Personidenter", personNumbers.joinToString(","))
                 }
-                parameter("gjeldende", "true")
-                parameter("identgruppe", "AktoerId")
+                parameter("journalpostId", journalpostId)
             }
 }

@@ -5,7 +5,7 @@ buildscript {
     ext.kafka_embedded_version = '2.0.2'
     ext.kith_hodemelding_version = '1.1'
     ext.kluent_version = '1.39'
-    ext.ktor_version = '1.0.0'
+    ext.ktor_version = '1.1.1'
     ext.logback_version = '1.2.3'
     ext.logstash_logback_encoder = '5.2'
     ext.prometheus_version = '0.5.0'
@@ -86,6 +86,8 @@ dependencies {
     implementation "io.ktor:ktor-client-gson:$ktor_version"
     implementation "io.ktor:ktor-server-netty:$ktor_version"
     implementation "io.ktor:ktor-client-jackson:$ktor_version"
+    implementation "io.ktor:ktor-client-logging:$ktor_version"
+    implementation "io.ktor:ktor-client-logging-jvm:$ktor_version"
 
     testRuntimeOnly "org.spekframework.spek2:spek-runtime-jvm:$spek_version"
     testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:$spek_version"

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.application.Application
-import io.ktor.client.HttpClient
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -19,7 +18,7 @@ import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.JournalfoerInngaaendeV1Client
 import no.nav.syfo.api.StsOidcClient
-import no.nav.syfo.api.createHttpClient
+import no.nav.syfo.api.SyfoSykemelginReglerClient
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.util.readConsumerConfig
 import no.nav.syfo.util.readProducerConfig
@@ -58,7 +57,7 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
     try {
         val listeners = (1..config.applicationThreads).map {
             launch {
-                val httpClient = createHttpClient(credentials)
+                val syfoSykemelginReglerClient = SyfoSykemelginReglerClient(credentials)
                 val consumerProperties = readConsumerConfig(config, credentials)
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
@@ -68,7 +67,7 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
                 val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
                 val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(config.journalfoerInngaaendeV1URL, oidcClient)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, httpClient, journalfoerInngaaendeV1Client)
+                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client)
             }
         }.toList()
 
@@ -87,7 +86,7 @@ suspend fun blockingApplicationLogic(
     producer: KafkaProducer<String, String>,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     config: ApplicationConfig,
-    httpClient: HttpClient,
+    syfoSykemelginReglerClient: SyfoSykemelginReglerClient,
     journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client
 ) {
     while (applicationState.running) {
@@ -112,12 +111,16 @@ suspend fun blockingApplicationLogic(
                 log.info("Incoming JoarkHendelse, NOT papir SM ")
                 log.info(journalfoeringHendelseRecord.toString())
             }
-
+            journalfoeringHendelseRecord.journalpostId
             // TODO call JOARK, with the journalpostid from the kafa topic
-            // And get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
+            // syfoSykemelginReglerClient.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
+
+            // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
+
+            // TODO map the xml file to the healthInformation format
 
             /*
-            val validationResult = httpClient.executeRuleValidation(config, text)
+            val validationResult = syfoSykemelginReglerClient.executeRuleValidation(config, text)
             when {
                 validationResult.status == Status.OK -> {
                     log.info("Rule ValidationResult = OK, $logKeys", *logValues)
