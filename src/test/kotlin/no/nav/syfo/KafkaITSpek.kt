@@ -39,7 +39,8 @@ object KafkaITSpek : Spek({
             kafkaSM2013PapirmottakTopic = "",
             syfoSmRegelerApiURL = "",
             kafkaSM2013OppgaveGsakTopic = "",
-            dokJournalfoeringV1 = ""
+            dokJournalfoeringV1 = "",
+            journalfoerInngaaendeV1URL = ""
     )
 
     val producer = KafkaProducer<String, JournalfoeringHendelseRecord>(readProducerConfig(config, credentials, KafkaAvroSerializer::class).apply {
