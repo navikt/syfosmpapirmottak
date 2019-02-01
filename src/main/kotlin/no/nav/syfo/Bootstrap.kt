@@ -106,13 +106,13 @@ suspend fun blockingApplicationLogic(
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
             // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and "mottaksKanal"
-            if (journalfoeringHendelseRecord.temaNytt == "SYM" &&
+            if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                 log.info("Received a papir SM, $logKeys", *logValues)
                 log.info(journalfoeringHendelseRecord.toString())
             }
                 // TODO Remove after we get the SYM tema
-            else if (journalfoeringHendelseRecord.temaNytt == "SYK") {
+            else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK") {
                     // TODO Remove after we get the SYM tema
                         // TODO call JOARK, with the journalpostid from the kafa topic
                         log.info("Incoming JoarkHendelse, tema SYK")
