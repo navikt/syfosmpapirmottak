@@ -111,10 +111,12 @@ suspend fun blockingApplicationLogic(
                 log.info("Incoming JoarkHendelse, NOT papir SM ")
                 log.info(journalfoeringHendelseRecord.toString())
             }
-            journalfoeringHendelseRecord.journalpostId
-            // TODO call JOARK, with the journalpostid from the kafa topic
-            // syfoSykemelginReglerClient.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
 
+            // TODO Remove after we get the SYM tema
+            if (journalfoeringHendelseRecord.behandlingstema == "SYK") {
+            // TODO call JOARK, with the journalpostid from the kafa topic
+            journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
+            }
             // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
 
             // TODO map the xml file to the healthInformation format

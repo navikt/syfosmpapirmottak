@@ -38,7 +38,7 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
     }
 
     // TODO https://confluence.adeo.no/pages/viewpage.action?pageId=287444683
-    suspend fun getJournalpostMetadata(journalpostId: String): Map<String, String> =
+    suspend fun getJournalpostMetadata(journalpostId: Long): Map<String, String> =
             client.get("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/") {
                 accept(ContentType.Application.Json)
                 val oidcToken = stsClient.oidcToken()
