@@ -98,34 +98,35 @@ suspend fun blockingApplicationLogic(
             // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and "mottaksKanal"
             if (journalfoeringHendelseRecord.temaNytt == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal == "skanning") {
-                    val logValues = arrayOf(
-                            keyValue("smId", "missing"),
-                            keyValue("msgId", "missing"),
-                            keyValue("orgNr", "missing"),
-                            keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
-                            keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
-                    )
+                val logValues = arrayOf(
+                        keyValue("smId", "missing"),
+                        keyValue("msgId", "missing"),
+                        keyValue("orgNr", "missing"),
+                        keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
+                        keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
+                )
 
-                    val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
-                    log.info("Received a papir SM, $logKeys", *logValues)
+                val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
+                log.info("Received a papir SM, $logKeys", *logValues)
 
                 log.info(journalfoeringHendelseRecord.toString())
-            } else {
+            }
+                // TODO Remove after we get the SYM tema
+            else if (journalfoeringHendelseRecord.temaNytt == "SYK") {
+                    // TODO Remove after we get the SYM tema
+                        // TODO call JOARK, with the journalpostid from the kafa topic
+                        log.info("Incoming JoarkHendelse, tema SYK")
+                        val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
+
+                        log.info("First document tittle, ${journalpost.dokumentListe.first().tittel}")
+                        // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
+                        // journalpost
+                        // TODO map the xml file to the healthInformation format
+                } else {
                 log.info("Incoming JoarkHendelse, NOT papir SM ")
                 log.info(journalfoeringHendelseRecord.toString())
             }
 
-            // TODO Remove after we get the SYM tema
-            if (journalfoeringHendelseRecord.temaNytt == "SYK") {
-            // TODO call JOARK, with the journalpostid from the kafa topic
-                log.info("Incoming JoarkHendelse, tema SYK")
-            val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
-
-                log.info("First document tittle, ${journalpost.dokumentListe.first().tittel}")
-            // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
-            // journalpost
-            // TODO map the xml file to the healthInformation format
-            }
             /*
             val validationResult = syfoSykemelginReglerClient.executeRuleValidation(config, text)
             when {
