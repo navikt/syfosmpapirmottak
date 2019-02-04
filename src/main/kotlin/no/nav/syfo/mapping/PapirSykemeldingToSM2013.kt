@@ -47,6 +47,7 @@ fun mappapirsykemeldingtosm2013(papirSykemelding: SykemeldingerType): HelseOpply
                     v = papirSykemelding.medisinskVurdering.hovedDiagnose.first().diagnose
                 }
             }
+            // TODO Legge til som bi diagnoser
             biDiagnoser = HelseOpplysningerArbeidsuforhet.MedisinskVurdering.BiDiagnoser().apply {
                 diagnosekode.add(
                         CV().apply {
@@ -59,10 +60,10 @@ fun mappapirsykemeldingtosm2013(papirSykemelding: SykemeldingerType): HelseOpply
                     // TODO legge til v og dn eller droppe heile feltet i papir
             annenFraversArsak = ArsakType().apply {
                 arsakskode.add(CS().apply {
-                    v = "1"
-                    dn = "Helsetilstanden hindrer pasienten i å være i aktivitet"
+                    v = papirSykemelding.medisinskVurdering.annenFraversArsak
+                    dn = "Helsetilstanden hindrer pasienten i å være i aktivitet" // TODO fylle ut
                 })
-                beskriv = papirSykemelding.medisinskVurdering.annenFraversArsak
+                beskriv = papirSykemelding.medisinskVurdering.fraversBeskrivelse
                     }
                 isSvangerskap = papirSykemelding.medisinskVurdering.svangerskap == "1".toBigInteger()
                 isYrkesskade = papirSykemelding.medisinskVurdering.yrkesskade == "1".toBigInteger()
@@ -94,7 +95,7 @@ fun mappapirsykemeldingtosm2013(papirSykemelding: SykemeldingerType): HelseOpply
                         // TODO hva skal vi fylle ut her???
                         arsakskode.add(CS().apply {
                             v = papirSykemelding.aktivitet.aktivitetIkkeMulig.medisinskeArsaker.medArsakerHindrer.toString()
-                            dn = papirSykemelding.aktivitet.aktivitetIkkeMulig.medisinskeArsaker.medArsakerHindrer.toString()
+                            dn = "" // TODO find at volven and map it
                             })
                         beskriv = papirSykemelding.aktivitet.aktivitetIkkeMulig.medisinskeArsaker.medArsakerBesk
                     }
@@ -102,7 +103,7 @@ fun mappapirsykemeldingtosm2013(papirSykemelding: SykemeldingerType): HelseOpply
                         // TODO hva skal vi fylle ut her???
                         arsakskode.add(CS().apply {
                             v = papirSykemelding.aktivitet.aktivitetIkkeMulig.arbeidsplassen.arbeidsplassenHindrer.toString()
-                            dn = papirSykemelding.aktivitet.aktivitetIkkeMulig.arbeidsplassen.arbeidsplassenHindrer.toString()
+                            dn = "" // TODO find at volven and map it
                         })
                         beskriv = papirSykemelding.aktivitet.aktivitetIkkeMulig.arbeidsplassen.arbeidsplassenBesk
                     }
@@ -200,12 +201,10 @@ fun mappapirsykemeldingtosm2013(papirSykemelding: SykemeldingerType): HelseOpply
         beskrivBistandNAV = papirSykemelding.meldingTilNAV.beskrivBistandNAV
     }
     meldingTilArbeidsgiver = papirSykemelding.meldingTilArbeidsgiver
-    // TODO tilbakedatering = TilbakedateringType().apply {
-    //                    tilbakeDato = LocalDate.now()
-    //                    tilbakebegrunnelse = "Pasient var syk"
-    //                }
     kontaktMedPasient = HelseOpplysningerArbeidsuforhet.KontaktMedPasient().apply {
-        behandletDato = LocalDateTime.of(papirSykemelding.kontaktMedPasient.behandletDato.year, papirSykemelding.kontaktMedPasient.behandletDato.month, papirSykemelding.kontaktMedPasient.behandletDato.dayOfMonth, 12, 0)
+        kontaktDato = papirSykemelding.kontaktMedPasient.behandletDato
+        begrunnIkkeKontakt = papirSykemelding.tilbakedatering.tilbakebegrunnelse
+        behandletDato = LocalDateTime.of(papirSykemelding.tilbakedatering.tilbakeDato.year, papirSykemelding.tilbakedatering.tilbakeDato.month, papirSykemelding.tilbakedatering.tilbakeDato.dayOfMonth, 12, 0)
     }
     behandler = HelseOpplysningerArbeidsuforhet.Behandler().apply {
         navn = NavnType().apply {
