@@ -120,7 +120,7 @@ suspend fun blockingApplicationLogic(
                         // TODO call JOARK, with the journalpostid from the kafa topic
                         log.info("Incoming JoarkHendelse, tema SYK")
                         val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
-                        val dokumentInfoId = journalpost.dokumentListe.first().dokumentId
+                        val dokumentInfoId = journalpost.dokumentListe.first().dokumentInfoId
 
                         // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
                 val paperSickLave = safClient.getdokument(journalfoeringHendelseRecord.journalpostId, dokumentInfoId, "PDFA")
