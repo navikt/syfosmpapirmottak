@@ -17,9 +17,9 @@ data class Journalpost(
 )
 
 data class Dokument(
-    val dokumentId: String,
+    val dokumentInfoId: String?,
     val dokumentTypeId: String,
-    val navSkjemaId: String?,
+    val brevkode: String?,
     val tittel: String,
     val dokumentKategori: String,
     val variant: List<Variant>,
