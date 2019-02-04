@@ -140,57 +140,59 @@ fun mappapirsykemeldingtosm2013(papirSykemelding: SykemeldingerType): HelseOpply
             vurderingDato = papirSykemelding.prognose.utenArbeidsgiver.datoNyTilbakemelding
         }
     }
-    utdypendeOpplysninger.spmGruppe.add(
-            HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe().apply {
-                spmGruppeId = "6.2"
-                spmGruppeTekst = "Utdypende opplysninger ved 8,17 og 39 uker"
-                spmSvar.add(DynaSvarType().apply {
-                    spmId = SpmId.SpmId6_2_1.spmId
-                    spmTekst = SpmId.SpmId6_2_1.spmTekst
-                    restriksjon = DynaSvarType.Restriksjon().apply {
-                        restriksjonskode.add(CS().apply {
-                            dn = SpmId.SpmId6_2_1.restriksjon.text
-                            v = SpmId.SpmId6_2_1.restriksjon.codeValue
-                        })
-                    }
-                    svarTekst = papirSykemelding.utdypendeOpplysninger.sykehistorie
-                })
-                spmSvar.add(DynaSvarType().apply {
-                    spmId = SpmId.SpmId6_2_2.spmId
-                    spmTekst = SpmId.SpmId6_2_2.spmTekst
-                    restriksjon = DynaSvarType.Restriksjon().apply {
-                        restriksjonskode.add(CS().apply {
-                            dn = SpmId.SpmId6_2_2.restriksjon.text
-                            v = SpmId.SpmId6_2_2.restriksjon.codeValue
-                        })
-                    }
-                    svarTekst = papirSykemelding.utdypendeOpplysninger.arbeidsevne
-                })
+    utdypendeOpplysninger = HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger().apply {
+        spmGruppe.add(
+                HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe().apply {
+                    spmGruppeId = "6.2"
+                    spmGruppeTekst = "Utdypende opplysninger ved 8,17 og 39 uker"
+                    spmSvar.add(DynaSvarType().apply {
+                        spmId = SpmId.SpmId6_2_1.spmId
+                        spmTekst = SpmId.SpmId6_2_1.spmTekst
+                        restriksjon = DynaSvarType.Restriksjon().apply {
+                            restriksjonskode.add(CS().apply {
+                                dn = SpmId.SpmId6_2_1.restriksjon.text
+                                v = SpmId.SpmId6_2_1.restriksjon.codeValue
+                            })
+                        }
+                        svarTekst = papirSykemelding.utdypendeOpplysninger.sykehistorie
+                    })
+                    spmSvar.add(DynaSvarType().apply {
+                        spmId = SpmId.SpmId6_2_2.spmId
+                        spmTekst = SpmId.SpmId6_2_2.spmTekst
+                        restriksjon = DynaSvarType.Restriksjon().apply {
+                            restriksjonskode.add(CS().apply {
+                                dn = SpmId.SpmId6_2_2.restriksjon.text
+                                v = SpmId.SpmId6_2_2.restriksjon.codeValue
+                            })
+                        }
+                        svarTekst = papirSykemelding.utdypendeOpplysninger.arbeidsevne
+                    })
 
-                spmSvar.add(DynaSvarType().apply {
-                    spmId = SpmId.SpmId6_2_3.spmId
-                    spmTekst = SpmId.SpmId6_2_3.spmTekst
-                    restriksjon = DynaSvarType.Restriksjon().apply {
-                        restriksjonskode.add(CS().apply {
-                            dn = SpmId.SpmId6_2_3.restriksjon.text
-                            v = SpmId.SpmId6_2_3.restriksjon.codeValue
-                        })
-                    }
-                    svarTekst = papirSykemelding.utdypendeOpplysninger.behandlingsresultat
-                })
+                    spmSvar.add(DynaSvarType().apply {
+                        spmId = SpmId.SpmId6_2_3.spmId
+                        spmTekst = SpmId.SpmId6_2_3.spmTekst
+                        restriksjon = DynaSvarType.Restriksjon().apply {
+                            restriksjonskode.add(CS().apply {
+                                dn = SpmId.SpmId6_2_3.restriksjon.text
+                                v = SpmId.SpmId6_2_3.restriksjon.codeValue
+                            })
+                        }
+                        svarTekst = papirSykemelding.utdypendeOpplysninger.behandlingsresultat
+                    })
 
-                spmSvar.add(DynaSvarType().apply {
-                    spmId = SpmId.SpmId6_2_4.spmId
-                    spmTekst = SpmId.SpmId6_2_4.spmTekst
-                    restriksjon = DynaSvarType.Restriksjon().apply {
-                        restriksjonskode.add(CS().apply {
-                            dn = SpmId.SpmId6_2_4.restriksjon.text
-                            v = SpmId.SpmId6_2_4.restriksjon.codeValue
-                        })
-                    }
-                    svarTekst = papirSykemelding.utdypendeOpplysninger.planlagtBehandling
+                    spmSvar.add(DynaSvarType().apply {
+                        spmId = SpmId.SpmId6_2_4.spmId
+                        spmTekst = SpmId.SpmId6_2_4.spmTekst
+                        restriksjon = DynaSvarType.Restriksjon().apply {
+                            restriksjonskode.add(CS().apply {
+                                dn = SpmId.SpmId6_2_4.restriksjon.text
+                                v = SpmId.SpmId6_2_4.restriksjon.codeValue
+                            })
+                        }
+                        svarTekst = papirSykemelding.utdypendeOpplysninger.planlagtBehandling
+                    })
                 })
-            })
+    }
     tiltak = HelseOpplysningerArbeidsuforhet.Tiltak().apply {
         tiltakArbeidsplassen = papirSykemelding.tiltak.tiltakArbeidsplassen
         tiltakNAV = papirSykemelding.tiltak.tiltakNAV
