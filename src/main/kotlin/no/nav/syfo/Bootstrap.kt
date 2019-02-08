@@ -123,12 +123,11 @@ suspend fun blockingApplicationLogic(
                         val dokumentInfoId = journalpost.dokumentListe.first().dokumentInfoId
 
                         // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
+                log.info("Calling saf rest")
                 val paperSickLave = safClient.getdokument(journalfoeringHendelseRecord.journalpostId, dokumentInfoId, "PDFA")
                         // TODO map the xml file to the healthInformation format
                         // mappapirsykemeldingtosm2013(paperSickLave)
-                } else {
-                log.info(journalfoeringHendelseRecord.toString())
-            }
+                }
 
             /*
             val validationResult = syfoSykemelginReglerClient.executeRuleValidation(config, text)

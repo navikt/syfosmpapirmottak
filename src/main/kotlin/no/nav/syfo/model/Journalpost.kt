@@ -55,7 +55,7 @@ enum class JournalTilstand {
 }
 
 data class Avsender(
-    val navn: String,
+    val navn: String?,
     val avsenderType: AvsenderType,
     val identifikator: String
 )
