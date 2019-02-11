@@ -114,7 +114,7 @@ suspend fun blockingApplicationLogic(
                 log.info("Received a papir SM, $logKeys", *logValues)
                 log.info(journalfoeringHendelseRecord.toString())
             }
-                // TODO Remove after we get the SYM tema
+            // TODO Remove after we get the SYM tema
             else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK") {
                     // TODO Remove after we get the SYM tema
                         // TODO call JOARK, with the journalpostid from the kafa topic
