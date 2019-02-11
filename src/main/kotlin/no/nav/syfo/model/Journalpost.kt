@@ -6,7 +6,7 @@ data class Journalpost(
     val journalTilstand: JournalTilstand,
     val avsender: Avsender,
     val brukerListe: List<Bruker>,
-    val arkivSak: ArkivSak,
+    val arkivSak: ArkivSak?,
     val tema: String,
     val tittel: String,
     val kanalReferanseId: String?,
