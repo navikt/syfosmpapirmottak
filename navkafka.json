@@ -3,7 +3,7 @@
     {
       "topicName": "privat-syfo-smpapir-automatiskBehandling",
       "members": [
-        {"member":"srvsyfosmjoark", "role":"CONSUMER"},
+        {"member":"srvsyfosmsak", "role":"CONSUMER"},
         {"member":"srvsyfosminfotrygd", "role":"CONSUMER"},
         {"member":"srvsyfosmregister", "role":"CONSUMER"},
         {"member":"srvsyfosmarena", "role":"CONSUMER"},
