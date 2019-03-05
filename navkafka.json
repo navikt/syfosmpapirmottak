@@ -14,7 +14,7 @@
     {
       "topicName": "privat-syfo-smpapir-manuellBehandling",
       "members": [
-        {"member":"srvsyfosmoppgave", "role":"CONSUMER"},
+        {"member":"srvsyfosmsak", "role":"CONSUMER"},
         {"member":"srvsyfosmarena", "role":"CONSUMER"},
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"}
       ],
