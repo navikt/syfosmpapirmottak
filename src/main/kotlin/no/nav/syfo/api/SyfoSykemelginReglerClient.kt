@@ -40,6 +40,7 @@ class SyfoSykemelginReglerClient(credentials: VaultCredentials) {
         }
     }
 
+    // TODO use retryAsync
     suspend fun executeRuleValidation(config: ApplicationConfig, payload: String): ValidationResult = client.post {
         body = payload
 

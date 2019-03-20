@@ -38,6 +38,7 @@ class SafClient(private val endpointUrl: String, private val stsClient: StsOidcC
     }
 
     // TODO https://confluence.adeo.no/display/BOA/saf+-+REST+hentdokument and https://saf-q1.nais.preprod.local/swagger-ui.html
+    // TODO use retryAsync
     suspend fun getdokument(journalpostId: Long, dokumentInfoId: String, variantFormat: String): ByteArray =
             client.get("$endpointUrl/rest/hentdokument/$journalpostId/$dokumentInfoId/$variantFormat") {
                 contentType(ContentType.Application.Json)

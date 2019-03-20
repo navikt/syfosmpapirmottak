@@ -38,6 +38,7 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
     }
 
     // TODO https://confluence.adeo.no/pages/viewpage.action?pageId=287444683
+    // TODO use retryAsync
     suspend fun getJournalpostMetadata(journalpostId: Long): Journalpost =
             client.get("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
                 accept(ContentType.Application.Json)

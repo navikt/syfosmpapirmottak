@@ -52,6 +52,7 @@ class StsOidcClient(username: String, password: String) {
         return oidcToken
     }
 
+    // TODO use retryAsync
     private suspend fun newOidcToken(): OidcToken = oidcClient.get("http://security-token-service/rest/v1/sts/token") {
         parameter("grant_type", "client_credentials")
         parameter("scope", "openid")

@@ -39,7 +39,7 @@ import javax.xml.bind.Marshaller
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
 
-private val log = LoggerFactory.getLogger("nav.syfo.papirmottak")
+val log = LoggerFactory.getLogger("nav.syfo.papirmottak")
 
 val objectMapper: ObjectMapper = ObjectMapper().apply {
     registerKotlinModule()
@@ -73,7 +73,7 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
 
                 val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
                 val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(config.journalfoerInngaaendeV1URL, oidcClient)
-                val safClient = SafClient(config.journalfoerInngaaendeV1URL, oidcClient)
+                val safClient = SafClient(config.safURL, oidcClient)
 
                 blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient)
             }
