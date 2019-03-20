@@ -6,7 +6,7 @@ version = "1.0.27"
 
 val coroutinesVersion = "1.0.1"
 val fellesformatVersion = "1.0"
-val kafkaVersion = "2.0.0"
+val kafkaVersion = "2.1.1"
 val kafkaEmbeddedVersion = "2.1.1"
 val kithHodemeldingVersion = "1.1"
 val kluentVersion = "1.39"
@@ -35,7 +35,7 @@ plugins {
     java
     kotlin("jvm") version "1.3.21"
     id("org.jmailen.kotlinter") version "1.21.0"
-    id("com.diffplug.gradle.spotless") version "3.14.0"
+    id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
 }
 
