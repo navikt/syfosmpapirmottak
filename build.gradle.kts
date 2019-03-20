@@ -4,6 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransf
 group = "no.nav.syfo"
 version = "1.0.27"
 
+val avroVersion = "1.8.2"
 val coroutinesVersion = "1.0.1"
 val fellesformatVersion = "1.0"
 val kafkaVersion = "2.0.0"
@@ -21,7 +22,7 @@ val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "1.0.0-SNAPSHOT"
 val jacksonVersion = "2.9.6"
 val joarkHendelseVersion = "0.0.3"
-val confluentVersion = "5.0.0"
+val confluentVersion = "5.0.2"
 val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "1.1-SNAPSHOT"
 val junitPlatformLauncher = "1.0.0"
@@ -41,14 +42,14 @@ plugins {
 
 
 repositories {
-    maven (url= "https://repo.adeo.no/repository/maven-snapshots/")
-    maven (url= "https://repo.adeo.no/repository/maven-releases/")
-    maven (url= "https://dl.bintray.com/kotlin/ktor")
-    maven (url= "https://dl.bintray.com/spekframework/spek-dev")
-    maven (url= "http://packages.confluent.io/maven/")
-    maven (url= "https://kotlin.bintray.com/kotlinx")
     mavenCentral()
     jcenter()
+    maven (url= "https://kotlin.bintray.com/kotlinx")
+    maven (url= "https://dl.bintray.com/kotlin/ktor")
+    maven (url= "https://dl.bintray.com/spekframework/spek-dev")
+    maven (url= "https://repo.adeo.no/repository/maven-snapshots/")
+    maven (url= "https://repo.adeo.no/repository/maven-releases/")
+    maven (url= "http://packages.confluent.io/maven/")
 }
 
 
@@ -69,6 +70,8 @@ dependencies {
 
     implementation ("org.apache.kafka:kafka_2.12:$kafkaVersion")
     implementation ("io.confluent:kafka-avro-serializer:$confluentVersion")
+    // Override avro version cause its not 1.8.1 is not compatible with team dokuments generated beans
+    implementation("org.apache.avro:avro:$avroVersion")
     implementation ("no.nav.dok:dok-journalfoering-hendelse-v1:$joarkHendelseVersion")
 
     implementation ("no.nav.syfo.tjenester:fellesformat:$fellesformatVersion")
