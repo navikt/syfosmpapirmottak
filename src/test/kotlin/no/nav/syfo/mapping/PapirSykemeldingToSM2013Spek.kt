@@ -81,11 +81,11 @@ object PapirSykemeldingToSM2013Spek : Spek({
                         periodeFOMDato = LocalDate.now()
                         periodeTOMDato = LocalDate.now().plusMonths(1)
                         medisinskeArsaker = MedisinskeArsakerType().apply {
-                            medArsakerHindrer = "0".toBigInteger()
+                            medArsakerHindrer = "1".toBigInteger()
                             medArsakerBesk = "Kan jobbe"
                         }
                         arbeidsplassen = ArbeidsplassenType().apply {
-                            arbeidsplassenHindrer = "0".toBigInteger()
+                            arbeidsplassenHindrer = "1".toBigInteger()
                             arbeidsplassenBesk = "Kan jobbe"
                         }
                     }
@@ -153,7 +153,7 @@ object PapirSykemeldingToSM2013Spek : Spek({
                     msgId = UUID.randomUUID().toString()
             )
 
-            sykmelding.behandler.hpr shouldEqual papirSykmelding.behandler.hpr
+            sykmelding.behandler.hpr shouldEqual papirSykmelding.behandler.hpr.toString()
             }
     }
 })

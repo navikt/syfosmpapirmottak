@@ -143,8 +143,8 @@ fun ArbeidsplassenType.toArbeidsrelatertArsak() = ArbeidsrelatertArsak(
 fun MedisinskVurderingType.toMedisinskVurdering() = MedisinskVurdering(
         hovedDiagnose = hovedDiagnose.first()?.toDiagnose(),
         biDiagnoser = bidiagnose?.map(BidiagnoseType::toDiagnose) ?: listOf(),
-        svangerskap = isSvangerskap(),
-        yrkesskade = isYrkesskade(),
+        svangerskap = svangerskap.equals(1.toBigInteger()),
+        yrkesskade = yrkesskade.equals(1.toBigInteger()),
         yrkesskadeDato = yrkesskadedato,
         annenFraversArsak = AnnenFraversArsak(
                 beskrivelse = annenFraversArsak,
@@ -157,14 +157,8 @@ fun HovedDiagnoseType.toDiagnose() = Diagnose(diagnosekodeSystem, diagnosekode)
 
 fun BidiagnoseType.toDiagnose() = Diagnose(diagnosekodeSystem, diagnosekode)
 
-fun MedisinskVurderingType.isSvangerskap(): Boolean =
-        isSvangerskap().equals(1.toBigInteger())
-
-fun MedisinskVurderingType.isYrkesskade(): Boolean =
-        isYrkesskade().equals(1.toBigInteger())
-
 fun MedisinskVurderingType.isSkjermesforpasient(): Boolean =
-        isSkjermesforpasient().equals(1.toBigInteger())
+        skjermesForPasient.equals(1.toBigInteger())
 
 fun ArbeidsgiverType.toArbeidsgiver() = Arbeidsgiver(
         harArbeidsgiver = HarArbeidsgiver.EN_ARBEIDSGIVER,
