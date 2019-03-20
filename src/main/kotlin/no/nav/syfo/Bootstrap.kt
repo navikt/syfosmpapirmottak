@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.ktor.application.Application
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
@@ -27,7 +28,6 @@ import no.nav.syfo.util.toProducerConfig
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -64,7 +64,7 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
                 val kafkaBaseConfig = loadBaseConfig(config, credentials)
 
                 val producerProperties = kafkaBaseConfig.toProducerConfig(config.applicationName, valueSerializer = StringSerializer::class)
-                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${config.applicationName}-consumer", valueDeserializer = StringDeserializer::class)
+                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${config.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
 
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
