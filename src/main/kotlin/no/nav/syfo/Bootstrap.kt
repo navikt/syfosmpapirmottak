@@ -21,11 +21,13 @@ import no.nav.syfo.api.SafClient
 import no.nav.syfo.api.StsOidcClient
 import no.nav.syfo.api.SyfoSykemelginReglerClient
 import no.nav.syfo.api.registerNaisApi
-import no.nav.syfo.util.readConsumerConfig
-import no.nav.syfo.util.readProducerConfig
+import no.nav.syfo.util.loadBaseConfig
+import no.nav.syfo.util.toConsumerConfig
+import no.nav.syfo.util.toProducerConfig
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -59,10 +61,14 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
         val listeners = (1..config.applicationThreads).map {
             launch {
                 val syfoSykemelginReglerClient = SyfoSykemelginReglerClient(credentials)
-                val consumerProperties = readConsumerConfig(config, credentials)
+                val kafkaBaseConfig = loadBaseConfig(config, credentials)
+
+                val producerProperties = kafkaBaseConfig.toProducerConfig(config.applicationName, valueSerializer = StringSerializer::class)
+                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${config.applicationName}-consumer", valueDeserializer = StringDeserializer::class)
+
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
-                val producerProperties = readProducerConfig(config, credentials, valueSerializer = StringSerializer::class)
+
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
                 val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)

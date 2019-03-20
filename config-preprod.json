@@ -2,5 +2,9 @@
   "kafkaBootstrapServers": "SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443",
   "dokJournalfoeringV1" : "aapen-dok-journalfoering-v1-q1",
   "journalfoerInngaaendeV1URL" : "https://dokarkiv-q1.nais.preprod.local",
-  "safURL" : "https://saf-q1.nais.preprod.local"
+  "safURL" : "https://saf-q1.nais.preprod.local",
+  "kafkaSM2013PapirmottakTopic" : "privat-syfo-smpapir-automatiskBehandling",
+  "syfoSmRegelerApiURL" : "syfosmregler",
+  "kafkaSM2013OppgaveGsakTopic" : "privat-syfo-smpapir-manuellBehandling",
+  "applicationName" : "syfosmpapirmottak"
 }

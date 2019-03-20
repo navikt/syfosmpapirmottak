@@ -9,13 +9,13 @@ data class ApplicationConfig(
     val applicationPort: Int = 8080,
     val applicationThreads: Int = 1,
     val kafkaBootstrapServers: String,
-    val kafkaSM2013PapirmottakTopic: String = "privat-syfo-smpapir-automatiskBehandling",
-    val syfoSmRegelerApiURL: String = "syfosmregler",
-    val kafkaSM2013OppgaveGsakTopic: String = "privat-syfo-smpapir-manuellBehandling",
+    val kafkaSM2013PapirmottakTopic: String,
+    val syfoSmRegelerApiURL: String,
+    val kafkaSM2013OppgaveGsakTopic: String,
     val dokJournalfoeringV1: String,
     val journalfoerInngaaendeV1URL: String,
-    val safURL: String
-
+    val safURL: String,
+    val applicationName: String
 )
 
 data class VaultCredentials(

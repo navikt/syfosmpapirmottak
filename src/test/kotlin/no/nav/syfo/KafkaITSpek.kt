@@ -4,15 +4,19 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer
 import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.util.readConsumerConfig
-import no.nav.syfo.util.readProducerConfig
+import no.nav.syfo.util.loadBaseConfig
+import no.nav.syfo.util.toConsumerConfig
+import no.nav.syfo.util.toProducerConfig
+import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
 import java.time.Duration
+import java.util.Properties
 
 object KafkaITSpek : Spek({
     val topic = "aapen-test-topic"
@@ -26,7 +30,7 @@ object KafkaITSpek : Spek({
     )
     val embeddedEnvironment = KafkaEnvironment(
             autoStart = false,
-            topics = listOf(topic),
+            topicNames = listOf(topic),
             withSchemaRegistry = true,
             withSecurity = true,
             users = listOf(JAASCredential(credentials.serviceuserUsername, credentials.serviceuserPassword))
@@ -41,18 +45,25 @@ object KafkaITSpek : Spek({
             kafkaSM2013OppgaveGsakTopic = "",
             dokJournalfoeringV1 = "",
             journalfoerInngaaendeV1URL = "",
-            safURL = ""
+            safURL = "",
+            applicationName = "syfosmpapirmottak"
     )
 
-    val producer = KafkaProducer<String, JournalfoeringHendelseRecord>(readProducerConfig(config, credentials, KafkaAvroSerializer::class).apply {
+    fun Properties.overrideForTest(): Properties = apply {
         remove("security.protocol")
         remove("sasl.mechanism")
-    })
+    }
 
-    val consumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(readConsumerConfig(config, credentials).apply {
-        remove("security.protocol")
-        remove("sasl.mechanism")
-    })
+    val baseConfig = loadBaseConfig(config, credentials).overrideForTest()
+
+    val producerProperties = baseConfig
+            .toProducerConfig("spek.integration", valueSerializer = KafkaAvroSerializer::class)
+    val producer = KafkaProducer<String, JournalfoeringHendelseRecord>(producerProperties)
+
+    val consumerProperties = baseConfig
+            .toConsumerConfig("spek.integration-consumer", valueDeserializer = StringDeserializer::class)
+    val consumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
+
     consumer.subscribe(listOf(topic))
 
     beforeGroup {
@@ -70,8 +81,8 @@ object KafkaITSpek : Spek({
             producer.send(ProducerRecord(topic, message))
 
             val messages = consumer.poll(Duration.ofMillis(10000)).toList()
-            // TODO messages.size shouldEqual 1
-            // TODO messages[0].value() shouldEqual message
+            messages.size shouldEqual 1
+            messages[0].value() shouldEqual message
         }
     }
 })

@@ -24,10 +24,12 @@ import no.nav.helse.sykSkanningMeta.TilbakedateringType
 import no.nav.helse.sykSkanningMeta.TiltakType
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.helse.sykSkanningMeta.UtenArbeidsgiverType
+import no.nav.syfo.model.toSykmelding
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.time.LocalDate
+import java.util.UUID
 
 object PapirSykemeldingToSM2013Spek : Spek({
 
@@ -144,8 +146,14 @@ object PapirSykemeldingToSM2013Spek : Spek({
                 }
                 }
 
-            val helseOpplysningerArbeidsuforhet = mappapirsykemeldingtosm2013(papirSykmelding)
-            helseOpplysningerArbeidsuforhet.syketilfelleStartDato shouldEqual papirSykmelding.syketilfelleStartDato
+            val sykmelding = papirSykmelding.toSykmelding(
+                    sykmeldingId = UUID.randomUUID().toString(),
+                    pasientAktoerId = "",
+                    legeAktoerId = "",
+                    msgId = UUID.randomUUID().toString()
+            )
+
+            sykmelding.behandler.hpr shouldEqual papirSykmelding.behandler.hpr
             }
     }
 })
