@@ -6,7 +6,7 @@ version = "1.0.27"
 
 val coroutinesVersion = "1.0.1"
 val fellesformatVersion = "1.0"
-val kafkaVersion = "2.1.1"
+val kafkaVersion = "2.0.0"
 val kafkaEmbeddedVersion = "2.1.1"
 val kithHodemeldingVersion = "1.1"
 val kluentVersion = "1.39"
