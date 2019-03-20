@@ -21,9 +21,10 @@ val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "1.0.0-SNAPSHOT"
 val jacksonVersion = "2.9.6"
 val joarkHendelseVersion = "0.0.3"
-val confluentVersion = "4.0.0"
+val confluentVersion = "5.0.0"
 val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "1.1-SNAPSHOT"
+val junitPlatformLauncher = "1.0.0"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
@@ -95,12 +96,15 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
     }
+    testImplementation("org.junit.platform:junit-platform-launcher:$junitPlatformLauncher")
     testImplementation ("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
 
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion") {
+    testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion")
+    {
         exclude(group = "org.jetbrains.kotlin")
     }
-    testRuntimeOnly ("org.spekframework.spek2:spek-runner-junit5:$spekVersion") {
+    testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
+    {
         exclude(group = "org.jetbrains.kotlin")
     }
 

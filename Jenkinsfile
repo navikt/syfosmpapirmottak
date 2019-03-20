@@ -3,6 +3,10 @@
 pipeline {
     agent any
 
+  tools {
+            jdk 'openjdk11'
+        }
+
     environment {
         APPLICATION_NAME = 'syfosmpapirmottak'
         DOCKER_SLUG = 'syfo'
@@ -42,9 +46,13 @@ pipeline {
                 slackStatus status: 'passed'
             }
         }
+       stage('push docker image') {
+             steps {
+                 dockerUtils action: 'createPushImage'
+              }
+       }
        stage('deploy to preprod') {
               steps {
-                   dockerUtils action: 'createPushImage'
                    deployApp action: 'kubectlDeploy', cluster: 'preprod-fss'
                    }
                }

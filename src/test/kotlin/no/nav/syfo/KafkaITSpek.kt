@@ -1,9 +1,6 @@
 package no.nav.syfo
 
-import io.confluent.kafka.serializers.KafkaAvroSerializer
-import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
-import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.util.loadBaseConfig
 import no.nav.syfo.util.toConsumerConfig
 import no.nav.syfo.util.toProducerConfig
@@ -12,6 +9,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
@@ -28,13 +26,11 @@ object KafkaITSpek : Spek({
             serviceuserUsername = " ",
             serviceuserPassword = ""
     )
+
     val embeddedEnvironment = KafkaEnvironment(
             autoStart = false,
-            topicNames = listOf(topic),
-            withSchemaRegistry = true,
-            withSecurity = true,
-            users = listOf(JAASCredential(credentials.serviceuserUsername, credentials.serviceuserPassword))
-            )
+            topicNames = listOf(topic)
+    )
 
     val config = ApplicationConfig(
             applicationPort = getRandomPort(),
@@ -56,13 +52,8 @@ object KafkaITSpek : Spek({
 
     val baseConfig = loadBaseConfig(config, credentials).overrideForTest()
 
-    val producerProperties = baseConfig
-            .toProducerConfig("spek.integration", valueSerializer = KafkaAvroSerializer::class)
-    val producer = KafkaProducer<String, JournalfoeringHendelseRecord>(producerProperties)
-
-    val consumerProperties = baseConfig
-            .toConsumerConfig("spek.integration-consumer", valueDeserializer = StringDeserializer::class)
-    val consumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
+    val producer = KafkaProducer<String, String>(baseConfig.toProducerConfig("spek-test", StringSerializer::class))
+    val consumer = KafkaConsumer<String, String>(baseConfig.toConsumerConfig("spek-test", StringDeserializer::class))
 
     consumer.subscribe(listOf(topic))
 
@@ -75,8 +66,7 @@ object KafkaITSpek : Spek({
     }
 
     describe("Push a message on a topic") {
-        val message = JournalfoeringHendelseRecord()
-
+        val message = "Test message"
         it("Can read the messages from the kafka topic") {
             producer.send(ProducerRecord(topic, message))
 
