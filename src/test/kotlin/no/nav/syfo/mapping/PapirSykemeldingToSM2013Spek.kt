@@ -34,7 +34,7 @@ import java.util.UUID
 object PapirSykemeldingToSM2013Spek : Spek({
 
     describe("Cheking mapping results") {
-        it("Should") {
+        it("Should map hpr from papirsykemelding to sykemlding format") {
             val papirSykmelding = SykemeldingerType().apply {
                 syketilfelleStartDato = LocalDate.now()
                 pasient = PasientType().apply {
