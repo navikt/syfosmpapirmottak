@@ -205,15 +205,19 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                 }
                 // TODO Remove after we get the SYM tema
                 else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK") {
-                    log.info("Incoming JoarkHendelse, tema SYK")
+                    log.info("Incoming JoarkHendelse, tema SYK $logKeys", *logValues)
+
+                    log.info(journalfoeringHendelseRecord.toString())
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId,
                             logKeys,
                             logValues).await()
+
                     val dokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "ARKIV"
                     }.dokumentId
 
+                    log.info("Found dokumentId: $dokumentInfoId")
                     // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
                     log.info("Calling saf rest")
                     val paperSickLave = safClient.getdokument(
@@ -223,7 +227,6 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                             logKeys,
                             logValues).await()
                     }
-                    log.info("Woop woop,  found a dokument")
 
                     // TODO Unmarshaller docoument from saf to corret type
                     // example: SykemeldingerType
