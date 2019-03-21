@@ -162,17 +162,57 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                         journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                     log.info("Received a papir SM, $logKeys", *logValues)
                     log.info(journalfoeringHendelseRecord.toString())
+                    val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
+                            journalfoeringHendelseRecord.journalpostId,
+                            logKeys,
+                            logValues).await()
+
+                    val smpapirXMLDokumentInfoId = journalpost.dokumentListe.first {
+                        it.variant.first().variantFormat == "XML"
+                    }.dokumentId
+
+                    val smpapirPDFDokumentInfoId = journalpost.dokumentListe.first {
+                        it.variant.first().variantFormat == "PDF"
+                    }.dokumentId
+
+                    val smpapirMetadataDokumentInfoId = journalpost.dokumentListe.first {
+                        it.variant.first().variantFormat == "ARKIV"
+                    }.dokumentId
+
+                    // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
+                    log.info("Calling saf rest")
+                    // TODO, change return type of safClient based on VariantFormat
+                    val smpapirMetadata = safClient.getdokument(
+                            journalfoeringHendelseRecord.journalpostId,
+                            smpapirMetadataDokumentInfoId,
+                            "ARKIV",
+                            logKeys,
+                            logValues).await()
+
+                    val smpapirXML = safClient.getdokument(
+                            journalfoeringHendelseRecord.journalpostId,
+                            smpapirMetadataDokumentInfoId,
+                            "ARKIV",
+                            logKeys,
+                            logValues).await()
+
+                    val smpapirPDF = safClient.getdokument(
+                            journalfoeringHendelseRecord.journalpostId,
+                            smpapirMetadataDokumentInfoId,
+                            "ARKIV",
+                            logKeys,
+                            logValues).await()
                 }
                 // TODO Remove after we get the SYM tema
                 else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK") {
-                    // TODO Remove after we get the SYM tema
-                    // TODO call JOARK, with the journalpostid from the kafa topic
                     log.info("Incoming JoarkHendelse, tema SYK")
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId,
                             logKeys,
                             logValues).await()
-                    val dokumentInfoId = journalpost.dokumentListe.first().dokumentId
+                    val dokumentInfoId = journalpost.dokumentListe.first {
+                        it.variant.first().variantFormat == "ARKIV"
+                    }.dokumentId
 
                     // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
                     log.info("Calling saf rest")
@@ -183,6 +223,20 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                             logKeys,
                             logValues).await()
                     }
+                    log.info("Woop woop,  found a dokument")
+
+                    // TODO Unmarshaller docoument from saf to corret type
+                    // example: SykemeldingerType
+                    // TODO map the xml file to the healthInformation format
+                    /* val sykmeldingtype = sykemeldingerTypeUnmarshaller.unmarshal(objectMapper.writeValueAsString(paperSickLave)) as SykemeldingerType
+                        sykmeldingtype.toSykmelding(
+                        sykmeldingId = UUID.randomUUID().toString(),
+                        pasientAktoerId = patientIdents.identer!!.first().ident,
+                        legeAktoerId = doctorIdents.identer!!.first().ident,
+                        msgId = msgId
+                    )*/
+
+                    // TODO
                     /*
                     val aktoerIdsDeferred = aktoerIdClient.getAktoerIds(listOf(personNumberDoctor, personNumberPatient), msgId, credentials.serviceuserUsername)
 
@@ -200,14 +254,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                                 keyValue("errorMessage", doctorIdents?.feilmelding ?: "No response for FNR"))
                     }
 
-                    // TODO map the xml file to the healthInformation format
-                    val sykmeldingtype = sykemeldingerTypeUnmarshaller.unmarshal(objectMapper.writeValueAsString(paperSickLave)) as SykemeldingerType
-                    sykmeldingtype.toSykmelding(
-                            sykmeldingId = UUID.randomUUID().toString(),
-                            pasientAktoerId = patientIdents.identer!!.first().ident,
-                            legeAktoerId = doctorIdents.identer!!.first().ident,
-                            msgId = msgId
-                    )
+
                 }
 
                 val validationResult = syfoSykemelginReglerClient.executeRuleValidation(config, text)
