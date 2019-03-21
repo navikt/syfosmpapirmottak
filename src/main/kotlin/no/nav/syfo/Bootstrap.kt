@@ -161,7 +161,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                         journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                     log.info("Received a papir SM, $logKeys", *logValues)
-                    log.info(journalfoeringHendelseRecord.toString())
+                    log.info("journalfoeringHendelseRecord:", objectMapper.writeValueAsString(journalfoeringHendelseRecord))
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId,
                             logKeys,
