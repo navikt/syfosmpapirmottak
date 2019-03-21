@@ -31,6 +31,10 @@ val navPersonv3Version = "3.2.0"
 val navArbeidsfordelingv1Version = "1.1.0"
 val commonsTextVersion = "1.4"
 val cxfVersion = "3.2.7"
+val jaxwsApiVersion = "2.3.1"
+val javaxAnnotationApiVersion = "1.3.2"
+val jaxbRuntimeVersion = "2.4.0-b180830.0438"
+val jaxwsToolsVersion = "2.3.1"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
@@ -44,7 +48,6 @@ plugins {
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
 }
-
 
 repositories {
     mavenCentral()
@@ -105,6 +108,15 @@ dependencies {
     implementation ("org.apache.cxf:cxf-rt-features-logging:$cxfVersion")
     implementation ("org.apache.cxf:cxf-rt-transports-http:$cxfVersion")
     implementation ("org.apache.cxf:cxf-rt-ws-security:$cxfVersion")
+
+    implementation ("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
+    implementation ("javax.annotation:javax.annotation-api:$javaxAnnotationApiVersion")
+    implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
+    implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbRuntimeVersion")
+    implementation ("javax.activation:activation:$javaxActivationVersion")
+    implementation("com.sun.xml.ws:jaxws-tools:$jaxwsToolsVersion") {
+        exclude(group = "com.sun.xml.ws", module = "policy")
+    }
 
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
