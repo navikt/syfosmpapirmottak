@@ -15,7 +15,6 @@ import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArgument
 
@@ -37,7 +36,7 @@ class SafClient(private val endpointUrl: String, private val stsClient: StsOidcC
 
     // TODO https://confluence.adeo.no/display/BOA/saf+-+REST+hentdokument and https://saf-q1.nais.preprod.local/swagger-ui.html
     suspend fun getdokument(
-        journalpostId: Long,
+        journalpostId: String,
         dokumentInfoId: String,
         variantFormat: String,
         logKeys: String,

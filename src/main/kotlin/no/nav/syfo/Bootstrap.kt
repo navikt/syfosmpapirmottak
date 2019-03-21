@@ -183,21 +183,21 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                     log.info("Calling saf rest")
                     // TODO, change return type of safClient based on VariantFormat
                     val smpapirMetadata = safClient.getdokument(
-                            journalfoeringHendelseRecord.journalpostId,
+                            journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirMetadataDokumentInfoId,
                             "ARKIV",
                             logKeys,
                             logValues)
 
                     val smpapirXML = safClient.getdokument(
-                            journalfoeringHendelseRecord.journalpostId,
+                            journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirMetadataDokumentInfoId,
                             "ARKIV",
                             logKeys,
                             logValues)
 
                     val smpapirPDF = safClient.getdokument(
-                            journalfoeringHendelseRecord.journalpostId,
+                            journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirMetadataDokumentInfoId,
                             "ARKIV",
                             logKeys,
@@ -222,7 +222,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                     // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
                     log.info("Calling saf rest")
                     val paperSickLave = safClient.getdokument(
-                            journalfoeringHendelseRecord.journalpostId,
+                            journalfoeringHendelseRecord.journalpostId.toString(),
                             dokumentInfoId,
                             "ARKIV",
                             logKeys,
