@@ -17,9 +17,7 @@ import io.ktor.client.request.headers
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
-import kotlinx.coroutines.Deferred
 import net.logstash.logback.argument.StructuredArgument
-import no.nav.syfo.util.retryAsync
 
 @KtorExperimentalAPI
 class SafClient(private val endpointUrl: String, private val stsClient: StsOidcClient) {
@@ -44,15 +42,12 @@ class SafClient(private val endpointUrl: String, private val stsClient: StsOidcC
         variantFormat: String,
         logKeys: String,
         logValues: Array<StructuredArgument>
-    ): Deferred<ByteArray> =
-            client.retryAsync("get_dokument_saf", logKeys, logValues) {
-                client.get<ByteArray>("$endpointUrl/rest/hentdokument/$journalpostId/$dokumentInfoId/$variantFormat") {
-                    contentType(ContentType.Application.Json)
+    ): ByteArray =
+                client.get("$endpointUrl/rest/hentdokument/$journalpostId/$dokumentInfoId/$variantFormat") {
                     accept(ContentType.Application.Json)
                     val oidcToken = stsClient.oidcToken()
                     headers {
                         append("Authorization", "Bearer ${oidcToken.access_token}")
                     }
                 }
-            }
 }

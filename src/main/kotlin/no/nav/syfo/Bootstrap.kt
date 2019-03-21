@@ -187,21 +187,21 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                             smpapirMetadataDokumentInfoId,
                             "ARKIV",
                             logKeys,
-                            logValues).await()
+                            logValues)
 
                     val smpapirXML = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId,
                             smpapirMetadataDokumentInfoId,
                             "ARKIV",
                             logKeys,
-                            logValues).await()
+                            logValues)
 
                     val smpapirPDF = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId,
                             smpapirMetadataDokumentInfoId,
                             "ARKIV",
                             logKeys,
-                            logValues).await()
+                            logValues)
                 }
                 // TODO Remove after we get the SYM tema
                 else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK" &&
@@ -226,8 +226,10 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                             dokumentInfoId,
                             "ARKIV",
                             logKeys,
-                            logValues).await()
+                            logValues)
                     }
+
+                    log.info("Finish with saf call")
 
                     // TODO Unmarshaller docoument from saf to corret type
                     // example: SykemeldingerType
