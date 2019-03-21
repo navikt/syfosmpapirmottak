@@ -165,7 +165,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId,
                             logKeys,
-                            logValues).await()
+                            logValues)
 
                     val smpapirXMLDokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "XML"
@@ -212,7 +212,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId,
                             logKeys,
-                            logValues).await()
+                            logValues)
 
                     val dokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "ARKIV"

@@ -16,10 +16,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
-import kotlinx.coroutines.Deferred
 import net.logstash.logback.argument.StructuredArgument
 import no.nav.syfo.model.Journalpost
-import no.nav.syfo.util.retryAsync
 
 @KtorExperimentalAPI
 class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val stsClient: StsOidcClient) {
@@ -43,14 +41,12 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
         journalpostId: Long,
         logKeys: String,
         logValues: Array<StructuredArgument>
-    ): Deferred<Journalpost> =
-            client.retryAsync("journalfoer_inngaaende", logKeys, logValues) {
-                client.get<Journalpost>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
+    ): Journalpost =
+                client.get("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
                 accept(ContentType.Application.Json)
                 val oidcToken = stsClient.oidcToken()
                 headers {
                     append("Authorization", "Bearer ${oidcToken.access_token}")
                 }
             }
-        }
 }
