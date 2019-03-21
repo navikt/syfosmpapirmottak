@@ -204,7 +204,8 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                             logValues).await()
                 }
                 // TODO Remove after we get the SYM tema
-                else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK") {
+                else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK" &&
+                        journalfoeringHendelseRecord.hendelsesType == "EndeligJournalført") {
                     log.info("Incoming JoarkHendelse, tema SYK $logKeys", *logValues)
 
                     log.info(journalfoeringHendelseRecord.toString())
