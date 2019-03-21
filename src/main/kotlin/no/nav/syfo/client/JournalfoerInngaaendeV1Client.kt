@@ -7,6 +7,10 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.logging.DEFAULT
+import io.ktor.client.features.logging.LogLevel
+import io.ktor.client.features.logging.Logger
+import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
@@ -27,12 +31,10 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
                 configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             }
         }
-        /*
         install(Logging) {
             logger = Logger.DEFAULT
             level = LogLevel.ALL
         }
-        */
     }
 
     // TODO https://confluence.adeo.no/pages/viewpage.action?pageId=287444683
@@ -42,7 +44,7 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
         logKeys: String,
         logValues: Array<StructuredArgument>
     ): Deferred<Journalpost> =
-            client.retryAsync("lournalfoer_Inngaaende", logKeys, logValues) {
+            client.retryAsync("journalfoer_inngaaende", logKeys, logValues) {
                 client.get<Journalpost>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
                 accept(ContentType.Application.Json)
                 val oidcToken = stsClient.oidcToken()
