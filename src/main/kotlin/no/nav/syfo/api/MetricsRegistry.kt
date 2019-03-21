@@ -1,6 +1,5 @@
 package no.nav.syfo.api
 
-import io.prometheus.client.Counter
 import io.prometheus.client.Summary
 
 const val NAMESPACE = "syfosmpapirmottak"

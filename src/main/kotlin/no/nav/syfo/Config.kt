@@ -15,7 +15,8 @@ data class ApplicationConfig(
     val dokJournalfoeringV1: String,
     val journalfoerInngaaendeV1URL: String,
     val safURL: String,
-    val applicationName: String
+    val applicationName: String,
+    val stsURL: String
 )
 
 data class VaultCredentials(

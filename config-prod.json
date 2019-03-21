@@ -4,7 +4,8 @@
   "journalfoerInngaaendeV1URL" : "https://dokarkiv.nais.prod.local",
   "safURL" : "https://saf.nais.prod.local",
   "kafkaSM2013PapirmottakTopic" : "privat-syfo-smpapir-automatiskBehandling",
-  "syfoSmRegelerApiURL" : "syfosmregler",
+  "syfoSmRegelerApiURL" : "http://syfosmregler",
   "kafkaSM2013OppgaveGsakTopic" : "privat-syfo-smpapir-manuellBehandling",
-  "applicationName" : "syfosmpapirmottak"
+  "applicationName" : "syfosmpapirmottak",
+  "stsURL" : "http://security-token-service/rest/v1/sts/token"
 }

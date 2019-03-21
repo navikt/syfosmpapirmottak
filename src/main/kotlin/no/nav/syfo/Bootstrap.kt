@@ -11,6 +11,7 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,7 +21,7 @@ import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.JournalfoerInngaaendeV1Client
 import no.nav.syfo.api.SafClient
 import no.nav.syfo.api.StsOidcClient
-import no.nav.syfo.api.SyfoSykemelginReglerClient
+import no.nav.syfo.api.SyfoSykemeldingRuleClient
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.util.loadBaseConfig
 import no.nav.syfo.util.toConsumerConfig
@@ -48,7 +49,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 }
 
 @KtorExperimentalAPI
-fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCoroutineDispatcher()) {
+fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(4).asCoroutineDispatcher()) {
     val config: ApplicationConfig = objectMapper.readValue(File(System.getenv("CONFIG_FILE")))
     val credentials: VaultCredentials = objectMapper.readValue(vaultApplicationPropertiesPath.toFile())
     val applicationState = ApplicationState()
@@ -60,7 +61,11 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
     try {
         val listeners = (1..config.applicationThreads).map {
             launch {
-                val syfoSykemelginReglerClient = SyfoSykemelginReglerClient(credentials)
+                val syfoSykemelginReglerClient = SyfoSykemeldingRuleClient(config.syfoSmRegelerApiURL, credentials)
+                val oidcClient = StsOidcClient(config.stsURL, credentials.serviceuserUsername, credentials.serviceuserPassword)
+                val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(config.journalfoerInngaaendeV1URL, oidcClient)
+                val safClient = SafClient(config.safURL, oidcClient)
+
                 val kafkaBaseConfig = loadBaseConfig(config, credentials)
 
                 val producerProperties = kafkaBaseConfig.toProducerConfig(config.applicationName, valueSerializer = StringSerializer::class)
@@ -71,15 +76,12 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
 
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
-                val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
-                val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(config.journalfoerInngaaendeV1URL, oidcClient)
-                val safClient = SafClient(config.safURL, oidcClient)
-
                 blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient)
             }
         }.toList()
 
         applicationState.initialized = true
+
         Runtime.getRuntime().addShutdownHook(Thread {
             applicationServer.stop(10, 10, TimeUnit.SECONDS)
         })
@@ -90,16 +92,16 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCo
 }
 
 @KtorExperimentalAPI
-suspend fun blockingApplicationLogic(
+suspend fun CoroutineScope.blockingApplicationLogic(
     applicationState: ApplicationState,
     producer: KafkaProducer<String, String>,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     config: ApplicationConfig,
-    syfoSykemelginReglerClient: SyfoSykemelginReglerClient,
+    syfoSykemelginReglerClient: SyfoSykemeldingRuleClient,
     journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client,
     safClient: SafClient
 ) {
-    while (applicationState.running) {
+    loop@ while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
 
             val journalfoeringHendelseRecord = it.value()
@@ -114,7 +116,8 @@ suspend fun blockingApplicationLogic(
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
-            // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and "mottaksKanal"
+            // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and
+            // TODO "mottaksKanal"
             if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                 log.info("Received a papir SM, $logKeys", *logValues)
@@ -125,12 +128,20 @@ suspend fun blockingApplicationLogic(
                     // TODO Remove after we get the SYM tema
                         // TODO call JOARK, with the journalpostid from the kafa topic
                         log.info("Incoming JoarkHendelse, tema SYK")
-                        val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(journalfoeringHendelseRecord.journalpostId)
+                        val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
+                                journalfoeringHendelseRecord.journalpostId,
+                                logKeys,
+                                logValues).await()
                         val dokumentInfoId = journalpost.dokumentListe.first().dokumentId
 
                         // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
                 log.info("Calling saf rest")
-                val paperSickLave = safClient.getdokument(journalfoeringHendelseRecord.journalpostId, dokumentInfoId, "ARKIV")
+                val paperSickLave = safClient.getdokument(
+                        journalfoeringHendelseRecord.journalpostId,
+                        dokumentInfoId,
+                        "ARKIV",
+                        logKeys,
+                        logValues).await()
                         // TODO map the xml file to the healthInformation format
                         // mappapirsykemeldingtosm2013(paperSickLave)
                 }

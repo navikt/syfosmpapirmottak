@@ -42,7 +42,8 @@ object KafkaITSpek : Spek({
             dokJournalfoeringV1 = "",
             journalfoerInngaaendeV1URL = "",
             safURL = "",
-            applicationName = "syfosmpapirmottak"
+            applicationName = "syfosmpapirmottak",
+            stsURL = "https/sts"
     )
 
     fun Properties.overrideForTest(): Properties = apply {
