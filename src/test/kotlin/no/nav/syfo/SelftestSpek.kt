@@ -2,7 +2,6 @@ package no.nav.syfo
 
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.isSuccess
 import io.ktor.routing.routing
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.handleRequest
@@ -15,41 +14,24 @@ import org.spekframework.spek2.style.specification.describe
 object SelftestSpek : Spek({
     val applicationState = ApplicationState()
 
+    afterGroup {
+        applicationState.running = false
+    }
     describe("Calling selftest with successful liveness and readyness tests") {
         with(TestApplicationEngine()) {
             start()
             application.initRouting(applicationState)
 
             it("Returns ok on is_alive") {
-                applicationState.running = true
-
                 with(handleRequest(HttpMethod.Get, "/is_alive")) {
-                    response.status()?.isSuccess() shouldEqual true
+                    response.status() shouldEqual HttpStatusCode.OK
                     response.content shouldNotEqual null
                 }
             }
+
             it("Returns ok on is_ready") {
-                applicationState.initialized = true
-
                 with(handleRequest(HttpMethod.Get, "/is_ready")) {
-                    println(response.status())
-                    response.status()?.isSuccess() shouldEqual true
-                    response.content shouldNotEqual null
-                }
-            }
-            it("Returns error on failed is_alive") {
-                applicationState.running = false
-
-                with(handleRequest(HttpMethod.Get, "/is_alive")) {
-                    response.status()?.isSuccess() shouldNotEqual true
-                    response.content shouldNotEqual null
-                }
-            }
-            it("Returns error on failed is_ready") {
-                applicationState.initialized = false
-
-                with(handleRequest(HttpMethod.Get, "/is_ready")) {
-                    response.status()?.isSuccess() shouldNotEqual true
+                    response.status() shouldEqual HttpStatusCode.OK
                     response.content shouldNotEqual null
                 }
             }

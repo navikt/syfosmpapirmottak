@@ -1,4 +1,4 @@
-package no.nav.syfo.api
+package no.nav.syfo.metrics
 
 import io.prometheus.client.Summary
 

@@ -1,4 +1,4 @@
-package no.nav.syfo.api
+package no.nav.syfo.client
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule

@@ -1,4 +1,4 @@
-package no.nav.syfo.api
+package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO

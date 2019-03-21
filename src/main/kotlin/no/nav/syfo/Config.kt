@@ -16,7 +16,11 @@ data class ApplicationConfig(
     val journalfoerInngaaendeV1URL: String,
     val safURL: String,
     val applicationName: String,
-    val stsURL: String
+    val stsURL: String,
+    val aktoerregisterV1Url: String,
+    val arbeidsfordelingV1EndpointURL: String,
+    val personV3EndpointURL: String,
+    val securityTokenServiceUrl: String
 )
 
 data class VaultCredentials(

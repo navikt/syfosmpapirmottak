@@ -26,6 +26,11 @@ val confluentVersion = "5.0.2"
 val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "1.1-SNAPSHOT"
 val junitPlatformLauncher = "1.0.0"
+val syfooppgaveSchemasVersion = "1.2-SNAPSHOT"
+val navPersonv3Version = "3.2.0"
+val navArbeidsfordelingv1Version = "1.1.0"
+val commonsTextVersion = "1.4"
+val cxfVersion = "3.2.7"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
@@ -78,8 +83,12 @@ dependencies {
     implementation ("no.nav.syfo.tjenester:kith-hodemelding:$kithHodemeldingVersion")
     implementation ("no.nav.helse.xml:papirSykemelding:$papirSykemeldingVersion")
     implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
+    implementation ("no.nav.syfo:syfooppgave-schemas:$syfooppgaveSchemasVersion")
+    implementation ("no.nav.tjenester:nav-person-v3-tjenestespesifikasjon:$navPersonv3Version")
+    implementation ("no.nav.tjenester:nav-arbeidsfordeling-v1-tjenestespesifikasjon:$navArbeidsfordelingv1Version:jaxws")
 
     implementation ("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation ("io.ktor:ktor-client-apache:$ktorVersion")
     implementation ("io.ktor:ktor-client-auth-basic:$ktorVersion")
     implementation ("io.ktor:ktor-client-gson:$ktorVersion")
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
@@ -90,6 +99,12 @@ dependencies {
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
     implementation ("javax.activation:activation:$javaxActivationVersion")
+
+    implementation ("org.apache.commons:commons-text:$commonsTextVersion")
+    implementation ("org.apache.cxf:cxf-rt-frontend-jaxws:$cxfVersion")
+    implementation ("org.apache.cxf:cxf-rt-features-logging:$cxfVersion")
+    implementation ("org.apache.cxf:cxf-rt-transports-http:$cxfVersion")
+    implementation ("org.apache.cxf:cxf-rt-ws-security:$cxfVersion")
 
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")

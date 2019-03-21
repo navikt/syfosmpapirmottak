@@ -43,7 +43,11 @@ object KafkaITSpek : Spek({
             journalfoerInngaaendeV1URL = "",
             safURL = "",
             applicationName = "syfosmpapirmottak",
-            stsURL = "https/sts"
+            stsURL = "https/sts",
+            aktoerregisterV1Url = "akotrurl",
+            arbeidsfordelingV1EndpointURL = "arbeidsforurl",
+            personV3EndpointURL = "personulr",
+            securityTokenServiceUrl = "securl"
     )
 
     fun Properties.overrideForTest(): Properties = apply {
