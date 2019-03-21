@@ -10,5 +10,6 @@
   "stsURL" : "http://security-token-service/rest/v1/sts/token",
   "personV3EndpointURL": "https://wasapp-q1.adeo.no/tpsws/ws/Person/v3",
   "arbeidsfordelingV1EndpointURL" : "https://app-q1.adeo.no/norg2/ws/Arbeidsfordeling/v1",
-  "securityTokenServiceUrl": "https://sts-q1.preprod.local/SecurityTokenServiceProvider/"
+  "securityTokenServiceUrl": "https://sts-q1.preprod.local/SecurityTokenServiceProvider/",
+  "aktoerregisterV1Url": "https://app-q1.adeo.no/aktoerregister/api/v1"
 }
