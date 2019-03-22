@@ -145,12 +145,13 @@ suspend fun CoroutineScope.blockingApplicationLogic(
         consumer.poll(Duration.ofMillis(0)).forEach {
             val journalfoeringHendelseRecord = it.value()
 
-            val logValues = arrayOf(
-                    keyValue("smId", "missing"),
-                    keyValue("msgId", "missing"),
-                    keyValue("orgNr", "missing"),
-                    keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
-                    keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
+            var logValues = arrayOf(
+                    keyValue("mottakId", "Missing"),
+                    keyValue("msgId", "Missing"),
+                    keyValue("orgNr", "Missing"),
+                    keyValue("sykmeldingId", "Missing"),
+                    keyValue("journalpostId", "Missing"),
+                    keyValue("hendelsesId", "Missing")
             )
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
@@ -179,9 +180,9 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                         it.variant.first().variantFormat == "ARKIV"
                     }.dokumentId
 
-                    // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
                     log.info("Calling saf rest")
-                    // TODO, change return type of safClient based on VariantFormat
+                    // TODO, get the 3 attachments on that spesific journalpost , xml/ocr, pdf,
+                    // metadata change return type of safClient based on VariantFormat
                     val smpapirMetadata = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirMetadataDokumentInfoId,
@@ -202,48 +203,12 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                             "ARKIV",
                             logKeys,
                             logValues)
-                }
-                // TODO Remove after we get the SYM tema
-                else if (journalfoeringHendelseRecord.temaNytt.toString() == "SYK" &&
-                        journalfoeringHendelseRecord.hendelsesType.toString() == "EndeligJournalført") {
-                    log.info("Incoming JoarkHendelse, tema SYK $logKeys", *logValues)
-
-                    log.info(journalfoeringHendelseRecord.toString())
-                    val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
-                            journalfoeringHendelseRecord.journalpostId,
-                            logKeys,
-                            logValues)
-
-                    val dokumentInfoId = journalpost.dokumentListe.first {
-                        it.variant.first().variantFormat == "ARKIV"
-                    }.dokumentId
-
-                    log.info("Found dokumentId: $dokumentInfoId")
-                    // TODO get the 3 attachments on that spesific journalpost , xml/ocr, pdf, metadata
-                    log.info("Calling saf rest")
-                    val paperSickLave = safClient.getdokument(
-                            journalfoeringHendelseRecord.journalpostId.toString(),
-                            dokumentInfoId,
-                            "ARKIV",
-                            logKeys,
-                            logValues)
-                    }
-
-                    log.info("Finish with saf call")
 
                     // TODO Unmarshaller docoument from saf to corret type
                     // example: SykemeldingerType
                     // TODO map the xml file to the healthInformation format
                     /* val sykmeldingtype = sykemeldingerTypeUnmarshaller.unmarshal(objectMapper.writeValueAsString(paperSickLave)) as SykemeldingerType
-                        sykmeldingtype.toSykmelding(
-                        sykmeldingId = UUID.randomUUID().toString(),
-                        pasientAktoerId = patientIdents.identer!!.first().ident,
-                        legeAktoerId = doctorIdents.identer!!.first().ident,
-                        msgId = msgId
-                    )*/
 
-                    // TODO
-                    /*
                     val aktoerIdsDeferred = aktoerIdClient.getAktoerIds(listOf(personNumberDoctor, personNumberPatient), msgId, credentials.serviceuserUsername)
 
                     val aktoerIds = aktoerIdsDeferred
@@ -260,10 +225,25 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                                 keyValue("errorMessage", doctorIdents?.feilmelding ?: "No response for FNR"))
                     }
 
+                       val receivedSykmelding = sykmeldingtype.toSykmelding(
+                        sykmeldingId = UUID.randomUUID().toString(),
+                        pasientAktoerId = patientIdents.identer!!.first().ident,
+                        legeAktoerId = doctorIdents.identer!!.first().ident,
+                        msgId = msgId
+                        )
 
+                    logValues = arrayOf(
+                        keyValue("mottakId", receivedSykmelding.navLogId),
+                        keyValue("msgId", receivedSykmelding.msgId),
+                        keyValue("orgNr", receivedSykmelding.legekontorOrgNr),
+                        keyValue("sykmeldingId", receivedSykmelding.sykmelding.id),
+                        keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
+                        keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
+                    )
                 }
 
-                val validationResult = syfoSykemelginReglerClient.executeRuleValidation(config, text)
+                log.info("Validating against rules, $logKeys", *logValues)
+                val validationResult = syfoSykemelginReglerClient.executeRuleValidation(receivedSykmelding).await()
                 when {
                     validationResult.status == Status.OK -> {
                         log.info("Rule ValidationResult = OK, $logKeys", *logValues)
@@ -279,6 +259,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                     }
                 }
                 */
+                }
             } catch (e: Exception) {
                 log.error("Exception caught while handling message, sending to backout $logKeys", *logValues, e)
             }
