@@ -1,11 +1,12 @@
 apiVersion: "nais.io/v1alpha1"
-kind: "Application"
+kind: Application
 metadata:
-  name: "syfosmpapirmottak"
-  namespace: "default"
+  name: syfosmpapirmottak
+  namespace: default
   labels:
     team: "teamsykefravr"
 spec:
+  name: "syfosmpapirmottak"
   image: "repo.adeo.no:5443/syfo/syfosmpapirmottak:@@VERSION@@"
   replicas:
     min: 1
@@ -15,26 +16,28 @@ spec:
   liveness:
     path: /is_alive
     initialDelay: 5
-    periodSeconds: 5
-    failureThreshold: 30
+    timeout: 1
+    periodSeconds: 10
+    failureThreshold: 3
   readiness:
     path: /is_ready
-    initialDelay: 30
-    periodSeconds: 5
-    timeout: 5
+    initialDelay: 5
+    timeout: 1
+    periodSeconds: 10
   prometheus:
     enabled: true
     path: /prometheus
   resources:
     limits:
-      cpu: 250m
-      memory: 1Gi
+      cpu: 500m
+      memory: 256Mi
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 128Mi
-  secrets: true
   vault:
     enabled: true
+  ingress:
+    disabled: false
   env:
-    - name: CONFIG_FILE
-      value: "config-preprod.json"
+  - name: CONFIG_FILE
+    value: "config-prod.json"

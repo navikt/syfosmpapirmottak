@@ -32,14 +32,12 @@ object KafkaITSpek : Spek({
             topicNames = listOf(topic)
     )
 
-    val config = ApplicationConfig(
+    val config = Environment(
             applicationPort = getRandomPort(),
             kafkaBootstrapServers = embeddedEnvironment.brokersURL,
             applicationThreads = 1,
             kafkaSM2013PapirmottakTopic = "",
             syfoSmRegelerApiURL = "",
-            kafkaSM2013OppgaveGsakTopic = "",
-            dokJournalfoeringV1 = "",
             journalfoerInngaaendeV1URL = "",
             safURL = "",
             applicationName = "syfosmpapirmottak",

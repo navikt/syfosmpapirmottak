@@ -44,8 +44,8 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.StringWriter
+import java.nio.file.Paths
 import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -69,50 +69,51 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 
 @KtorExperimentalAPI
 fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(4).asCoroutineDispatcher()) {
-    val config: ApplicationConfig = objectMapper.readValue(File(System.getenv("CONFIG_FILE")))
-    val credentials: VaultCredentials = objectMapper.readValue(vaultApplicationPropertiesPath.toFile())
+    val env = Environment()
+    val credentials = objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
+
     val applicationState = ApplicationState()
 
-    val applicationServer = embeddedServer(Netty, config.applicationPort) {
+    val applicationServer = embeddedServer(Netty, env.applicationPort) {
         initRouting(applicationState)
     }.start(wait = false)
 
     DefaultExports.initialize()
 
     try {
-        val listeners = (1..config.applicationThreads).map {
+        val listeners = (1..env.applicationThreads).map {
             launch {
-                val syfoSykemelginReglerClient = SyfoSykemeldingRuleClient(config.syfoSmRegelerApiURL, credentials)
-                val oidcClient = StsOidcClient(config.stsURL, credentials.serviceuserUsername, credentials.serviceuserPassword)
-                val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(config.journalfoerInngaaendeV1URL, oidcClient)
-                val safClient = SafClient(config.safURL, oidcClient)
-                val aktoerIdClient = AktoerIdClient(config.aktoerregisterV1Url, oidcClient)
+                val syfoSykemelginReglerClient = SyfoSykemeldingRuleClient(env.syfoSmRegelerApiURL, credentials)
+                val oidcClient = StsOidcClient(env.stsURL, credentials.serviceuserUsername, credentials.serviceuserPassword)
+                val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(env.journalfoerInngaaendeV1URL, oidcClient)
+                val safClient = SafClient(env.safURL, oidcClient)
+                val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
 
                 val arbeidsfordelingV1 = JaxWsProxyFactoryBean().apply {
-                    address = config.arbeidsfordelingV1EndpointURL
+                    address = env.arbeidsfordelingV1EndpointURL
                     serviceClass = ArbeidsfordelingV1::class.java
                 }.create() as ArbeidsfordelingV1
                 configureSTSFor(arbeidsfordelingV1, credentials.serviceuserUsername,
-                        credentials.serviceuserPassword, config.securityTokenServiceUrl)
+                        credentials.serviceuserPassword, env.securityTokenServiceUrl)
 
                 val personV3 = JaxWsProxyFactoryBean().apply {
-                    address = config.personV3EndpointURL
+                    address = env.personV3EndpointURL
                     serviceClass = PersonV3::class.java
                 }.create() as PersonV3
                 configureSTSFor(personV3, credentials.serviceuserUsername,
-                        credentials.serviceuserPassword, config.securityTokenServiceUrl)
+                        credentials.serviceuserPassword, env.securityTokenServiceUrl)
 
-                val kafkaBaseConfig = loadBaseConfig(config, credentials)
+                val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
-                val producerProperties = kafkaBaseConfig.toProducerConfig(config.applicationName, valueSerializer = StringSerializer::class)
-                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${config.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
+                val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = StringSerializer::class)
+                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
 
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
-                kafkaconsumer.subscribe(listOf(config.dokJournalfoeringV1))
+                kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, config, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient, aktoerIdClient, personV3, arbeidsfordelingV1, credentials)
+                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, env, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient, aktoerIdClient, personV3, arbeidsfordelingV1, credentials)
             }
         }.toList()
 
@@ -132,7 +133,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
     applicationState: ApplicationState,
     producer: KafkaProducer<String, String>,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    config: ApplicationConfig,
+    env: Environment,
     syfoSykemelginReglerClient: SyfoSykemeldingRuleClient,
     journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client,
     safClient: SafClient,
