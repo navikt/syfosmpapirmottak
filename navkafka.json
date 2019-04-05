@@ -16,6 +16,7 @@
       "members": [
         {"member":"srvsyfosmsak", "role":"CONSUMER"},
         {"member":"srvsyfosmarena", "role":"CONSUMER"},
+        {"member":"srvsyfosmregister", "role":"CONSUMER"},
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"}
       ],
       "numPartitions": 3
