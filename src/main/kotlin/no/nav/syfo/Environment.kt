@@ -1,10 +1,13 @@
 package no.nav.syfo
 
+import no.nav.syfo.kafka.KafkaConfig
+import no.nav.syfo.kafka.KafkaCredentials
+
 data class Environment(
     val applicationPort: Int = getEnvVar("APPLICATION_PORT", "8080").toInt(),
     val applicationThreads: Int = getEnvVar("APPLICATION_THREADS", "4").toInt(),
     val applicationName: String = getEnvVar("NAIS_APP_NAME", "syfosmpapirmottak"),
-    val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL"),
+    override val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL"),
     val sm2013AutomaticHandlingTopic: String = getEnvVar("KAFKA_SM2013_AUTOMATIC_TOPIC", "privat-syfo-sm2013-automatiskBehandling"),
     val kafkaSM2013PapirmottakTopic: String = getEnvVar("KAFKA_SMPAPIR_AUTOMATIC_TOPIC", "privat-syfo-smpapir-automatiskBehandling"),
     val sm2013BehandlingsUtfallToipic: String = getEnvVar("KAFKA_SM2013_BEHANDLING_TOPIC", "privat-syfo-sm2013-behandlingsUtfall"),
@@ -19,12 +22,15 @@ data class Environment(
     val stsURL: String = getEnvVar("STS_URL"),
     val aktoerregisterV1Url: String = getEnvVar("AKTORREGISTER_V1_URL")
 
-)
+) : KafkaConfig
 
 data class VaultCredentials(
     val serviceuserUsername: String,
     val serviceuserPassword: String
-)
+) : KafkaCredentials {
+    override val kafkaUsername: String = serviceuserUsername
+    override val kafkaPassword: String = serviceuserPassword
+}
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
         System.getenv(varName) ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")

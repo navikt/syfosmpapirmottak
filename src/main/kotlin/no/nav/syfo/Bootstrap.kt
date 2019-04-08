@@ -28,12 +28,12 @@ import no.nav.syfo.client.SyfoSykemeldingRuleClient
 import no.nav.syfo.client.ValidationResult
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.kafka.loadBaseConfig
+import no.nav.syfo.kafka.toConsumerConfig
+import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.sak.avro.PrioritetType
 import no.nav.syfo.sak.avro.ProduceTask
-import no.nav.syfo.util.loadBaseConfig
-import no.nav.syfo.util.toConsumerConfig
-import no.nav.syfo.util.toProducerConfig
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
@@ -113,7 +113,7 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(4).asCo
 
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, env, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient, aktoerIdClient, personV3, arbeidsfordelingV1, credentials)
+                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient, aktoerIdClient, personV3, arbeidsfordelingV1)
             }
         }.toList()
 
@@ -133,14 +133,12 @@ suspend fun CoroutineScope.blockingApplicationLogic(
     applicationState: ApplicationState,
     producer: KafkaProducer<String, String>,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    env: Environment,
     syfoSykemelginReglerClient: SyfoSykemeldingRuleClient,
     journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client,
     safClient: SafClient,
     aktoerIdClient: AktoerIdClient,
     personV3: PersonV3,
-    arbeidsfordelingV1: ArbeidsfordelingV1,
-    credentials: VaultCredentials
+    arbeidsfordelingV1: ArbeidsfordelingV1
 ) {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
@@ -262,7 +260,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                 */
                 }
             } catch (e: Exception) {
-                log.error("Exception caught while handling message, sending to backout $logKeys", *logValues, e)
+                log.error("Exception caught while handling message $logKeys", *logValues, e)
             }
         }
 

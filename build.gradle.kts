@@ -35,6 +35,7 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
+val smCommonVersion = "1.0.8"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
@@ -98,6 +99,12 @@ dependencies {
     implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
     implementation ("io.ktor:ktor-client-logging:$ktorVersion")
     implementation ("io.ktor:ktor-client-logging-jvm:$ktorVersion")
+
+    implementation ("no.nav.syfo.sm:syfosm-common-models:$smCommonVersion")
+    implementation ("no.nav.syfo.sm:syfosm-common-networking:$smCommonVersion")
+    implementation ("no.nav.syfo.sm:syfosm-common-rest-sts:$smCommonVersion")
+    implementation ("no.nav.syfo.sm:syfosm-common-ws:$smCommonVersion")
+    implementation ("no.nav.syfo.sm:syfosm-common-kafka:$smCommonVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
