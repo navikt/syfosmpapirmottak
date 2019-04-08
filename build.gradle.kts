@@ -6,7 +6,7 @@ group = "no.nav.syfo"
 version = "1.0.27-SNAPSHOT"
 
 val avroVersion = "1.8.2"
-val coroutinesVersion = "1.0.1"
+val coroutinesVersion = "1.1.1"
 val fellesformatVersion = "1.0"
 val kafkaVersion = "2.0.0"
 val kafkaEmbeddedVersion = "2.1.1"

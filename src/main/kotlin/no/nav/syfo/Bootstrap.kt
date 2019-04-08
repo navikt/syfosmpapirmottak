@@ -20,7 +20,6 @@ import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArgument
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.paop.ws.configureSTSFor
 import no.nav.syfo.client.JournalfoerInngaaendeV1Client
 import no.nav.syfo.client.SafClient
 import no.nav.syfo.client.StsOidcClient
@@ -31,14 +30,15 @@ import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
+import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.sak.avro.PrioritetType
 import no.nav.syfo.sak.avro.ProduceTask
+import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
-import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -68,7 +68,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 }
 
 @KtorExperimentalAPI
-fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(4).asCoroutineDispatcher()) {
+fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCoroutineDispatcher()) {
     val env = Environment()
     val credentials = objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
 
@@ -84,24 +84,18 @@ fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(4).asCo
         val listeners = (1..env.applicationThreads).map {
             launch {
                 val syfoSykemelginReglerClient = SyfoSykemeldingRuleClient(env.syfoSmRegelerApiURL, credentials)
-                val oidcClient = StsOidcClient(env.stsURL, credentials.serviceuserUsername, credentials.serviceuserPassword)
+                val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
                 val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(env.journalfoerInngaaendeV1URL, oidcClient)
                 val safClient = SafClient(env.safURL, oidcClient)
                 val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
 
-                val arbeidsfordelingV1 = JaxWsProxyFactoryBean().apply {
-                    address = env.arbeidsfordelingV1EndpointURL
-                    serviceClass = ArbeidsfordelingV1::class.java
-                }.create() as ArbeidsfordelingV1
-                configureSTSFor(arbeidsfordelingV1, credentials.serviceuserUsername,
-                        credentials.serviceuserPassword, env.securityTokenServiceUrl)
+                val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
+                    port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+                }
 
-                val personV3 = JaxWsProxyFactoryBean().apply {
-                    address = env.personV3EndpointURL
-                    serviceClass = PersonV3::class.java
-                }.create() as PersonV3
-                configureSTSFor(personV3, credentials.serviceuserUsername,
-                        credentials.serviceuserPassword, env.securityTokenServiceUrl)
+                val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
+                    port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+                }
 
                 val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
@@ -160,6 +154,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                 // TODO "mottaksKanal"
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                         journalfoeringHendelseRecord.mottaksKanal == "skanning") {
+                    INCOMING_MESSAGE_COUNTER.inc()
                     log.info("Received a papir SM, $logKeys", *logValues)
                     log.info("journalfoeringHendelseRecord:", objectMapper.writeValueAsString(journalfoeringHendelseRecord))
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
