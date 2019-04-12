@@ -158,9 +158,7 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                     log.info("Received a papir SM, $logKeys", *logValues)
                     log.info("journalfoeringHendelseRecord:", objectMapper.writeValueAsString(journalfoeringHendelseRecord))
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
-                            journalfoeringHendelseRecord.journalpostId,
-                            logKeys,
-                            logValues)
+                            journalfoeringHendelseRecord.journalpostId)
 
                     val smpapirXMLDokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "XML"

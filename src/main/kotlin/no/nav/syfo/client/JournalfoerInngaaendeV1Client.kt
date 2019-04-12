@@ -18,7 +18,6 @@ import io.ktor.client.request.headers
 import io.ktor.client.response.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
-import net.logstash.logback.argument.StructuredArgument
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.model.Journalpost
 
@@ -40,9 +39,7 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
 
     // TODO https://confluence.adeo.no/pages/viewpage.action?pageId=287444683
     suspend fun getJournalpostMetadata(
-        journalpostId: Long,
-        logKeys: String,
-        logValues: Array<StructuredArgument>
+        journalpostId: Long
     ): Journalpost =
             retry("get_journalpostMetadata") {
                 client.get<HttpResponse>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
