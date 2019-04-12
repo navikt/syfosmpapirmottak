@@ -45,7 +45,8 @@ fun SykemeldingerType.toSykmelding(
         avsenderSystem = AvsenderSystem(
                 navn = "papir",
                 versjon = "1"
-        )
+        ),
+        syketilfelleStartDato = syketilfelleStartDato
 )
 
 fun BehandlerType.toBehandler(aktoerId: String) = Behandler(
