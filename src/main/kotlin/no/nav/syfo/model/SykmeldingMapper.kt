@@ -18,6 +18,7 @@ import no.nav.helse.sykSkanningMeta.TilbakedateringType
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.QuestionGroup
 import no.nav.syfo.QuestionId
+import java.time.LocalDateTime
 
 fun SykemeldingerType.toSykmelding(
     sykmeldingId: String,
@@ -46,7 +47,8 @@ fun SykemeldingerType.toSykmelding(
                 navn = "papir",
                 versjon = "1"
         ),
-        syketilfelleStartDato = syketilfelleStartDato
+        syketilfelleStartDato = syketilfelleStartDato,
+        signaturDato = LocalDateTime.now()
 )
 
 fun BehandlerType.toBehandler(aktoerId: String) = Behandler(
@@ -63,7 +65,8 @@ fun BehandlerType.toBehandler(aktoerId: String) = Behandler(
                 kommune = "",
                 postboks = "",
                 land = ""
-        )
+        ),
+        tlf = ""
 )
 
 fun toKontaktMedPasient(kontaktMedPasient: KontaktMedPasientType, tilbakedatering: TilbakedateringType) = KontaktMedPasient(

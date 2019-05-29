@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
-import io.ktor.client.call.receive
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
@@ -15,7 +14,6 @@ import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.response.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArgument
@@ -44,11 +42,11 @@ class SafClient(private val endpointUrl: String, private val stsClient: StsOidcC
         logKeys: String,
         logValues: Array<StructuredArgument>
     ): ByteArray =
-                client.get<HttpResponse>("$endpointUrl/rest/hentdokument/$journalpostId/$dokumentInfoId/$variantFormat") {
+                client.get<ByteArray>("$endpointUrl/rest/hentdokument/$journalpostId/$dokumentInfoId/$variantFormat") {
                     accept(ContentType.Application.Json)
                     val oidcToken = stsClient.oidcToken()
                     headers {
                         append("Authorization", "Bearer ${oidcToken.access_token}")
                     }
-                }.use { it.call.response.receive<ByteArray>() }
+                }
 }

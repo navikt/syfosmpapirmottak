@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
-import io.ktor.client.call.receive
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
@@ -15,7 +14,6 @@ import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.response.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
@@ -42,12 +40,12 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
         journalpostId: Long
     ): Journalpost =
             retry("get_journalpostMetadata") {
-                client.get<HttpResponse>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
+                client.get<Journalpost>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
                     accept(ContentType.Application.Json)
                     val oidcToken = stsClient.oidcToken()
                     headers {
                         append("Authorization", "Bearer ${oidcToken.access_token}")
                     }
-                }.use { it.call.response.receive<Journalpost>() }
+                }
             }
 }

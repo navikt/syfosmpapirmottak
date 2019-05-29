@@ -58,6 +58,7 @@ fun doReadynessCheck(): Boolean {
 }
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
+val coroutineContext = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
 
 val log = LoggerFactory.getLogger("nav.syfo.papirmottak")
 
@@ -68,7 +69,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 }
 
 @KtorExperimentalAPI
-fun main(args: Array<String>) = runBlocking(Executors.newFixedThreadPool(2).asCoroutineDispatcher()) {
+fun main() = runBlocking(coroutineContext) {
     val env = Environment()
     val credentials = objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
 

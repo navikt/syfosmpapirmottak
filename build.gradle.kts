@@ -12,7 +12,7 @@ val kafkaVersion = "2.0.0"
 val kafkaEmbeddedVersion = "2.1.1"
 val kithHodemeldingVersion = "1.1"
 val kluentVersion = "1.39"
-val ktorVersion = "1.1.3"
+val ktorVersion = "1.2.1"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "5.2"
 val prometheusVersion = "0.5.0"
@@ -36,17 +36,13 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "1.0.11"
-
-tasks.withType<Jar> {
-    manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
-}
+val smCommonVersion = "1.0.20"
 
 
 plugins {
     java
-    kotlin("jvm") version "1.3.21"
-    id("org.jmailen.kotlinter") version "1.21.0"
+    kotlin("jvm") version "1.3.31"
+    id("org.jmailen.kotlinter") version "1.25.1"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
 }
@@ -94,7 +90,7 @@ dependencies {
 
     implementation ("io.ktor:ktor-client-cio:$ktorVersion")
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")
-    implementation ("io.ktor:ktor-client-auth-basic:$ktorVersion")
+    implementation ("io.ktor:ktor-client-auth-basic-jvm:$ktorVersion")
     implementation ("io.ktor:ktor-client-gson:$ktorVersion")
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
     implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
@@ -150,6 +146,10 @@ dependencies {
 
 
 tasks {
+    withType<Jar> {
+        manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
+    }
+
     create("printVersion") {
         doLast {
             println(project.version)

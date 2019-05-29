@@ -16,7 +16,10 @@ import no.nav.syfo.helpers.retry
 import no.nav.syfo.model.IdentInfoResult
 
 @KtorExperimentalAPI
-class AktoerIdClient(private val endpointUrl: String, private val stsClient: StsOidcClient) {
+class AktoerIdClient(
+    private val endpointUrl: String,
+    private val stsClient: StsOidcClient
+) {
     private val client = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
