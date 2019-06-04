@@ -16,7 +16,7 @@ val ktorVersion = "1.2.1"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "5.2"
 val prometheusVersion = "0.5.0"
-val spekVersion = "2.0.0"
+val spekVersion = "2.0.2"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
@@ -42,7 +42,7 @@ val smCommonVersion = "1.0.20"
 plugins {
     java
     kotlin("jvm") version "1.3.31"
-    id("org.jmailen.kotlinter") version "1.25.1"
+    id("org.jmailen.kotlinter") version "1.26.0"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
 }

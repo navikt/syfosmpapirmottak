@@ -1,19 +1,21 @@
 package no.nav.syfo
 
+import com.ctc.wstx.exc.WstxException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
+import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.ktor.application.Application
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.prometheus.client.hotspot.DefaultExports
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -24,9 +26,9 @@ import no.nav.syfo.client.JournalfoerInngaaendeV1Client
 import no.nav.syfo.client.SafClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.client.SyfoSykemeldingRuleClient
-import no.nav.syfo.client.ValidationResult
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
@@ -37,21 +39,31 @@ import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Tema
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeRequest
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.GeografiskTilknytning
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.NorskIdent
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.PersonIdent
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.Personidenter
+import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
+import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningResponse
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
-import java.io.StringWriter
+import java.io.IOException
 import java.nio.file.Paths
 import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.xml.bind.Marshaller
 
 fun doReadynessCheck(): Boolean {
     return true
@@ -108,7 +120,11 @@ fun main() = runBlocking(coroutineContext) {
 
                 val kafkaproducer = KafkaProducer<String, String>(producerProperties)
 
-                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, syfoSykemelginReglerClient, journalfoerInngaaendeV1Client, safClient, aktoerIdClient, personV3, arbeidsfordelingV1)
+                val kafkaManualTaskproducerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = KafkaAvroSerializer::class)
+                val kafkaManuelTaskProducer = KafkaProducer<String, ProduceTask>(kafkaManualTaskproducerProperties)
+
+                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, syfoSykemelginReglerClient,
+                        journalfoerInngaaendeV1Client, safClient, aktoerIdClient, personV3, arbeidsfordelingV1, kafkaManuelTaskProducer)
             }
         }.toList()
 
@@ -124,7 +140,7 @@ fun main() = runBlocking(coroutineContext) {
 }
 
 @KtorExperimentalAPI
-suspend fun CoroutineScope.blockingApplicationLogic(
+suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     producer: KafkaProducer<String, String>,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
@@ -133,16 +149,14 @@ suspend fun CoroutineScope.blockingApplicationLogic(
     safClient: SafClient,
     aktoerIdClient: AktoerIdClient,
     personV3: PersonV3,
-    arbeidsfordelingV1: ArbeidsfordelingV1
-) {
-    while (applicationState.running) {
+    arbeidsfordelingV1: ArbeidsfordelingV1,
+    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>
+) = coroutineScope {
+    loop@ while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
             val journalfoeringHendelseRecord = it.value()
 
             var logValues = arrayOf(
-                    keyValue("mottakId", "Missing"),
-                    keyValue("msgId", "Missing"),
-                    keyValue("orgNr", "Missing"),
                     keyValue("sykmeldingId", "Missing"),
                     keyValue("journalpostId", "Missing"),
                     keyValue("hendelsesId", "Missing")
@@ -156,19 +170,31 @@ suspend fun CoroutineScope.blockingApplicationLogic(
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                         journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                     INCOMING_MESSAGE_COUNTER.inc()
-                    log.info("Received a papir SM, $logKeys", *logValues)
+
+                    logValues = arrayOf(
+                            keyValue("sykmeldingId", UUID.randomUUID().toString()),
+                            keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
+                            keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
+                    )
+
+                    log.info("Received message, $logKeys", *logValues)
+
+                    // TODO remove when in prod
                     log.info("journalfoeringHendelseRecord:", objectMapper.writeValueAsString(journalfoeringHendelseRecord))
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId)
 
+                    // TODO is this correct
                     val smpapirXMLDokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "XML"
                     }.dokumentId
 
+                    // TODO is this correct
                     val smpapirPDFDokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "PDF"
                     }.dokumentId
 
+                    // TODO is this correct
                     val smpapirMetadataDokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "ARKIV"
                     }.dokumentId
@@ -185,89 +211,63 @@ suspend fun CoroutineScope.blockingApplicationLogic(
 
                     val smpapirXML = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
-                            smpapirMetadataDokumentInfoId,
+                            smpapirXMLDokumentInfoId,
                             "ARKIV",
                             logKeys,
                             logValues)
 
                     val smpapirPDF = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
-                            smpapirMetadataDokumentInfoId,
+                            smpapirPDFDokumentInfoId,
                             "ARKIV",
                             logKeys,
                             logValues)
 
-                    // TODO Unmarshaller docoument from saf to corret type
-                    // example: SykemeldingerType
-                    // TODO map the xml file to the healthInformation format
-                    /* val sykmeldingtype = sykemeldingerTypeUnmarshaller.unmarshal(objectMapper.writeValueAsString(paperSickLave)) as SykemeldingerType
+                    // TODO remove
+                    log.info("i made it here")
+                    /*
+                    val sykmeldingtype = sykemeldingerTypeUnmarshaller.unmarshal(StringReader(objectMapper.writeValueAsString(smpapirMetadata))) as SykemeldingerType
 
-                    val aktoerIdsDeferred = aktoerIdClient.getAktoerIds(listOf(personNumberDoctor, personNumberPatient), msgId, credentials.serviceuserUsername)
-
-                    val aktoerIds = aktoerIdsDeferred
-
-                    val patientIdents = aktoerIds[personNumberPatient]
-                    val doctorIdents = aktoerIds[personNumberDoctor]
-
-                    if (patientIdents == null || patientIdents.feilmelding != null) {
-                        log.info("Patient not found i aktorRegister $logKeys, {}", *logValues,
-                                keyValue("errorMessage", patientIdents?.feilmelding ?: "No response for FNR"))
-                    }
-                    if (doctorIdents == null || doctorIdents.feilmelding != null) {
-                        log.info("Doctor not found i aktorRegister $logKeys, {}", *logValues,
-                                keyValue("errorMessage", doctorIdents?.feilmelding ?: "No response for FNR"))
-                    }
-
-                       val receivedSykmelding = sykmeldingtype.toSykmelding(
-                        sykmeldingId = UUID.randomUUID().toString(),
-                        pasientAktoerId = patientIdents.identer!!.first().ident,
-                        legeAktoerId = doctorIdents.identer!!.first().ident,
-                        msgId = msgId
-                        )
-
-                    logValues = arrayOf(
-                        keyValue("mottakId", receivedSykmelding.navLogId),
-                        keyValue("msgId", receivedSykmelding.msgId),
-                        keyValue("orgNr", receivedSykmelding.legekontorOrgNr),
-                        keyValue("sykmeldingId", receivedSykmelding.sykmelding.id),
-                        keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
-                        keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
+                    val sykmelding = healthInformation.toSykmelding(
+                            sykmeldingId = UUID.randomUUID().toString(),
+                            pasientAktoerId = patientIdents.identer!!.first().ident,
+                            legeAktoerId = doctorIdents.identer!!.first().ident,
+                            msgId = msgId,
+                            signaturDato = msgHead.msgInfo.genDate
                     )
-                }
+                    val receivedSykmelding = ReceivedSykmelding(
+                            sykmelding = sykmelding,
+                            personNrPasient = personNumberPatient,
+                            tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                            personNrLege = personNumberDoctor,
+                            navLogId = ediLoggId,
+                            msgId = msgId,
+                            legekontorOrgNr = legekontorOrgNr,
+                            legekontorOrgName = legekontorOrgName,
+                            legekontorHerId = legekontorHerId,
+                            legekontorReshId = legekontorReshId,
+                            mottattDato = receiverBlock.mottattDatotid.toGregorianCalendar().toZonedDateTime().toLocalDateTime(),
+                            rulesetVersion = healthInformation.regelSettVersjon,
+                            fellesformat = inputMessageText,
+                            tssid = samhandlerPraksis?.tss_ident ?: ""
+                    )
 
-                log.info("Validating against rules, $logKeys", *logValues)
-                val validationResult = syfoSykemelginReglerClient.executeRuleValidation(receivedSykmelding).await()
-                when {
-                    validationResult.status == Status.OK -> {
-                        log.info("Rule ValidationResult = OK, $logKeys", *logValues)
-                        producer.send(ProducerRecord(config.kafkaSM2013PapirmottakTopic, text))
-                    }
-                    validationResult.status == Status.MANUAL_PROCESSING -> {
-                        val geografiskTilknytning = fetchGeografiskTilknytningAsync(personV3, receivedSykmelding)
-                        val finnBehandlendeEnhetListeResponse = fetchBehandlendeEnhetAsync(arbeidsfordelingV1, geografiskTilknytning.await().geografiskTilknytning)
-                        createTask(kafkaManuelTaskProducer, receivedSykmelding, validationResult, findNavOffice(finnBehandlendeEnhetListeResponse.await()), logKeys, logValues)
-                    }
-                    validationResult.status == Status.INVALID -> {
-                        log.error("Rule validation is Invaldid $logKeys", logValues)
-                    }
-                }
-                */
+
+                    val geografiskTilknytning = fetchGeografiskTilknytning(personV3, receivedSykmelding)
+                    val finnBehandlendeEnhetListeResponse = fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning)
+                    createTask(kafkaManuelTaskProducer, receivedSykmelding, findNavOffice(finnBehandlendeEnhetListeResponse), logKeys, logValues)
+                     */
                 }
             } catch (e: Exception) {
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
             }
-        }
 
-        delay(100)
+            delay(100)
+        }
     }
 }
 
 inline fun <reified T> XMLEIFellesformat.get(): T = any.find { it is T } as T
-
-fun Marshaller.toString(input: Any): String = StringWriter().use {
-    marshal(input, it)
-    it.toString()
-}
 
 fun Application.initRouting(applicationState: ApplicationState) {
     routing {
@@ -275,20 +275,20 @@ fun Application.initRouting(applicationState: ApplicationState) {
     }
 }
 
-fun createTask(kafkaProducer: KafkaProducer<String, ProduceTask>, receivedSykmelding: ReceivedSykmelding, results: ValidationResult, navKontor: String, logKeys: String, logValues: Array<StructuredArgument>) {
-    kafkaProducer.send(ProducerRecord("aapen-syfo-oppgave-produserOppgave", receivedSykmelding.msgId, ProduceTask().apply {
+fun createTask(kafkaProducer: KafkaProducer<String, ProduceTask>, receivedSykmelding: ReceivedSykmelding, navKontor: String, logKeys: String, logValues: Array<StructuredArgument>) {
+    kafkaProducer.send(ProducerRecord("aapen-syfo-oppgave-produserOppgave", receivedSykmelding.sykmelding.id, ProduceTask().apply {
         messageId = receivedSykmelding.msgId
         aktoerId = receivedSykmelding.sykmelding.pasientAktoerId
         tildeltEnhetsnr = navKontor
         opprettetAvEnhetsnr = "9999"
         behandlesAvApplikasjon = "FS22" // Gosys
         orgnr = receivedSykmelding.legekontorOrgNr ?: ""
-        beskrivelse = "Manuell behandling sykmelding: ${results.ruleHits}"
-        temagruppe = "SYM"
-        tema = ""
-        behandlingstema = "BEH_EL_SYM"
-        oppgavetype = ""
-        behandlingstype = ""
+        beskrivelse = "Manuell behandling av pga papir sykmelding"
+        temagruppe = "ANY"
+        tema = "SYM"
+        behandlingstema = "ANY"
+        oppgavetype = "BEH_EL_SYM"
+        behandlingstype = "ANY"
         mappeId = 1
         aktivDato = DateTimeFormatter.ISO_DATE.format(LocalDate.now())
         fristFerdigstillelse = DateTimeFormatter.ISO_DATE.format(LocalDate.now())
@@ -304,4 +304,32 @@ fun findNavOffice(finnBehandlendeEnhetListeResponse: FinnBehandlendeEnhetListeRe
             "0393"
         } else {
             finnBehandlendeEnhetListeResponse.behandlendeEnhetListe.first().enhetId
+        }
+
+suspend fun fetchGeografiskTilknytning(personV3: PersonV3, receivedSykmelding: ReceivedSykmelding): HentGeografiskTilknytningResponse =
+        retry(callName = "tps_hent_geografisktilknytning",
+                retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
+                legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
+            personV3.hentGeografiskTilknytning(HentGeografiskTilknytningRequest().withAktoer(PersonIdent().withIdent(
+                    NorskIdent()
+                            .withIdent(receivedSykmelding.personNrPasient)
+                            .withType(Personidenter().withValue("FNR")))))
+        }
+
+suspend fun fetchBehandlendeEnhet(arbeidsfordelingV1: ArbeidsfordelingV1, geografiskTilknytning: GeografiskTilknytning?): FinnBehandlendeEnhetListeResponse? =
+        retry(callName = "finn_nav_kontor",
+                retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
+                legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
+            arbeidsfordelingV1.finnBehandlendeEnhetListe(FinnBehandlendeEnhetListeRequest().apply {
+                val afk = ArbeidsfordelingKriterier()
+                if (geografiskTilknytning?.geografiskTilknytning != null) {
+                    afk.geografiskTilknytning = Geografi().apply {
+                        value = geografiskTilknytning.geografiskTilknytning
+                    }
+                }
+                afk.tema = Tema().apply {
+                    value = "SYM"
+                }
+                arbeidsfordelingKriterier = afk
+            })
         }
