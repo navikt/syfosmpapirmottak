@@ -20,8 +20,9 @@ data class Environment(
     val journalfoerInngaaendeV1URL: String = getEnvVar("JOURNAL_FOER_INNGAAENDE_V1_URL"),
     val safURL: String = getEnvVar("SAF_URL"),
     val stsURL: String = getEnvVar("STS_URL"),
-    val aktoerregisterV1Url: String = getEnvVar("AKTORREGISTER_V1_URL")
-
+    val aktoerregisterV1Url: String = getEnvVar("AKTORREGISTER_V1_URL"),
+    val helsepersonellv1EndpointURL: String = getEnvVar("HELSEPERSONELL_V1_ENDPOINT_URL"),
+    val kuhrSarApiUrl: String = getEnvVar("KUHR_SAR_API_URL", "http://kuhr-sar-api")
 ) : KafkaConfig
 
 data class VaultCredentials(

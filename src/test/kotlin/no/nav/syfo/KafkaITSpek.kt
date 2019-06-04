@@ -45,7 +45,8 @@ object KafkaITSpek : Spek({
             aktoerregisterV1Url = "akotrurl",
             arbeidsfordelingV1EndpointURL = "arbeidsforurl",
             personV3EndpointURL = "personulr",
-            securityTokenServiceUrl = "securl"
+            securityTokenServiceUrl = "securl",
+            helsepersonellv1EndpointURL = "hpr/api"
     )
 
     fun Properties.overrideForTest(): Properties = apply {

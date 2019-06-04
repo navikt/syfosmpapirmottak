@@ -55,3 +55,5 @@ spec:
     value: {{AKTORREGISTER_V1_URL}}
   - name: STS_URL
     value: {{STS_URL}}
+  - name: HELSEPERSONELL_V1_ENDPOINT_URL
+    value: {{HELSEPERSONELL_V1_ENDPOINT_URL}}

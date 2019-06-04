@@ -14,28 +14,35 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.prometheus.client.hotspot.DefaultExports
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArgument
 import net.logstash.logback.argument.StructuredArguments.keyValue
+import no.nav.helse.sykSkanningMeta.SykemeldingerType
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.client.JournalfoerInngaaendeV1Client
 import no.nav.syfo.client.SafClient
 import no.nav.syfo.client.StsOidcClient
-import no.nav.syfo.client.SyfoSykemeldingRuleClient
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.SarClient
+import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
 import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.model.toSykmelding
 import no.nav.syfo.sak.avro.PrioritetType
 import no.nav.syfo.sak.avro.ProduceTask
+import no.nav.syfo.util.sykemeldingerTypeUnmarshaller
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
@@ -50,20 +57,30 @@ import no.nav.tjeneste.virksomhet.person.v3.informasjon.PersonIdent
 import no.nav.tjeneste.virksomhet.person.v3.informasjon.Personidenter
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningResponse
+import no.nhn.schemas.reg.hprv2.IHPR2Service
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
+import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import java.io.IOException
+import java.io.StringReader
 import java.nio.file.Paths
 import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.GregorianCalendar
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.xml.datatype.DatatypeFactory
+import no.nhn.schemas.reg.hprv2.Person as HPRPerson
+import org.apache.cxf.phase.Phase
+import org.apache.cxf.binding.soap.SoapMessage
+import org.apache.cxf.message.Message
+import org.apache.cxf.ws.addressing.WSAddressingFeature
+import java.time.LocalDateTime
 
 fun doReadynessCheck(): Boolean {
     return true
@@ -71,6 +88,8 @@ fun doReadynessCheck(): Boolean {
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
 val coroutineContext = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
+
+val datatypeFactory: DatatypeFactory = DatatypeFactory.newInstance()
 
 val log = LoggerFactory.getLogger("nav.syfo.papirmottak")
 
@@ -96,11 +115,22 @@ fun main() = runBlocking(coroutineContext) {
     try {
         val listeners = (1..env.applicationThreads).map {
             launch {
-                val syfoSykemelginReglerClient = SyfoSykemeldingRuleClient(env.syfoSmRegelerApiURL, credentials)
                 val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+                val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
                 val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(env.journalfoerInngaaendeV1URL, oidcClient)
                 val safClient = SafClient(env.safURL, oidcClient)
-                val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
+
+                val kuhrSarClient = SarClient(env.kuhrSarApiUrl, credentials)
+
+                val kafkaBaseConfig = loadBaseConfig(env, credentials)
+
+                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
+
+                val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
+                kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
+
+                val kafkaManualTaskproducerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = KafkaAvroSerializer::class)
+                val kafkaManuelTaskProducer = KafkaProducer<String, ProduceTask>(kafkaManualTaskproducerProperties)
 
                 val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
                     port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
@@ -110,21 +140,28 @@ fun main() = runBlocking(coroutineContext) {
                     port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
                 }
 
-                val kafkaBaseConfig = loadBaseConfig(env, credentials)
+                val helsepersonellV1 = createPort<IHPR2Service>(env.helsepersonellv1EndpointURL) {
+                    proxy {
+                        // TODO: Contact someone about this hacky workaround
+                        // talk to HDIR about HPR about they claim to send a ISO-8859-1 but its really UTF-8 payload
+                        val interceptor = object : AbstractSoapInterceptor(Phase.RECEIVE) {
+                            override fun handleMessage(message: SoapMessage?) {
+                                if (message != null)
+                                    message[Message.ENCODING] = "utf-8"
+                            }
+                        }
 
-                val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = StringSerializer::class)
-                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
+                        inInterceptors.add(interceptor)
+                        inFaultInterceptors.add(interceptor)
+                        features.add(WSAddressingFeature())
+                    }
 
-                val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
-                kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
+                    port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+                }
 
-                val kafkaproducer = KafkaProducer<String, String>(producerProperties)
-
-                val kafkaManualTaskproducerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = KafkaAvroSerializer::class)
-                val kafkaManuelTaskProducer = KafkaProducer<String, ProduceTask>(kafkaManualTaskproducerProperties)
-
-                blockingApplicationLogic(applicationState, kafkaproducer, kafkaconsumer, syfoSykemelginReglerClient,
-                        journalfoerInngaaendeV1Client, safClient, aktoerIdClient, personV3, arbeidsfordelingV1, kafkaManuelTaskProducer)
+                blockingApplicationLogic(applicationState, kafkaconsumer,
+                        journalfoerInngaaendeV1Client, safClient, personV3, arbeidsfordelingV1, kafkaManuelTaskProducer,
+                        aktoerIdClient, credentials, kuhrSarClient, helsepersonellV1)
             }
         }.toList()
 
@@ -142,17 +179,18 @@ fun main() = runBlocking(coroutineContext) {
 @KtorExperimentalAPI
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
-    producer: KafkaProducer<String, String>,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    syfoSykemelginReglerClient: SyfoSykemeldingRuleClient,
     journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client,
     safClient: SafClient,
-    aktoerIdClient: AktoerIdClient,
     personV3: PersonV3,
     arbeidsfordelingV1: ArbeidsfordelingV1,
-    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>
+    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+    aktoerIdClient: AktoerIdClient,
+    credentials: VaultCredentials,
+    kuhrSarClient: SarClient,
+    helsepersonellv1: IHPR2Service
 ) = coroutineScope {
-    loop@ while (applicationState.running) {
+    while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
             val journalfoeringHendelseRecord = it.value()
 
@@ -171,10 +209,14 @@ suspend fun blockingApplicationLogic(
                         journalfoeringHendelseRecord.mottaksKanal == "skanning") {
                     INCOMING_MESSAGE_COUNTER.inc()
 
+                    val sykmeldingId = UUID.randomUUID().toString()
+                    val journalpostId = journalfoeringHendelseRecord.journalpostId
+                    val hendelsesId = journalfoeringHendelseRecord.hendelsesId
+
                     logValues = arrayOf(
-                            keyValue("sykmeldingId", UUID.randomUUID().toString()),
-                            keyValue("journalpostId", journalfoeringHendelseRecord.journalpostId),
-                            keyValue("hendelsesId", journalfoeringHendelseRecord.hendelsesId)
+                            keyValue("sykmeldingId", sykmeldingId),
+                            keyValue("journalpostId", journalpostId),
+                            keyValue("hendelsesId", hendelsesId)
                     )
 
                     log.info("Received message, $logKeys", *logValues)
@@ -223,40 +265,77 @@ suspend fun blockingApplicationLogic(
                             logKeys,
                             logValues)
 
-                    // TODO remove
-                    log.info("i made it here")
-                    /*
-                    val sykmeldingtype = sykemeldingerTypeUnmarshaller.unmarshal(StringReader(objectMapper.writeValueAsString(smpapirMetadata))) as SykemeldingerType
+                    val sykmeldingpapir = sykemeldingerTypeUnmarshaller.unmarshal(StringReader(objectMapper.writeValueAsString(smpapirMetadata))) as SykemeldingerType
 
-                    val sykmelding = healthInformation.toSykmelding(
-                            sykmeldingId = UUID.randomUUID().toString(),
-                            pasientAktoerId = patientIdents.identer!!.first().ident,
-                            legeAktoerId = doctorIdents.identer!!.first().ident,
-                            msgId = msgId,
-                            signaturDato = msgHead.msgInfo.genDate
+                    val hprNrLege = sykmeldingpapir.behandler.hpr.toInt()
+
+                    // TODO make call to HPR, and find out the fnr for the doctor
+                    val doctor = fetchDoctor(helsepersonellv1, hprNrLege).await()
+
+                    val personNumberPatient = sykmeldingpapir.pasient.fnr
+                    val personNumberDoctor = doctor.nin
+
+                    val aktoerIdsDeferred = async {
+                        aktoerIdClient.getAktoerIds(
+                                listOf(personNumberDoctor,
+                                        personNumberPatient),
+                                sykmeldingId,
+                                credentials.serviceuserUsername)
+                    }
+
+                    // TODO find the orgName?
+                    val legekontorOrgName = "Sorlandet sykehus"
+
+                    val samhandlerInfo = kuhrSarClient.getSamhandler(personNumberDoctor)
+                    val samhandlerPraksis = findBestSamhandlerPraksis(
+                            samhandlerInfo,
+                            legekontorOrgName)?.samhandlerPraksis
+
+                    when (samhandlerPraksis) {
+                        null -> log.info("SamhandlerPraksis is Not found, $logKeys", *logValues)
+                        else -> log.info("SamhandlerPraksis is Not found, $logKeys", *logValues)
+                    }
+
+                    val aktoerIds = aktoerIdsDeferred.await()
+                    val patientIdents = aktoerIds[personNumberPatient]
+                    val doctorIdents = aktoerIds[personNumberDoctor]
+
+                    if (patientIdents == null || patientIdents.feilmelding != null) {
+                        log.info("Patient not found i aktorRegister $logKeys, {}", *logValues,
+                                keyValue("errorMessage", patientIdents?.feilmelding ?: "No response for FNR"))
+                    }
+
+                    if (doctorIdents == null || doctorIdents.feilmelding != null) {
+                        log.info("Doctor not found i aktorRegister $logKeys, {}", *logValues,
+                                keyValue("errorMessage", doctorIdents?.feilmelding ?: "No response for FNR"))
+                    }
+
+                    val sykmelding = sykmeldingpapir.toSykmelding(
+                            sykmeldingId = sykmeldingId,
+                            pasientAktoerId = patientIdents!!.identer!!.first().ident,
+                            legeAktoerId = doctorIdents!!.identer!!.first().ident,
+                            msgId = sykmeldingId
                     )
                     val receivedSykmelding = ReceivedSykmelding(
                             sykmelding = sykmelding,
                             personNrPasient = personNumberPatient,
-                            tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                            tlfPasient = "",
                             personNrLege = personNumberDoctor,
-                            navLogId = ediLoggId,
-                            msgId = msgId,
-                            legekontorOrgNr = legekontorOrgNr,
-                            legekontorOrgName = legekontorOrgName,
-                            legekontorHerId = legekontorHerId,
-                            legekontorReshId = legekontorReshId,
-                            mottattDato = receiverBlock.mottattDatotid.toGregorianCalendar().toZonedDateTime().toLocalDateTime(),
-                            rulesetVersion = healthInformation.regelSettVersjon,
-                            fellesformat = inputMessageText,
+                            navLogId = sykmeldingId,
+                            msgId = sykmeldingId,
+                            legekontorOrgNr = "",
+                            legekontorOrgName = "",
+                            legekontorHerId = "",
+                            legekontorReshId = "",
+                            mottattDato = LocalDateTime.now(),
+                            rulesetVersion = "",
+                            fellesformat = "",
                             tssid = samhandlerPraksis?.tss_ident ?: ""
                     )
-
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, receivedSykmelding)
                     val finnBehandlendeEnhetListeResponse = fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning)
                     createTask(kafkaManuelTaskProducer, receivedSykmelding, findNavOffice(finnBehandlendeEnhetListeResponse), logKeys, logValues)
-                     */
                 }
             } catch (e: Exception) {
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
@@ -333,3 +412,13 @@ suspend fun fetchBehandlendeEnhet(arbeidsfordelingV1: ArbeidsfordelingV1, geogra
                 arbeidsfordelingKriterier = afk
             })
         }
+
+fun CoroutineScope.fetchDoctor(hprService: IHPR2Service, hprNummer: Int): Deferred<HPRPerson> = async {
+    retry(
+            callName = "hpr_hent_person_med_personnummer",
+            retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
+            legalExceptions = *arrayOf(IOException::class, WstxException::class)
+    ) {
+        hprService.hentPerson(hprNummer, datatypeFactory.newXMLGregorianCalendar(GregorianCalendar()))
+    }
+}

@@ -1,5 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
+import no.nils.wsdl2java.Wsdl2JavaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.syfo"
@@ -37,29 +38,51 @@ val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
 val smCommonVersion = "1.0.20"
+val javaxJaxwsApiVersion = "2.2.1"
 
 
 plugins {
     java
+    id("no.nils.wsdl2java") version "0.10"
     kotlin("jvm") version "1.3.31"
     id("org.jmailen.kotlinter") version "1.26.0"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
 }
 
+buildscript {
+    dependencies {
+        classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
+        classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
+        classpath("com.sun.activation:javax.activation:1.2.0")
+        classpath("com.sun.xml.ws:jaxws-tools:2.3.1") {
+            exclude(group = "com.sun.xml.ws", module = "policy")
+        }
+    }
+}
+
 repositories {
-    mavenCentral()
-    jcenter()
     maven (url= "https://kotlin.bintray.com/kotlinx")
     maven (url= "https://dl.bintray.com/kotlin/ktor")
     maven (url= "https://dl.bintray.com/spekframework/spek-dev")
     maven (url= "https://repo.adeo.no/repository/maven-snapshots/")
     maven (url= "https://repo.adeo.no/repository/maven-releases/")
     maven (url= "http://packages.confluent.io/maven/")
+    mavenCentral()
+    jcenter()
 }
 
 
 dependencies {
+    wsdl2java("javax.annotation:javax.annotation-api:$javaxAnnotationApiVersion")
+    wsdl2java("javax.activation:activation:$javaxActivationVersion")
+    wsdl2java("org.glassfish.jaxb:jaxb-runtime:$jaxbRuntimeVersion")
+    wsdl2java("javax.xml.bind:jaxb-api:$jaxbApiVersion")
+    wsdl2java("javax.xml.ws:jaxws-api:$javaxJaxwsApiVersion")
+    wsdl2java("com.sun.xml.ws:jaxws-tools:$jaxwsToolsVersion") {
+        exclude(group = "com.sun.xml.ws", module = "policy")
+    }
+
     implementation(kotlin("stdlib"))
 
     implementation ("com.fasterxml.jackson.module:jackson-module-jaxb-annotations:$jacksonVersion")
@@ -156,7 +179,15 @@ tasks {
         }
     }
     withType<KotlinCompile> {
+        dependsOn("wsdl2java")
         kotlinOptions.jvmTarget = "1.8"
+    }
+
+    withType<Wsdl2JavaTask> {
+        wsdlDir = file("$projectDir/src/main/resources/wsdl")
+        wsdlsToGenerate = listOf(
+                mutableListOf("-xjc", "-b", "$projectDir/src/main/resources/xjb/binding.xml", "$projectDir/src/main/resources/wsdl/helsepersonellregisteret.wsdl")
+        )
     }
 
     withType<ShadowJar> {
