@@ -205,8 +205,8 @@ suspend fun blockingApplicationLogic(
             try {
                 // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and
                 // TODO "mottaksKanal"
-                if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
-                        journalfoeringHendelseRecord.mottaksKanal == "skanning") {
+                if (journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" &&
+                        journalfoeringHendelseRecord.mottaksKanal == "SKAN_NETS") {
                     INCOMING_MESSAGE_COUNTER.inc()
 
                     val sykmeldingId = UUID.randomUUID().toString()
