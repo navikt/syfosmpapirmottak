@@ -227,18 +227,18 @@ suspend fun blockingApplicationLogic(
                             journalfoeringHendelseRecord.journalpostId)
 
                     // TODO is this correct
-                    val smpapirXMLDokumentInfoId = journalpost.dokumentListe.first {
-                        it.variant.first().variantFormat == "XML"
+                    val smpapirOCRDokumentInfoId = journalpost.dokumentListe.first {
+                        it.variant.first().variantFormat == "ORIGINAL"
                     }.dokumentId
 
                     // TODO is this correct
                     val smpapirPDFDokumentInfoId = journalpost.dokumentListe.first {
-                        it.variant.first().variantFormat == "PDF"
+                        it.variant.first().variantFormat == "ARKIV"
                     }.dokumentId
 
                     // TODO is this correct
                     val smpapirMetadataDokumentInfoId = journalpost.dokumentListe.first {
-                        it.variant.first().variantFormat == "ARKIV"
+                        it.variant.first().variantFormat == "META"
                     }.dokumentId
 
                     log.info("Calling saf rest")
@@ -247,14 +247,14 @@ suspend fun blockingApplicationLogic(
                     val smpapirMetadata = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirMetadataDokumentInfoId,
-                            "ARKIV",
+                            "META",
                             logKeys,
                             logValues)
 
-                    val smpapirXML = safClient.getdokument(
+                    val smpapirOCR = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
-                            smpapirXMLDokumentInfoId,
-                            "ARKIV",
+                            smpapirOCRDokumentInfoId,
+                            "ORIGINAL",
                             logKeys,
                             logValues)
 
@@ -265,7 +265,7 @@ suspend fun blockingApplicationLogic(
                             logKeys,
                             logValues)
 
-                    val sykmeldingpapir = sykemeldingerTypeUnmarshaller.unmarshal(StringReader(objectMapper.writeValueAsString(smpapirMetadata))) as SykemeldingerType
+                    val sykmeldingpapir = sykemeldingerTypeUnmarshaller.unmarshal(StringReader(objectMapper.writeValueAsString(smpapirOCR))) as SykemeldingerType
 
                     val hprNrLege = sykmeldingpapir.behandler.hpr.toInt()
 
