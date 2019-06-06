@@ -128,7 +128,7 @@ fun main() = runBlocking(coroutineContext) {
                 val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
                 val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
-
+                consumerProperties.setProperty("max_poll_records_config", "5")
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
@@ -192,7 +192,7 @@ suspend fun blockingApplicationLogic(
     oppgaveClient: OppgaveClient
 ) = coroutineScope {
     while (applicationState.running) {
-        consumer.poll(Duration.ofMillis(0)).forEach {
+        consumer.poll(Duration.ofMillis(100)).forEach {
             val journalfoeringHendelseRecord = it.value()
 
             var logValues = arrayOf(
@@ -206,7 +206,9 @@ suspend fun blockingApplicationLogic(
             try {
                 // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and
                 // TODO "mottaksKanal"
-
+                if (journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" ||
+                        journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
+                        journalfoeringHendelseRecord.mottaksKanal == "SKAN_NETS") {
                     INCOMING_MESSAGE_COUNTER.inc()
                     val requestLatency = REQUEST_TIME.startTimer()
 
@@ -347,6 +349,7 @@ suspend fun blockingApplicationLogic(
                     log.info("Message($logKeys) processing took {}s",
                             *logValues,
                             keyValue("latency", currentRequestLatency))
+                }
             } catch (e: Exception) {
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
             }
