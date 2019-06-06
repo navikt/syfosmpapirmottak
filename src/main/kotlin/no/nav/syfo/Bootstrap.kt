@@ -38,6 +38,7 @@ import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
 import no.nav.syfo.metrics.OPPRETT_OPPGAVE_COUNTER
+import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.OpprettOppgave
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.toSykmelding
@@ -208,6 +209,7 @@ suspend fun blockingApplicationLogic(
                 if (journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" &&
                         journalfoeringHendelseRecord.mottaksKanal == "SKAN_NETS") {
                     INCOMING_MESSAGE_COUNTER.inc()
+                    val requestLatency = REQUEST_TIME.startTimer()
 
                     val sykmeldingId = UUID.randomUUID().toString()
                     val journalpostId = journalfoeringHendelseRecord.journalpostId
@@ -221,24 +223,21 @@ suspend fun blockingApplicationLogic(
 
                     log.info("Received message, $logKeys", *logValues)
 
-                    // TODO remove when in prod
+                    // TODO remove log.info when in prod
                     log.info("journalfoeringHendelseRecord:", objectMapper.writeValueAsString(journalfoeringHendelseRecord))
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId)
 
-                    // TODO is this correct
                     val smpapirOCRDokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "ORIGINAL"
                     }.dokumentId
 
-                    // TODO is this correct
                     val smpapirPDFDokumentInfoId = journalpost.dokumentListe.first {
                         it.variant.first().variantFormat == "ARKIV"
                     }.dokumentId
 
-                    // TODO is this correct
                     val smpapirMetadataDokumentInfoId = journalpost.dokumentListe.first {
-                        it.variant.first().variantFormat == "META"
+                        it.variant.first().variantFormat == "SKANNING_META"
                     }.dokumentId
 
                     log.info("Calling saf rest")
@@ -247,7 +246,7 @@ suspend fun blockingApplicationLogic(
                     val smpapirMetadata = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirMetadataDokumentInfoId,
-                            "META",
+                            "SKANNING_META",
                             logKeys,
                             logValues)
 
@@ -343,6 +342,12 @@ suspend fun blockingApplicationLogic(
                             journalfoeringHendelseRecord.journalpostId.toString(),
                             findNavOffice(finnBehandlendeEnhetListeResponse),
                             patientIdents!!.identer!!.first().ident, sykmeldingId)
+
+                    val currentRequestLatency = requestLatency.observeDuration()
+
+                    log.info("Message($logKeys) processing took {}s",
+                            *logValues,
+                            keyValue("latency", currentRequestLatency))
                 }
             } catch (e: Exception) {
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
