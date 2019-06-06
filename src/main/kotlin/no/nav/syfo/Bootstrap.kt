@@ -292,7 +292,7 @@ suspend fun blockingApplicationLogic(
 
                     when (samhandlerPraksis) {
                         null -> log.info("SamhandlerPraksis is Not found, $logKeys", *logValues)
-                        else -> log.info("SamhandlerPraksis is Not found, $logKeys", *logValues)
+                        else -> log.info("SamhandlerPraksis is found, name: ${samhandlerPraksis.navn} $logKeys", *logValues)
                     }
 
                     val aktoerIds = aktoerIdsDeferred.await()
@@ -366,6 +366,7 @@ fun Application.initRouting(applicationState: ApplicationState) {
     }
 }
 
+@KtorExperimentalAPI
 suspend fun createTask(oppgaveClient: OppgaveClient, logKeys: String, logValues: Array<StructuredArgument>, sakId: String, journalpostId: String, tildeltEnhetsnr: String, aktoerId: String, sykmeldingId: String) {
     log.info("Creating oppgave with {}, $logKeys",
             keyValue("sakid", sakId),
