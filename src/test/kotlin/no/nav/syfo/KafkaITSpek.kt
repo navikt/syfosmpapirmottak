@@ -36,8 +36,6 @@ object KafkaITSpek : Spek({
             applicationPort = getRandomPort(),
             kafkaBootstrapServers = embeddedEnvironment.brokersURL,
             applicationThreads = 1,
-            kafkaSM2013PapirmottakTopic = "",
-            syfoSmRegelerApiURL = "",
             journalfoerInngaaendeV1URL = "",
             safURL = "",
             applicationName = "syfosmpapirmottak",
@@ -46,7 +44,8 @@ object KafkaITSpek : Spek({
             arbeidsfordelingV1EndpointURL = "arbeidsforurl",
             personV3EndpointURL = "personulr",
             securityTokenServiceUrl = "securl",
-            helsepersonellv1EndpointURL = "hpr/api"
+            helsepersonellv1EndpointURL = "hpr/api",
+            oppgavebehandlingUrl = "oppgave/api"
     )
 
     fun Properties.overrideForTest(): Properties = apply {

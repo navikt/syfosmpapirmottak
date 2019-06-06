@@ -7,7 +7,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
-import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.ktor.application.Application
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
@@ -31,17 +30,17 @@ import no.nav.syfo.client.SafClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
-import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
+import no.nav.syfo.metrics.OPPRETT_OPPGAVE_COUNTER
+import no.nav.syfo.model.OpprettOppgave
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.toSykmelding
-import no.nav.syfo.sak.avro.PrioritetType
-import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.util.sykemeldingerTypeUnmarshaller
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
@@ -61,8 +60,6 @@ import no.nhn.schemas.reg.hprv2.IHPR2Service
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.StringReader
@@ -116,9 +113,14 @@ fun main() = runBlocking(coroutineContext) {
         val listeners = (1..env.applicationThreads).map {
             launch {
                 val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+
                 val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
+
                 val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(env.journalfoerInngaaendeV1URL, oidcClient)
+
                 val safClient = SafClient(env.safURL, oidcClient)
+
+                val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
 
                 val kuhrSarClient = SarClient(env.kuhrSarApiUrl, credentials)
 
@@ -128,9 +130,6 @@ fun main() = runBlocking(coroutineContext) {
 
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
-
-                val kafkaManualTaskproducerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = KafkaAvroSerializer::class)
-                val kafkaManuelTaskProducer = KafkaProducer<String, ProduceTask>(kafkaManualTaskproducerProperties)
 
                 val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
                     port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
@@ -160,8 +159,8 @@ fun main() = runBlocking(coroutineContext) {
                 }
 
                 blockingApplicationLogic(applicationState, kafkaconsumer,
-                        journalfoerInngaaendeV1Client, safClient, personV3, arbeidsfordelingV1, kafkaManuelTaskProducer,
-                        aktoerIdClient, credentials, kuhrSarClient, helsepersonellV1)
+                        journalfoerInngaaendeV1Client, safClient, personV3, arbeidsfordelingV1,
+                        aktoerIdClient, credentials, kuhrSarClient, helsepersonellV1, env, oppgaveClient)
             }
         }.toList()
 
@@ -184,11 +183,12 @@ suspend fun blockingApplicationLogic(
     safClient: SafClient,
     personV3: PersonV3,
     arbeidsfordelingV1: ArbeidsfordelingV1,
-    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
     aktoerIdClient: AktoerIdClient,
     credentials: VaultCredentials,
     kuhrSarClient: SarClient,
-    helsepersonellv1: IHPR2Service
+    helsepersonellv1: IHPR2Service,
+    env: Environment,
+    oppgaveClient: OppgaveClient
 ) = coroutineScope {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
@@ -335,7 +335,14 @@ suspend fun blockingApplicationLogic(
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, receivedSykmelding)
                     val finnBehandlendeEnhetListeResponse = fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning)
-                    createTask(kafkaManuelTaskProducer, receivedSykmelding, findNavOffice(finnBehandlendeEnhetListeResponse), logKeys, logValues)
+                    // TODO find sakid
+                    createTask(oppgaveClient,
+                            logKeys,
+                            logValues,
+                            "",
+                            journalfoeringHendelseRecord.journalpostId.toString(),
+                            findNavOffice(finnBehandlendeEnhetListeResponse),
+                            patientIdents!!.identer!!.first().ident, sykmeldingId)
                 }
             } catch (e: Exception) {
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
@@ -354,28 +361,34 @@ fun Application.initRouting(applicationState: ApplicationState) {
     }
 }
 
-fun createTask(kafkaProducer: KafkaProducer<String, ProduceTask>, receivedSykmelding: ReceivedSykmelding, navKontor: String, logKeys: String, logValues: Array<StructuredArgument>) {
-    kafkaProducer.send(ProducerRecord("aapen-syfo-oppgave-produserOppgave", receivedSykmelding.sykmelding.id, ProduceTask().apply {
-        messageId = receivedSykmelding.msgId
-        aktoerId = receivedSykmelding.sykmelding.pasientAktoerId
-        tildeltEnhetsnr = navKontor
-        opprettetAvEnhetsnr = "9999"
-        behandlesAvApplikasjon = "FS22" // Gosys
-        orgnr = receivedSykmelding.legekontorOrgNr ?: ""
-        beskrivelse = "Manuell behandling av pga papir sykmelding"
-        temagruppe = "ANY"
-        tema = "SYM"
-        behandlingstema = "ANY"
-        oppgavetype = "BEH_EL_SYM"
-        behandlingstype = "ANY"
-        mappeId = 1
-        aktivDato = DateTimeFormatter.ISO_DATE.format(LocalDate.now())
-        fristFerdigstillelse = DateTimeFormatter.ISO_DATE.format(LocalDate.now())
-        prioritet = PrioritetType.NORM
-        metadata = mapOf()
-    }))
+suspend fun createTask(oppgaveClient: OppgaveClient, logKeys: String, logValues: Array<StructuredArgument>, sakId: String, journalpostId: String, tildeltEnhetsnr: String, aktoerId: String, sykmeldingId: String) {
+    log.info("Creating oppgave with {}, $logKeys",
+            keyValue("sakid", sakId),
+            keyValue("journalpost", journalpostId),
+            keyValue("tildeltEnhetsnr", tildeltEnhetsnr),
+            *logValues)
+    val opprettOppgave = OpprettOppgave(
+            tildeltEnhetsnr = tildeltEnhetsnr,
+            aktoerId = aktoerId,
+            opprettetAvEnhetsnr = "9999",
+            journalpostId = journalpostId,
+            behandlesAvApplikasjon = "FS22",
+            saksreferanse = sakId,
+            beskrivelse = "Papir sykemdligns som må manuelt legges inn i infotrygd",
+            tema = "ANY",
+            oppgavetype = "BEH_EL_SYM",
+            aktivDato = LocalDate.parse(DateTimeFormatter.ISO_DATE.format(LocalDate.now()), DateTimeFormatter.ISO_DATE),
+            fristFerdigstillelse = LocalDate.parse(DateTimeFormatter.ISO_DATE.format(LocalDate.now().plusDays(14)), DateTimeFormatter.ISO_DATE),
+            prioritet = "NORM"
+    )
 
-    log.info("Message sendt to topic: aapen-syfo-oppgave-produserOppgave $logKeys", *logValues)
+    val response = oppgaveClient.createOppgave(opprettOppgave, sykmeldingId)
+    OPPRETT_OPPGAVE_COUNTER.inc()
+    log.info("Task created with {} $logKeys",
+            keyValue("oppgaveId", response.id),
+            keyValue("sakid", sakId),
+            keyValue("journalpost", journalpostId),
+            *logValues)
 }
 
 fun findNavOffice(finnBehandlendeEnhetListeResponse: FinnBehandlendeEnhetListeResponse?): String =
