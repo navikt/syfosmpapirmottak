@@ -206,8 +206,7 @@ suspend fun blockingApplicationLogic(
             try {
                 // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and
                 // TODO "mottaksKanal"
-                if (// journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" &&
-                        journalfoeringHendelseRecord.mottaksKanal == "SKAN_NETS") {
+
                     INCOMING_MESSAGE_COUNTER.inc()
                     val requestLatency = REQUEST_TIME.startTimer()
 
@@ -348,7 +347,6 @@ suspend fun blockingApplicationLogic(
                     log.info("Message($logKeys) processing took {}s",
                             *logValues,
                             keyValue("latency", currentRequestLatency))
-                }
             } catch (e: Exception) {
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
             }
