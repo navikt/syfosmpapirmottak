@@ -110,70 +110,71 @@ fun main() = runBlocking(coroutineContext) {
 
     DefaultExports.initialize()
 
-    try {
-        val listeners = (1..env.applicationThreads).map {
-            launch {
-                val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
-                val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
+    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
 
-                val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(env.journalfoerInngaaendeV1URL, oidcClient)
+    val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(env.journalfoerInngaaendeV1URL, oidcClient)
 
-                val safClient = SafClient(env.safURL, oidcClient)
+    val safClient = SafClient(env.safURL, oidcClient)
 
-                val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
 
-                val kuhrSarClient = SarClient(env.kuhrSarApiUrl, credentials)
+    val kuhrSarClient = SarClient(env.kuhrSarApiUrl, credentials)
 
-                val kafkaBaseConfig = loadBaseConfig(env, credentials)
+    val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
-                val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
-                consumerProperties.setProperty("max.poll.interval.ms", "5000")
-                val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
-                kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
+    val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
+    val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
+    kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
-                val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
-                    port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-                }
-
-                val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
-                    port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-                }
-
-                val helsepersonellV1 = createPort<IHPR2Service>(env.helsepersonellv1EndpointURL) {
-                    proxy {
-                        // TODO: Contact someone about this hacky workaround
-                        // talk to HDIR about HPR about they claim to send a ISO-8859-1 but its really UTF-8 payload
-                        val interceptor = object : AbstractSoapInterceptor(Phase.RECEIVE) {
-                            override fun handleMessage(message: SoapMessage?) {
-                                if (message != null)
-                                    message[Message.ENCODING] = "utf-8"
-                            }
-                        }
-
-                        inInterceptors.add(interceptor)
-                        inFaultInterceptors.add(interceptor)
-                        features.add(WSAddressingFeature())
-                    }
-
-                    port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-                }
-
-                blockingApplicationLogic(applicationState, kafkaconsumer,
-                        journalfoerInngaaendeV1Client, safClient, personV3, arbeidsfordelingV1,
-                        aktoerIdClient, credentials, kuhrSarClient, helsepersonellV1, env, oppgaveClient)
-            }
-        }.toList()
-
-        applicationState.initialized = true
-
-        Runtime.getRuntime().addShutdownHook(Thread {
-            applicationServer.stop(10, 10, TimeUnit.SECONDS)
-        })
-        runBlocking { listeners.forEach { it.join() } }
-    } finally {
-        applicationState.running = false
+    val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
     }
+
+    val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
+    val helsepersonellV1 = createPort<IHPR2Service>(env.helsepersonellv1EndpointURL) {
+        proxy {
+            // TODO: Contact someone about this hacky workaround
+            // talk to HDIR about HPR about they claim to send a ISO-8859-1 but its really UTF-8 payload
+            val interceptor = object : AbstractSoapInterceptor(Phase.RECEIVE) {
+                override fun handleMessage(message: SoapMessage?) {
+                    if (message != null)
+                        message[Message.ENCODING] = "utf-8"
+                }
+            }
+
+            inInterceptors.add(interceptor)
+            inFaultInterceptors.add(interceptor)
+            features.add(WSAddressingFeature())
+        }
+
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
+    val listeners = (1..env.applicationThreads).map {
+        launch {
+            try {
+                blockingApplicationLogic(applicationState, kafkaconsumer, journalfoerInngaaendeV1Client, safClient,
+                        personV3, arbeidsfordelingV1, aktoerIdClient, credentials, kuhrSarClient, helsepersonellV1,
+                        env, oppgaveClient)
+            } finally {
+                applicationState.running = false
+            }
+        }
+
+    }.toList()
+
+    applicationState.initialized = true
+
+    Runtime.getRuntime().addShutdownHook(Thread {
+        applicationServer.stop(10, 10, TimeUnit.SECONDS)
+    })
+
+    runBlocking { listeners.forEach { it.join() } }
 }
 
 @KtorExperimentalAPI
