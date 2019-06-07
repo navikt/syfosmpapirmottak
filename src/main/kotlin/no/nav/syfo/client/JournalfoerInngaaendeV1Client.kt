@@ -9,7 +9,7 @@ import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
-import io.ktor.client.request.headers
+import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
@@ -34,10 +34,8 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
             retry("get_journalpostMetadata") {
                 client.get<Journalpost>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
                     accept(ContentType.Application.Json)
-                    val oidcToken = stsClient.oidcToken()
-                    headers {
-                        append("Authorization", "Bearer ${oidcToken.access_token}")
-                    }
+                    header("X-Correlation-ID", journalpostId)
+                    header("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
                 }
             }
 }
