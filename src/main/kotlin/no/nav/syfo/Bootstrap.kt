@@ -243,23 +243,17 @@ suspend fun blockingApplicationLogic(
                     val smpapirMetadata = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirMetadataDokumentInfoId,
-                            "SKANNING_META",
-                            logKeys,
-                            logValues)
+                            "SKANNING_META")
 
                     val smpapirOCR = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirOCRDokumentInfoId,
-                            "ORIGINAL",
-                            logKeys,
-                            logValues)
+                            "ORIGINAL")
 
                     val smpapirPDF = safClient.getdokument(
                             journalfoeringHendelseRecord.journalpostId.toString(),
                             smpapirPDFDokumentInfoId,
-                            "ARKIV",
-                            logKeys,
-                            logValues)
+                            "ARKIV")
 
                     val sykmeldingpapir = sykemeldingerTypeUnmarshaller.unmarshal(StringReader(objectMapper.writeValueAsString(smpapirOCR))) as SykemeldingerType
 

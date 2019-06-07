@@ -7,10 +7,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.logging.DEFAULT
-import io.ktor.client.features.logging.LogLevel
-import io.ktor.client.features.logging.Logger
-import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
@@ -28,10 +24,6 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
                 registerModule(JavaTimeModule())
                 configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             }
-        }
-        install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.ALL
         }
     }
 

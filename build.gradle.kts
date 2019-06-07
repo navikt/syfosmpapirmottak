@@ -117,8 +117,6 @@ dependencies {
     implementation ("io.ktor:ktor-client-gson:$ktorVersion")
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
     implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
-    implementation ("io.ktor:ktor-client-logging:$ktorVersion")
-    implementation ("io.ktor:ktor-client-logging-jvm:$ktorVersion")
 
     implementation ("no.nav.syfo.sm:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-networking:$smCommonVersion")
