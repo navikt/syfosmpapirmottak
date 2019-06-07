@@ -37,14 +37,12 @@ object KafkaITSpek : Spek({
             kafkaBootstrapServers = embeddedEnvironment.brokersURL,
             applicationThreads = 1,
             journalfoerInngaaendeV1URL = "",
-            safURL = "",
             applicationName = "syfosmpapirmottak",
             stsURL = "https/sts",
             aktoerregisterV1Url = "akotrurl",
             arbeidsfordelingV1EndpointURL = "arbeidsforurl",
             personV3EndpointURL = "personulr",
             securityTokenServiceUrl = "securl",
-            helsepersonellv1EndpointURL = "hpr/api",
             oppgavebehandlingUrl = "oppgave/api"
     )
 
