@@ -212,9 +212,9 @@ suspend fun blockingApplicationLogic(
 
                 // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and
                 // TODO "mottaksKanal"
-                if (journalfoeringHendelseRecord.temaGammelt == "SYM" ||
-                        journalfoeringHendelseRecord.temaNytt == "SYM" &&
-                        journalfoeringHendelseRecord.mottaksKanal == "SKAN_NETS") {
+                if ((journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" ||
+                        journalfoeringHendelseRecord.temaNytt.toString() == "SYM") &&
+                        journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS") {
                     INCOMING_MESSAGE_COUNTER.inc()
                     val requestLatency = REQUEST_TIME.startTimer()
 
