@@ -204,14 +204,6 @@ suspend fun blockingApplicationLogic(
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
             try {
-                log.info("journalfoeringHendelseRecord.temaGammelt:  ${journalfoeringHendelseRecord.temaGammelt}, " +
-                        "journalfoeringHendelseRecord.hendelsesId: ${journalfoeringHendelseRecord.hendelsesId}, " +
-                        "journalfoeringHendelseRecord.temaNytt: ${journalfoeringHendelseRecord.temaNytt}, " +
-                        "journalfoeringHendelseRecord.mottaksKanal: ${journalfoeringHendelseRecord.mottaksKanal}, " +
-                        "journalfoeringHendelseRecord.journalpostId: ${journalfoeringHendelseRecord.journalpostId}")
-
-                // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and
-                // TODO "mottaksKanal"
                 if ((journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" ||
                         journalfoeringHendelseRecord.temaNytt.toString() == "SYM") &&
                         journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS") {
@@ -230,8 +222,6 @@ suspend fun blockingApplicationLogic(
 
                     log.info("Received message, $logKeys", *logValues)
 
-                    // TODO remove log.info when in prod
-                    log.info("journalfoeringHendelseRecord:", objectMapper.writeValueAsString(journalfoeringHendelseRecord))
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId)
 
