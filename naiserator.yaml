@@ -55,3 +55,5 @@ spec:
     value: {{STS_URL}}
   - name: OPPGAVEBEHANDLING_URL
     value: {{OPPGAVEBEHANDLING_URL}}
+  - name: SAFGRAPHQL_URL
+    value: {{SAFGRAPHQL_URL}}

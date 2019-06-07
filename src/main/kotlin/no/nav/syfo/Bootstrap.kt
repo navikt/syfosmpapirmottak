@@ -22,11 +22,11 @@ import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArgument
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.client.JournalfoerInngaaendeV1Client
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.OppgaveClient
+import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
@@ -96,7 +96,7 @@ fun main() = runBlocking(coroutineContext) {
 
     val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
 
-    val journalfoerInngaaendeV1Client = JournalfoerInngaaendeV1Client(env.journalfoerInngaaendeV1URL, oidcClient)
+    val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
 
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
 
@@ -117,7 +117,7 @@ fun main() = runBlocking(coroutineContext) {
     val listeners = (1..env.applicationThreads).map {
         launch {
             try {
-                blockingApplicationLogic(applicationState, kafkaconsumer, journalfoerInngaaendeV1Client,
+                blockingApplicationLogic(applicationState, kafkaconsumer, safJournalpostClient,
                         personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient)
             } finally {
                 applicationState.running = false
@@ -138,7 +138,7 @@ fun main() = runBlocking(coroutineContext) {
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    journalfoerInngaaendeV1Client: JournalfoerInngaaendeV1Client,
+    safJournalpostClient: SafJournalpostClient,
     personV3: PersonV3,
     arbeidsfordelingV1: ArbeidsfordelingV1,
     aktoerIdClient: AktoerIdClient,
@@ -176,7 +176,7 @@ suspend fun blockingApplicationLogic(
 
                     log.info("Received paper sicklave, $logKeys", *logValues)
 
-                    val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
+                    val journalpost = safJournalpostClient.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId)
 
                     val personNumberPatient = journalpost.brukerListe.first {

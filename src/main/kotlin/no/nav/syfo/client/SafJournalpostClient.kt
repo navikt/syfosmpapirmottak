@@ -16,7 +16,7 @@ import no.nav.syfo.helpers.retry
 import no.nav.syfo.model.Journalpost
 
 @KtorExperimentalAPI
-class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val stsClient: StsOidcClient) {
+class SafJournalpostClient(private val endpointUrl: String, private val stsClient: StsOidcClient) {
     private val client = HttpClient(CIO) {
         install(JsonFeature) {
             serializer = JacksonSerializer {
