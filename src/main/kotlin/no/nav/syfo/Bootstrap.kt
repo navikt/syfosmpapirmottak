@@ -174,7 +174,7 @@ suspend fun blockingApplicationLogic(
                             keyValue("hendelsesId", hendelsesId)
                     )
 
-                    log.info("Received message, $logKeys", *logValues)
+                    log.info("Received paper sicklave, $logKeys", *logValues)
 
                     val journalpost = journalfoerInngaaendeV1Client.getJournalpostMetadata(
                             journalfoeringHendelseRecord.journalpostId)

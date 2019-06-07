@@ -31,7 +31,7 @@ class JournalfoerInngaaendeV1Client(private val endpointUrl: String, private val
     suspend fun getJournalpostMetadata(
         journalpostId: Long
     ): Journalpost =
-            retry("get_journalpostMetadata") {
+            retry(callName = "get_journalpostMetadata", retryIntervals = arrayOf(500L, 1000L, 3000L)) {
                 client.get<Journalpost>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
                     accept(ContentType.Application.Json)
                     header("X-Correlation-ID", journalpostId)
