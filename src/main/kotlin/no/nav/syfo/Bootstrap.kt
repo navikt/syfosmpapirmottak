@@ -165,7 +165,6 @@ fun main() = runBlocking(coroutineContext) {
                 applicationState.running = false
             }
         }
-
     }.toList()
 
     applicationState.initialized = true
@@ -207,8 +206,8 @@ suspend fun blockingApplicationLogic(
             try {
                 // TODO find a better metod of filter from the kafa topic, only get the right "behandlingstema" and
                 // TODO "mottaksKanal"
-                if (journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" ||
-                        journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
+                if (journalfoeringHendelseRecord.temaGammelt == "SYM" ||
+                        journalfoeringHendelseRecord.temaNytt == "SYM" &&
                         journalfoeringHendelseRecord.mottaksKanal == "SKAN_NETS") {
                     INCOMING_MESSAGE_COUNTER.inc()
                     val requestLatency = REQUEST_TIME.startTimer()
