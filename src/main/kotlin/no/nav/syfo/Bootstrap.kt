@@ -128,7 +128,6 @@ fun main() = runBlocking(coroutineContext) {
                 val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
                 val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
-                consumerProperties.setProperty("max_poll_records_config", "5")
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
@@ -192,7 +191,7 @@ suspend fun blockingApplicationLogic(
     oppgaveClient: OppgaveClient
 ) = coroutineScope {
     while (applicationState.running) {
-        consumer.poll(Duration.ofMillis(100)).forEach {
+        consumer.poll(Duration.ofMillis(0)).forEach {
             val journalfoeringHendelseRecord = it.value()
 
             var logValues = arrayOf(
