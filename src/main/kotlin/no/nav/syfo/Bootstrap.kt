@@ -128,8 +128,7 @@ fun main() = runBlocking(coroutineContext) {
                 val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
                 val consumerProperties = kafkaBaseConfig.toConsumerConfig("${env.applicationName}-consumer", valueDeserializer = KafkaAvroDeserializer::class)
-                consumerProperties.setProperty("max.poll.records", "1")
-                // consumerProperties.setProperty("max.poll.interval.ms", "5000")
+                consumerProperties.setProperty("max.poll.interval.ms", "5000")
                 val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
                 kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
