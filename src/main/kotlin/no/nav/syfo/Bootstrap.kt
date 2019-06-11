@@ -89,7 +89,7 @@ fun main() = runBlocking(coroutineContext) {
 
     DefaultExports.initialize()
 
-    val listeners = (1..env.applicationThreads).map {
+    val listeners = (0.until(env.applicationThreads)).map {
         launch {
             try {
                 createListener(applicationState, env, credentials)
