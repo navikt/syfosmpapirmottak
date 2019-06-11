@@ -212,7 +212,7 @@ suspend fun blockingApplicationLogic(
                         )
                         throw RuntimeException("Unable to handle message with id $journalpostId")
                     }
-                    val pasientFNR = pasientIdents.identer!!.find { it.gjeldende && it.identgruppe == "FNR" }!!.ident
+                    val pasientFNR = pasientIdents.identer!!.find {identInfo -> identInfo.gjeldende && identInfo.identgruppe == "FNR" }!!.ident
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
                     val finnBehandlendeEnhetListeResponse =
