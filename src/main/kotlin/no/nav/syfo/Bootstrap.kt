@@ -89,38 +89,10 @@ fun main() = runBlocking(coroutineContext) {
 
     DefaultExports.initialize()
 
-    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
-
-    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
-
-    val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
-
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
-
-    val kafkaBaseConfig = loadBaseConfig(env, credentials)
-
-    val consumerProperties = kafkaBaseConfig.toConsumerConfig(
-        "${env.applicationName}-consumer",
-        valueDeserializer = KafkaAvroDeserializer::class
-    )
-    val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
-    kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
-
-    val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
-        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-    }
-
-    val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
-        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-    }
-
     val listeners = (1..env.applicationThreads).map {
         launch {
             try {
-                blockingApplicationLogic(
-                    applicationState, kafkaconsumer, safJournalpostClient,
-                    personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
-                )
+                createListener(applicationState, env, credentials)
             } finally {
                 applicationState.running = false
             }
@@ -134,6 +106,43 @@ fun main() = runBlocking(coroutineContext) {
     })
 
     listeners.forEach { it.join() }
+}
+
+@KtorExperimentalAPI
+suspend fun createListener(
+    applicationState: ApplicationState,
+    env: Environment,
+    credentials: VaultCredentials
+) {
+    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+
+    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
+
+    val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
+
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
+
+    val kafkaBaseConfig = loadBaseConfig(env, credentials)
+
+    val consumerProperties = kafkaBaseConfig.toConsumerConfig(
+            "${env.applicationName}-consumer",
+            valueDeserializer = KafkaAvroDeserializer::class
+    )
+    val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
+    kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
+
+    val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
+    val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
+    blockingApplicationLogic(
+            applicationState, kafkaconsumer, safJournalpostClient,
+            personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
+    )
 }
 
 @KtorExperimentalAPI
