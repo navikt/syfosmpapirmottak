@@ -168,6 +168,8 @@ suspend fun blockingApplicationLogic(
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
+            log.info("Message read from topic")
+
             try {
                 if ((journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" ||
                             journalfoeringHendelseRecord.temaNytt.toString() == "SYM") &&
