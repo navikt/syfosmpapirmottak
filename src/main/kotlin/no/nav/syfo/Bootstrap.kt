@@ -217,7 +217,7 @@ suspend fun blockingApplicationLogic(
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
                     val finnBehandlendeEnhetListeResponse =
                         fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning)
-                    // TODO find sakid
+
                     createTask(
                         oppgaveClient,
                         logKeys,
