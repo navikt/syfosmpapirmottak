@@ -1,41 +1,44 @@
 package no.nav.syfo.client
 
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.features.json.JacksonSerializer
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.request.accept
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.http.ContentType
+import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.ApolloQueryCall
+import com.apollographql.apollo.api.Response
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.request.RequestHeaders
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.syfo.helpers.retry
-import no.nav.syfo.model.Journalpost
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
+
+suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { cont ->
+    enqueue(object : ApolloCall.Callback<T>() {
+        override fun onResponse(response: Response<T>) {
+            cont.resume(response)
+        }
+
+        override fun onFailure(e: ApolloException) {
+            cont.resumeWithException(e)
+        }
+    })
+}
 
 @KtorExperimentalAPI
 class SafJournalpostClient(private val endpointUrl: String, private val stsClient: StsOidcClient) {
-    private val client = HttpClient(CIO) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer {
-                registerKotlinModule()
-                registerModule(JavaTimeModule())
-                configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            }
-        }
-    }
+    private val apolloClient: ApolloClient = ApolloClient.builder()
+            .serverUrl(endpointUrl)
+            .build()
 
-    // TODO https://confluence.adeo.no/pages/viewpage.action?pageId=287444683
     suspend fun getJournalpostMetadata(
-        journalpostId: Long
-    ): Journalpost =
-            retry(callName = "get_journalpostMetadata", retryIntervals = arrayOf(500L, 1000L, 3000L)) {
-                client.get<Journalpost>("$endpointUrl/rest/journalfoerinngaaende/v1/journalposter/$journalpostId") {
-                    accept(ContentType.Application.Json)
-                    header("X-Correlation-ID", journalpostId)
-                    header("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
-                }
-            }
+        journalpostId: String
+    ): FindJournalpostQuery.Journalpost? = apolloClient.query(FindJournalpostQuery.builder()
+            .id(journalpostId)
+            .build())
+            .requestHeaders(RequestHeaders.builder()
+                    .addHeader("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
+                    .addHeader("X-Correlation-ID", journalpostId)
+                    .build())
+            .execute()
+            .data()
+            ?.journalpost()
 }

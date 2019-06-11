@@ -33,7 +33,6 @@ import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
 import no.nav.syfo.metrics.OPPRETT_OPPGAVE_COUNTER
 import no.nav.syfo.metrics.REQUEST_TIME
-import no.nav.syfo.model.BrukerType
 import no.nav.syfo.model.OpprettOppgave
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
@@ -181,30 +180,30 @@ suspend fun blockingApplicationLogic(
                     log.info("Received paper sicklave, $logKeys", *logValues)
 
                     val journalpost = safJournalpostClient.getJournalpostMetadata(
-                        journalfoeringHendelseRecord.journalpostId
-                    )
+                        journalfoeringHendelseRecord.journalpostId.toString()
+                    )!!
 
-                    val personNumberPatient = journalpost.brukerListe.first {
-                        it.brukerType == BrukerType.PERSON
-                    }.identifikator!!
+                    val aktoerIdPasient = journalpost.bruker()!!.id()!!
 
-                    val aktoerIdsDeferred = async {
+                    val personnummerDeferred = async {
                         aktoerIdClient.getAktoerIds(
-                            listOf(personNumberPatient), sykmeldingId, credentials.serviceuserUsername
+                            listOf(aktoerIdPasient), sykmeldingId, credentials.serviceuserUsername
                         )
                     }
 
-                    val aktoerIds = aktoerIdsDeferred.await()
-                    val patientIdents = aktoerIds[personNumberPatient]
+                    val personNummer = personnummerDeferred.await()
+                    val pasientIdents = personNummer[aktoerIdPasient]
 
-                    if (patientIdents == null || patientIdents.feilmelding != null) {
+                    if (pasientIdents == null || pasientIdents.feilmelding != null) {
                         log.info(
                             "Patient not found i aktorRegister $logKeys, {}", *logValues,
-                            keyValue("errorMessage", patientIdents?.feilmelding ?: "No response for FNR")
+                            keyValue("errorMessage", pasientIdents?.feilmelding ?: "No response for FNR")
                         )
+                        throw RuntimeException("Unable to handle message with id $journalpostId")
                     }
+                    val pasientFNR = pasientIdents.identer!!.find { it.gjeldende && it.identgruppe == "FNR" }!!.ident
 
-                    val geografiskTilknytning = fetchGeografiskTilknytning(personV3, personNumberPatient)
+                    val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
                     val finnBehandlendeEnhetListeResponse =
                         fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning)
                     // TODO find sakid
@@ -212,10 +211,10 @@ suspend fun blockingApplicationLogic(
                         oppgaveClient,
                         logKeys,
                         logValues,
-                        journalpost.arkivSak!!.arkivSakId,
+                        journalpost.sak()!!.arkivsaksnummer()!!,
                         journalfoeringHendelseRecord.journalpostId.toString(),
                         findNavOffice(finnBehandlendeEnhetListeResponse),
-                        patientIdents!!.identer!!.first().ident, sykmeldingId
+                        aktoerIdPasient, sykmeldingId
                     )
 
                     val currentRequestLatency = requestLatency.observeDuration()

@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.27-SNAPSHOT"
 
+val apolloVersion = "1.0.0"
 val avroVersion = "1.8.2"
 val coroutinesVersion = "1.1.1"
 val fellesformatVersion = "1.0"
@@ -48,6 +49,7 @@ plugins {
     id("org.jmailen.kotlinter") version "1.26.0"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
+    id("com.apollographql.android") version "1.0.0"
 }
 
 buildscript {
@@ -109,6 +111,8 @@ dependencies {
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
     implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
 
+    implementation("com.apollographql.apollo:apollo-runtime:$apolloVersion")
+
     implementation ("no.nav.syfo.sm:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-networking:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-rest-sts:$smCommonVersion")
@@ -145,12 +149,10 @@ dependencies {
     testImplementation("org.junit.platform:junit-platform-launcher:$junitPlatformLauncher")
     testImplementation ("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
 
-    testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion")
-    {
+    testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
     }
-    testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
-    {
+    testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
     }
 
