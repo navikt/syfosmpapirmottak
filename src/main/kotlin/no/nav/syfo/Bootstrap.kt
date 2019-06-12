@@ -158,7 +158,6 @@ suspend fun blockingApplicationLogic(
 ) = coroutineScope {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
-            log.info("Message read from topic")
             val journalfoeringHendelseRecord = it.value()
 
             var logValues = arrayOf(
@@ -169,10 +168,14 @@ suspend fun blockingApplicationLogic(
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
+            log.info("temaGammelt: ${journalfoeringHendelseRecord.temaGammelt.toString().trim()}" +
+            "temaNytt ${journalfoeringHendelseRecord.temaNytt.toString().trim()}" +
+            "mottaksKanal ${journalfoeringHendelseRecord.mottaksKanal.toString().trim()}")
+
             try {
-                if ((journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" ||
-                            journalfoeringHendelseRecord.temaNytt.toString() == "SYM") &&
-                    journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"
+                if ((journalfoeringHendelseRecord.temaGammelt.toString().trim() == "SYM" ||
+                            journalfoeringHendelseRecord.temaNytt.toString().trim() == "SYM") &&
+                    journalfoeringHendelseRecord.mottaksKanal.toString().trim() == "SKAN_NETS"
                 ) {
                     INCOMING_MESSAGE_COUNTER.inc()
                     val requestLatency = REQUEST_TIME.startTimer()
