@@ -157,7 +157,6 @@ suspend fun blockingApplicationLogic(
     oppgaveClient: OppgaveClient
 ) = coroutineScope {
     while (applicationState.running) {
-        log.info("made it to blockingApplicationLogic")
         consumer.poll(Duration.ofMillis(0)).forEach {
             log.info("Message read from topic")
             val journalfoeringHendelseRecord = it.value()
