@@ -139,8 +139,6 @@ suspend fun createListener(
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
     }
 
-    log.info("I made it here")
-
     blockingApplicationLogic(
             applicationState, kafkaconsumer, safJournalpostClient,
             personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
@@ -158,9 +156,10 @@ suspend fun blockingApplicationLogic(
     credentials: VaultCredentials,
     oppgaveClient: OppgaveClient
 ) = coroutineScope {
-    log.info("made it to blockingApplicationLogic")
     while (applicationState.running) {
+        log.info("made it to blockingApplicationLogic")
         consumer.poll(Duration.ofMillis(0)).forEach {
+            log.info("Message read from topic")
             val journalfoeringHendelseRecord = it.value()
 
             var logValues = arrayOf(
@@ -170,8 +169,6 @@ suspend fun blockingApplicationLogic(
             )
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
-
-            log.info("Message read from topic")
 
             try {
                 if ((journalfoeringHendelseRecord.temaGammelt.toString() == "SYM" ||
