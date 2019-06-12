@@ -169,8 +169,8 @@ suspend fun blockingApplicationLogic(
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
             try {
-                if (journalfoeringHendelseRecord.temaNytt.toString().trim() == "SYM" &&
-                    journalfoeringHendelseRecord.mottaksKanal.toString().trim() == "SKAN_NETS"
+                if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
+                    journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"
                 ) {
                     INCOMING_MESSAGE_COUNTER.inc()
                     val requestLatency = REQUEST_TIME.startTimer()
