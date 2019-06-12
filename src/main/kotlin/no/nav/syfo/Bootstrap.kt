@@ -139,6 +139,8 @@ suspend fun createListener(
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
     }
 
+    log.info("I made it here")
+
     blockingApplicationLogic(
             applicationState, kafkaconsumer, safJournalpostClient,
             personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
@@ -156,6 +158,7 @@ suspend fun blockingApplicationLogic(
     credentials: VaultCredentials,
     oppgaveClient: OppgaveClient
 ) = coroutineScope {
+    log.info("made it to blockingApplicationLogic")
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach {
             val journalfoeringHendelseRecord = it.value()
@@ -212,7 +215,7 @@ suspend fun blockingApplicationLogic(
                         )
                         throw RuntimeException("Unable to handle message with id $journalpostId")
                     }
-                    val pasientFNR = pasientIdents.identer!!.find {identInfo -> identInfo.gjeldende && identInfo.identgruppe == "FNR" }!!.ident
+                    val pasientFNR = pasientIdents.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "FNR" }!!.ident
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
                     val finnBehandlendeEnhetListeResponse =
