@@ -128,6 +128,7 @@ suspend fun createListener(
             "${env.applicationName}-consumer",
             valueDeserializer = KafkaAvroDeserializer::class
     )
+    consumerProperties.setProperty("max.poll.records", "1")
     val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
