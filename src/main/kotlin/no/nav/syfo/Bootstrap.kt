@@ -26,6 +26,7 @@ import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.helpers.retry
+import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
@@ -87,7 +88,7 @@ fun main() = runBlocking(coroutineContext) {
 
     DefaultExports.initialize()
 
-    val kafkaBaseConfig = loadBaseConfig(env, credentials)
+    val kafkaBaseConfig = loadBaseConfig(env, credentials).envOverrides()
 
     val consumerProperties = kafkaBaseConfig.toConsumerConfig(
             "${env.applicationName}-consumer",
