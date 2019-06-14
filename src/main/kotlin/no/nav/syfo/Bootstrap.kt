@@ -93,6 +93,8 @@ fun main() = runBlocking(coroutineContext) {
             "${env.applicationName}-consumer",
             valueDeserializer = KafkaAvroDeserializer::class
     )
+    consumerProperties.setProperty("auto.offset.reset", "latest")
+    consumerProperties.setProperty("enable.auto.commit", "false")
 
     launchListeners(
             env,
