@@ -93,8 +93,6 @@ fun main() = runBlocking(coroutineContext) {
             "${env.applicationName}-consumer",
             valueDeserializer = KafkaAvroDeserializer::class
     )
-    consumerProperties.setProperty("auto.offset.reset", "latest")
-    consumerProperties.setProperty("enable.auto.commit", "false")
 
     launchListeners(
             env,
@@ -185,9 +183,11 @@ suspend fun blockingApplicationLogic(
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
-            log.info("temaGammelt: ${journalfoeringHendelseRecord.temaGammelt}" +
-                    "temaNytt ${journalfoeringHendelseRecord.temaNytt}" +
-                    "mottaksKanal ${journalfoeringHendelseRecord.mottaksKanal}")
+            log.info("temaGammelt: ${journalfoeringHendelseRecord.temaGammelt} " +
+                    "temaNytt: ${journalfoeringHendelseRecord.temaNytt} " +
+                    "mottaksKanal: ${journalfoeringHendelseRecord.mottaksKanal} "+
+                    "journalpostid: ${journalfoeringHendelseRecord.journalpostId} " +
+                    "journalpostStatus: ${journalfoeringHendelseRecord.journalpostStatus}")
             try {
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"
