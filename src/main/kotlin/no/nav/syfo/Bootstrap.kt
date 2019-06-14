@@ -114,13 +114,13 @@ suspend fun createListener(
     env: Environment,
     credentials: VaultCredentials
 ) {
-    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+  //  val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
-    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
+  //  val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
 
-    val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
+  //  val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
 
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
+ //   val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
 
     val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
@@ -134,7 +134,7 @@ suspend fun createListener(
     val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
-    val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
+   /* val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
     }
 
@@ -146,18 +146,32 @@ suspend fun createListener(
             applicationState, kafkaconsumer, safJournalpostClient,
             personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
     )
+    */
+
+    blockingApplicationLogic(
+            applicationState, kafkaconsumer
+    )
+
 }
+
+/*
+@KtorExperimentalAPI
+suspend fun blockingApplicationLogic(
+        applicationState: ApplicationState,
+        consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
+        safJournalpostClient: SafJournalpostClient,
+        personV3: PersonV3,
+        arbeidsfordelingV1: ArbeidsfordelingV1,
+        aktoerIdClient: AktoerIdClient,
+        credentials: VaultCredentials,
+        oppgaveClient: OppgaveClient
+) = coroutineScope {
+ */
 
 @KtorExperimentalAPI
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
-    consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    safJournalpostClient: SafJournalpostClient,
-    personV3: PersonV3,
-    arbeidsfordelingV1: ArbeidsfordelingV1,
-    aktoerIdClient: AktoerIdClient,
-    credentials: VaultCredentials,
-    oppgaveClient: OppgaveClient
+    consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>
 ) = coroutineScope {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -189,7 +203,7 @@ suspend fun blockingApplicationLogic(
                     )
 
                     log.info("Received paper sicklave, $logKeys", *logValues)
-
+                    /*
                     val journalpost = safJournalpostClient.getJournalpostMetadata(
                         journalfoeringHendelseRecord.journalpostId.toString()
                     )!!
@@ -227,7 +241,7 @@ suspend fun blockingApplicationLogic(
                         findNavOffice(finnBehandlendeEnhetListeResponse),
                         aktoerIdPasient, sykmeldingId
                     )
-
+                    */
                     val currentRequestLatency = requestLatency.observeDuration()
 
                     log.info(
