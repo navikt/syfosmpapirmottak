@@ -13,8 +13,9 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.prometheus.client.hotspot.DefaultExports
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -23,10 +24,7 @@ import net.logstash.logback.argument.StructuredArgument
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.registerNaisApi
-import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.OppgaveClient
-import no.nav.syfo.client.SafJournalpostClient
-import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
@@ -34,7 +32,6 @@ import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
 import no.nav.syfo.metrics.OPPRETT_OPPGAVE_COUNTER
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.OpprettOppgave
-import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
@@ -55,6 +52,7 @@ import java.io.IOException
 import java.nio.file.Paths
 import java.time.Duration
 import java.time.LocalDate
+import java.util.Properties
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -89,70 +87,70 @@ fun main() = runBlocking(coroutineContext) {
 
     DefaultExports.initialize()
 
-    val listeners = (1.until(env.applicationThreads)).map {
-        launch {
-            try {
-                createListener(applicationState, env, credentials)
-            } finally {
-                applicationState.running = false
-            }
-        }
-    }.toList()
-
-    applicationState.initialized = true
-
-    Runtime.getRuntime().addShutdownHook(Thread {
-        applicationServer.stop(10, 10, TimeUnit.SECONDS)
-    })
-
-    listeners.forEach { it.join() }
-}
-
-@KtorExperimentalAPI
-suspend fun createListener(
-    applicationState: ApplicationState,
-    env: Environment,
-    credentials: VaultCredentials
-) {
-  //  val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
-
-  //  val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
-
-  //  val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
-
- //   val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
-
     val kafkaBaseConfig = loadBaseConfig(env, credentials)
 
     val consumerProperties = kafkaBaseConfig.toConsumerConfig(
             "${env.applicationName}-consumer",
             valueDeserializer = KafkaAvroDeserializer::class
     )
-    consumerProperties.setProperty("max.poll.records", "1")
-    consumerProperties.setProperty("max.poll.interval.ms", "20000")
-    consumerProperties.setProperty("request.timeout.ms", "30000")
-    val kafkaconsumer = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
-    kafkaconsumer.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
-   /* val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
-        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-    }
-
-    val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
-        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-    }
-
-    blockingApplicationLogic(
-            applicationState, kafkaconsumer, safJournalpostClient,
-            personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
+    launchListeners(
+            env,
+            applicationState,
+            consumerProperties
     )
-    */
 
-    blockingApplicationLogic(
-            applicationState, kafkaconsumer
-    )
+    Runtime.getRuntime().addShutdownHook(Thread {
+        applicationServer.stop(10, 10, TimeUnit.SECONDS)
+    })
 
 }
+
+fun CoroutineScope.createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
+        launch {
+            try {
+                action()
+            } finally {
+                applicationState.running = false
+            }
+        }
+
+@KtorExperimentalAPI
+fun CoroutineScope.launchListeners(
+        env: Environment,
+        applicationState: ApplicationState,
+        consumerProperties: Properties
+) {
+    val journalfoeringHendelseListeners = 0.until(env.applicationThreads).map {
+        val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
+
+        kafkaconsumerJournalfoeringHendelse.subscribe(
+                listOf(
+                        env.dokJournalfoeringV1Topic
+                )
+        )
+        createListener(applicationState) {
+            //  val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+
+            //  val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
+
+            //  val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
+
+            //   val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
+            blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse)
+            /* blockingApplicationLogic(
+                    applicationState, kafkaconsumer, safJournalpostClient,
+                    personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
+            )
+             */
+        }
+    }.toList()
+
+
+    applicationState.initialized = true
+    runBlocking { journalfoeringHendelseListeners.forEach { it.join() } }
+}
+
 
 /*
 @KtorExperimentalAPI
