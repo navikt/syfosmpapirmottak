@@ -183,7 +183,9 @@ suspend fun blockingApplicationLogic(
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
-            log.info("Message is read from topic")
+            log.info("temaGammelt: ${journalfoeringHendelseRecord.temaGammelt}" +
+                    "temaNytt ${journalfoeringHendelseRecord.temaNytt}" +
+                    "mottaksKanal ${journalfoeringHendelseRecord.mottaksKanal}")
             try {
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"
