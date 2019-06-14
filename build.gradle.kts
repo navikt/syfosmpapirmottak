@@ -28,7 +28,6 @@ val joarkHendelseVersion = "0.0.3"
 val confluentVersion = "5.0.2"
 val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "1.1-SNAPSHOT"
-val junitPlatformLauncher = "1.0.0"
 val syfooppgaveSchemasVersion = "1.2-SNAPSHOT"
 val navPersonv3Version = "3.2.0"
 val navArbeidsfordelingv1Version = "1.1.0"
@@ -146,7 +145,6 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
     }
-    testImplementation("org.junit.platform:junit-platform-launcher:$junitPlatformLauncher")
     testImplementation ("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
 
     testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion") {
