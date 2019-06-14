@@ -170,7 +170,7 @@ suspend fun blockingApplicationLogic(
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>
-) = coroutineScope {
+){
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
@@ -183,6 +183,7 @@ suspend fun blockingApplicationLogic(
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
+            log.info("Message is read from topic")
             try {
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"

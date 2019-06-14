@@ -15,13 +15,13 @@ spec:
   port: 8080
   liveness:
     path: /is_alive
-    initialDelay: 5
+    initialDelay: 10
     timeout: 1
     periodSeconds: 10
     failureThreshold: 5
   readiness:
     path: /is_ready
-    initialDelay: 5
+    initialDelay: 10
     timeout: 1
     periodSeconds: 10
   prometheus:
