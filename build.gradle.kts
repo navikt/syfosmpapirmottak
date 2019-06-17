@@ -113,6 +113,7 @@ dependencies {
 
     implementation("com.apollographql.apollo:apollo-runtime:$apolloVersion")
     implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
+    implementation("com.squareup.okhttp3:logging-interceptor:$okhttpVersion")
 
     implementation ("no.nav.syfo.sm:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-networking:$smCommonVersion")
