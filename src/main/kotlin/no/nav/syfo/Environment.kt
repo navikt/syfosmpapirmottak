@@ -12,7 +12,6 @@ data class Environment(
     val personV3EndpointURL: String = getEnvVar("PERSON_V3_ENDPOINT_URL"),
     val securityTokenServiceUrl: String = getEnvVar("SECURITY_TOKEN_SERVICE_URL"),
     val arbeidsfordelingV1EndpointURL: String = getEnvVar("ARBEIDSFORDELING_V1_ENDPOINT_URL"),
-    val journalfoerInngaaendeV1URL: String = getEnvVar("JOURNAL_FOER_INNGAAENDE_V1_URL"),
     val safV1Url: String = getEnvVar("SAFGRAPHQL_URL"),
     val stsURL: String = getEnvVar("STS_URL"),
     val aktoerregisterV1Url: String = getEnvVar("AKTORREGISTER_V1_URL"),
