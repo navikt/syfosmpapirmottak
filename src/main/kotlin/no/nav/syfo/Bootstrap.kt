@@ -258,8 +258,8 @@ suspend fun blockingApplicationLogic(
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
             }
 
-            delay(100)
         }
+        delay(100)
     }
 }
 
