@@ -102,7 +102,7 @@ fun main() = runBlocking(coroutineContext) {
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
     val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
-    val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
+    val safJournalpostClient = SafJournalpostClient(env.safV1Url, oidcClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
 
     val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
