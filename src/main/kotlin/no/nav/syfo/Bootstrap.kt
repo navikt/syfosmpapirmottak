@@ -16,6 +16,7 @@ import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -24,7 +25,10 @@ import net.logstash.logback.argument.StructuredArgument
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.registerNaisApi
+import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.OppgaveClient
+import no.nav.syfo.client.SafJournalpostClient
+import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
@@ -33,6 +37,7 @@ import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
 import no.nav.syfo.metrics.OPPRETT_OPPGAVE_COUNTER
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.OpprettOppgave
+import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
@@ -95,16 +100,34 @@ fun main() = runBlocking(coroutineContext) {
             valueDeserializer = KafkaAvroDeserializer::class
     )
 
+    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
+    val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
+
+    val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
+    val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
     launchListeners(
             env,
             applicationState,
-            consumerProperties
+            consumerProperties,
+            safJournalpostClient,
+            personV3,
+            arbeidsfordelingV1,
+            aktoerIdClient,
+            credentials,
+            oppgaveClient
     )
 
     Runtime.getRuntime().addShutdownHook(Thread {
         applicationServer.stop(10, 10, TimeUnit.SECONDS)
     })
-
 }
 
 fun CoroutineScope.createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
@@ -118,9 +141,15 @@ fun CoroutineScope.createListener(applicationState: ApplicationState, action: su
 
 @KtorExperimentalAPI
 fun CoroutineScope.launchListeners(
-        env: Environment,
-        applicationState: ApplicationState,
-        consumerProperties: Properties
+    env: Environment,
+    applicationState: ApplicationState,
+    consumerProperties: Properties,
+    safJournalpostClient: SafJournalpostClient,
+    personV3: PersonV3,
+    arbeidsfordelingV1: ArbeidsfordelingV1,
+    aktoerIdClient: AktoerIdClient,
+    credentials: VaultCredentials,
+    oppgaveClient: OppgaveClient
 ) {
     val journalfoeringHendelseListeners = 0.until(env.applicationThreads).map {
         val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
@@ -131,47 +160,29 @@ fun CoroutineScope.launchListeners(
                 )
         )
         createListener(applicationState) {
-            //  val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
-            //  val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
-
-            //  val safJournalpostClient = SafJournalpostClient(env.journalfoerInngaaendeV1URL, oidcClient)
-
-            //   val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
-            blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse)
-            /* blockingApplicationLogic(
-                    applicationState, kafkaconsumer, safJournalpostClient,
+            blockingApplicationLogic(
+                    applicationState, kafkaconsumerJournalfoeringHendelse, safJournalpostClient,
                     personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
             )
-             */
         }
     }.toList()
-
 
     applicationState.initialized = true
     runBlocking { journalfoeringHendelseListeners.forEach { it.join() } }
 }
 
-
-/*
-@KtorExperimentalAPI
-suspend fun blockingApplicationLogic(
-        applicationState: ApplicationState,
-        consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-        safJournalpostClient: SafJournalpostClient,
-        personV3: PersonV3,
-        arbeidsfordelingV1: ArbeidsfordelingV1,
-        aktoerIdClient: AktoerIdClient,
-        credentials: VaultCredentials,
-        oppgaveClient: OppgaveClient
-) = coroutineScope {
- */
-
 @KtorExperimentalAPI
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
-    consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>
-){
+    consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
+    safJournalpostClient: SafJournalpostClient,
+    personV3: PersonV3,
+    arbeidsfordelingV1: ArbeidsfordelingV1,
+    aktoerIdClient: AktoerIdClient,
+    credentials: VaultCredentials,
+    oppgaveClient: OppgaveClient
+) = coroutineScope {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
@@ -184,11 +195,6 @@ suspend fun blockingApplicationLogic(
 
             val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
 
-            log.info("temaGammelt: ${journalfoeringHendelseRecord.temaGammelt} " +
-                    "temaNytt: ${journalfoeringHendelseRecord.temaNytt} " +
-                    "mottaksKanal: ${journalfoeringHendelseRecord.mottaksKanal} "+
-                    "journalpostid: ${journalfoeringHendelseRecord.journalpostId} " +
-                    "journalpostStatus: ${journalfoeringHendelseRecord.journalpostStatus}")
             try {
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"
@@ -207,7 +213,7 @@ suspend fun blockingApplicationLogic(
                     )
 
                     log.info("Received paper sicklave, $logKeys", *logValues)
-                    /*
+
                     val journalpost = safJournalpostClient.getJournalpostMetadata(
                         journalfoeringHendelseRecord.journalpostId.toString()
                     )!!
@@ -245,7 +251,7 @@ suspend fun blockingApplicationLogic(
                         findNavOffice(finnBehandlendeEnhetListeResponse),
                         aktoerIdPasient, sykmeldingId
                     )
-                    */
+
                     val currentRequestLatency = requestLatency.observeDuration()
 
                     log.info(
@@ -257,7 +263,6 @@ suspend fun blockingApplicationLogic(
             } catch (e: Exception) {
                 log.error("Exception caught while handling message $logKeys", *logValues, e)
             }
-
         }
         delay(100)
     }
