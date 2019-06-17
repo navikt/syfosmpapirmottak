@@ -7,6 +7,7 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
 import io.ktor.util.KtorExperimentalAPI
+import okhttp3.OkHttpClient
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -24,8 +25,11 @@ suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { c
 }
 
 @KtorExperimentalAPI
-class SafJournalpostClient(private val endpointUrl: String, private val stsClient: StsOidcClient) {
+class SafJournalpostClient(endpointUrl: String, private val stsClient: StsOidcClient) {
+    var okHttpClient = OkHttpClient.Builder().build()
+
     private val apolloClient: ApolloClient = ApolloClient.builder()
+            .okHttpClient(okHttpClient)
             .serverUrl(endpointUrl)
             .build()
 

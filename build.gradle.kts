@@ -7,6 +7,7 @@ group = "no.nav.syfo"
 version = "1.0.27-SNAPSHOT"
 
 val apolloVersion = "1.0.0"
+val okhttpVersion = "3.14.2"
 val avroVersion = "1.8.2"
 val coroutinesVersion = "1.1.1"
 val fellesformatVersion = "1.0"
@@ -111,6 +112,7 @@ dependencies {
     implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
 
     implementation("com.apollographql.apollo:apollo-runtime:$apolloVersion")
+    implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
 
     implementation ("no.nav.syfo.sm:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-networking:$smCommonVersion")
