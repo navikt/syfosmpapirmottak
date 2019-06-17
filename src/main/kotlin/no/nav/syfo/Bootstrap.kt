@@ -214,6 +214,7 @@ suspend fun blockingApplicationLogic(
 
                     log.info("Received paper sicklave, $logKeys", *logValues)
 
+                    log.info("Calling saf graphql on journalpostid: ${journalfoeringHendelseRecord.journalpostId}")
                     val journalpost = safJournalpostClient.getJournalpostMetadata(
                         journalfoeringHendelseRecord.journalpostId.toString()
                     )!!
