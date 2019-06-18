@@ -1,7 +1,6 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.receive
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
@@ -9,7 +8,6 @@ import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.parameter
-import io.ktor.client.response.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
@@ -26,10 +24,10 @@ class AktoerIdClient(
         }
     }
 
-    suspend fun getAktoerIds(personNumbers: List<String>, trackingId: String, username: String): Map<String, IdentInfoResult> =
-            retry("get_aktoerids") {
+    suspend fun getFnr(personNumbers: List<String>, trackingId: String, username: String): Map<String, IdentInfoResult> =
+            retry("get_fnr") {
                 // TODO: Remove this workaround whenever ktor issue #1009 is fixed
-                client.get<HttpResponse>("$endpointUrl/identer") {
+                client.get<Map<String, IdentInfoResult>>("$endpointUrl/identer") {
                     accept(ContentType.Application.Json)
                     val oidcToken = stsClient.oidcToken()
                     headers {
@@ -40,6 +38,6 @@ class AktoerIdClient(
                     }
                     parameter("gjeldende", "true")
                     parameter("identgruppe", "AktoerId")
-                }.use { it.call.response.receive<Map<String, IdentInfoResult>>() }
+                }
             }
 }

@@ -222,7 +222,7 @@ suspend fun blockingApplicationLogic(
                     val aktoerIdPasient = journalpost.bruker()!!.id()!!
 
                     val personnummerDeferred = async {
-                        aktoerIdClient.getAktoerIds(
+                        aktoerIdClient.getFnr(
                             listOf(aktoerIdPasient), sykmeldingId, credentials.serviceuserUsername
                         )
                     }
@@ -237,6 +237,10 @@ suspend fun blockingApplicationLogic(
                         )
                         throw RuntimeException("Unable to handle message with id $journalpostId")
                     }
+
+                    log.info("ForsteIdent ${pasientIdents.identer!!.first().ident}")
+                    log.info("SisteIdent ${pasientIdents.identer!!.last().ident}")
+
                     val pasientFNR = pasientIdents.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "FNR" }!!.ident
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
