@@ -221,30 +221,23 @@ suspend fun blockingApplicationLogic(
 
                     val aktoerIdPasient = journalpost.bruker()!!.id()!!
 
-                    val personnummerDeferred = async {
+                    val pasientNorskIdentDeferred = async {
                         aktoerIdClient.getFnr(
                             listOf(aktoerIdPasient), sykmeldingId, credentials.serviceuserUsername
                         )
-                    }
+                    }.await()
 
-                    val personNummer = personnummerDeferred.await()
-                    val pasientIdents = personNummer[aktoerIdPasient]
+                    val pasientNorskIdent = pasientNorskIdentDeferred[aktoerIdPasient]
 
-                    if (pasientIdents == null || pasientIdents.feilmelding != null) {
+                    if (pasientNorskIdent == null || pasientNorskIdent.feilmelding != null) {
                         log.info(
                             "Patient not found i aktorRegister $logKeys, {}", *logValues,
-                            keyValue("errorMessage", pasientIdents?.feilmelding ?: "No response for FNR")
+                            keyValue("errorMessage", pasientNorskIdent?.feilmelding ?: "No response for FNR")
                         )
                         throw RuntimeException("Unable to handle message with id $journalpostId")
                     }
 
-                    log.info("ForsteIdent ${pasientIdents.identer!!.first().ident}")
-
-                    log.info("ForsteIdentgruppe ${pasientIdents.identer!!.first().identgruppe}")
-
-                    log.info("ForsteGjeldende ${pasientIdents.identer!!.first().gjeldende}")
-
-                    val pasientFNR = pasientIdents.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "FNR" }!!.ident
+                    val pasientFNR = pasientNorskIdent.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "NorskIdent" }!!.ident
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
                     val finnBehandlendeEnhetListeResponse =
