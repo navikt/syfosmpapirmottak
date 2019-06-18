@@ -219,6 +219,9 @@ suspend fun blockingApplicationLogic(
                         journalfoeringHendelseRecord.journalpostId.toString()
                     )!!
 
+                    // TODO remove after testing
+                    log.info("journalpost: ${objectMapper.writeValueAsString(journalpost)}")
+
                     val aktoerIdPasient = journalpost.bruker()!!.id()!!
 
                     val personnummerDeferred = async {
