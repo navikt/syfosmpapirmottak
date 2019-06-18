@@ -303,7 +303,7 @@ suspend fun createTask(
         behandlesAvApplikasjon = "FS22",
         saksreferanse = sakId,
         beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
-        tema = "ANY",
+        tema = "SYM",
         oppgavetype = "JFR",
         aktivDato = LocalDate.now(),
         fristFerdigstillelse = LocalDate.now().plusDays(1),
