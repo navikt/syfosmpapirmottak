@@ -3,6 +3,7 @@ package no.nav.syfo
 import com.ctc.wstx.exc.WstxException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -218,9 +219,6 @@ suspend fun blockingApplicationLogic(
                     val journalpost = safJournalpostClient.getJournalpostMetadata(
                         journalfoeringHendelseRecord.journalpostId.toString()
                     )!!
-
-                    // TODO remove after testing
-                    log.info("journalpost: ${objectMapper.writeValueAsString(journalpost)}")
 
                     val aktoerIdPasient = journalpost.bruker()!!.id()!!
 
