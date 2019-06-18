@@ -38,7 +38,6 @@ object KafkaITSpek : Spek({
             applicationThreads = 1,
             safV1Url = "saf/api",
             applicationName = "syfosmpapirmottak",
-            stsURL = "https/sts",
             aktoerregisterV1Url = "akotrurl",
             arbeidsfordelingV1EndpointURL = "arbeidsforurl",
             personV3EndpointURL = "personulr",

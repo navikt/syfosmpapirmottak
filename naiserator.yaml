@@ -49,9 +49,5 @@ spec:
     value: {{SECURITY_TOKEN_SERVICE_URL}}
   - name: AKTORREGISTER_V1_URL
     value: {{AKTORREGISTER_V1_URL}}
-  - name: STS_URL
-    value: {{STS_URL}}
-  - name: OPPGAVEBEHANDLING_URL
-    value: {{OPPGAVEBEHANDLING_URL}}
   - name: SAFGRAPHQL_URL
     value: {{SAFGRAPHQL_URL}}
