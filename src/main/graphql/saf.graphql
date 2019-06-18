@@ -1,12 +1,16 @@
 query FindJournalpost($id: String!) {
     journalpost(journalpostId: $id) {
-        avsenderMottakerId
-        avsenderMottakerLand
-        avsenderMottakerNavn
+        avsenderMottaker{
+            id
+        }
+        avsenderMottaker{
+            navn
+        }
         behandlingstema
         behandlingstemanavn
         bruker {
             id
+            type
         }
         journalforendeEnhet
         journalfortAvNavn
@@ -17,6 +21,7 @@ query FindJournalpost($id: String!) {
         opprettetAvNavn
         sak {
             arkivsaksnummer
+            arkivsaksystem
         }
         skjerming
         tema
