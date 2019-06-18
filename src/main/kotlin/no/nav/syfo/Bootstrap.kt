@@ -239,7 +239,6 @@ suspend fun blockingApplicationLogic(
                     }
 
                     log.info("ForsteIdent ${pasientIdents.identer!!.first().ident}")
-                    log.info("SisteIdent ${pasientIdents.identer!!.last().ident}")
 
                     val pasientFNR = pasientIdents.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "FNR" }!!.ident
 

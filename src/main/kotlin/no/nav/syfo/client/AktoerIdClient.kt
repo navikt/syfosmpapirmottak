@@ -37,7 +37,7 @@ class AktoerIdClient(
                         append("Nav-Personidenter", personNumbers.joinToString(","))
                     }
                     parameter("gjeldende", "true")
-                    parameter("identgruppe", "AktoerId")
+                    parameter("identgruppe", "NorskIdent")
                 }
             }
 }
