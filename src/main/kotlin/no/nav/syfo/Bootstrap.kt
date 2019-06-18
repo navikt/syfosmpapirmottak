@@ -240,6 +240,10 @@ suspend fun blockingApplicationLogic(
 
                     log.info("ForsteIdent ${pasientIdents.identer!!.first().ident}")
 
+                    log.info("ForsteIdentgruppe ${pasientIdents.identer!!.first().identgruppe}")
+
+                    log.info("ForsteGjeldende ${pasientIdents.identer!!.first().gjeldende}")
+
                     val pasientFNR = pasientIdents.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "FNR" }!!.ident
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
