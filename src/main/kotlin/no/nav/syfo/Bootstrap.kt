@@ -253,7 +253,7 @@ suspend fun blockingApplicationLogic(
                         logValues,
                         journalpost.sak()!!.arkivsaksnummer()!!,
                         journalfoeringHendelseRecord.journalpostId.toString(),
-                        findNavOffice(finnBehandlendeEnhetListeResponse),
+                        finnBehandlendeEnhetListeResponse?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: "0393",
                         aktoerIdPasient, sykmeldingId
                     )
 
@@ -324,13 +324,6 @@ suspend fun createTask(
         *logValues
     )
 }
-
-fun findNavOffice(finnBehandlendeEnhetListeResponse: FinnBehandlendeEnhetListeResponse?): String =
-    if (finnBehandlendeEnhetListeResponse?.behandlendeEnhetListe?.firstOrNull()?.enhetId == null) {
-        "0393"
-    } else {
-        finnBehandlendeEnhetListeResponse.behandlendeEnhetListe.first().enhetId
-    }
 
 suspend fun fetchGeografiskTilknytning(personV3: PersonV3, patientFnr: String): HentGeografiskTilknytningResponse =
     retry(
