@@ -247,7 +247,7 @@ suspend fun blockingApplicationLogic(
                     val finnBehandlendeEnhetListeResponse =
                         fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning, patientDiskresjonsKode)
 
-                    if(finnBehandlendeEnhetListeResponse?.behandlendeEnhetListe?.firstOrNull()?.enhetId == null ){
+                    if (finnBehandlendeEnhetListeResponse?.behandlendeEnhetListe?.firstOrNull()?.enhetId == null) {
                         log.error("arbeidsfordeling fant ingen nav-enheter $logKeys", *logValues)
                     }
 
