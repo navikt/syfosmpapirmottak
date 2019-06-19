@@ -40,7 +40,9 @@ import no.nav.syfo.model.OpprettOppgave
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Oppgavetyper
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Tema
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeRequest
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
@@ -51,6 +53,7 @@ import no.nav.tjeneste.virksomhet.person.v3.informasjon.PersonIdent
 import no.nav.tjeneste.virksomhet.person.v3.informasjon.Personidenter
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningResponse
+import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentPersonRequest
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
@@ -240,8 +243,9 @@ suspend fun blockingApplicationLogic(
                     val pasientFNR = pasientNorskIdent.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "NorskIdent" }!!.ident
 
                     val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
+                    val patientDiskresjonsKode = fetchDiskresjonsKode(personV3, pasientFNR)
                     val finnBehandlendeEnhetListeResponse =
-                        fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning)
+                        fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning, patientDiskresjonsKode)
 
                     createTask(
                         oppgaveClient,
@@ -345,25 +349,40 @@ suspend fun fetchGeografiskTilknytning(personV3: PersonV3, patientFnr: String): 
         )
     }
 
-suspend fun fetchBehandlendeEnhet(
-    arbeidsfordelingV1: ArbeidsfordelingV1,
-    geografiskTilknytning: GeografiskTilknytning?
-): FinnBehandlendeEnhetListeResponse? =
-    retry(
-        callName = "finn_nav_kontor",
-        retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
-        legalExceptions = *arrayOf(IOException::class, WstxException::class)
-    ) {
-        arbeidsfordelingV1.finnBehandlendeEnhetListe(FinnBehandlendeEnhetListeRequest().apply {
-            val afk = ArbeidsfordelingKriterier()
-            if (geografiskTilknytning?.geografiskTilknytning != null) {
-                afk.geografiskTilknytning = Geografi().apply {
-                    value = geografiskTilknytning.geografiskTilknytning
+suspend fun fetchBehandlendeEnhet(arbeidsfordelingV1: ArbeidsfordelingV1, geografiskTilknytning: GeografiskTilknytning?, patientDiskresjonsKode: String?): FinnBehandlendeEnhetListeResponse? =
+        retry(callName = "finn_nav_kontor",
+                retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
+                legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
+            arbeidsfordelingV1.finnBehandlendeEnhetListe(FinnBehandlendeEnhetListeRequest().apply {
+                val afk = ArbeidsfordelingKriterier()
+                if (geografiskTilknytning?.geografiskTilknytning != null) {
+                    afk.geografiskTilknytning = no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi().apply {
+                        value = geografiskTilknytning.geografiskTilknytning
+                    }
                 }
-            }
-            afk.tema = Tema().apply {
-                value = "SYM"
-            }
-            arbeidsfordelingKriterier = afk
-        })
-    }
+                afk.tema = Tema().apply {
+                    value = "SYM"
+                }
+
+                afk.oppgavetype = Oppgavetyper().apply {
+                    value = "BEH_EL_SYM"
+                }
+
+                if (!patientDiskresjonsKode.isNullOrBlank()) {
+                    afk.diskresjonskode = Diskresjonskoder().apply {
+                        value = patientDiskresjonsKode
+                    }
+                }
+
+                arbeidsfordelingKriterier = afk
+            })
+        }
+
+suspend fun fetchDiskresjonsKode(personV3: PersonV3, pasientFNR: String): String? =
+        retry(callName = "tps_hent_person",
+                retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
+                legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
+            personV3.hentPerson(HentPersonRequest()
+                    .withAktoer(PersonIdent().withIdent(NorskIdent().withIdent(pasientFNR)))
+            ).person?.diskresjonskode?.kodeverksRef
+        }
