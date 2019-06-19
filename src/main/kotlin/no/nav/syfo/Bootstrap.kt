@@ -292,13 +292,6 @@ suspend fun createTask(
     aktoerId: String,
     sykmeldingId: String
 ) {
-    log.info(
-        "Creating oppgave with {}, $logKeys",
-        keyValue("sakid", sakId),
-        keyValue("journalpost", journalpostId),
-        keyValue("tildeltEnhetsnr", tildeltEnhetsnr),
-        *logValues
-    )
     val opprettOppgave = OpprettOppgave(
         tildeltEnhetsnr = tildeltEnhetsnr,
         aktoerId = aktoerId,
@@ -321,6 +314,7 @@ suspend fun createTask(
         keyValue("oppgaveId", response.id),
         keyValue("sakid", sakId),
         keyValue("journalpost", journalpostId),
+        keyValue("tildeltEnhetsnr", tildeltEnhetsnr),
         *logValues
     )
 }
