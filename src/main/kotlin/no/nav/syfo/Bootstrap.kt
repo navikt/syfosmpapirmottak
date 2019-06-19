@@ -365,7 +365,7 @@ suspend fun fetchBehandlendeEnhet(arbeidsfordelingV1: ArbeidsfordelingV1, geogra
                 }
 
                 afk.oppgavetype = Oppgavetyper().apply {
-                    value = "BEH_EL_SYM"
+                    value = "JFR"
                 }
 
                 if (!patientDiskresjonsKode.isNullOrBlank()) {
