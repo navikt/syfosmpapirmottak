@@ -57,6 +57,7 @@ import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentPersonRequest
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
+import type.BrukerIdType
 import java.io.IOException
 import java.nio.file.Paths
 import java.time.Duration
@@ -222,28 +223,11 @@ suspend fun blockingApplicationLogic(
                         journalfoeringHendelseRecord.journalpostId.toString()
                     )!!
 
-                    val aktoerIdPasient = journalpost.bruker()!!.id()!!
+                    val aktoerIdPasient = findAktorid(journalpost, aktoerIdClient, sykmeldingId, credentials, logKeys, logValues, journalpostId)
+                    val fnrPasient = findFNR(journalpost, aktoerIdClient, sykmeldingId, credentials, logKeys, logValues, journalpostId)
 
-                    val pasientNorskIdentDeferred = async {
-                        aktoerIdClient.getFnr(
-                            listOf(aktoerIdPasient), sykmeldingId, credentials.serviceuserUsername
-                        )
-                    }.await()
-
-                    val pasientNorskIdent = pasientNorskIdentDeferred[aktoerIdPasient]
-
-                    if (pasientNorskIdent == null || pasientNorskIdent.feilmelding != null) {
-                        log.info(
-                            "Patient not found i aktorRegister $logKeys, {}", *logValues,
-                            keyValue("errorMessage", pasientNorskIdent?.feilmelding ?: "No response for FNR")
-                        )
-                        throw RuntimeException("Unable to handle message with id $journalpostId")
-                    }
-
-                    val pasientFNR = pasientNorskIdent.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "NorskIdent" }!!.ident
-
-                    val geografiskTilknytning = fetchGeografiskTilknytning(personV3, pasientFNR)
-                    val patientDiskresjonsKode = fetchDiskresjonsKode(personV3, pasientFNR)
+                    val geografiskTilknytning = fetchGeografiskTilknytning(personV3, fnrPasient)
+                    val patientDiskresjonsKode = fetchDiskresjonsKode(personV3, fnrPasient)
                     val finnBehandlendeEnhetListeResponse =
                         fetchBehandlendeEnhet(arbeidsfordelingV1, geografiskTilknytning.geografiskTilknytning, patientDiskresjonsKode)
 
@@ -377,3 +361,76 @@ suspend fun fetchDiskresjonsKode(personV3: PersonV3, pasientFNR: String): String
                     .withAktoer(PersonIdent().withIdent(NorskIdent().withIdent(pasientFNR)))
             ).person?.diskresjonskode?.kodeverksRef
         }
+
+@KtorExperimentalAPI
+suspend fun CoroutineScope.findAktorid(
+    journalpost: FindJournalpostQuery.Journalpost,
+    aktoerIdClient: AktoerIdClient,
+    sykmeldingId: String,
+    credentials: VaultCredentials,
+    logKeys: String,
+    logValues: Array<StructuredArgument>,
+    journalpostId: Long
+): String {
+
+    if (journalpost.bruker()?.type() != BrukerIdType.AKTOERID) {
+
+        val pasientFNR = journalpost.bruker()!!.id()!!
+
+        val pasientAktoerIdDeferred = async {
+            aktoerIdClient.getAktoerIds(
+                    listOf(pasientFNR), sykmeldingId, credentials.serviceuserUsername
+            )
+        }.await()
+
+        val pasientAktoerId = pasientAktoerIdDeferred[pasientFNR]
+
+        if (pasientAktoerId == null || pasientAktoerId.feilmelding != null) {
+            log.info(
+                    "Patient not found i aktorRegister $logKeys, {}", *logValues,
+                    keyValue("errorMessage", pasientAktoerId?.feilmelding ?: "No response for AKTORID")
+            )
+            throw RuntimeException("Unable to handle message with id $journalpostId")
+        }
+
+        return pasientAktoerId.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "AktoerId" }!!.ident
+    } else {
+        return journalpost.bruker()!!.id()!!
+    }
+}
+
+@KtorExperimentalAPI
+suspend fun CoroutineScope.findFNR(
+    journalpost: FindJournalpostQuery.Journalpost,
+    aktoerIdClient: AktoerIdClient,
+    sykmeldingId: String,
+    credentials: VaultCredentials,
+    logKeys: String,
+    logValues: Array<StructuredArgument>,
+    journalpostId: Long
+): String {
+
+    if (journalpost.bruker()?.type() != BrukerIdType.FNR) {
+        val aktoerIdPasient = journalpost.bruker()!!.id()!!
+
+        val pasientNorskIdentDeferred = async {
+            aktoerIdClient.getFnr(
+                    listOf(aktoerIdPasient), sykmeldingId, credentials.serviceuserUsername
+            )
+        }.await()
+
+        val pasientNorskIdent = pasientNorskIdentDeferred[aktoerIdPasient]
+
+        if (pasientNorskIdent == null || pasientNorskIdent.feilmelding != null) {
+            log.info(
+                    "Patient not found i aktorRegister $logKeys, {}", *logValues,
+                    keyValue("errorMessage", pasientNorskIdent?.feilmelding ?: "No response for FNR")
+            )
+            throw RuntimeException("Unable to handle message with id $journalpostId")
+        }
+
+        return pasientNorskIdent.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "NorskIdent" }!!.ident
+    } else {
+        return journalpost.bruker()!!.id()!!
+    }
+}

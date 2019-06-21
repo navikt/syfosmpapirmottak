@@ -26,7 +26,6 @@ class AktoerIdClient(
 
     suspend fun getFnr(personNumbers: List<String>, trackingId: String, username: String): Map<String, IdentInfoResult> =
             retry("get_fnr") {
-                // TODO: Remove this workaround whenever ktor issue #1009 is fixed
                 client.get<Map<String, IdentInfoResult>>("$endpointUrl/identer") {
                     accept(ContentType.Application.Json)
                     val oidcToken = stsClient.oidcToken()
@@ -38,6 +37,22 @@ class AktoerIdClient(
                     }
                     parameter("gjeldende", "true")
                     parameter("identgruppe", "NorskIdent")
+                }
+            }
+
+    suspend fun getAktoerIds(personNumbers: List<String>, trackingId: String, username: String): Map<String, IdentInfoResult> =
+            retry("get_aktoerids") {
+                client.get<Map<String, IdentInfoResult>>("$endpointUrl/identer") {
+                    accept(ContentType.Application.Json)
+                    val oidcToken = stsClient.oidcToken()
+                    headers {
+                        append("Authorization", "Bearer ${oidcToken.access_token}")
+                        append("Nav-Consumer-Id", username)
+                        append("Nav-Call-Id", trackingId)
+                        append("Nav-Personidenter", personNumbers.joinToString(","))
+                    }
+                    parameter("gjeldende", "true")
+                    parameter("identgruppe", "AktoerId")
                 }
             }
 }
