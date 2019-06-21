@@ -359,7 +359,7 @@ suspend fun fetchDiskresjonsKode(personV3: PersonV3, pasientFNR: String): String
                 legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
             personV3.hentPerson(HentPersonRequest()
                     .withAktoer(PersonIdent().withIdent(NorskIdent().withIdent(pasientFNR)))
-            ).person?.diskresjonskode?.kodeverksRef
+            ).person?.diskresjonskode?.value
         }
 
 @KtorExperimentalAPI
