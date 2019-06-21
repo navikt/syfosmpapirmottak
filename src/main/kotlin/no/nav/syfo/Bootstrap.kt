@@ -41,7 +41,6 @@ import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Oppgavetyper
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Tema
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeRequest
@@ -372,31 +371,30 @@ suspend fun CoroutineScope.findAktorid(
     logValues: Array<StructuredArgument>,
     journalpostId: Long
 ): String {
+        if (journalpost.bruker()?.type() != BrukerIdType.AKTOERID) {
 
-    if (journalpost.bruker()?.type() != BrukerIdType.AKTOERID) {
+            val pasientFNR = journalpost.bruker()!!.id()!!
 
-        val pasientFNR = journalpost.bruker()!!.id()!!
+            val pasientAktoerIdDeferred = async {
+                aktoerIdClient.getAktoerIds(
+                        listOf(pasientFNR), sykmeldingId, credentials.serviceuserUsername
+                )
+            }.await()
 
-        val pasientAktoerIdDeferred = async {
-            aktoerIdClient.getAktoerIds(
-                    listOf(pasientFNR), sykmeldingId, credentials.serviceuserUsername
-            )
-        }.await()
+            val pasientAktoerId = pasientAktoerIdDeferred[pasientFNR]
 
-        val pasientAktoerId = pasientAktoerIdDeferred[pasientFNR]
+            if (pasientAktoerId == null || pasientAktoerId.feilmelding != null) {
+                log.info(
+                        "Patient not found i aktorRegister $logKeys, {}", *logValues,
+                        keyValue("errorMessage", pasientAktoerId?.feilmelding ?: "No response for AKTORID")
+                )
+                throw RuntimeException("Unable to handle message with id $journalpostId")
+            }
 
-        if (pasientAktoerId == null || pasientAktoerId.feilmelding != null) {
-            log.info(
-                    "Patient not found i aktorRegister $logKeys, {}", *logValues,
-                    keyValue("errorMessage", pasientAktoerId?.feilmelding ?: "No response for AKTORID")
-            )
-            throw RuntimeException("Unable to handle message with id $journalpostId")
+            return pasientAktoerId.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "AktoerId" }!!.ident
+        } else {
+            return journalpost.bruker()!!.id()!!
         }
-
-        return pasientAktoerId.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "AktoerId" }!!.ident
-    } else {
-        return journalpost.bruker()!!.id()!!
-    }
 }
 
 @KtorExperimentalAPI
