@@ -28,15 +28,18 @@ import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.SafJournalpostClient
+import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
+import no.nav.syfo.metrics.CASE_CREATED_COUNTER
 import no.nav.syfo.metrics.INCOMING_MESSAGE_COUNTER
 import no.nav.syfo.metrics.OPPRETT_OPPGAVE_COUNTER
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.OpprettOppgave
+import no.nav.syfo.model.OpprettSakResponse
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
@@ -107,6 +110,7 @@ fun main() = runBlocking(coroutineContext) {
     val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
     val safJournalpostClient = SafJournalpostClient(env.safV1Url, oidcClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
+    val sakClient = SakClient(env.opprettSakUrl, oidcClient)
 
     val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
@@ -125,7 +129,8 @@ fun main() = runBlocking(coroutineContext) {
             arbeidsfordelingV1,
             aktoerIdClient,
             credentials,
-            oppgaveClient
+            oppgaveClient,
+            sakClient
     )
 
     Runtime.getRuntime().addShutdownHook(Thread {
@@ -152,7 +157,8 @@ fun CoroutineScope.launchListeners(
     arbeidsfordelingV1: ArbeidsfordelingV1,
     aktoerIdClient: AktoerIdClient,
     credentials: VaultCredentials,
-    oppgaveClient: OppgaveClient
+    oppgaveClient: OppgaveClient,
+    sakClient: SakClient
 ) {
     val journalfoeringHendelseListeners = 0.until(env.applicationThreads).map {
         val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
@@ -166,7 +172,7 @@ fun CoroutineScope.launchListeners(
 
             blockingApplicationLogic(
                     applicationState, kafkaconsumerJournalfoeringHendelse, safJournalpostClient,
-                    personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient
+                    personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient, sakClient
             )
         }
     }.toList()
@@ -184,7 +190,8 @@ suspend fun blockingApplicationLogic(
     arbeidsfordelingV1: ArbeidsfordelingV1,
     aktoerIdClient: AktoerIdClient,
     credentials: VaultCredentials,
-    oppgaveClient: OppgaveClient
+    oppgaveClient: OppgaveClient,
+    sakClient: SakClient
 ) = coroutineScope {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -201,6 +208,7 @@ suspend fun blockingApplicationLogic(
             try {
                 if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
                     journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"
+                    // TODO skal vi dobbelt sjekke at dette er ein ny hendelse???
                 ) {
                     INCOMING_MESSAGE_COUNTER.inc()
                     val requestLatency = REQUEST_TIME.startTimer()
@@ -234,11 +242,13 @@ suspend fun blockingApplicationLogic(
                         log.error("arbeidsfordeling fant ingen nav-enheter $logKeys", *logValues)
                     }
 
+                    val sakid = findSakid(sakClient, sykmeldingId, aktoerIdPasient, logKeys, logValues)
+
                     createTask(
                         oppgaveClient,
                         logKeys,
                         logValues,
-                        journalpost.sak()!!.arkivsaksnummer()!!,
+                        sakid,
                         journalfoeringHendelseRecord.journalpostId.toString(),
                         finnBehandlendeEnhetListeResponse?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: "0393",
                         aktoerIdPasient, sykmeldingId
@@ -432,3 +442,37 @@ suspend fun CoroutineScope.findFNR(
         return journalpost.bruker()!!.id()!!
     }
 }
+
+@KtorExperimentalAPI
+suspend fun CoroutineScope.findSakid(
+    sakClient: SakClient,
+    sykemeldingsId: String,
+    aktorId: String,
+    logKeys: String,
+    logValues: Array<StructuredArgument>
+): String {
+
+    val findSakResponseDeferred = async {
+        sakClient.findSak(aktorId, sykemeldingsId)
+    }
+
+    val findSakResponse = findSakResponseDeferred.await()
+
+    return if (findSakResponse != null && findSakResponse.isNotEmpty() && findSakResponse.sortedOpprettSakResponse().lastOrNull()?.id != null) {
+        log.info("Found a sak, {} $logKeys", findSakResponse.sortedOpprettSakResponse().last().id.toString(), *logValues)
+        findSakResponse.sortedOpprettSakResponse().last().id.toString()
+    } else {
+        val createSakResponseDeferred = async {
+            sakClient.createSak(aktorId, sykemeldingsId)
+        }
+        val createSakResponse = createSakResponseDeferred.await()
+
+        CASE_CREATED_COUNTER.inc()
+        log.info("Created a sak, {} $logKeys", createSakResponse.id.toString(), *logValues)
+
+        createSakResponse.id.toString()
+    }
+}
+
+fun List<OpprettSakResponse>.sortedOpprettSakResponse(): List<OpprettSakResponse> =
+        sortedBy { it.opprettetTidspunkt }

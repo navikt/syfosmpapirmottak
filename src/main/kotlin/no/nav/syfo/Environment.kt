@@ -14,7 +14,8 @@ data class Environment(
     val arbeidsfordelingV1EndpointURL: String = getEnvVar("ARBEIDSFORDELING_V1_ENDPOINT_URL"),
     val safV1Url: String = getEnvVar("SAFGRAPHQL_URL"),
     val aktoerregisterV1Url: String = getEnvVar("AKTORREGISTER_V1_URL"),
-    val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL", "http://oppgave/api/v1/oppgaver")
+    val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL", "http://oppgave/api/v1/oppgaver"),
+    val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL", "http://sak/api/v1/saker")
 ) : KafkaConfig
 
 data class VaultCredentials(
