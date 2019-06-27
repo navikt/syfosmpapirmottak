@@ -230,6 +230,8 @@ suspend fun blockingApplicationLogic(
                         journalfoeringHendelseRecord.journalpostId.toString()
                     )!!
 
+                    log.info("Svar far saf graphql om journalpost Bruker: ${journalpost.bruker()!!.id()!!}")
+
                     val aktoerIdPasient = findAktorid(journalpost, aktoerIdClient, sykmeldingId, credentials, logKeys, logValues, journalpostId)
                     val fnrPasient = findFNR(journalpost, aktoerIdClient, sykmeldingId, credentials, logKeys, logValues, journalpostId)
 
@@ -385,6 +387,7 @@ suspend fun CoroutineScope.findAktorid(
 
             val pasientFNR = journalpost.bruker()!!.id()!!
 
+            log.info("Calling aktoerIdClient on FNR")
             val pasientAktoerIdDeferred = async {
                 aktoerIdClient.getAktoerIds(
                         listOf(pasientFNR), sykmeldingId, credentials.serviceuserUsername
@@ -421,6 +424,7 @@ suspend fun CoroutineScope.findFNR(
     if (journalpost.bruker()?.type() != BrukerIdType.FNR) {
         val aktoerIdPasient = journalpost.bruker()!!.id()!!
 
+        log.info("Calling aktoerIdClient on AktorID")
         val pasientNorskIdentDeferred = async {
             aktoerIdClient.getFnr(
                     listOf(aktoerIdPasient), sykmeldingId, credentials.serviceuserUsername
