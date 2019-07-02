@@ -1,6 +1,5 @@
 package no.nav.syfo
 
-import com.ctc.wstx.exc.WstxException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -20,8 +19,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import net.logstash.logback.argument.StructuredArgument
-import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
@@ -29,40 +26,21 @@ import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.StsOidcClient
-import no.nav.syfo.helpers.retry
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
-import no.nav.syfo.metrics.REQUEST_TIME
-import no.nav.syfo.model.OppgaveResponse
-import no.nav.syfo.model.OpprettOppgave
+import no.nav.syfo.service.BehandlingService
+import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Oppgavetyper
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Tema
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeRequest
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
-import no.nav.tjeneste.virksomhet.person.v3.informasjon.GeografiskTilknytning
-import no.nav.tjeneste.virksomhet.person.v3.informasjon.NorskIdent
-import no.nav.tjeneste.virksomhet.person.v3.informasjon.PersonIdent
-import no.nav.tjeneste.virksomhet.person.v3.informasjon.Personidenter
-import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
-import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningResponse
-import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentPersonRequest
 import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import type.BrukerIdType
-import java.io.IOException
 import java.nio.file.Paths
 import java.time.Duration
-import java.time.LocalDate
-import java.util.Properties
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -119,17 +97,14 @@ fun main() = runBlocking(coroutineContext) {
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
     }
 
+    val oppgaveService = OppgaveService(oppgaveClient, personV3, arbeidsfordelingV1)
+    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService)
+
     launchListeners(
             env,
             applicationState,
             consumerProperties,
-            safJournalpostClient,
-            personV3,
-            arbeidsfordelingV1,
-            aktoerIdClient,
-            credentials,
-            oppgaveClient,
-            sakClient
+            behandlingService
     )
     applicationState.initialized = true
 
@@ -152,21 +127,14 @@ fun CoroutineScope.launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerProperties: Properties,
-    safJournalpostClient: SafJournalpostClient,
-    personV3: PersonV3,
-    arbeidsfordelingV1: ArbeidsfordelingV1,
-    aktoerIdClient: AktoerIdClient,
-    credentials: VaultCredentials,
-    oppgaveClient: OppgaveClient,
-    sakClient: SakClient
+    behandlingService: BehandlingService
 ) {
     val journalfoeringHendelseListeners = 0.until(env.applicationThreads).map {
         val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
         kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
         createListener(applicationState) {
-            blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse, safJournalpostClient,
-                    personV3, arbeidsfordelingV1, aktoerIdClient, credentials, oppgaveClient, sakClient)
+            blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse, behandlingService)
         }
     }.toList()
 
@@ -177,81 +145,13 @@ fun CoroutineScope.launchListeners(
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    safJournalpostClient: SafJournalpostClient,
-    personV3: PersonV3,
-    arbeidsfordelingV1: ArbeidsfordelingV1,
-    aktoerIdClient: AktoerIdClient,
-    credentials: VaultCredentials,
-    oppgaveClient: OppgaveClient,
-    sakClient: SakClient
+    behandlingService: BehandlingService
 ) = coroutineScope {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
 
-            var logValues = arrayOf(
-                keyValue("sykmeldingId", "Missing"),
-                keyValue("journalpostId", "Missing"),
-                keyValue("hendelsesId", "Missing")
-            )
-
-            val logKeys = logValues.joinToString(prefix = "(", postfix = ")", separator = ",") { "{}" }
-
-            try {
-                if (journalfoeringHendelseRecord.temaNytt.toString() == "SYM" &&
-                    journalfoeringHendelseRecord.mottaksKanal.toString() == "SKAN_NETS"
-                    // TODO skal vi dobbelt sjekke at dette er ein ny hendelse???
-                ) {
-                    val requestLatency = REQUEST_TIME.startTimer()
-
-                    val sykmeldingId = UUID.randomUUID().toString()
-                    val journalpostId = journalfoeringHendelseRecord.journalpostId.toString()
-                    val hendelsesId = journalfoeringHendelseRecord.hendelsesId
-
-                    logValues = arrayOf(
-                        keyValue("sykmeldingId", sykmeldingId),
-                        keyValue("journalpostId", journalpostId),
-                        keyValue("hendelsesId", hendelsesId)
-                    )
-
-                    log.info("Received papirsykmelding, $logKeys", *logValues)
-                    val journalpost = safJournalpostClient.getJournalpostMetadata(journalpostId)!!
-
-                    log.debug("Response from saf graphql $logKeys", *logValues)
-
-                    val aktoerIdPasient = findAktorid(journalpost, aktoerIdClient, sykmeldingId, credentials)
-                    val fnrPasient = findFNR(journalpost, aktoerIdClient, sykmeldingId, credentials)
-
-                    val geografiskTilknytning = fetchGeografiskTilknytning(personV3, fnrPasient)
-                    val patientDiskresjonsKode = fetchDiskresjonsKode(personV3, fnrPasient)
-                    val finnBehandlendeEnhetListeResponse = fetchBehandlendeEnhet(arbeidsfordelingV1,
-                            geografiskTilknytning.geografiskTilknytning, patientDiskresjonsKode)
-
-                    val behandlerEnhetsId = finnBehandlendeEnhetListeResponse?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: let {
-                        log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET $logKeys", *logValues)
-                        STANDARD_NAV_ENHET
-                    }
-
-                    val sakId = findSakid(sakClient, sykmeldingId, aktoerIdPasient, logKeys, logValues)
-
-                    val createTaskResponse = createTask(oppgaveClient, sakId, journalpostId, behandlerEnhetsId,
-                            aktoerIdPasient, sykmeldingId)
-
-                    log.info("Task created with {}, {}, {} $logKeys",
-                            keyValue("oppgaveId", createTaskResponse.id),
-                            keyValue("sakid", sakId),
-                            keyValue("tildeltEnhetsnr", behandlerEnhetsId),
-                            *logValues
-                    )
-
-                    val currentRequestLatency = requestLatency.observeDuration()
-
-                    log.info("Finished processing ($logKeys) {}s", *logValues, keyValue("latency", currentRequestLatency))
-                }
-            } catch (e: Exception) {
-                log.error("Exception caught while handling message $logKeys", *logValues, e)
-                throw e
-            }
+            behandlingService.handleJournalpost(journalfoeringHendelseRecord)
         }
         delay(100)
     }
@@ -262,159 +162,5 @@ inline fun <reified T> XMLEIFellesformat.get(): T = any.find { it is T } as T
 fun Application.initRouting(applicationState: ApplicationState) {
     routing {
         registerNaisApi(readynessCheck = ::doReadynessCheck, livenessCheck = { applicationState.running })
-    }
-}
-
-@KtorExperimentalAPI
-suspend fun createTask(
-    oppgaveClient: OppgaveClient,
-    sakId: String,
-    journalpostId: String,
-    tildeltEnhetsnr: String,
-    aktoerId: String,
-    sykmeldingId: String
-): OppgaveResponse {
-    val opprettOppgave = OpprettOppgave(
-        tildeltEnhetsnr = tildeltEnhetsnr,
-        aktoerId = aktoerId,
-        opprettetAvEnhetsnr = "9999",
-        journalpostId = journalpostId,
-        behandlesAvApplikasjon = "FS22",
-        saksreferanse = sakId,
-        beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
-        tema = "SYM",
-        oppgavetype = "JFR",
-        aktivDato = LocalDate.now(),
-        fristFerdigstillelse = LocalDate.now().plusDays(1),
-        prioritet = "NORM"
-    )
-
-    return oppgaveClient.createOppgave(opprettOppgave, sykmeldingId)
-}
-
-suspend fun fetchGeografiskTilknytning(personV3: PersonV3, patientFnr: String): HentGeografiskTilknytningResponse =
-    retry(
-        callName = "tps_hent_geografisktilknytning",
-        retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
-        legalExceptions = *arrayOf(IOException::class, WstxException::class)
-    ) {
-        personV3.hentGeografiskTilknytning(
-            HentGeografiskTilknytningRequest().withAktoer(
-                PersonIdent().withIdent(
-                    NorskIdent()
-                        .withIdent(patientFnr)
-                        .withType(Personidenter().withValue("FNR"))
-                )
-            )
-        )
-    }
-
-suspend fun fetchBehandlendeEnhet(arbeidsfordelingV1: ArbeidsfordelingV1, geografiskTilknytning: GeografiskTilknytning?, patientDiskresjonsKode: String?): FinnBehandlendeEnhetListeResponse? =
-        retry(callName = "finn_nav_kontor",
-                retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
-                legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
-            arbeidsfordelingV1.finnBehandlendeEnhetListe(FinnBehandlendeEnhetListeRequest().apply {
-                val afk = ArbeidsfordelingKriterier()
-                if (geografiskTilknytning?.geografiskTilknytning != null) {
-                    afk.geografiskTilknytning = no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi().apply {
-                        value = geografiskTilknytning.geografiskTilknytning
-                    }
-                }
-                afk.tema = Tema().apply {
-                    value = "SYM"
-                }
-
-                afk.oppgavetype = Oppgavetyper().apply {
-                    value = "JFR"
-                }
-
-                if (!patientDiskresjonsKode.isNullOrBlank()) {
-                    afk.diskresjonskode = Diskresjonskoder().apply {
-                        value = patientDiskresjonsKode
-                    }
-                }
-
-                arbeidsfordelingKriterier = afk
-            })
-        }
-
-suspend fun fetchDiskresjonsKode(personV3: PersonV3, pasientFNR: String): String? =
-        retry(callName = "tps_hent_person",
-                retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
-                legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
-            personV3.hentPerson(HentPersonRequest()
-                    .withAktoer(PersonIdent().withIdent(NorskIdent().withIdent(pasientFNR)))
-            ).person?.diskresjonskode?.value
-        }
-
-@KtorExperimentalAPI
-suspend fun findAktorid(
-    journalpost: FindJournalpostQuery.Journalpost,
-    aktoerIdClient: AktoerIdClient,
-    sykmeldingId: String,
-    credentials: VaultCredentials
-): String {
-    return if (journalpost.bruker()?.type() == BrukerIdType.AKTOERID) {
-        journalpost.bruker()!!.id()!!
-    } else {
-        val pasientFNR = journalpost.bruker()!!.id()!!
-
-        log.info("Calling aktoerIdClient on FNR")
-        val pasientAktoerId = aktoerIdClient
-                .getAktoerIds(listOf(pasientFNR), sykmeldingId, credentials.serviceuserUsername)[pasientFNR]
-
-        if (pasientAktoerId == null || pasientAktoerId.feilmelding != null) {
-            throw RuntimeException("Patient not found in aktoerRegister , error message:${pasientAktoerId?.feilmelding}")
-        }
-
-        pasientAktoerId.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "AktoerId" }!!.ident
-    }
-}
-
-@KtorExperimentalAPI
-suspend fun findFNR(
-    journalpost: FindJournalpostQuery.Journalpost,
-    aktoerIdClient: AktoerIdClient,
-    sykmeldingId: String,
-    credentials: VaultCredentials
-): String {
-
-    if (journalpost.bruker()?.type() != BrukerIdType.FNR) {
-        val aktoerIdPasient = journalpost.bruker()!!.id()!!
-
-        log.info("Calling aktoerIdClient on AktorID")
-        val pasientNorskIdent = aktoerIdClient
-                .getFnr(listOf(aktoerIdPasient), sykmeldingId, credentials.serviceuserUsername)[aktoerIdPasient]
-
-        if (pasientNorskIdent == null || pasientNorskIdent.feilmelding != null) {
-            throw RuntimeException("Patient not found in aktoerRegister , error message:${pasientNorskIdent?.feilmelding}")
-        }
-
-        return pasientNorskIdent.identer!!.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == "NorskIdent" }!!.ident
-    } else {
-        return journalpost.bruker()!!.id()!!
-    }
-}
-
-@KtorExperimentalAPI
-suspend fun findSakid(
-    sakClient: SakClient,
-    sykemeldingsId: String,
-    aktorId: String,
-    logKeys: String,
-    logValues: Array<StructuredArgument>
-): String {
-
-    val findSakResponse = sakClient.findSak(aktorId, sykemeldingsId)
-
-    val sakIdFromResponse = findSakResponse?.sortedBy { it.opprettetTidspunkt }?.lastOrNull()?.id?.toString()
-    return if (sakIdFromResponse == null) {
-        val createSakResponse = sakClient.createSak(aktorId, sykemeldingsId)
-        log.info("Created a sak, {} $logKeys", createSakResponse.id.toString(), *logValues)
-
-        createSakResponse.id.toString()
-    } else {
-        log.info("Found a sak, {} $logKeys", sakIdFromResponse, *logValues)
-        sakIdFromResponse
     }
 }
