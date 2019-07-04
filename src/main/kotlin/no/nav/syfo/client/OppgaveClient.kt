@@ -16,6 +16,7 @@ import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.model.OppgaveResponse
 import no.nav.syfo.model.OpprettOppgave
+import java.time.LocalDate
 
 @KtorExperimentalAPI
 class OppgaveClient constructor(val url: String, val oidcClient: StsOidcClient) {
@@ -38,5 +39,31 @@ class OppgaveClient constructor(val url: String, val oidcClient: StsOidcClient) 
             this.header("X-Correlation-ID", msgId)
             body = createOppgave
         }
+    }
+
+    suspend fun createOppgave(
+        oppgaveClient: OppgaveClient,
+        sakId: String,
+        journalpostId: String,
+        tildeltEnhetsnr: String,
+        aktoerId: String,
+        sykmeldingId: String
+    ): OppgaveResponse {
+        val opprettOppgave = OpprettOppgave(
+                tildeltEnhetsnr = tildeltEnhetsnr,
+                aktoerId = aktoerId,
+                opprettetAvEnhetsnr = "9999",
+                journalpostId = journalpostId,
+                behandlesAvApplikasjon = "FS22",
+                saksreferanse = sakId,
+                beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
+                tema = "SYM",
+                oppgavetype = "JFR",
+                aktivDato = LocalDate.now(),
+                fristFerdigstillelse = LocalDate.now().plusDays(1),
+                prioritet = "NORM"
+        )
+
+        return createOppgave(opprettOppgave, sykmeldingId)
     }
 }
