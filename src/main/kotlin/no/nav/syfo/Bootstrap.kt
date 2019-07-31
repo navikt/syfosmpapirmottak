@@ -19,6 +19,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.helse.eiFellesformat.XMLEIFellesformat
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
@@ -34,13 +35,12 @@ import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
-import no.trygdeetaten.xml.eiff._1.XMLEIFellesformat
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
 import java.time.Duration
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
