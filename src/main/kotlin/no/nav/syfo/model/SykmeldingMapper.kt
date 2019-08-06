@@ -1,5 +1,6 @@
 package no.nav.syfo.model
 
+import java.time.LocalDateTime
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
@@ -18,7 +19,6 @@ import no.nav.helse.sykSkanningMeta.TilbakedateringType
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.QuestionGroup
 import no.nav.syfo.QuestionId
-import java.time.LocalDateTime
 
 fun SykemeldingerType.toSykmelding(
     sykmeldingId: String,

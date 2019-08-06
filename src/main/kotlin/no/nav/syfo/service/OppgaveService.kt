@@ -2,14 +2,20 @@ package no.nav.syfo.service
 
 import com.ctc.wstx.exc.WstxException
 import io.ktor.util.KtorExperimentalAPI
-import net.logstash.logback.argument.StructuredArgument
+import java.io.IOException
+import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.LoggingMeta
 import no.nav.syfo.STANDARD_NAV_ENHET
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.model.OppgaveResponse
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.*
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Oppgavetyper
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Tema
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeRequest
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
@@ -20,9 +26,8 @@ import no.nav.tjeneste.virksomhet.person.v3.informasjon.Personidenter
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningResponse
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentPersonRequest
-import java.io.IOException
 
-class OppgaveService(
+class OppgaveService @KtorExperimentalAPI constructor(
     val oppgaveClient: OppgaveClient,
     val personV3: PersonV3,
     val arbeidsfordelingV1: ArbeidsfordelingV1
@@ -34,8 +39,7 @@ class OppgaveService(
         sakId: String,
         journalpostId: String,
         trackingId: String,
-        logKeys: String,
-        logValues: Array<StructuredArgument>
+        loggingMeta: LoggingMeta
     ): OppgaveResponse {
 
         val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient)
@@ -43,7 +47,7 @@ class OppgaveService(
         val enhetsListe = fetchBehandlendeEnhet(geografiskTilknytning.geografiskTilknytning, diskresjonsKode)
 
         val behandlerEnhetsId = enhetsListe?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
-            log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET $logKeys", *logValues)
+            log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
             STANDARD_NAV_ENHET
         }
         return oppgaveClient.createOppgave(oppgaveClient, sakId, journalpostId, behandlerEnhetsId,

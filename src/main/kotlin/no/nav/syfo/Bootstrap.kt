@@ -12,6 +12,12 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.prometheus.client.hotspot.DefaultExports
+import java.nio.file.Paths
+import java.time.Duration
+import java.util.Properties
+import java.util.UUID
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -19,6 +25,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import net.logstash.logback.argument.StructuredArguments
 import no.nav.helse.eiFellesformat.XMLEIFellesformat
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.registerNaisApi
@@ -38,11 +45,6 @@ import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.file.Paths
-import java.time.Duration
-import java.util.Properties
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 const val STANDARD_NAV_ENHET = "0393"
 
@@ -117,6 +119,8 @@ fun CoroutineScope.createListener(applicationState: ApplicationState, action: su
         launch {
             try {
                 action()
+            } catch (e: TrackableException) {
+                log.error("En uhåndtert feil oppstod, applikasjonen restarter {}", StructuredArguments.fields(e.loggingMeta), e.cause)
             } finally {
                 applicationState.running = false
             }
@@ -150,8 +154,14 @@ suspend fun blockingApplicationLogic(
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
+            val sykmeldingId = UUID.randomUUID().toString()
+            val loggingMeta = LoggingMeta(
+                    sykmeldingId = sykmeldingId,
+                    journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
+                    hendelsesId = journalfoeringHendelseRecord.hendelsesId
+            )
 
-            behandlingService.handleJournalpost(journalfoeringHendelseRecord)
+            behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta, sykmeldingId)
         }
         delay(100)
     }
