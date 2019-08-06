@@ -1,5 +1,7 @@
 package no.nav.syfo.mapping
 
+import java.time.LocalDate
+import java.util.UUID
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
@@ -28,8 +30,6 @@ import no.nav.syfo.model.toSykmelding
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.time.LocalDate
-import java.util.UUID
 
 object PapirSykemeldingToSM2013Spek : Spek({
 

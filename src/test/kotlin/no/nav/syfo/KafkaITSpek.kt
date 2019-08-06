@@ -1,5 +1,8 @@
 package no.nav.syfo
 
+import java.net.ServerSocket
+import java.time.Duration
+import java.util.Properties
 import no.nav.common.KafkaEnvironment
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
@@ -12,9 +15,6 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.net.ServerSocket
-import java.time.Duration
-import java.util.Properties
 
 object KafkaITSpek : Spek({
     val topic = "aapen-test-topic"
