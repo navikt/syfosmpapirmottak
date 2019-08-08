@@ -1,6 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
-import no.nils.wsdl2java.Wsdl2JavaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.syfo"
@@ -9,8 +8,8 @@ version = "1.0.27-SNAPSHOT"
 val apolloVersion = "1.0.0"
 val coroutinesVersion = "1.2.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
-val kafkaVersion = "2.0.0"
-val kafkaEmbeddedVersion = "2.1.1"
+val kafkaVersion = "2.3.0"
+val kafkaEmbeddedVersion = "2.2.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.39"
 val ktorVersion = "1.2.3"
