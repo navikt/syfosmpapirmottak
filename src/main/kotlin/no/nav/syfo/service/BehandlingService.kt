@@ -29,8 +29,8 @@ class BehandlingService constructor(
             val journalpostId = journalfoeringEvent.journalpostId.toString()
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
-                    journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS"
-            // TODO skal vi dobbelt sjekke at dette er ein ny hendelse???
+                    journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" &&
+                    journalfoeringEvent.hendelsesType == "MIDLERTIDIG_JOURNALFORT"
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 log.info("Received papirsykmelding, {}", fields(loggingMeta))
