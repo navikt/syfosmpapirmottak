@@ -48,7 +48,8 @@ fun SykemeldingerType.toSykmelding(
                 versjon = "1"
         ),
         syketilfelleStartDato = syketilfelleStartDato,
-        signaturDato = LocalDateTime.now()
+        signaturDato = LocalDateTime.now(),
+        navnFastlege = "Ukjent"
 )
 
 fun BehandlerType.toBehandler(aktoerId: String) = Behandler(
