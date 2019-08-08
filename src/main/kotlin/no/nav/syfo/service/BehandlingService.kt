@@ -39,16 +39,16 @@ class BehandlingService constructor(
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                val aktoerIdPasient = aktoerIdClient.findAktorid(journalpost, sykmeldingId)
-                val fnrPasient = aktoerIdClient.findFNR(journalpost, sykmeldingId)
+                val aktoerIdPasient = aktoerIdClient.finnAktorid(journalpost, sykmeldingId)
+                val fnrPasient = aktoerIdClient.finnFnr(journalpost, sykmeldingId)
 
-                val sakId = sakClient.findOrCreateSak(sykmeldingId, aktoerIdPasient, loggingMeta)
+                val sakId = sakClient.finnEllerOpprettSak(sykmeldingId, aktoerIdPasient, loggingMeta)
 
-                val createTaskResponse = oppgaveService.createOppgave(fnrPasient, aktoerIdPasient, sykmeldingId,
+                val oppgaveId = oppgaveService.createOppgave(fnrPasient, aktoerIdPasient, sykmeldingId,
                         journalpostId, sykmeldingId, loggingMeta)
 
                 log.info("Task created with {}, {} {}",
-                        StructuredArguments.keyValue("oppgaveId", createTaskResponse.id),
+                        StructuredArguments.keyValue("oppgaveId", oppgaveId),
                         StructuredArguments.keyValue("sakid", sakId),
                         fields(loggingMeta)
                 )

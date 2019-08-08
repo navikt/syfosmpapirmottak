@@ -9,7 +9,6 @@ import no.nav.syfo.STANDARD_NAV_ENHET
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
-import no.nav.syfo.model.OppgaveResponse
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
@@ -40,7 +39,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         journalpostId: String,
         trackingId: String,
         loggingMeta: LoggingMeta
-    ): OppgaveResponse {
+    ): Int {
 
         val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient)
         val diskresjonsKode = fetchDiskresjonsKode(fnrPasient)
@@ -50,7 +49,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
             log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
             STANDARD_NAV_ENHET
         }
-        return oppgaveClient.createOppgave(oppgaveClient, sakId, journalpostId, behandlerEnhetsId,
+        return oppgaveClient.opprettOppgave(sakId, journalpostId, behandlerEnhetsId,
                 aktoerIdPasient, trackingId)
     }
 

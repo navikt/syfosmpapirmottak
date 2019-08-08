@@ -43,7 +43,6 @@ plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
     kotlin("jvm") version "1.3.40"
-    id("org.jmailen.kotlinter") version "2.1.0"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
     id("com.apollographql.android") version "1.0.0"
@@ -98,7 +97,6 @@ dependencies {
     implementation ("no.nav.tjenestespesifikasjoner:person-v3-tjenestespesifikasjon:$navPersonv3Version")
     implementation ("no.nav.tjenestespesifikasjoner:arbeidsfordeling-v1-tjenestespesifikasjon:$navArbeidsfordelingv1Version")
 
-    implementation ("io.ktor:ktor-client-cio:$ktorVersion")
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")
     implementation ("io.ktor:ktor-client-auth-basic-jvm:$ktorVersion")
     implementation ("io.ktor:ktor-client-gson:$ktorVersion")

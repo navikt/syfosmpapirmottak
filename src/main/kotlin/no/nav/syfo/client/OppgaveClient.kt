@@ -15,8 +15,6 @@ import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
 import java.time.LocalDate
 import no.nav.syfo.helpers.retry
-import no.nav.syfo.model.OppgaveResponse
-import no.nav.syfo.model.OpprettOppgave
 
 @KtorExperimentalAPI
 class OppgaveClient constructor(val url: String, val oidcClient: StsOidcClient) {
@@ -31,25 +29,24 @@ class OppgaveClient constructor(val url: String, val oidcClient: StsOidcClient) 
         }
     }
 
-    suspend fun createOppgave(createOppgave: OpprettOppgave, msgId: String): OppgaveResponse = retry("create_oppgave") {
-        client.post<OppgaveResponse>(url) {
+    private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse = retry("opprett_oppgave") {
+        client.post<OpprettOppgaveResponse>(url) {
             contentType(ContentType.Application.Json)
             val oidcToken = oidcClient.oidcToken()
             this.header("Authorization", "Bearer ${oidcToken.access_token}")
             this.header("X-Correlation-ID", msgId)
-            body = createOppgave
+            body = opprettOppgaveRequest
         }
     }
 
-    suspend fun createOppgave(
-        oppgaveClient: OppgaveClient,
+    suspend fun opprettOppgave(
         sakId: String,
         journalpostId: String,
         tildeltEnhetsnr: String,
         aktoerId: String,
         sykmeldingId: String
-    ): OppgaveResponse {
-        val opprettOppgave = OpprettOppgave(
+    ): Int {
+        val opprettOppgaveRequest = OpprettOppgaveRequest(
                 tildeltEnhetsnr = tildeltEnhetsnr,
                 aktoerId = aktoerId,
                 opprettetAvEnhetsnr = "9999",
@@ -64,6 +61,26 @@ class OppgaveClient constructor(val url: String, val oidcClient: StsOidcClient) 
                 prioritet = "NORM"
         )
 
-        return createOppgave(opprettOppgave, sykmeldingId)
+        return opprettOppgave(opprettOppgaveRequest, sykmeldingId).id
     }
 }
+
+data class OpprettOppgaveRequest(
+    val tildeltEnhetsnr: String? = null,
+    val opprettetAvEnhetsnr: String? = null,
+    val aktoerId: String? = null,
+    val journalpostId: String? = null,
+    val behandlesAvApplikasjon: String? = null,
+    val saksreferanse: String? = null,
+    val tilordnetRessurs: String? = null,
+    val beskrivelse: String? = null,
+    val tema: String? = null,
+    val oppgavetype: String,
+    val aktivDato: LocalDate,
+    val fristFerdigstillelse: LocalDate? = null,
+    val prioritet: String
+)
+
+data class OpprettOppgaveResponse(
+    val id: Int
+)
