@@ -20,6 +20,9 @@ jobs:
       - run:
           name: Build jar file
           command: ./gradlew shadowJar -x test
+      - run:
+          name: Run tests
+          command: ./gradlew test
       - barkendeploy/skip-on-env-var:
           env_var: '"<< pipeline.parameters.deploy_branch >>"'
       - barkendeploy/gradle-cache-persist
