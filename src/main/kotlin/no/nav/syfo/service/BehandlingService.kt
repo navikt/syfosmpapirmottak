@@ -11,6 +11,7 @@ import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
+import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.wrapExceptions
 
@@ -34,6 +35,7 @@ class BehandlingService constructor(
                     journalfoeringEvent.hendelsesType == "MIDLERTIDIG_JOURNALFORT"
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
+                PAPIRSM_MOTTATT.inc()
                 log.info("Received papirsykmelding, {}", fields(loggingMeta))
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId)
                         ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
