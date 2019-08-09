@@ -10,6 +10,7 @@ data class Environment(
     override val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL"),
     val dokJournalfoeringV1Topic: String = getEnvVar("DOK_JOURNALFOERING_V1", "aapen-dok-journalfoering-v1-q1"),
     val personV3EndpointURL: String = getEnvVar("PERSON_V3_ENDPOINT_URL"),
+    val diskresjonskodeEndpointUrl: String = getEnvVar("DISKRESJONSKODE_ENDPOINT_URL"),
     val securityTokenServiceUrl: String = getEnvVar("SECURITY_TOKEN_SERVICE_URL"),
     val arbeidsfordelingV1EndpointURL: String = getEnvVar("ARBEIDSFORDELING_V1_ENDPOINT_URL"),
     val safV1Url: String = getEnvVar("SAFGRAPHQL_URL"),

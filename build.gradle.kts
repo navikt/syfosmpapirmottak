@@ -28,6 +28,7 @@ val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
 val navPersonv3Version = "1.2019.07.11-06.47-b55f47790a9d"
+val diskresjonskodeV1Version = "1.2019.07.11-06.47-b55f47790a9d"
 val navArbeidsfordelingv1Version = "1.2019.07.11-06.47-b55f47790a9d"
 val commonsTextVersion = "1.4"
 val cxfVersion = "3.2.7"
@@ -95,6 +96,7 @@ dependencies {
     implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
     implementation ("no.nav.syfo.schemas:syfosmoppgave-avro:$syfooppgaveSchemasVersion")
     implementation ("no.nav.tjenestespesifikasjoner:person-v3-tjenestespesifikasjon:$navPersonv3Version")
+    implementation ("no.nav.tjenestespesifikasjoner:diskresjonskodev1-tjenestespesifikasjon:$diskresjonskodeV1Version")
     implementation ("no.nav.tjenestespesifikasjoner:arbeidsfordeling-v1-tjenestespesifikasjon:$navArbeidsfordelingv1Version")
 
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")

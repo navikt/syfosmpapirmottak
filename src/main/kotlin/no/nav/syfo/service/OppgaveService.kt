@@ -2,19 +2,16 @@ package no.nav.syfo.service
 
 import com.ctc.wstx.exc.WstxException
 import io.ktor.util.KtorExperimentalAPI
-import java.io.IOException
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.STANDARD_NAV_ENHET
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
+import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
+import no.nav.tjeneste.pip.diskresjonskode.meldinger.WSHentDiskresjonskodeRequest
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Oppgavetyper
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Tema
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.*
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeRequest
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
@@ -24,11 +21,12 @@ import no.nav.tjeneste.virksomhet.person.v3.informasjon.PersonIdent
 import no.nav.tjeneste.virksomhet.person.v3.informasjon.Personidenter
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningResponse
-import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentPersonRequest
+import java.io.IOException
 
 class OppgaveService @KtorExperimentalAPI constructor(
     val oppgaveClient: OppgaveClient,
     val personV3: PersonV3,
+    val diskresjonskodeV1: DiskresjonskodePortType,
     val arbeidsfordelingV1: ArbeidsfordelingV1
 ) {
     @KtorExperimentalAPI
@@ -98,12 +96,18 @@ class OppgaveService @KtorExperimentalAPI constructor(
                 })
             }
 
-    suspend fun fetchDiskresjonsKode(pasientFNR: String): String? =
-            retry(callName = "tps_hent_person",
-                    retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
-                    legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
-                personV3.hentPerson(HentPersonRequest()
-                        .withAktoer(PersonIdent().withIdent(NorskIdent().withIdent(pasientFNR)))
-                ).person?.diskresjonskode?.value
+    suspend fun fetchDiskresjonsKode(pasientFNR: String): String? {
+        val diskresjonskodeSomTall: String? = retry(callName = "tps_diskresjonskode",
+            retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
+            legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
+            diskresjonskodeV1.hentDiskresjonskode(WSHentDiskresjonskodeRequest().withIdent(pasientFNR)).diskresjonskode
+        }
+        return diskresjonskodeSomTall?.let {
+            when (diskresjonskodeSomTall) {
+                "6" -> "SPSF"
+                "7" -> "SPFO"
+                else -> null
             }
+        }
+    }
 }
