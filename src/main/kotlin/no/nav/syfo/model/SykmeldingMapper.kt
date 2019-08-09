@@ -48,7 +48,8 @@ fun SykemeldingerType.toSykmelding(
                 versjon = "1"
         ),
         syketilfelleStartDato = syketilfelleStartDato,
-        signaturDato = LocalDateTime.now()
+        signaturDato = LocalDateTime.now(),
+        navnFastlege = "Ukjent"
 )
 
 fun BehandlerType.toBehandler(aktoerId: String) = Behandler(
@@ -81,10 +82,10 @@ fun MeldingTilNAVType.toMeldingTilNAV() = MeldingTilNAV(
 
 fun UtdypendeOpplysningerType.toMap() = mapOf(
         QuestionGroup.GROUP_6_2.spmGruppeId to mapOf(
-                QuestionId.ID_6_2_1.spmId to SporsmalSvar(sykehistorie, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)),
-                QuestionId.ID_6_2_2.spmId to SporsmalSvar(arbeidsevne, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)),
-                QuestionId.ID_6_2_3.spmId to SporsmalSvar(behandlingsresultat, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)),
-                QuestionId.ID_6_2_4.spmId to SporsmalSvar(planlagtBehandling, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
+                QuestionId.ID_6_2_1.spmId to SporsmalSvar(QuestionId.ID_6_2_1.spmTekst, sykehistorie, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)),
+                QuestionId.ID_6_2_2.spmId to SporsmalSvar(QuestionId.ID_6_2_2.spmTekst, arbeidsevne, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)),
+                QuestionId.ID_6_2_3.spmId to SporsmalSvar(QuestionId.ID_6_2_3.spmTekst, behandlingsresultat, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)),
+                QuestionId.ID_6_2_4.spmId to SporsmalSvar(QuestionId.ID_6_2_4.spmTekst, planlagtBehandling, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
         )
 )
 
