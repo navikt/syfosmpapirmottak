@@ -12,6 +12,8 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.log
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.wrapExceptions
+import type.BrukerIdType
+import java.lang.IllegalStateException
 
 @KtorExperimentalAPI
 class BehandlingService constructor(
@@ -35,12 +37,12 @@ class BehandlingService constructor(
                 val requestLatency = REQUEST_TIME.startTimer()
                 log.info("Received papirsykmelding, {}", fields(loggingMeta))
                 val journalpost = safJournalpostClient.getJournalpostMetadata(journalpostId)
-                        ?: error("Unable to find journalpost with id $journalpostId")
+                        ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                val aktoerIdPasient = aktoerIdClient.finnAktorid(journalpost, sykmeldingId)
-                val fnrPasient = aktoerIdClient.finnFnr(journalpost, sykmeldingId)
+                val aktoerIdPasient = hentAktoridFraJournalpost(journalpost, sykmeldingId)
+                val fnrPasient = hentFnrFraJournalpost(journalpost, sykmeldingId)
 
                 val sakId = sakClient.finnEllerOpprettSak(sykmeldingId, aktoerIdPasient, loggingMeta)
 
@@ -57,6 +59,32 @@ class BehandlingService constructor(
 
                 log.info("Finished processing took {}s, {}", StructuredArguments.keyValue("latency", currentRequestLatency), fields(loggingMeta))
             }
+        }
+    }
+
+    suspend fun hentAktoridFraJournalpost(
+        journalpost: FindJournalpostQuery.Journalpost,
+        sykmeldingId: String
+    ): String {
+        val bruker = journalpost.bruker() ?: throw IllegalStateException("Journalpost mangler en bruker")
+        val brukerId = bruker.id() ?: throw IllegalStateException("Journalpost mangler brukerid")
+        return if (bruker.type() == BrukerIdType.AKTOERID) {
+            brukerId
+        } else {
+            aktoerIdClient.finnAktorid(brukerId, sykmeldingId)
+        }
+    }
+
+    suspend fun hentFnrFraJournalpost(
+        journalpost: FindJournalpostQuery.Journalpost,
+        sykmeldingId: String
+    ): String {
+        val bruker = journalpost.bruker() ?: throw IllegalStateException("Journalpost mangler en bruker")
+        val brukerId = bruker.id() ?: throw IllegalStateException("Journalpost mangler brukerid")
+        return if (bruker.type() == BrukerIdType.FNR) {
+            brukerId
+        } else {
+            aktoerIdClient.finnFnr(brukerId, sykmeldingId)
         }
     }
 }

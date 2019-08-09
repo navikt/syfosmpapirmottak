@@ -16,7 +16,7 @@ import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
-import type.BrukerIdType
+import java.lang.IllegalStateException
 
 @KtorExperimentalAPI
 class AktoerIdClient(
@@ -63,34 +63,20 @@ class AktoerIdClient(
         }
 
         return aktor.identer?.find { ident -> ident.gjeldende && ident.identgruppe == identGruppe }?.ident
-                ?: error("Spoerringen til AktoerId returnerte ingen $identGruppe")
+                ?: throw IllegalStateException("Spoerringen til AktoerId returnerte ingen $identGruppe")
     }
 
     suspend fun finnAktorid(
-        journalpost: FindJournalpostQuery.Journalpost,
+        fnr: String,
         sykmeldingId: String
-    ): String {
-        val bruker = journalpost.bruker() ?: error("Journalpost mangler en bruker")
-        val brukerId = bruker.id() ?: error("Journalpost mangler brukerid")
-        return if (bruker.type() == BrukerIdType.AKTOERID) {
-            brukerId
-        } else {
-            hentIdent(brukerId, sykmeldingId, "AktoerId")
-        }
-    }
+    ): String =
+        hentIdent(fnr, sykmeldingId, "AktoerId")
 
     suspend fun finnFnr(
-        journalpost: FindJournalpostQuery.Journalpost,
+        aktorId: String,
         sykmeldingId: String
-    ): String {
-        val bruker = journalpost.bruker() ?: error("Journalpost mangler en bruker")
-        val brukerId = bruker.id() ?: error("Journalpost mangler brukerid")
-        return if (bruker.type() == BrukerIdType.FNR) {
-            brukerId
-        } else {
-            hentIdent(brukerId, sykmeldingId, "NorskIdent")
-        }
-    }
+    ): String =
+        hentIdent(aktorId, sykmeldingId, "NorskIdent")
 }
 
 data class Ident(
