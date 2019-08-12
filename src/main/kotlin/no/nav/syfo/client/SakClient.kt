@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.get
@@ -19,12 +19,11 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
-import no.nav.syfo.model.OpprettSak
-import no.nav.syfo.model.OpprettSakResponse
+import java.time.ZonedDateTime
 
 @KtorExperimentalAPI
 class SakClient constructor(val url: String, val oidcClient: StsOidcClient) {
-    private val client: HttpClient = HttpClient(CIO) {
+    private val client: HttpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer {
                 registerKotlinModule()
@@ -35,15 +34,15 @@ class SakClient constructor(val url: String, val oidcClient: StsOidcClient) {
         }
     }
 
-    suspend fun createSak(
+    private suspend fun opprettSak(
         pasientAktoerId: String,
         msgId: String
-    ): OpprettSakResponse = retry("sak_opprett") {
-        client.post<OpprettSakResponse>(url) {
+    ): SakResponse = retry("opprett_sak") {
+        client.post<SakResponse>(url) {
             contentType(ContentType.Application.Json)
             header("X-Correlation-ID", msgId)
             header("Authorization", "Bearer ${oidcClient.oidcToken().access_token}")
-            body = OpprettSak(
+            body = OpprettSakRequest(
                     tema = "SYM",
                     applikasjon = "FS22",
                     aktoerId = pasientAktoerId,
@@ -53,11 +52,11 @@ class SakClient constructor(val url: String, val oidcClient: StsOidcClient) {
         }
     }
 
-    suspend fun findSak(
+    private suspend fun finnSak(
         pasientAktoerId: String,
         msgId: String
-    ): List<OpprettSakResponse>? = retry("finn_sak") {
-        client.get<List<OpprettSakResponse>?>(url) {
+    ): List<SakResponse>? = retry("finn_sak") {
+        client.get<List<SakResponse>?>(url) {
             contentType(ContentType.Application.Json)
             header("X-Correlation-ID", msgId)
             header("Authorization", "Bearer ${oidcClient.oidcToken().access_token}")
@@ -67,22 +66,41 @@ class SakClient constructor(val url: String, val oidcClient: StsOidcClient) {
         }
     }
 
-    suspend fun findOrCreateSak(
+    suspend fun finnEllerOpprettSak(
         sykemeldingsId: String,
         aktorId: String,
         loggingMeta: LoggingMeta
     ): String {
-        val findSakResponse = findSak(aktorId, sykemeldingsId)
+        val finnSakRespons = finnSak(aktorId, sykemeldingsId)
 
-        val sakIdFromResponse = findSakResponse?.sortedBy { it.opprettetTidspunkt }?.lastOrNull()?.id?.toString()
-        return if (sakIdFromResponse == null) {
-            val createSakResponse = createSak(aktorId, sykemeldingsId)
-            log.info("Opprettet en sak med sakid {}, {}", createSakResponse.id.toString(), fields(loggingMeta))
+        val sakIdFraRespons = finnSakRespons?.sortedBy { it.opprettetTidspunkt }?.lastOrNull()?.id?.toString()
+        return if (sakIdFraRespons == null) {
+            val opprettSakRespons = opprettSak(aktorId, sykemeldingsId)
+            log.info("Opprettet en sak med sakid {}, {}", opprettSakRespons.id.toString(), fields(loggingMeta))
 
-            createSakResponse.id.toString()
+            opprettSakRespons.id.toString()
         } else {
-            log.info("Fant en sak med sakid {}, {}", sakIdFromResponse, fields(loggingMeta))
-            sakIdFromResponse
+            log.info("Fant en sak med sakid {}, {}", sakIdFraRespons, fields(loggingMeta))
+            sakIdFraRespons
         }
     }
 }
+
+data class OpprettSakRequest(
+    val tema: String,
+    val applikasjon: String,
+    val aktoerId: String,
+    val orgnr: String?,
+    val fagsakNr: String?
+)
+
+data class SakResponse(
+    val id: Long,
+    val tema: String,
+    val aktoerId: String,
+    val orgnr: String?,
+    val fagsakNr: String?,
+    val applikasjon: String,
+    val opprettetAv: String,
+    val opprettetTidspunkt: ZonedDateTime
+)

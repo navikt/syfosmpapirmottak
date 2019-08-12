@@ -7,6 +7,8 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
 import io.ktor.util.KtorExperimentalAPI
+import no.nav.syfo.domain.Bruker
+import no.nav.syfo.domain.JournalpostMetadata
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -32,14 +34,26 @@ class SafJournalpostClient(endpointUrl: String, private val stsClient: StsOidcCl
 
     suspend fun getJournalpostMetadata(
         journalpostId: String
-    ): FindJournalpostQuery.Journalpost? = apolloClient.query(FindJournalpostQuery.builder()
+    ): JournalpostMetadata? {
+        val journalpost = apolloClient.query(FindJournalpostQuery.builder()
             .id(journalpostId)
             .build())
             .requestHeaders(RequestHeaders.builder()
-                    .addHeader("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
-                    .addHeader("X-Correlation-ID", journalpostId)
-                    .build())
+                .addHeader("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
+                .addHeader("X-Correlation-ID", journalpostId)
+                .build())
             .execute()
             .data()
             ?.journalpost()
+        return journalpost?.let {
+            it.bruker()?.let { bruker ->
+                JournalpostMetadata(
+                    Bruker(
+                        bruker.id() ?: throw IllegalStateException("Journalpost mangler brukerid"),
+                        bruker.type()?.name ?: throw IllegalStateException("Journalpost mangler brukertype")
+                    )
+                )
+            } ?: throw IllegalStateException("Journalpost mangler brukerobjekt")
+        }
+    }
 }

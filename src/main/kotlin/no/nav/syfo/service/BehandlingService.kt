@@ -9,7 +9,9 @@ import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
+import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
+import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.wrapExceptions
 
@@ -29,26 +31,27 @@ class BehandlingService constructor(
             val journalpostId = journalfoeringEvent.journalpostId.toString()
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
-                    journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS"
-            // TODO skal vi dobbelt sjekke at dette er ein ny hendelse???
+                    journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" &&
+                    journalfoeringEvent.hendelsesType == "MidlertidigJournalført"
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
-                log.info("Received papirsykmelding, {}", fields(loggingMeta))
-                val journalpost = safJournalpostClient.getJournalpostMetadata(journalpostId)
-                        ?: error("Unable to find journalpost with id $journalpostId")
+                PAPIRSM_MOTTATT.inc()
+                log.info("Mottatt papirsykmelding, {}", fields(loggingMeta))
+                val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId)
+                        ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                val aktoerIdPasient = aktoerIdClient.findAktorid(journalpost, sykmeldingId)
-                val fnrPasient = aktoerIdClient.findFNR(journalpost, sykmeldingId)
+                val aktoerIdPasient = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
+                val fnrPasient = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
 
-                val sakId = sakClient.findOrCreateSak(sykmeldingId, aktoerIdPasient, loggingMeta)
+                val sakId = sakClient.finnEllerOpprettSak(sykmeldingId, aktoerIdPasient, loggingMeta)
 
-                val createTaskResponse = oppgaveService.createOppgave(fnrPasient, aktoerIdPasient, sykmeldingId,
+                val oppgaveId = oppgaveService.createOppgave(fnrPasient, aktoerIdPasient, sykmeldingId,
                         journalpostId, sykmeldingId, loggingMeta)
 
-                log.info("Task created with {}, {} {}",
-                        StructuredArguments.keyValue("oppgaveId", createTaskResponse.id),
+                log.info("Opprettet oppgave med {}, {} {}",
+                        StructuredArguments.keyValue("oppgaveId", oppgaveId),
                         StructuredArguments.keyValue("sakid", sakId),
                         fields(loggingMeta)
                 )
@@ -57,6 +60,32 @@ class BehandlingService constructor(
 
                 log.info("Finished processing took {}s, {}", StructuredArguments.keyValue("latency", currentRequestLatency), fields(loggingMeta))
             }
+        }
+    }
+
+    suspend fun hentAktoridFraJournalpost(
+        journalpost: JournalpostMetadata,
+        sykmeldingId: String
+    ): String {
+        val bruker = journalpost.bruker
+        val brukerId = bruker.id
+        return if (bruker.type == "AKTOERID") {
+            brukerId
+        } else {
+            aktoerIdClient.finnAktorid(brukerId, sykmeldingId)
+        }
+    }
+
+    suspend fun hentFnrFraJournalpost(
+        journalpost: JournalpostMetadata,
+        sykmeldingId: String
+    ): String {
+        val bruker = journalpost.bruker
+        val brukerId = bruker.id
+        return if (bruker.type == "FNR") {
+            brukerId
+        } else {
+            aktoerIdClient.finnFnr(brukerId, sykmeldingId)
         }
     }
 }

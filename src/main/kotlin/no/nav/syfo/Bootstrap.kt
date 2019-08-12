@@ -40,6 +40,7 @@ import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.ws.createPort
+import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -99,7 +100,11 @@ fun main() = runBlocking(coroutineContext) {
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
     }
 
-    val oppgaveService = OppgaveService(oppgaveClient, personV3, arbeidsfordelingV1)
+    val diskresjonskodeV1 = createPort<DiskresjonskodePortType>(env.diskresjonskodeEndpointUrl) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
+    val oppgaveService = OppgaveService(oppgaveClient, personV3, diskresjonskodeV1, arbeidsfordelingV1)
     val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService)
 
     launchListeners(

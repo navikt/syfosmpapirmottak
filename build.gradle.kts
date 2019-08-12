@@ -1,6 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
-import no.nils.wsdl2java.Wsdl2JavaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.syfo"
@@ -9,8 +8,8 @@ version = "1.0.27-SNAPSHOT"
 val apolloVersion = "1.0.0"
 val coroutinesVersion = "1.2.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
-val kafkaVersion = "2.0.0"
-val kafkaEmbeddedVersion = "2.1.1"
+val kafkaVersion = "2.3.0"
+val kafkaEmbeddedVersion = "2.2.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.39"
 val ktorVersion = "1.2.3"
@@ -29,6 +28,7 @@ val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
 val navPersonv3Version = "1.2019.07.11-06.47-b55f47790a9d"
+val diskresjonskodeV1Version = "1.2019.07.11-06.47-b55f47790a9d"
 val navArbeidsfordelingv1Version = "1.2019.07.11-06.47-b55f47790a9d"
 val commonsTextVersion = "1.4"
 val cxfVersion = "3.2.7"
@@ -44,7 +44,6 @@ plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
     kotlin("jvm") version "1.3.40"
-    id("org.jmailen.kotlinter") version "2.1.0"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
     id("com.apollographql.android") version "1.0.0"
@@ -97,6 +96,7 @@ dependencies {
     implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
     implementation ("no.nav.syfo.schemas:syfosmoppgave-avro:$syfooppgaveSchemasVersion")
     implementation ("no.nav.tjenestespesifikasjoner:person-v3-tjenestespesifikasjon:$navPersonv3Version")
+    implementation ("no.nav.tjenestespesifikasjoner:diskresjonskodev1-tjenestespesifikasjon:$diskresjonskodeV1Version")
     implementation ("no.nav.tjenestespesifikasjoner:arbeidsfordeling-v1-tjenestespesifikasjon:$navArbeidsfordelingv1Version")
 
     implementation ("io.ktor:ktor-client-cio:$ktorVersion")

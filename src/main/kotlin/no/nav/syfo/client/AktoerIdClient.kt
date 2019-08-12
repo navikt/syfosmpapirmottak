@@ -1,5 +1,9 @@
 package no.nav.syfo.client
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.json.JacksonSerializer
@@ -12,8 +16,7 @@ import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
-import no.nav.syfo.model.IdentInfoResult
-import type.BrukerIdType
+import java.lang.IllegalStateException
 
 @KtorExperimentalAPI
 class AktoerIdClient(
@@ -22,65 +25,67 @@ class AktoerIdClient(
 ) {
     private val client = HttpClient(Apache) {
         install(JsonFeature) {
-            serializer = JacksonSerializer()
+            serializer = JacksonSerializer() {
+                registerKotlinModule()
+                registerModule(JavaTimeModule())
+                configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
         }
     }
 
-    suspend fun fetchIdenter(personNumbers: List<String>, trackingId: String, identGruppe: String): Map<String, IdentInfoResult> =
-            retry("get_aktoerids") {
-                client.get<Map<String, IdentInfoResult>>("$endpointUrl/identer") {
+    private suspend fun hentIdent(sokeIdent: List<String>, callId: String, identGruppe: String): Map<String, Aktor> =
+            retry("hent_identer") {
+                client.get<Map<String, Aktor>>("$endpointUrl/identer") {
                     accept(ContentType.Application.Json)
                     val oidcToken = stsClient.oidcToken()
                     headers {
                         append("Authorization", "Bearer ${oidcToken.access_token}")
                         append("Nav-Consumer-Id", "syfosmsak")
-                        append("Nav-Call-Id", trackingId)
-                        append("Nav-Personidenter", personNumbers.joinToString(","))
+                        append("Nav-Call-Id", callId)
+                        append("Nav-Personidenter", sokeIdent.joinToString(","))
                     }
                     parameter("gjeldende", "true")
                     parameter("identgruppe", identGruppe)
                 }
             }
 
-    suspend fun findIdentOfType(
+    private suspend fun hentIdent(
         brukerId: String,
         sykmeldingId: String,
         identGruppe: String
     ): String {
         log.info("Kaller AktoerId for aa hente en $identGruppe")
-        val pasientAktoerId = fetchIdenter(listOf(brukerId), sykmeldingId, identGruppe)[brukerId]
+        val aktor = hentIdent(listOf(brukerId), sykmeldingId, identGruppe)[brukerId]
 
-        if (pasientAktoerId == null || pasientAktoerId.feilmelding != null) {
-            throw RuntimeException("Pasient ikke funnet i $identGruppe, feilmelding: ${pasientAktoerId?.feilmelding}")
+        if (aktor == null || aktor.feilmelding != null) {
+            throw RuntimeException("Pasient ikke funnet i $identGruppe, feilmelding: ${aktor?.feilmelding}")
         }
 
-        return pasientAktoerId.identer?.find { identInfo -> identInfo.gjeldende && identInfo.identgruppe == identGruppe }?.ident
-                ?: error("Spoerringen til AktoerId returnerte ingen $identGruppe")
+        return aktor.identer?.find { ident -> ident.gjeldende && ident.identgruppe == identGruppe }?.ident
+                ?: throw IllegalStateException("Spoerringen til AktoerId returnerte ingen $identGruppe")
     }
 
-    suspend fun findAktorid(
-        journalpost: FindJournalpostQuery.Journalpost,
+    suspend fun finnAktorid(
+        fnr: String,
         sykmeldingId: String
-    ): String {
-        val bruker = journalpost.bruker() ?: error("Journalpost mangler en bruker")
-        val brukerId = bruker.id() ?: error("Journalpost mangler brukerid")
-        return if (bruker.type() == BrukerIdType.AKTOERID) {
-            brukerId
-        } else {
-            findIdentOfType(brukerId, sykmeldingId, "AktoerId")
-        }
-    }
+    ): String =
+        hentIdent(fnr, sykmeldingId, "AktoerId")
 
-    suspend fun findFNR(
-        journalpost: FindJournalpostQuery.Journalpost,
+    suspend fun finnFnr(
+        aktorId: String,
         sykmeldingId: String
-    ): String {
-        val bruker = journalpost.bruker() ?: error("Journalpost mangler en bruker")
-        val brukerId = bruker.id() ?: error("Journalpost mangler brukerid")
-        return if (bruker.type() == BrukerIdType.FNR) {
-            brukerId
-        } else {
-            findIdentOfType(brukerId, sykmeldingId, "NorskIdent")
-        }
-    }
+    ): String =
+        hentIdent(aktorId, sykmeldingId, "NorskIdent")
 }
+
+data class Ident(
+    val ident: String,
+    val identgruppe: String,
+    val gjeldende: Boolean
+)
+
+data class Aktor(
+    val identer: List<Ident>? = null,
+    val feilmelding: String? = null
+)
