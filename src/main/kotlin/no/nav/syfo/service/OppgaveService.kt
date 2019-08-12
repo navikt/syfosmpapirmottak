@@ -39,6 +39,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         loggingMeta: LoggingMeta
     ): Int {
 
+        log.info("Oppretter oppgave for {}", fields(loggingMeta))
         val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient)
         val diskresjonsKode = fetchDiskresjonsKode(fnrPasient)
         val enhetsListe = fetchBehandlendeEnhet(geografiskTilknytning.geografiskTilknytning, diskresjonsKode)
