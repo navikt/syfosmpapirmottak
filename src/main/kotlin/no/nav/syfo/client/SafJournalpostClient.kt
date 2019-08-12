@@ -46,12 +46,14 @@ class SafJournalpostClient(endpointUrl: String, private val stsClient: StsOidcCl
             .data()
             ?.journalpost()
         return journalpost?.let {
-            JournalpostMetadata(
-                Bruker(
-                    it.bruker()?.id(),
-                    it.bruker()?.type()?.name
+            it.bruker()?.let { bruker ->
+                JournalpostMetadata(
+                    Bruker(
+                        bruker.id() ?: throw IllegalStateException("Journalpost mangler brukerid"),
+                        bruker.type()?.name ?: throw IllegalStateException("Journalpost mangler brukertype")
+                    )
                 )
-            )
+            } ?: throw IllegalStateException("Journalpost mangler brukerobjekt")
         }
     }
 }

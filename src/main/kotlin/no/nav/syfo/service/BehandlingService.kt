@@ -67,8 +67,8 @@ class BehandlingService constructor(
         journalpost: JournalpostMetadata,
         sykmeldingId: String
     ): String {
-        val bruker = journalpost.bruker ?: throw IllegalStateException("Journalpost mangler en bruker")
-        val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid")
+        val bruker = journalpost.bruker
+        val brukerId = bruker.id
         return if (bruker.type == "AKTOERID") {
             brukerId
         } else {
@@ -80,8 +80,8 @@ class BehandlingService constructor(
         journalpost: JournalpostMetadata,
         sykmeldingId: String
     ): String {
-        val bruker = journalpost.bruker ?: throw IllegalStateException("Journalpost mangler en bruker")
-        val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid")
+        val bruker = journalpost.bruker
+        val brukerId = bruker.id
         return if (bruker.type == "FNR") {
             brukerId
         } else {
