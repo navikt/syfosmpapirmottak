@@ -26,12 +26,7 @@ suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { c
 }
 
 @KtorExperimentalAPI
-class SafJournalpostClient(endpointUrl: String, private val stsClient: StsOidcClient) {
-
-    private val apolloClient: ApolloClient = ApolloClient.builder()
-            .serverUrl(endpointUrl)
-            .build()
-
+class SafJournalpostClient(private val apolloClient: ApolloClient, private val stsClient: StsOidcClient) {
     suspend fun getJournalpostMetadata(
         journalpostId: String
     ): JournalpostMetadata? {

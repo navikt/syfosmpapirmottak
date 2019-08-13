@@ -1,13 +1,6 @@
 package no.nav.syfo.client
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
-import io.ktor.client.features.json.JacksonSerializer
-import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -22,23 +15,12 @@ import no.nav.syfo.log
 import java.time.ZonedDateTime
 
 @KtorExperimentalAPI
-class SakClient constructor(val url: String, val oidcClient: StsOidcClient) {
-    private val client: HttpClient = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer {
-                registerKotlinModule()
-                registerModule(JavaTimeModule())
-                configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            }
-        }
-    }
-
+class SakClient constructor(private val url: String, private val oidcClient: StsOidcClient, private val httpClient: HttpClient) {
     private suspend fun opprettSak(
         pasientAktoerId: String,
         msgId: String
     ): SakResponse = retry("opprett_sak") {
-        client.post<SakResponse>(url) {
+        httpClient.post<SakResponse>(url) {
             contentType(ContentType.Application.Json)
             header("X-Correlation-ID", msgId)
             header("Authorization", "Bearer ${oidcClient.oidcToken().access_token}")
@@ -56,7 +38,7 @@ class SakClient constructor(val url: String, val oidcClient: StsOidcClient) {
         pasientAktoerId: String,
         msgId: String
     ): List<SakResponse>? = retry("finn_sak") {
-        client.get<List<SakResponse>?>(url) {
+        httpClient.get<List<SakResponse>?>(url) {
             contentType(ContentType.Application.Json)
             header("X-Correlation-ID", msgId)
             header("Authorization", "Bearer ${oidcClient.oidcToken().access_token}")

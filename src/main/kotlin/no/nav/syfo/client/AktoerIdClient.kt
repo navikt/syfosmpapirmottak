@@ -1,13 +1,6 @@
 package no.nav.syfo.client
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
-import io.ktor.client.features.json.JacksonSerializer
-import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
@@ -16,27 +9,16 @@ import io.ktor.http.ContentType
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
-import java.lang.IllegalStateException
 
 @KtorExperimentalAPI
 class AktoerIdClient(
     private val endpointUrl: String,
-    private val stsClient: StsOidcClient
+    private val stsClient: StsOidcClient,
+    private val httpClient: HttpClient
 ) {
-    private val client = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer() {
-                registerKotlinModule()
-                registerModule(JavaTimeModule())
-                configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            }
-        }
-    }
-
     private suspend fun hentIdent(sokeIdent: List<String>, callId: String, identGruppe: String): Map<String, Aktor> =
             retry("hent_identer") {
-                client.get<Map<String, Aktor>>("$endpointUrl/identer") {
+                httpClient.get<Map<String, Aktor>>("$endpointUrl/identer") {
                     accept(ContentType.Application.Json)
                     val oidcToken = stsClient.oidcToken()
                     headers {

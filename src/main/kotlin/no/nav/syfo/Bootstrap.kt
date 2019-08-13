@@ -1,12 +1,18 @@
 package no.nav.syfo
 
+import com.apollographql.apollo.ApolloClient
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.ktor.application.Application
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.apache.Apache
+import io.ktor.client.features.json.JacksonSerializer
+import io.ktor.client.features.json.JsonFeature
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -87,10 +93,23 @@ fun main() = runBlocking(coroutineContext) {
     )
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
-    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient)
-    val safJournalpostClient = SafJournalpostClient(env.safV1Url, oidcClient)
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient)
-    val sakClient = SakClient(env.opprettSakUrl, oidcClient)
+    val httpClient = HttpClient(Apache) {
+        install(JsonFeature) {
+            serializer = JacksonSerializer {
+                registerKotlinModule()
+                registerModule(JavaTimeModule())
+                configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
+        }
+    }
+    val apolloClient: ApolloClient = ApolloClient.builder()
+        .serverUrl(env.safV1Url)
+        .build()
+    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient, httpClient)
+    val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
+    val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
 
     val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
