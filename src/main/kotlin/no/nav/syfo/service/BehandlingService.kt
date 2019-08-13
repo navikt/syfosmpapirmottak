@@ -12,6 +12,7 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
+import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.wrapExceptions
 
@@ -55,6 +56,7 @@ class BehandlingService constructor(
                         StructuredArguments.keyValue("sakid", sakId),
                         fields(loggingMeta)
                 )
+                PAPIRSM_OPPGAVE.inc()
 
                 val currentRequestLatency = requestLatency.observeDuration()
 
