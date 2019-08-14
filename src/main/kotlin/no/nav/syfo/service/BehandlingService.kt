@@ -46,10 +46,10 @@ class BehandlingService constructor(
                 val aktoerIdPasient = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
                 val fnrPasient = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
 
-                val sakId = sakClient.finnEllerOpprettSak(sykmeldingId, aktoerIdPasient, loggingMeta)
+                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktoerIdPasient, loggingMeta = loggingMeta)
 
-                val oppgaveId = oppgaveService.createOppgave(fnrPasient, aktoerIdPasient, sykmeldingId,
-                        journalpostId, sykmeldingId, loggingMeta)
+                val oppgaveId = oppgaveService.createOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
+                        journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
                 log.info("Opprettet oppgave med {}, {} {}",
                         StructuredArguments.keyValue("oppgaveId", oppgaveId),
