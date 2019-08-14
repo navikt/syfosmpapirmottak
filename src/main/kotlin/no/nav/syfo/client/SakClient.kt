@@ -49,15 +49,15 @@ class SakClient constructor(private val url: String, private val oidcClient: Sts
     }
 
     suspend fun finnEllerOpprettSak(
-        sykemeldingsId: String,
+        sykmeldingsId: String,
         aktorId: String,
         loggingMeta: LoggingMeta
     ): String {
-        val finnSakRespons = finnSak(aktorId, sykemeldingsId)
+        val finnSakRespons = finnSak(aktorId, sykmeldingsId)
 
         val sakIdFraRespons = finnSakRespons?.sortedBy { it.opprettetTidspunkt }?.lastOrNull()?.id?.toString()
         return if (sakIdFraRespons == null) {
-            val opprettSakRespons = opprettSak(aktorId, sykemeldingsId)
+            val opprettSakRespons = opprettSak(aktorId, sykmeldingsId)
             log.info("Opprettet en sak med sakid {}, {}", opprettSakRespons.id.toString(), fields(loggingMeta))
 
             opprettSakRespons.id.toString()
