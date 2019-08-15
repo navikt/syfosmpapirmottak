@@ -21,22 +21,20 @@ object BehandlingServiceSpek : Spek ({
     val loggingMetadata = LoggingMeta(sykmeldingId,"123", "hendelsesId")
 
     val aktoerIdClientMock = mockk<AktoerIdClient>()
-    coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns "aktorId"
-    coEvery { aktoerIdClientMock.finnFnr(any(), any()) } returns "fnr"
-
     val oppgaveserviceMock = mockk<OppgaveService>()
-    coEvery { oppgaveserviceMock.createOppgave(any(), any(), any(), any(), any(), any()) } returns 1000
-
     val sakClientMock = mockk<SakClient>()
-    coEvery{ sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
-
     val safJournalpostClientMock = mockk<SafJournalpostClient>()
-    coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("fnr", "FNR"))
 
     val behandlingService = BehandlingService(safJournalpostClientMock, aktoerIdClientMock, sakClientMock, oppgaveserviceMock)
 
     beforeEachTest {
-        clearAllMocks(answers = false)
+        clearAllMocks()
+
+        coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns "aktorId"
+        coEvery { aktoerIdClientMock.finnFnr(any(), any()) } returns "fnr"
+        coEvery { oppgaveserviceMock.createOppgave(any(), any(), any(), any(), any(), any()) } returns 1000
+        coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
+        coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("fnr", "FNR"))
     }
 
     describe("BehandlingService ende-til-ende") {
