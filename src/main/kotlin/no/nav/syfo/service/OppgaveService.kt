@@ -30,7 +30,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
     val arbeidsfordelingV1: ArbeidsfordelingV1
 ) {
     @KtorExperimentalAPI
-    suspend fun createOppgave(
+    suspend fun opprettOppgave(
         fnrPasient: String,
         aktoerIdPasient: String,
         sakId: String,
@@ -42,7 +42,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
         val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient)
         val diskresjonsKode = fetchDiskresjonsKode(fnrPasient)
-        val enhetsListe = fetchBehandlendeEnhet(geografiskTilknytning.geografiskTilknytning, diskresjonsKode)
+        val enhetsListe = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequest(geografiskTilknytning.geografiskTilknytning, diskresjonsKode))
 
         val behandlerEnhetsId = enhetsListe?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
             log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
@@ -50,6 +50,23 @@ class OppgaveService @KtorExperimentalAPI constructor(
         }
         return oppgaveClient.opprettOppgave(sakId, journalpostId, behandlerEnhetsId,
                 aktoerIdPasient, trackingId)
+    }
+
+    @KtorExperimentalAPI
+    suspend fun opprettFordelingsOppgave(
+        journalpostId: String,
+        trackingId: String,
+        loggingMeta: LoggingMeta
+    ): Int {
+
+        log.info("Oppretter fordelingsoppgave for {}", fields(loggingMeta))
+        val fordelingsenheter = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequestForFordelingsenhet())
+
+        val behandlerEnhetsId = fordelingsenheter?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
+            log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
+            STANDARD_NAV_ENHET
+        }
+        return oppgaveClient.opprettFordelingsOppgave(journalpostId, behandlerEnhetsId, trackingId)
     }
 
     suspend fun fetchGeografiskTilknytning(patientFnr: String): HentGeografiskTilknytningResponse =
@@ -69,32 +86,45 @@ class OppgaveService @KtorExperimentalAPI constructor(
                 )
             }
 
-    suspend fun fetchBehandlendeEnhet(tilknytting: GeografiskTilknytning?, patientDiskresjonsKode: String?): FinnBehandlendeEnhetListeResponse? =
+    fun lagFinnBehandlendeEnhetListeRequest(tilknytting: GeografiskTilknytning?, patientDiskresjonsKode: String?): FinnBehandlendeEnhetListeRequest =
+        FinnBehandlendeEnhetListeRequest().apply {
+            arbeidsfordelingKriterier = ArbeidsfordelingKriterier().apply {
+                if (tilknytting?.geografiskTilknytning != null) {
+                    geografiskTilknytning = Geografi().apply {
+                        value = tilknytting.geografiskTilknytning
+                    }
+                }
+                tema = Tema().apply {
+                    value = "SYM"
+                }
+                oppgavetype = Oppgavetyper().apply {
+                    value = "JFR"
+                }
+                if (!patientDiskresjonsKode.isNullOrBlank()) {
+                    diskresjonskode = Diskresjonskoder().apply {
+                        value = patientDiskresjonsKode
+                    }
+                }
+            }
+        }
+
+    fun lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(): FinnBehandlendeEnhetListeRequest =
+        FinnBehandlendeEnhetListeRequest().apply {
+            arbeidsfordelingKriterier = ArbeidsfordelingKriterier().apply {
+                tema = Tema().apply {
+                    value = "SYM"
+                }
+                oppgavetype = Oppgavetyper().apply {
+                    value = "FDR"
+                }
+            }
+        }
+
+    suspend fun fetchBehandlendeEnhet(finnBehandlendeEnhetListeRequest: FinnBehandlendeEnhetListeRequest): FinnBehandlendeEnhetListeResponse? =
             retry(callName = "finn_nav_kontor",
                     retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
                     legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
-                arbeidsfordelingV1.finnBehandlendeEnhetListe(FinnBehandlendeEnhetListeRequest().apply {
-                    arbeidsfordelingKriterier = ArbeidsfordelingKriterier().apply {
-                        if (tilknytting?.geografiskTilknytning != null) {
-                            geografiskTilknytning = Geografi().apply {
-                                value = tilknytting.geografiskTilknytning
-                            }
-                        }
-                        tema = Tema().apply {
-                            value = "SYM"
-                        }
-
-                        oppgavetype = Oppgavetyper().apply {
-                            value = "JFR"
-                        }
-
-                        if (!patientDiskresjonsKode.isNullOrBlank()) {
-                            diskresjonskode = Diskresjonskoder().apply {
-                                value = patientDiskresjonsKode
-                            }
-                        }
-                    }
-                })
+                arbeidsfordelingV1.finnBehandlendeEnhetListe(finnBehandlendeEnhetListeRequest)
             }
 
     suspend fun fetchDiskresjonsKode(pasientFNR: String): String? {

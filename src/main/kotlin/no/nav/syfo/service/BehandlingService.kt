@@ -21,7 +21,8 @@ class BehandlingService constructor(
     val safJournalpostClient: SafJournalpostClient,
     val aktoerIdClient: AktoerIdClient,
     val sakClient: SakClient,
-    val oppgaveService: OppgaveService
+    val oppgaveService: OppgaveService,
+    val fordelingsOppgaveService: FordelingsOppgaveService
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
@@ -43,20 +44,24 @@ class BehandlingService constructor(
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                val aktoerIdPasient = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
-                val fnrPasient = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
+                if (journalpostMetadata.bruker != null && !journalpostMetadata.bruker.id.isNullOrEmpty() && !journalpostMetadata.bruker.type.isNullOrEmpty()) {
+                    val aktoerIdPasient = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
+                    val fnrPasient = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
 
-                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktoerIdPasient, loggingMeta = loggingMeta)
+                    val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktoerIdPasient, loggingMeta = loggingMeta)
 
-                val oppgaveId = oppgaveService.createOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
+                    val oppgaveId = oppgaveService.opprettOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
                         journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                log.info("Opprettet oppgave med {}, {} {}",
+                    log.info("Opprettet oppgave med {}, {} {}",
                         StructuredArguments.keyValue("oppgaveId", oppgaveId),
                         StructuredArguments.keyValue("sakid", sakId),
                         fields(loggingMeta)
-                )
-                PAPIRSM_OPPGAVE.inc()
+                    )
+                    PAPIRSM_OPPGAVE.inc()
+                } else {
+                    fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, loggingMeta, sykmeldingId)
+                }
 
                 val currentRequestLatency = requestLatency.observeDuration()
 
@@ -69,8 +74,8 @@ class BehandlingService constructor(
         journalpost: JournalpostMetadata,
         sykmeldingId: String
     ): String {
-        val bruker = journalpost.bruker
-        val brukerId = bruker.id
+        val bruker = journalpost.bruker ?: throw IllegalStateException("Journalpost mangler bruker")
+        val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid")
         return if (bruker.type == "AKTOERID") {
             brukerId
         } else {
@@ -82,8 +87,8 @@ class BehandlingService constructor(
         journalpost: JournalpostMetadata,
         sykmeldingId: String
     ): String {
-        val bruker = journalpost.bruker
-        val brukerId = bruker.id
+        val bruker = journalpost.bruker ?: throw IllegalStateException("Journalpost mangler bruker")
+        val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid")
         return if (bruker.type == "FNR") {
             brukerId
         } else {

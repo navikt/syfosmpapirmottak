@@ -45,6 +45,27 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
 
         return opprettOppgave(opprettOppgaveRequest, sykmeldingId).id
     }
+
+    suspend fun opprettFordelingsOppgave(
+        journalpostId: String,
+        tildeltEnhetsnr: String,
+        sykmeldingId: String
+    ): Int {
+        val opprettOppgaveRequest = OpprettOppgaveRequest(
+            tildeltEnhetsnr = tildeltEnhetsnr,
+            opprettetAvEnhetsnr = "9999",
+            journalpostId = journalpostId,
+            behandlesAvApplikasjon = "FS22",
+            beskrivelse = "Fordelingsoppgave for mottatt papirsykmelding som må legges inn i infotrygd manuelt",
+            tema = "SYM",
+            oppgavetype = "FDR",
+            aktivDato = LocalDate.now(),
+            fristFerdigstillelse = LocalDate.now().plusDays(1),
+            prioritet = "NORM"
+        )
+
+        return opprettOppgave(opprettOppgaveRequest, sykmeldingId).id
+    }
 }
 
 data class OpprettOppgaveRequest(
