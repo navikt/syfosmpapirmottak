@@ -41,14 +41,12 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
             .data()
             ?.journalpost()
         return journalpost?.let {
-            it.bruker()?.let { bruker ->
-                JournalpostMetadata(
-                    Bruker(
-                        bruker.id(),
-                        bruker.type()?.name
-                    )
+            JournalpostMetadata(
+                Bruker(
+                    it.bruker()?.id(),
+                    it.bruker()?.type()?.name
                 )
-            }
+            )
         }
     }
 }

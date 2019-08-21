@@ -44,7 +44,7 @@ class BehandlingService constructor(
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                if (journalpostMetadata.bruker != null && !journalpostMetadata.bruker.id.isNullOrEmpty() && !journalpostMetadata.bruker.type.isNullOrEmpty()) {
+                if (!journalpostMetadata.bruker.id.isNullOrEmpty() && !journalpostMetadata.bruker.type.isNullOrEmpty()) {
                     val aktoerIdPasient = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
                     val fnrPasient = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
 

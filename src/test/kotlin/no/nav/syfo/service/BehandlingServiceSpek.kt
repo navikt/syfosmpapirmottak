@@ -82,20 +82,7 @@ object BehandlingServiceSpek : Spek ({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
             coVerify { listOf(aktoerIdClientMock, oppgaveserviceMock, sakClientMock, fordelingsOppgaveServiceMock) wasNot Called }
         }
-
-        it("Oppretter fordelingsoppgave hvis journalpost mangler bruker") {
-            val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(null)
-
-            runBlocking {
-                behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
-            }
-
-            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(eq("123"), loggingMetadata, sykmeldingId) }
-            coVerify { listOf(aktoerIdClientMock, oppgaveserviceMock, sakClientMock) wasNot Called }
-        }
-
+        
         it("Oppretter fordelingsoppgave hvis journalpost mangler brukerid") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker(null, "type"))

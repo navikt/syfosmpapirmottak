@@ -1,7 +1,7 @@
 package no.nav.syfo.domain
 
 data class JournalpostMetadata(
-    val bruker: Bruker?
+    val bruker: Bruker
 )
 
 data class Bruker(
