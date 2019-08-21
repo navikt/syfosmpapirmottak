@@ -107,6 +107,31 @@ object BehandlingServiceSpek : Spek ({
             coVerify { listOf(aktoerIdClientMock, oppgaveserviceMock, sakClientMock) wasNot Called }
         }
 
+        it("Oppretter fordelingsoppgave hvis ikke kan hente aktørid fra aktørregister") {
+            val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
+            coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns null
+
+            runBlocking {
+                behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
+            }
+
+            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(eq("123"), loggingMetadata, sykmeldingId) }
+            coVerify { listOf(oppgaveserviceMock, sakClientMock) wasNot Called }
+        }
+
+        it("Oppretter fordelingsoppgave hvis ikke kan hente fnr fra aktørregister") {
+            val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"))
+            coEvery { aktoerIdClientMock.finnFnr(any(), any()) } returns null
+
+            runBlocking {
+                behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
+            }
+
+            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(eq("123"), loggingMetadata, sykmeldingId) }
+            coVerify { listOf(oppgaveserviceMock, sakClientMock) wasNot Called }
+        }
+
         it("Behandler ikke meldinger med feil tema") {
             val journalfoeringEventFeilTema = lagJournalfoeringEvent("MidlertidigJournalført", "FEIL_TEMA", "SKAN_NETS")
 
