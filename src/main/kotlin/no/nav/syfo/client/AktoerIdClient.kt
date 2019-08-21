@@ -51,14 +51,26 @@ class AktoerIdClient(
     suspend fun finnAktorid(
         fnr: String,
         sykmeldingId: String
-    ): String =
-        hentIdent(fnr, sykmeldingId, "AktoerId")
+    ): String? {
+        return try {
+            hentIdent(fnr, sykmeldingId, "AktoerId")
+        } catch (e: Exception) {
+            log.error("Kunne ikke hente aktørid for sykmeldingsid {}", sykmeldingId)
+            null
+        }
+    }
 
     suspend fun finnFnr(
         aktorId: String,
         sykmeldingId: String
-    ): String =
-        hentIdent(aktorId, sykmeldingId, "NorskIdent")
+    ): String? {
+        return try {
+            hentIdent(aktorId, sykmeldingId, "NorskIdent")
+        } catch (e: Exception) {
+            log.error("Kunne ikke hente fnr for sykmeldingsid {}", sykmeldingId)
+            null
+        }
+    }
 }
 
 data class Ident(

@@ -49,7 +49,7 @@ object BehandlingServiceSpek : Spek ({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
             coVerify { aktoerIdClientMock.finnAktorid(eq("fnr"), sykmeldingId) }
-            coVerify { aktoerIdClientMock.finnFnr(any(), any()) wasNot Called }
+            coVerify { aktoerIdClientMock.finnFnr(any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, eq("aktorId"), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(eq("fnr"), eq("aktorId"), eq("sakId"), eq("123"), any(), any()) }
         }
@@ -64,7 +64,7 @@ object BehandlingServiceSpek : Spek ({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
             coVerify { aktoerIdClientMock.finnFnr(eq("aktorId"), sykmeldingId) }
-            coVerify { aktoerIdClientMock.finnAktorid(any(), any()) wasNot Called }
+            coVerify { aktoerIdClientMock.finnAktorid(any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, eq("aktorId"), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(eq("fnr"), eq("aktorId"), eq("sakId"), eq("123"), any(), any()) }
         }
@@ -82,7 +82,7 @@ object BehandlingServiceSpek : Spek ({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
             coVerify { listOf(aktoerIdClientMock, oppgaveserviceMock, sakClientMock, fordelingsOppgaveServiceMock) wasNot Called }
         }
-        
+
         it("Oppretter fordelingsoppgave hvis journalpost mangler brukerid") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker(null, "type"))
