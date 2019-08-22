@@ -132,6 +132,20 @@ object BehandlingServiceSpek : Spek ({
             coVerify { listOf(oppgaveserviceMock, sakClientMock) wasNot Called }
         }
 
+        it("Oppretter ikke fordelingsoppgave hvis aktørregister svarer med feilmelding") {
+            val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"))
+            coEvery { aktoerIdClientMock.finnFnr(any(), any()) } throws IllegalStateException("feilmelding")
+
+            assertFailsWith<TrackableException> {
+                runBlocking {
+                    behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
+                }
+            }
+
+            coVerify { listOf(oppgaveserviceMock, sakClientMock, fordelingsOppgaveServiceMock) wasNot Called }
+        }
+
         it("Behandler ikke meldinger med feil tema") {
             val journalfoeringEventFeilTema = lagJournalfoeringEvent("MidlertidigJournalført", "FEIL_TEMA", "SKAN_NETS")
 

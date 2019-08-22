@@ -142,6 +142,7 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
     }
+    testImplementation ("io.ktor:ktor-jackson:$ktorVersion")
     testImplementation ("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
 
     testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion") {
