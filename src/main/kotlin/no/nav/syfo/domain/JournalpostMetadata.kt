@@ -5,6 +5,6 @@ data class JournalpostMetadata(
 )
 
 data class Bruker(
-    val id: String,
-    val type: String
+    val id: String?,
+    val type: String?
 )

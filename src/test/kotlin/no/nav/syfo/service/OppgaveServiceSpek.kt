@@ -46,7 +46,7 @@ object OppgaveServiceSpek : Spek ({
     describe("OppgaveService ende-til-ende") {
         it("Ende-til-ende") {
             runBlocking {
-                oppgaveService.createOppgave("fnr", "aktorId", "sakId", journalpostId, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, sykmeldingId, loggingMetadata)
             }
 
             coVerify { personV3Mock.hentGeografiskTilknytning(any()) }
@@ -65,7 +65,7 @@ object OppgaveServiceSpek : Spek ({
             coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("6")
             coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns lagFinnBehandlendeEnhetListeResponse("2103")
             runBlocking {
-                oppgaveService.createOppgave("fnr", "aktorId", "sakId", journalpostId, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, sykmeldingId, loggingMetadata)
             }
 
             coVerify { personV3Mock.hentGeografiskTilknytning(any()) }
@@ -82,7 +82,7 @@ object OppgaveServiceSpek : Spek ({
         it("Behandlende enhet mangler") {
             coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns FinnBehandlendeEnhetListeResponse()
             runBlocking {
-                oppgaveService.createOppgave("fnr", "aktorId", "sakId", journalpostId, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, sykmeldingId, loggingMetadata)
             }
 
             coVerify { personV3Mock.hentGeografiskTilknytning(any()) }

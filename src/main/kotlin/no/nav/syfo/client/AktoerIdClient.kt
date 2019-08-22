@@ -23,7 +23,7 @@ class AktoerIdClient(
                     val oidcToken = stsClient.oidcToken()
                     headers {
                         append("Authorization", "Bearer ${oidcToken.access_token}")
-                        append("Nav-Consumer-Id", "syfosmsak")
+                        append("Nav-Consumer-Id", "syfosmpapirmottak")
                         append("Nav-Call-Id", callId)
                         append("Nav-Personidenter", sokeIdent.joinToString(","))
                     }
@@ -36,29 +36,41 @@ class AktoerIdClient(
         brukerId: String,
         sykmeldingId: String,
         identGruppe: String
-    ): String {
+    ): String? {
         log.info("Kaller AktoerId for aa hente en $identGruppe")
         val aktor = hentIdent(listOf(brukerId), sykmeldingId, identGruppe)[brukerId]
 
-        if (aktor == null || aktor.feilmelding != null) {
-            throw RuntimeException("Pasient ikke funnet i $identGruppe, feilmelding: ${aktor?.feilmelding}")
+        if (aktor?.feilmelding != null) {
+            log.warn("Aktørregister returnerte funksjonell feil for {} for sykmelding {}", identGruppe, sykmeldingId)
+            return null
         }
-
-        return aktor.identer?.find { ident -> ident.gjeldende && ident.identgruppe == identGruppe }?.ident
+        return aktor?.identer?.find { ident -> ident.gjeldende && ident.identgruppe == identGruppe }?.ident
                 ?: throw IllegalStateException("Spoerringen til AktoerId returnerte ingen $identGruppe")
     }
 
     suspend fun finnAktorid(
         fnr: String,
         sykmeldingId: String
-    ): String =
-        hentIdent(fnr, sykmeldingId, "AktoerId")
+    ): String? {
+        return try {
+            hentIdent(fnr, sykmeldingId, "AktoerId")
+        } catch (e: IllegalStateException) {
+            log.error("Kunne ikke hente aktørid for sykmeldingsid {}", sykmeldingId)
+            throw e
+        }
+    }
 
     suspend fun finnFnr(
         aktorId: String,
         sykmeldingId: String
-    ): String =
-        hentIdent(aktorId, sykmeldingId, "NorskIdent")
+    ): String? {
+        return try {
+            hentIdent(aktorId, sykmeldingId, "NorskIdent")
+        } catch (e: IllegalStateException) {
+            log.error("Kunne ikke hente fnr for sykmeldingsid {}", sykmeldingId)
+            throw e
+        }
+    }
 }
 
 data class Ident(

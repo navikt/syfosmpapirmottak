@@ -44,6 +44,7 @@ import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.service.BehandlingService
+import no.nav.syfo.service.FordelingsOppgaveService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
@@ -124,7 +125,8 @@ fun main() = runBlocking(coroutineContext) {
     }
 
     val oppgaveService = OppgaveService(oppgaveClient, personV3, diskresjonskodeV1, arbeidsfordelingV1)
-    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService)
+    val fordelingsOppgaveService = FordelingsOppgaveService(oppgaveService)
+    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService, fordelingsOppgaveService)
 
     launchListeners(
             env,
