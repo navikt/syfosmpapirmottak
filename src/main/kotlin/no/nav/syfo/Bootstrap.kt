@@ -62,7 +62,7 @@ fun doReadynessCheck(): Boolean {
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
 
-val coroutineContext = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
+val coroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
 val log: Logger = LoggerFactory.getLogger("nav.syfo.papirmottak")
 
