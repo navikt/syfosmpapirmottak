@@ -1,7 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import kotlinx.coroutines.coroutineScope
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
@@ -29,7 +28,7 @@ class BehandlingService constructor(
         journalfoeringEvent: JournalfoeringHendelseRecord,
         loggingMeta: LoggingMeta,
         sykmeldingId: String
-    ) = coroutineScope {
+    ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
 

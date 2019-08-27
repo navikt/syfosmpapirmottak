@@ -18,19 +18,11 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.prometheus.client.hotspot.DefaultExports
-import java.nio.file.Paths
-import java.time.Duration
-import java.util.Properties
-import java.util.UUID
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments
 import no.nav.helse.eiFellesformat.XMLEIFellesformat
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
@@ -53,6 +45,10 @@ import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.file.Paths
+import java.time.Duration
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 const val STANDARD_NAV_ENHET = "0393"
 
@@ -61,8 +57,6 @@ fun doReadynessCheck(): Boolean {
 }
 
 data class ApplicationState(var running: Boolean = true, var initialized: Boolean = false)
-
-val coroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
 val log: Logger = LoggerFactory.getLogger("nav.syfo.papirmottak")
 
@@ -73,7 +67,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 }
 
 @KtorExperimentalAPI
-fun main() = runBlocking(coroutineContext) {
+fun main() {
     val env = Environment()
     val credentials =
         objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
@@ -141,8 +135,8 @@ fun main() = runBlocking(coroutineContext) {
     })
 }
 
-fun CoroutineScope.createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
-        launch {
+fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
+        GlobalScope.launch {
             try {
                 action()
             } catch (e: TrackableException) {
@@ -153,7 +147,7 @@ fun CoroutineScope.createListener(applicationState: ApplicationState, action: su
         }
 
 @KtorExperimentalAPI
-fun CoroutineScope.launchListeners(
+fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerProperties: Properties,
@@ -172,7 +166,7 @@ suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService
-) = coroutineScope {
+) {
     while (applicationState.running) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
