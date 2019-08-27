@@ -153,7 +153,7 @@ fun CoroutineScope.createListener(applicationState: ApplicationState, action: su
         }
 
 @KtorExperimentalAPI
-fun CoroutineScope.launchListeners(
+suspend fun CoroutineScope.launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerProperties: Properties,
@@ -168,7 +168,7 @@ fun CoroutineScope.launchListeners(
         }
     }.toList()
 
-    runBlocking { journalfoeringHendelseListeners.forEach { it.join() } }
+    journalfoeringHendelseListeners.forEach { it.join() }
 }
 
 @KtorExperimentalAPI

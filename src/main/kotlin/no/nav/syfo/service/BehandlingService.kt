@@ -35,7 +35,7 @@ class BehandlingService constructor(
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
                     journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" &&
-                    journalfoeringEvent.hendelsesType == "MidlertidigJournalført"
+                    journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført"
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
@@ -73,6 +73,8 @@ class BehandlingService constructor(
                 val currentRequestLatency = requestLatency.observeDuration()
 
                 log.info("Finished processing took {}s, {}", StructuredArguments.keyValue("latency", currentRequestLatency), fields(loggingMeta))
+            } else {
+                log.info("Mottatt jp som ikke treffer filter, tema = ${journalfoeringEvent.temaNytt}, mottakskanal = ${journalfoeringEvent.mottaksKanal}, hendelsestype = ${journalfoeringEvent.hendelsesType}, journalpostid = $journalpostId")
             }
         }
     }
