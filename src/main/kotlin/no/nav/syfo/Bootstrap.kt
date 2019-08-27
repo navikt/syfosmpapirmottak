@@ -153,22 +153,18 @@ fun CoroutineScope.createListener(applicationState: ApplicationState, action: su
         }
 
 @KtorExperimentalAPI
-suspend fun CoroutineScope.launchListeners(
+fun CoroutineScope.launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerProperties: Properties,
     behandlingService: BehandlingService
 ) {
-    val journalfoeringHendelseListeners = 0.until(env.applicationThreads).map {
-        val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
-        kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
+    val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
+    kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
-        createListener(applicationState) {
-            blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse, behandlingService)
-        }
-    }.toList()
-
-    journalfoeringHendelseListeners.forEach { it.join() }
+    createListener(applicationState) {
+        blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse, behandlingService)
+    }
 }
 
 @KtorExperimentalAPI
