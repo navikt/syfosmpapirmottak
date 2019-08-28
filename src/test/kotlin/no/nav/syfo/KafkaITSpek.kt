@@ -35,7 +35,6 @@ object KafkaITSpek : Spek({
     val config = Environment(
             applicationPort = getRandomPort(),
             kafkaBootstrapServers = embeddedEnvironment.brokersURL,
-            applicationThreads = 1,
             safV1Url = "saf/api",
             applicationName = "syfosmpapirmottak",
             aktoerregisterV1Url = "aktorurl",
