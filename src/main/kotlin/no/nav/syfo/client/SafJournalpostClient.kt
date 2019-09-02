@@ -40,6 +40,7 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
             .execute()
             .data()
             ?.journalpost()
+        // endre objecttype til noe som også har med dokumenter (må hente ut dokument med riktig type (=ORIGINAL) sin id)
         return journalpost?.let {
             JournalpostMetadata(
                 Bruker(

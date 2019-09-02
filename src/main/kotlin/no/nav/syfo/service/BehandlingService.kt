@@ -42,6 +42,11 @@ class BehandlingService constructor(
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId)
                         ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
+                // I egen service:
+                // Hente dokument via rest-api for saf
+                // Mappe om til receivedSykmelding
+                // Metrikk for antall ganger mapping gikk bra/ikke bra..? 
+
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
                 if (journalpostMetadata.bruker.id.isNullOrEmpty() || journalpostMetadata.bruker.type.isNullOrEmpty()) {
