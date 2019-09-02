@@ -102,7 +102,7 @@ object OppgaveServiceSpek : Spek ({
             coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("6")
             var diskresjonskode: String? = null
             runBlocking {
-                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr")
+                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr", loggingMetadata)
             }
 
             diskresjonskode shouldEqual "SPSF"
@@ -112,7 +112,7 @@ object OppgaveServiceSpek : Spek ({
             coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("7")
             var diskresjonskode: String? = null
             runBlocking {
-                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr")
+                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr", loggingMetadata)
             }
 
             diskresjonskode shouldEqual "SPFO"
@@ -122,7 +122,7 @@ object OppgaveServiceSpek : Spek ({
             coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("5")
             var diskresjonskode: String? = null
             runBlocking {
-                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr")
+                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr", loggingMetadata)
             }
 
             diskresjonskode shouldEqual null
