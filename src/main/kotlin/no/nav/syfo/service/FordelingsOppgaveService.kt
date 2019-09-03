@@ -23,7 +23,7 @@ class FordelingsOppgaveService(
             val oppgaveId = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
             PAPIRSM_FORDELINGSOPPGAVE.inc()
-            log.info("Opprettet fordelingsoppgaveoppgave med {}, {} {}",
+            log.info("Opprettet fordelingsoppgave med {}, {} {}",
                 StructuredArguments.keyValue("oppgaveId", oppgaveId),
                 StructuredArguments.keyValue("journalpostId", journalpostId),
                 fields(loggingMeta)
