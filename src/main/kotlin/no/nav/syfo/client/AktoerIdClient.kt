@@ -41,7 +41,7 @@ class AktoerIdClient(
         val aktor = hentIdent(listOf(brukerId), sykmeldingId, identGruppe)[brukerId]
 
         if (aktor?.feilmelding != null) {
-            log.warn("Aktørregister returnerte funksjonell feil for {} for sykmelding {}", identGruppe, sykmeldingId)
+            log.warn("Aktørregister returnerte funksjonell feil for {} for sykmelding {}: {}", identGruppe, sykmeldingId, aktor.feilmelding)
             return null
         }
         return aktor?.identer?.find { ident -> ident.gjeldende && ident.identgruppe == identGruppe }?.ident
@@ -55,7 +55,7 @@ class AktoerIdClient(
         return try {
             hentIdent(fnr, sykmeldingId, "AktoerId")
         } catch (e: IllegalStateException) {
-            log.error("Kunne ikke hente aktørid for sykmeldingsid {}", sykmeldingId)
+            log.error("Kunne ikke hente aktørid for sykmeldingsid {}, feilmelding {}", sykmeldingId, e.message)
             throw e
         }
     }
@@ -67,7 +67,7 @@ class AktoerIdClient(
         return try {
             hentIdent(aktorId, sykmeldingId, "NorskIdent")
         } catch (e: IllegalStateException) {
-            log.error("Kunne ikke hente fnr for sykmeldingsid {}", sykmeldingId)
+            log.error("Kunne ikke hente fnr for sykmeldingsid {}, feilmelding {}", sykmeldingId, e.message)
             throw e
         }
     }
