@@ -36,7 +36,7 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "2019.09.02-02-36-c9fb7fc524d827079666ed1574b55968aef68909"
+val smCommonVersion = "2019.09.03-10-15-c63a243d0ddbaf03cc98e788fc87052b16119b48"
 val javaxJaxwsApiVersion = "2.2.1"
 
 
