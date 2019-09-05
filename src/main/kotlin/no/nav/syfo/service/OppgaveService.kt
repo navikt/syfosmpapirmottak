@@ -11,7 +11,12 @@ import no.nav.syfo.log
 import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
 import no.nav.tjeneste.pip.diskresjonskode.meldinger.WSHentDiskresjonskodeRequest
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.*
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.FinnBehandlendeEnhetListeUgyldigInput
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Oppgavetyper
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Tema
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeRequest
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
@@ -40,9 +45,9 @@ class OppgaveService @KtorExperimentalAPI constructor(
     ): Int {
 
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
-        val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient)
-        val diskresjonsKode = fetchDiskresjonsKode(fnrPasient)
-        val enhetsListe = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequest(geografiskTilknytning.geografiskTilknytning, diskresjonsKode))
+        val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient, loggingMeta)
+        val diskresjonsKode = fetchDiskresjonsKode(fnrPasient, loggingMeta)
+        val enhetsListe = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequest(geografiskTilknytning.geografiskTilknytning, diskresjonsKode), loggingMeta)
 
         val behandlerEnhetsId = enhetsListe?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
             log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
@@ -60,7 +65,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
     ): Int {
 
         log.info("Oppretter fordelingsoppgave for {}", fields(loggingMeta))
-        val fordelingsenheter = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequestForFordelingsenhet())
+        val fordelingsenheter = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(), loggingMeta)
 
         val behandlerEnhetsId = fordelingsenheter?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
             log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
@@ -69,21 +74,26 @@ class OppgaveService @KtorExperimentalAPI constructor(
         return oppgaveClient.opprettFordelingsOppgave(journalpostId, behandlerEnhetsId, trackingId)
     }
 
-    suspend fun fetchGeografiskTilknytning(patientFnr: String): HentGeografiskTilknytningResponse =
+    suspend fun fetchGeografiskTilknytning(patientFnr: String, loggingMeta: LoggingMeta): HentGeografiskTilknytningResponse =
             retry(
                     callName = "tps_hent_geografisktilknytning",
                     retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
                     legalExceptions = *arrayOf(IOException::class, WstxException::class)
             ) {
-                personV3.hentGeografiskTilknytning(
+                try {
+                    personV3.hentGeografiskTilknytning(
                         HentGeografiskTilknytningRequest().withAktoer(
-                                PersonIdent().withIdent(
-                                        NorskIdent()
-                                                .withIdent(patientFnr)
-                                                .withType(Personidenter().withValue("FNR"))
-                                )
+                            PersonIdent().withIdent(
+                                NorskIdent()
+                                    .withIdent(patientFnr)
+                                    .withType(Personidenter().withValue("FNR"))
+                            )
                         )
-                )
+                    )
+                } catch (e: Exception) {
+                    log.warn("Kunne ikke hente person fra TPS ${e.message}", fields(loggingMeta))
+                    throw e
+                }
             }
 
     fun lagFinnBehandlendeEnhetListeRequest(tilknytting: GeografiskTilknytning?, patientDiskresjonsKode: String?): FinnBehandlendeEnhetListeRequest =
@@ -120,18 +130,31 @@ class OppgaveService @KtorExperimentalAPI constructor(
             }
         }
 
-    suspend fun fetchBehandlendeEnhet(finnBehandlendeEnhetListeRequest: FinnBehandlendeEnhetListeRequest): FinnBehandlendeEnhetListeResponse? =
+    suspend fun fetchBehandlendeEnhet(finnBehandlendeEnhetListeRequest: FinnBehandlendeEnhetListeRequest, loggingMeta: LoggingMeta): FinnBehandlendeEnhetListeResponse? =
             retry(callName = "finn_nav_kontor",
                     retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
                     legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
-                arbeidsfordelingV1.finnBehandlendeEnhetListe(finnBehandlendeEnhetListeRequest)
+                try {
+                    arbeidsfordelingV1.finnBehandlendeEnhetListe(finnBehandlendeEnhetListeRequest)
+                } catch (e: FinnBehandlendeEnhetListeUgyldigInput) {
+                    log.warn("Ugyldig input ved henting av behandlende enhet fra Norg2 ${e.message}", fields(loggingMeta))
+                    return@retry null
+                } catch (e: Exception) {
+                    log.warn("Kunne ikke hente behandlende enhet fra Norg2 ${e.message}", fields(loggingMeta))
+                    throw e
+                }
             }
 
-    suspend fun fetchDiskresjonsKode(pasientFNR: String): String? {
+    suspend fun fetchDiskresjonsKode(pasientFNR: String, loggingMeta: LoggingMeta): String? {
         val diskresjonskodeSomTall: String? = retry(callName = "tps_diskresjonskode",
             retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L, 10000L),
             legalExceptions = *arrayOf(IOException::class, WstxException::class)) {
-            diskresjonskodeV1.hentDiskresjonskode(WSHentDiskresjonskodeRequest().withIdent(pasientFNR)).diskresjonskode
+            try {
+                diskresjonskodeV1.hentDiskresjonskode(WSHentDiskresjonskodeRequest().withIdent(pasientFNR)).diskresjonskode
+            } catch (e: Exception) {
+                log.warn("Kunne ikke hente diskresjonskode fra TPS ${e.message}", fields(loggingMeta))
+                throw e
+            }
         }
         return diskresjonskodeSomTall?.let {
             when (diskresjonskodeSomTall) {
