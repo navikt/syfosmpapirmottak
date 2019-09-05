@@ -1,0 +1,23 @@
+{
+  "topics": [
+    {
+      "topicName": "privat-syfo-smpapir-automatiskBehandling",
+      "members": [
+        {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"},
+        {"member":"srvsyfostorebror", "role":"CONSUMER"}
+      ],
+      "numPartitions": 3
+    },
+    {
+      "topicName": "privat-syfo-smpapir-manuellBehandling",
+      "members": [
+        {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"},
+        {"member":"srvsyfosmarena", "role":"CONSUMER"},
+        {"member":"syfosmregister", "role":"CONSUMER"},
+        {"member":"srvsyfostorebror", "role":"CONSUMER"}
+
+      ],
+      "numPartitions": 3
+    }
+  ]
+}
