@@ -13,7 +13,7 @@
       "members": [
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"},
         {"member":"srvsyfosmarena", "role":"CONSUMER"},
-        {"member":"syfosmregister", "role":"CONSUMER"},
+        {"member":"srvsyfosmregister", "role":"CONSUMER"},
         {"member":"srvsyfostorebror", "role":"CONSUMER"}
 
       ],
