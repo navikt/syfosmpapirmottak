@@ -4,6 +4,7 @@
       "topicName": "privat-syfo-smpapir-automatiskBehandling",
       "members": [
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"},
+        {"member":"srvsyfosmregister", "role":"CONSUMER"},
         {"member":"srvsyfostorebror", "role":"CONSUMER"}
       ],
       "numPartitions": 3
