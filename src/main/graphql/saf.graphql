@@ -1,19 +1,21 @@
 query FindJournalpost($id: String!) {
     journalpost(journalpostId: $id) {
-        avsenderMottaker{
+        avsenderMottaker {
             id
         }
-        avsenderMottaker{
+        avsenderMottaker {
             navn
         }
-        behandlingstema
-        behandlingstemanavn
         bruker {
             id
             type
         }
-        journalforendeEnhet
-        journalfortAvNavn
+        dokumenter {
+            dokumentInfoId
+            dokumentvarianter {
+                variantformat
+            }
+        }
         journalposttype
         journalstatus
         kanal
