@@ -5,6 +5,7 @@
       "members": [
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"},
         {"member":"srvsyfosmregister", "role":"CONSUMER"},
+        {"member":"srvsyfosminfotrygd", "role":"CONSUMER"},
         {"member":"srvsyfostorebror", "role":"CONSUMER"}
       ],
       "numPartitions": 3
