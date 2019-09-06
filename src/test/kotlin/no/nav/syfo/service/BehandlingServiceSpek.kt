@@ -7,6 +7,7 @@ import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.TrackableException
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.Bruker
@@ -25,8 +26,9 @@ object BehandlingServiceSpek : Spek ({
     val sakClientMock = mockk<SakClient>()
     val safJournalpostClientMock = mockk<SafJournalpostClient>()
     val fordelingsOppgaveServiceMock = mockk<FordelingsOppgaveService>()
+    val safDokumentClientMock = mockk<SafDokumentClient>()
 
-    val behandlingService = BehandlingService(safJournalpostClientMock, aktoerIdClientMock, sakClientMock, oppgaveserviceMock, fordelingsOppgaveServiceMock)
+    val behandlingService = BehandlingService(safJournalpostClientMock, aktoerIdClientMock, sakClientMock, oppgaveserviceMock, fordelingsOppgaveServiceMock, safDokumentClientMock)
 
     beforeEachTest {
         clearAllMocks()
@@ -37,6 +39,7 @@ object BehandlingServiceSpek : Spek ({
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
         coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker("fnr", "FNR"), null)
         coEvery { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any()) } just Runs
+        coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
     }
 
     describe("BehandlingService ende-til-ende") {

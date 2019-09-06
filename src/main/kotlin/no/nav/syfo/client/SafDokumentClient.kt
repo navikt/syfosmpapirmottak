@@ -1,13 +1,19 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
+import no.nav.helse.sykSkanningMeta.SkanningmetadataType
+import no.nav.syfo.LoggingMeta
 import no.nav.syfo.helpers.retry
-import java.time.LocalDate
+import no.nav.syfo.log
+import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
+import no.nav.syfo.skanningMetadataUnmarshaller
+import java.io.StringReader
+import javax.xml.bind.JAXBException
 
 @KtorExperimentalAPI
 class SafDokumentClient constructor(
@@ -18,7 +24,7 @@ class SafDokumentClient constructor(
 
     private suspend fun hentDokumentFraSaf(journalpostId: String, dokumentInfoId: String, msgId: String): String = retry("hent_dokument") {
         httpClient.get<String>("$url/rest/hentdokument/$journalpostId/$dokumentInfoId/ORIGINAL") {
-            contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Xml)
             val oidcToken = oidcClient.oidcToken()
             this.header("Authorization", "Bearer ${oidcToken.access_token}")
             this.header("Nav-Callid", msgId)
@@ -26,45 +32,13 @@ class SafDokumentClient constructor(
         }
     }
 
-    suspend fun hentDokument(journalpostId: String, dokumentInfoId: String, msgId: String): String {
-        val xmlDokument = hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId)
-        // map til object
-
-        return hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId)
+    suspend fun hentDokument(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): SkanningmetadataType? {
+        return try {
+            skanningMetadataUnmarshaller.unmarshal(StringReader(hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId))) as SkanningmetadataType
+        } catch (ex: JAXBException) {
+            log.warn("Klarte ikke å tolke OCR-dokument: ${ex.message}, {}", loggingMeta)
+            PAPIRSM_HENTDOK_FEIL.inc()
+            null
+        }
     }
 }
-
-data class Skanningmetadata(
-    val sykemeldinger: Sykemeldinger
-)
-
-data class Sykemeldinger(
-    val pasient: Pasient,
-    val medisinskVurdering: MedisinskVurdering,
-    val aktivitet: Aktivitet,
-    val tilbakedatering: Tilbakedatering,
-    val kontaktMedPasient: KontaktMedPasient,
-    val behandler: Behandler
-)
-
-data class Pasient (val fnr: String)
-
-data class MedisinskVurdering(val hovedDiagnose: HovedDiagnose)
-
-data class HovedDiagnose(val diagnosekode: String, val diagnose: String)
-
-data class Aktivitet(val aktivitetIkkeMulig: AktivitetIkkeMulig)
-
-data class AktivitetIkkeMulig(
-    val periodeFOMDato: LocalDate,
-    val periodeTOMDato: LocalDate,
-    val medisinskeArsaker: MedisinskeArsaker
-)
-
-data class MedisinskeArsaker(val medArsakerHindrer: String)
-
-data class Tilbakedatering(val tilbakebegrunnelse: String)
-
-data class KontaktMedPasient(val behandletDato: LocalDate)
-
-data class Behandler(val hpr: String)

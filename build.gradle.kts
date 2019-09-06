@@ -20,7 +20,7 @@ val spekVersion = "2.0.5"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
-val papirSykemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
+val papirSykemeldingVersion = "2019.09.06-09-26-c37e693903df24742031d0ee6998baa4e05024c8"
 val jacksonVersion = "2.9.6"
 val joarkHendelseVersion = "67a9be4476b63b7247cfacfaf821ab656bd2a952"
 val confluentVersion = "5.0.2"
@@ -38,6 +38,7 @@ val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
 val smCommonVersion = "2019.09.03-11-07-64032e3b6381665e9f9c0914cef626331399e66d"
 val javaxJaxwsApiVersion = "2.2.1"
+val javaTimeAdapterVersion = "1.1.3"
 
 
 plugins {
@@ -132,6 +133,7 @@ dependencies {
     implementation("com.sun.xml.ws:jaxws-tools:$jaxwsToolsVersion") {
         exclude(group = "com.sun.xml.ws", module = "policy")
     }
+    implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
 
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")

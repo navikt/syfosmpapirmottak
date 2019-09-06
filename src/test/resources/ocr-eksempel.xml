@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<skanningmetadata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="skanning_meta.xsd">
+    <sykemeldinger>
+        <pasient>
+            <fnr>12345678910</fnr>
+        </pasient>
+        <medisinskVurdering>
+            <hovedDiagnose>
+                <diagnosekode>900.3</diagnosekode>
+                <diagnose>Skikkelig syk</diagnose>
+            </hovedDiagnose>
+        </medisinskVurdering>
+        <aktivitet>
+            <aktivitetIkkeMulig>
+                <periodeFOMDato>2019-01-10</periodeFOMDato>
+                <periodeTOMDato>2019-01-14</periodeTOMDato>
+                <medisinskeArsaker>
+                    <medArsakerHindrer>1</medArsakerHindrer>
+                </medisinskeArsaker>
+            </aktivitetIkkeMulig>
+        </aktivitet>
+        <tilbakedatering>
+            <tilbakebegrunnelse>Legevakten
+                Sentrum</tilbakebegrunnelse>
+        </tilbakedatering>
+        <kontaktMedPasient>
+            <behandletDato>2019-01-11</behandletDato>
+        </kontaktMedPasient>
+        <behandler>
+            <HPR>12345678</HPR>
+        </behandler>
+    </sykemeldinger>
+</skanningmetadata>

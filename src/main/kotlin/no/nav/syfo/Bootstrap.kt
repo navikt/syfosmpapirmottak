@@ -122,7 +122,7 @@ fun main() {
 
     val oppgaveService = OppgaveService(oppgaveClient, personV3, diskresjonskodeV1, arbeidsfordelingV1)
     val fordelingsOppgaveService = FordelingsOppgaveService(oppgaveService)
-    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService, fordelingsOppgaveService)
+    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService, fordelingsOppgaveService, safDokumentClient)
 
     launchListeners(
             env,
