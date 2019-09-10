@@ -81,9 +81,10 @@ fun main() {
     DefaultExports.initialize()
 
     val kafkaBaseConfig = loadBaseConfig(env, credentials).envOverrides()
+    kafkaBaseConfig["auto.offset.reset"] = "latest"
 
     val consumerProperties = kafkaBaseConfig.toConsumerConfig(
-            "${env.applicationName}-consumer",
+            "${env.applicationName}-consumer-v2",
             valueDeserializer = KafkaAvroDeserializer::class
     )
 
