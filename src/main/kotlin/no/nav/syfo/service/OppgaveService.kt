@@ -54,7 +54,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
             STANDARD_NAV_ENHET
         }
         return oppgaveClient.opprettOppgave(sakId, journalpostId, behandlerEnhetsId,
-                aktoerIdPasient, trackingId)
+                aktoerIdPasient, trackingId, loggingMeta)
     }
 
     @KtorExperimentalAPI
@@ -71,7 +71,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
             log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
             STANDARD_NAV_ENHET
         }
-        return oppgaveClient.opprettFordelingsOppgave(journalpostId, behandlerEnhetsId, trackingId)
+        return oppgaveClient.opprettFordelingsOppgave(journalpostId, behandlerEnhetsId, trackingId, loggingMeta)
     }
 
     suspend fun fetchGeografiskTilknytning(patientFnr: String, loggingMeta: LoggingMeta): HentGeografiskTilknytningResponse =
