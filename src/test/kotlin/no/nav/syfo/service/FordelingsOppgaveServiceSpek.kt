@@ -37,7 +37,7 @@ object FordelingsOppgaveServiceSpek : Spek ({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any()) } returns 1
+        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns 1
         coEvery { personV3Mock.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse().withGeografiskTilknytning(Kommune().withGeografiskTilknytning("1122"))
         coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse()
         coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns FinnBehandlendeEnhetListeResponse().apply {
@@ -59,7 +59,7 @@ object FordelingsOppgaveServiceSpek : Spek ({
                         it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.diskresjonskode == null
                 })
             }
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, eq("enhetId"), sykmeldingId) }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, eq("enhetId"), sykmeldingId, loggingMetadata) }
         }
 
         it("Behandlende enhet mangler") {
@@ -74,7 +74,7 @@ object FordelingsOppgaveServiceSpek : Spek ({
                         it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.diskresjonskode == null
                 })
             }
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, STANDARD_NAV_ENHET, sykmeldingId) }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, STANDARD_NAV_ENHET, sykmeldingId, loggingMetadata) }
         }
     }
 })

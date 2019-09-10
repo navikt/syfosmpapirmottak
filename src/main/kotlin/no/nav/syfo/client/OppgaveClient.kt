@@ -6,7 +6,10 @@ import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
+import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.LoggingMeta
 import no.nav.syfo.helpers.retry
+import no.nav.syfo.log
 import java.time.LocalDate
 
 @KtorExperimentalAPI
@@ -26,7 +29,8 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         journalpostId: String,
         tildeltEnhetsnr: String,
         aktoerId: String,
-        sykmeldingId: String
+        sykmeldingId: String,
+        loggingMeta: LoggingMeta
     ): Int {
         val opprettOppgaveRequest = OpprettOppgaveRequest(
                 tildeltEnhetsnr = tildeltEnhetsnr,
@@ -42,14 +46,15 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
                 fristFerdigstillelse = LocalDate.now().plusDays(1),
                 prioritet = "NORM"
         )
-
+        log.info("Oppretter journalføringsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
         return opprettOppgave(opprettOppgaveRequest, sykmeldingId).id
     }
 
     suspend fun opprettFordelingsOppgave(
         journalpostId: String,
         tildeltEnhetsnr: String,
-        sykmeldingId: String
+        sykmeldingId: String,
+        loggingMeta: LoggingMeta
     ): Int {
         val opprettOppgaveRequest = OpprettOppgaveRequest(
             tildeltEnhetsnr = tildeltEnhetsnr,
@@ -63,7 +68,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             fristFerdigstillelse = LocalDate.now().plusDays(1),
             prioritet = "NORM"
         )
-
+        log.info("Oppretter fordelingsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
         return opprettOppgave(opprettOppgaveRequest, sykmeldingId).id
     }
 }
