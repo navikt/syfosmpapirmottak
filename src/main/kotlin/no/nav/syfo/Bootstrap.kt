@@ -29,6 +29,7 @@ import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.api.registerNaisApi
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.OppgaveClient
+import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.StsOidcClient
@@ -97,6 +98,7 @@ fun main() {
                 configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             }
+            expectSuccess = false
         }
     }
     val apolloClient: ApolloClient = ApolloClient.builder()
@@ -104,6 +106,7 @@ fun main() {
         .build()
     val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient, httpClient)
     val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
+    val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
     val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
 
@@ -121,7 +124,7 @@ fun main() {
 
     val oppgaveService = OppgaveService(oppgaveClient, personV3, diskresjonskodeV1, arbeidsfordelingV1)
     val fordelingsOppgaveService = FordelingsOppgaveService(oppgaveService)
-    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService, fordelingsOppgaveService)
+    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sakClient, oppgaveService, fordelingsOppgaveService, safDokumentClient)
 
     launchListeners(
             env,

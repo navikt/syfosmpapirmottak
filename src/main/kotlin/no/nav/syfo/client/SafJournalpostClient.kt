@@ -7,8 +7,10 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
 import io.ktor.util.KtorExperimentalAPI
+import no.nav.syfo.LoggingMeta
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
+import no.nav.syfo.log
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -28,7 +30,8 @@ suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { c
 @KtorExperimentalAPI
 class SafJournalpostClient(private val apolloClient: ApolloClient, private val stsClient: StsOidcClient) {
     suspend fun getJournalpostMetadata(
-        journalpostId: String
+        journalpostId: String,
+        loggingMeta: LoggingMeta
     ): JournalpostMetadata? {
         val journalpost = apolloClient.query(FindJournalpostQuery.builder()
             .id(journalpostId)
@@ -45,8 +48,21 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
                 Bruker(
                     it.bruker()?.id(),
                     it.bruker()?.type()?.name
-                )
+                ), finnDokumentIdForOcr(it.dokumenter(), loggingMeta)
             )
         }
     }
+}
+
+fun finnDokumentIdForOcr(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, loggingMeta: LoggingMeta): String? {
+    dokumentListe?.forEach { dokument ->
+        dokument.dokumentvarianter().forEach {
+            if (it.variantformat().name == "ORIGINAL") {
+                log.info("Fant OCR-dokument {}", loggingMeta)
+                return dokument.dokumentInfoId()
+            }
+        }
+    }
+    log.warn("Fant ikke OCR-dokument {}", loggingMeta)
+    return null
 }

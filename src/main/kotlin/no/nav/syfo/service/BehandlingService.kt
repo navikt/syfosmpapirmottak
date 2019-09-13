@@ -6,6 +6,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.JournalpostMetadata
@@ -18,11 +19,12 @@ import no.nav.syfo.wrapExceptions
 
 @KtorExperimentalAPI
 class BehandlingService constructor(
-    val safJournalpostClient: SafJournalpostClient,
-    val aktoerIdClient: AktoerIdClient,
-    val sakClient: SakClient,
-    val oppgaveService: OppgaveService,
-    val fordelingsOppgaveService: FordelingsOppgaveService
+    private val safJournalpostClient: SafJournalpostClient,
+    private val aktoerIdClient: AktoerIdClient,
+    private val sakClient: SakClient,
+    private val oppgaveService: OppgaveService,
+    private val fordelingsOppgaveService: FordelingsOppgaveService,
+    private val safDokumentClient: SafDokumentClient
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
@@ -39,8 +41,16 @@ class BehandlingService constructor(
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
                 log.info("Mottatt papirsykmelding, {}", fields(loggingMeta))
-                val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId)
+                val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
                         ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
+
+                journalpostMetadata.dokumentInfoId?.let {
+                    try {
+                        safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = journalpostMetadata.dokumentInfoId, msgId = sykmeldingId, loggingMeta = loggingMeta)
+                    } catch (e: Exception) {
+                        log.warn("Kunne ikke hente OCR-dokument: {${e.message}}, {}", loggingMeta)
+                    }
+                }
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 

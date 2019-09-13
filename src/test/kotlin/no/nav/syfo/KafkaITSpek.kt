@@ -43,7 +43,8 @@ object KafkaITSpek : Spek({
             personV3EndpointURL = "personurl",
             diskresjonskodeEndpointUrl = "diskresjonskodeUrl",
             securityTokenServiceUrl = "securl",
-            oppgavebehandlingUrl = "oppgave/api"
+            oppgavebehandlingUrl = "oppgave/api",
+            hentDokumentUrl = "saf"
     )
 
     fun Properties.overrideForTest(): Properties = apply {

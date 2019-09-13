@@ -7,6 +7,7 @@ import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.TrackableException
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.Bruker
@@ -25,8 +26,9 @@ object BehandlingServiceSpek : Spek ({
     val sakClientMock = mockk<SakClient>()
     val safJournalpostClientMock = mockk<SafJournalpostClient>()
     val fordelingsOppgaveServiceMock = mockk<FordelingsOppgaveService>()
+    val safDokumentClientMock = mockk<SafDokumentClient>()
 
-    val behandlingService = BehandlingService(safJournalpostClientMock, aktoerIdClientMock, sakClientMock, oppgaveserviceMock, fordelingsOppgaveServiceMock)
+    val behandlingService = BehandlingService(safJournalpostClientMock, aktoerIdClientMock, sakClientMock, oppgaveserviceMock, fordelingsOppgaveServiceMock, safDokumentClientMock)
 
     beforeEachTest {
         clearAllMocks()
@@ -35,8 +37,9 @@ object BehandlingServiceSpek : Spek ({
         coEvery { aktoerIdClientMock.finnFnr(any(), any()) } returns "fnr"
         coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns 1000
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
-        coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("fnr", "FNR"))
+        coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker("fnr", "FNR"), null)
         coEvery { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any()) } just Runs
+        coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
     }
 
     describe("BehandlingService ende-til-ende") {
@@ -47,7 +50,7 @@ object BehandlingServiceSpek : Spek ({
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
             }
 
-            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
+            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(eq("fnr"), sykmeldingId) }
             coVerify { aktoerIdClientMock.finnFnr(any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, eq("aktorId"), any()) }
@@ -56,13 +59,13 @@ object BehandlingServiceSpek : Spek ({
 
         it("Ende-til-ende journalpost med aktorId") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"))
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"), null)
 
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
             }
 
-            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
+            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { aktoerIdClientMock.finnFnr(eq("aktorId"), sykmeldingId) }
             coVerify { aktoerIdClientMock.finnAktorid(any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, eq("aktorId"), any()) }
@@ -71,7 +74,7 @@ object BehandlingServiceSpek : Spek ({
 
         it("Kaster feil hvis journalpost mangler") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns null
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns null
 
             assertFailsWith<TrackableException> {
                 runBlocking {
@@ -79,13 +82,13 @@ object BehandlingServiceSpek : Spek ({
                 }
             }
 
-            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123")) }
+            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { listOf(aktoerIdClientMock, oppgaveserviceMock, sakClientMock, fordelingsOppgaveServiceMock) wasNot Called }
         }
 
         it("Oppretter fordelingsoppgave hvis journalpost mangler brukerid") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker(null, "type"))
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker(null, "type"), null)
 
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
@@ -97,7 +100,7 @@ object BehandlingServiceSpek : Spek ({
 
         it("Oppretter fordelingsoppgave hvis journalpost mangler brukertype") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("id", null))
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker("id", null), null)
 
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
@@ -121,7 +124,7 @@ object BehandlingServiceSpek : Spek ({
 
         it("Oppretter fordelingsoppgave hvis ikke kan hente fnr fra aktørregister") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"))
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"), null)
             coEvery { aktoerIdClientMock.finnFnr(any(), any()) } returns null
 
             runBlocking {
@@ -134,7 +137,7 @@ object BehandlingServiceSpek : Spek ({
 
         it("Oppretter ikke fordelingsoppgave hvis aktørregister svarer med feilmelding") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"))
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker("aktorId", "AKTOERID"), null)
             coEvery { aktoerIdClientMock.finnFnr(any(), any()) } throws IllegalStateException("feilmelding")
 
             assertFailsWith<TrackableException> {
