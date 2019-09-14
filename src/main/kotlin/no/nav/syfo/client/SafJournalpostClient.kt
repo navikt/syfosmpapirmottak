@@ -48,9 +48,14 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
                 Bruker(
                     it.bruker()?.id(),
                     it.bruker()?.type()?.name
-                ), finnDokumentIdForOcr(it.dokumenter(), loggingMeta)
+                ), finnDokumentIdForOcr(it.dokumenter(), loggingMeta),
+                erIkkeJournalfort(it.journalstatus())
             )
         }
+    }
+
+    private fun erIkkeJournalfort(journalstatus: type.Journalstatus?): Boolean {
+        return journalstatus?.name?.equals("MOTTATT", true) ?: false
     }
 }
 
