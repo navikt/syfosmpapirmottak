@@ -22,12 +22,14 @@ class FordelingsOppgaveService(
             log.info("Oppretter fordelingsoppgave, {}", fields(loggingMeta))
             val oppgaveId = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-            PAPIRSM_FORDELINGSOPPGAVE.inc()
-            log.info("Opprettet fordelingsoppgave med {}, {} {}",
-                StructuredArguments.keyValue("oppgaveId", oppgaveId),
-                StructuredArguments.keyValue("journalpostId", journalpostId),
-                fields(loggingMeta)
-            )
+            if (oppgaveId != 0) {
+                PAPIRSM_FORDELINGSOPPGAVE.inc()
+                log.info("Opprettet fordelingsoppgave med {}, {} {}",
+                    StructuredArguments.keyValue("oppgaveId", oppgaveId),
+                    StructuredArguments.keyValue("journalpostId", journalpostId),
+                    fields(loggingMeta)
+                )
+            }
         }
     }
 }

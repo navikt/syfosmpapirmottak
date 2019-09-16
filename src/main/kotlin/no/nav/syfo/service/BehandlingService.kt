@@ -72,12 +72,14 @@ class BehandlingService constructor(
                             val oppgaveId = oppgaveService.opprettOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
                                 journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                            log.info("Opprettet oppgave med {}, {} {}",
-                                StructuredArguments.keyValue("oppgaveId", oppgaveId),
-                                StructuredArguments.keyValue("sakid", sakId),
-                                fields(loggingMeta)
-                            )
-                            PAPIRSM_OPPGAVE.inc()
+                            if (oppgaveId != 0) {
+                                log.info("Opprettet oppgave med {}, {} {}",
+                                    StructuredArguments.keyValue("oppgaveId", oppgaveId),
+                                    StructuredArguments.keyValue("sakid", sakId),
+                                    fields(loggingMeta)
+                                )
+                                PAPIRSM_OPPGAVE.inc()
+                            }
                         }
                     }
                 } else {
