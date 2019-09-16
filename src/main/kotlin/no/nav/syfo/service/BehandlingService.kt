@@ -44,40 +44,46 @@ class BehandlingService constructor(
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
                         ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
-                journalpostMetadata.dokumentInfoId?.let {
-                    try {
-                        safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = journalpostMetadata.dokumentInfoId, msgId = sykmeldingId, loggingMeta = loggingMeta)
-                    } catch (e: Exception) {
-                        log.warn("Kunne ikke hente OCR-dokument: {${e.message}}, {}", loggingMeta)
-                    }
-                }
-
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                if (journalpostMetadata.bruker.id.isNullOrEmpty() || journalpostMetadata.bruker.type.isNullOrEmpty()) {
-                    PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
-                    log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
-                    fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, loggingMeta, sykmeldingId)
-                } else {
-                    val aktoerIdPasient = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
-                    val fnrPasient = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
+                if (journalpostMetadata.jpErIkkeJournalfort) {
+                    journalpostMetadata.dokumentInfoId?.let {
+                        try {
+                            safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = journalpostMetadata.dokumentInfoId, msgId = sykmeldingId, loggingMeta = loggingMeta)
+                        } catch (e: Exception) {
+                            log.warn("Kunne ikke hente OCR-dokument: {${e.message}}, {}", loggingMeta)
+                        }
+                    }
 
-                    if (aktoerIdPasient.isNullOrEmpty() || fnrPasient.isNullOrEmpty()) {
-                        log.warn("Kunne ikke hente bruker fra aktørregister, oppretter fordelingsoppgave {}", loggingMeta)
+                    if (journalpostMetadata.bruker.id.isNullOrEmpty() || journalpostMetadata.bruker.type.isNullOrEmpty()) {
+                        PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
+                        log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
                         fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, loggingMeta, sykmeldingId)
                     } else {
-                        val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktoerIdPasient, loggingMeta = loggingMeta)
+                        val aktoerIdPasient = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
+                        val fnrPasient = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
 
-                        val oppgaveId = oppgaveService.opprettOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
-                            journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+                        if (aktoerIdPasient.isNullOrEmpty() || fnrPasient.isNullOrEmpty()) {
+                            log.warn("Kunne ikke hente bruker fra aktørregister, oppretter fordelingsoppgave {}", loggingMeta)
+                            fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, loggingMeta, sykmeldingId)
+                        } else {
+                            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktoerIdPasient, loggingMeta = loggingMeta)
 
-                        log.info("Opprettet oppgave med {}, {} {}",
-                            StructuredArguments.keyValue("oppgaveId", oppgaveId),
-                            StructuredArguments.keyValue("sakid", sakId),
-                            fields(loggingMeta)
-                        )
-                        PAPIRSM_OPPGAVE.inc()
+                            val oppgaveId = oppgaveService.opprettOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
+                                journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+
+                            if (oppgaveId != 0) {
+                                log.info("Opprettet oppgave med {}, {} {}",
+                                    StructuredArguments.keyValue("oppgaveId", oppgaveId),
+                                    StructuredArguments.keyValue("sakid", sakId),
+                                    fields(loggingMeta)
+                                )
+                                PAPIRSM_OPPGAVE.inc()
+                            }
+                        }
                     }
+                } else {
+                    log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))
                 }
                 val currentRequestLatency = requestLatency.observeDuration()
 

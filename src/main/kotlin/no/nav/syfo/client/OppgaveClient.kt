@@ -1,7 +1,9 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -24,6 +26,21 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         }
     }
 
+    private suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse = retry("hent_oppgave") {
+        httpClient.get<OppgaveResponse>(url) {
+            val oidcToken = oidcClient.oidcToken()
+            this.header("Authorization", "Bearer ${oidcToken.access_token}")
+            this.header("X-Correlation-ID", msgId)
+            parameter("tema", "SYM")
+            parameter("oppgavetype", oppgavetype)
+            parameter("journalpostId", journalpostId)
+            parameter("statuskategori", "AAPEN")
+            parameter("sorteringsrekkefolge", "ASC")
+            parameter("sorteringsfelt", "FRIST")
+            parameter("limit", "10")
+        }
+    }
+
     suspend fun opprettOppgave(
         sakId: String,
         journalpostId: String,
@@ -32,6 +49,11 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         sykmeldingId: String,
         loggingMeta: LoggingMeta
     ): Int {
+        val oppgaveResponse = hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
+        if (oppgaveResponse.antallTreffTotalt > 0) {
+            log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
+            return 0
+        }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
                 tildeltEnhetsnr = tildeltEnhetsnr,
                 aktoerId = aktoerId,
@@ -56,6 +78,11 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         sykmeldingId: String,
         loggingMeta: LoggingMeta
     ): Int {
+        val oppgaveResponse = hentOppgave(oppgavetype = "FDR", journalpostId = journalpostId, msgId = sykmeldingId)
+        if (oppgaveResponse.antallTreffTotalt > 0) {
+            log.info("Det finnes allerede fordelingsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
+            return 0
+        }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
             tildeltEnhetsnr = tildeltEnhetsnr,
             opprettetAvEnhetsnr = "9999",
@@ -91,4 +118,19 @@ data class OpprettOppgaveRequest(
 
 data class OpprettOppgaveResponse(
     val id: Int
+)
+
+data class OppgaveResponse(
+    val antallTreffTotalt: Int,
+    val oppgaver: List<Oppgave>
+)
+
+data class Oppgave(
+    val id: String?,
+    val tildeltEnhetsnr: String?,
+    val aktoerId: String?,
+    val journalpostId: String?,
+    val saksreferanse: String?,
+    val tema: String?,
+    val oppgavetype: String?
 )
