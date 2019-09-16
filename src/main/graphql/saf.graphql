@@ -12,6 +12,7 @@ query FindJournalpost($id: String!) {
         }
         dokumenter {
             dokumentInfoId
+            brevkode
             dokumentvarianter {
                 variantformat
             }

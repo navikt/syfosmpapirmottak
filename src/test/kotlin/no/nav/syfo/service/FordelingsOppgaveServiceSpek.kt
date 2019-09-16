@@ -37,7 +37,7 @@ object FordelingsOppgaveServiceSpek : Spek ({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns 1
+        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any(), any()) } returns 1
         coEvery { personV3Mock.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse().withGeografiskTilknytning(Kommune().withGeografiskTilknytning("1122"))
         coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse()
         coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns FinnBehandlendeEnhetListeResponse().apply {
@@ -50,7 +50,7 @@ object FordelingsOppgaveServiceSpek : Spek ({
     describe("FordelingsOppgaveService ende-til-ende") {
         it("Ende-til-ende") {
             runBlocking {
-                fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, loggingMetadata, sykmeldingId)
+                fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, false, loggingMetadata, sykmeldingId)
             }
 
             coVerify {
@@ -59,13 +59,27 @@ object FordelingsOppgaveServiceSpek : Spek ({
                         it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.diskresjonskode == null
                 })
             }
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, eq("enhetId"), sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, eq("enhetId"), false, sykmeldingId, loggingMetadata) }
+        }
+
+        it("Ende-til-ende utland") {
+            runBlocking {
+                fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, true, loggingMetadata, sykmeldingId)
+            }
+
+            coVerify {
+                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
+                    it.arbeidsfordelingKriterier.geografiskTilknytning == null && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
+                        it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.behandlingstype.value == "ae0106" && it.arbeidsfordelingKriterier.diskresjonskode == null
+                })
+            }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, eq("enhetId"), true, sykmeldingId, loggingMetadata) }
         }
 
         it("Behandlende enhet mangler") {
             coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns FinnBehandlendeEnhetListeResponse()
             runBlocking {
-                fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, loggingMetadata, sykmeldingId)
+                fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId, false, loggingMetadata, sykmeldingId)
             }
 
             coVerify {
@@ -74,7 +88,7 @@ object FordelingsOppgaveServiceSpek : Spek ({
                         it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.diskresjonskode == null
                 })
             }
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, STANDARD_NAV_ENHET, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, STANDARD_NAV_ENHET, false, sykmeldingId, loggingMetadata) }
         }
     }
 })

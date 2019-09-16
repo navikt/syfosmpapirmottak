@@ -13,6 +13,7 @@ import no.nav.tjeneste.pip.diskresjonskode.meldinger.WSHentDiskresjonskodeReques
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.FinnBehandlendeEnhetListeUgyldigInput
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.ArbeidsfordelingKriterier
+import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Behandlingstyper
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Diskresjonskoder
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Geografi
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Oppgavetyper
@@ -40,6 +41,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         aktoerIdPasient: String,
         sakId: String,
         journalpostId: String,
+        gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
     ): Int {
@@ -47,31 +49,32 @@ class OppgaveService @KtorExperimentalAPI constructor(
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
         val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient, loggingMeta)
         val diskresjonsKode = fetchDiskresjonsKode(fnrPasient, loggingMeta)
-        val enhetsListe = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequest(geografiskTilknytning.geografiskTilknytning, diskresjonsKode), loggingMeta)
+        val enhetsListe = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequest(geografiskTilknytning.geografiskTilknytning, diskresjonsKode, gjelderUtland), loggingMeta)
 
         val behandlerEnhetsId = enhetsListe?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
             log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
             STANDARD_NAV_ENHET
         }
         return oppgaveClient.opprettOppgave(sakId, journalpostId, behandlerEnhetsId,
-                aktoerIdPasient, trackingId, loggingMeta)
+                aktoerIdPasient, gjelderUtland, trackingId, loggingMeta)
     }
 
     @KtorExperimentalAPI
     suspend fun opprettFordelingsOppgave(
         journalpostId: String,
+        gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
     ): Int {
 
         log.info("Oppretter fordelingsoppgave for {}", fields(loggingMeta))
-        val fordelingsenheter = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(), loggingMeta)
+        val fordelingsenheter = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(gjelderUtland), loggingMeta)
 
         val behandlerEnhetsId = fordelingsenheter?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
             log.error("Unable to find a NAV enhet, defaulting to $STANDARD_NAV_ENHET {}", fields(loggingMeta))
             STANDARD_NAV_ENHET
         }
-        return oppgaveClient.opprettFordelingsOppgave(journalpostId, behandlerEnhetsId, trackingId, loggingMeta)
+        return oppgaveClient.opprettFordelingsOppgave(journalpostId, behandlerEnhetsId, gjelderUtland, trackingId, loggingMeta)
     }
 
     suspend fun fetchGeografiskTilknytning(patientFnr: String, loggingMeta: LoggingMeta): HentGeografiskTilknytningResponse =
@@ -96,7 +99,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
                 }
             }
 
-    fun lagFinnBehandlendeEnhetListeRequest(tilknytting: GeografiskTilknytning?, patientDiskresjonsKode: String?): FinnBehandlendeEnhetListeRequest =
+    fun lagFinnBehandlendeEnhetListeRequest(tilknytting: GeografiskTilknytning?, patientDiskresjonsKode: String?, gjelderUtland: Boolean): FinnBehandlendeEnhetListeRequest =
         FinnBehandlendeEnhetListeRequest().apply {
             arbeidsfordelingKriterier = ArbeidsfordelingKriterier().apply {
                 if (tilknytting?.geografiskTilknytning != null) {
@@ -104,11 +107,23 @@ class OppgaveService @KtorExperimentalAPI constructor(
                         value = tilknytting.geografiskTilknytning
                     }
                 }
-                tema = Tema().apply {
-                    value = "SYM"
+                if (gjelderUtland) {
+                    // Fordi vi mangler korrekt arbeidsfordleing for SYM
+                    tema = Tema().apply {
+                        value = "SYK"
+                    }
+                } else {
+                    tema = Tema().apply {
+                        value = "SYM"
+                    }
                 }
                 oppgavetype = Oppgavetyper().apply {
                     value = "JFR"
+                }
+                if (gjelderUtland) {
+                    behandlingstype = Behandlingstyper().apply {
+                        value = "ae0106"
+                    }
                 }
                 if (!patientDiskresjonsKode.isNullOrBlank()) {
                     diskresjonskode = Diskresjonskoder().apply {
@@ -118,7 +133,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
             }
         }
 
-    fun lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(): FinnBehandlendeEnhetListeRequest =
+    fun lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(gjelderUtland: Boolean): FinnBehandlendeEnhetListeRequest =
         FinnBehandlendeEnhetListeRequest().apply {
             arbeidsfordelingKriterier = ArbeidsfordelingKriterier().apply {
                 tema = Tema().apply {
@@ -126,6 +141,11 @@ class OppgaveService @KtorExperimentalAPI constructor(
                 }
                 oppgavetype = Oppgavetyper().apply {
                     value = "FDR"
+                }
+                if (gjelderUtland) {
+                    behandlingstype = Behandlingstyper().apply {
+                        value = "ae0106"
+                    }
                 }
             }
         }
