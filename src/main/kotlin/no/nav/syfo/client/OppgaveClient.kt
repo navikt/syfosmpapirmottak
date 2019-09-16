@@ -1,7 +1,6 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
-import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -29,7 +28,6 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
 
     private suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse = retry("hent_oppgave") {
         httpClient.get<OppgaveResponse>(url) {
-            accept(ContentType.Application.Json)
             val oidcToken = oidcClient.oidcToken()
             this.header("Authorization", "Bearer ${oidcToken.access_token}")
             this.header("X-Correlation-ID", msgId)
