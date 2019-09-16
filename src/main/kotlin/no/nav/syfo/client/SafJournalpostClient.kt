@@ -7,6 +7,7 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
 import io.ktor.util.KtorExperimentalAPI
+import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
@@ -43,13 +44,16 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
             .execute()
             .data()
             ?.journalpost()
+        val dokumentId: String? = finnDokumentIdForOcr(journalpost?.dokumenter(), loggingMeta)
         return journalpost?.let {
             JournalpostMetadata(
                 Bruker(
                     it.bruker()?.id(),
                     it.bruker()?.type()?.name
-                ), finnDokumentIdForOcr(it.dokumenter(), loggingMeta),
-                erIkkeJournalfort(it.journalstatus())
+                ),
+                dokumentId,
+                erIkkeJournalfort(it.journalstatus()),
+                sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta)
             )
         }
     }
@@ -63,11 +67,35 @@ fun finnDokumentIdForOcr(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, 
     dokumentListe?.forEach { dokument ->
         dokument.dokumentvarianter().forEach {
             if (it.variantformat().name == "ORIGINAL") {
-                log.info("Fant OCR-dokument {}", loggingMeta)
+                log.info("Fant OCR-dokument {}", fields(loggingMeta))
                 return dokument.dokumentInfoId()
             }
         }
     }
-    log.warn("Fant ikke OCR-dokument {}", loggingMeta)
+    log.warn("Fant ikke OCR-dokument {}", fields(loggingMeta))
     return null
+}
+
+const val BREVKODE_UTLAND: String = "900023"
+
+fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, dokumentId: String?, loggingMeta: LoggingMeta): Boolean {
+    var brevkode: String? = null
+    dokumentId?.let { id ->
+        dokumentListe?.let { liste ->
+            val dokumenterMedRiktigId = liste.takeWhile { it.dokumentInfoId() == id }
+            brevkode = dokumenterMedRiktigId[0].brevkode()
+        }
+    }
+    if (dokumentId == null || dokumentListe == null || dokumentListe.isEmpty()) {
+        log.warn("Mangler info om brevkode, antar utenlandsk sykmelding {}", fields(loggingMeta))
+        return true
+    }
+
+    return if (brevkode == BREVKODE_UTLAND) {
+        log.info("Sykmelding gjelder utenlandsk sykmelding, brevkode: {}, {}", brevkode, fields(loggingMeta))
+        true
+    } else {
+        log.info("Sykmelding gjelder innenlands-sykmelding, brevkode: {}, {}", brevkode, fields(loggingMeta))
+        false
+    }
 }
