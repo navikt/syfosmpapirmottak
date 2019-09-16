@@ -15,12 +15,13 @@ class FordelingsOppgaveService(
     @KtorExperimentalAPI
     suspend fun handterJournalpostUtenBruker(
         journalpostId: String,
+        gjelderUtland: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String
     ) = coroutineScope {
         wrapExceptions(loggingMeta) {
             log.info("Oppretter fordelingsoppgave, {}", fields(loggingMeta))
-            val oppgaveId = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+            val oppgaveId = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = gjelderUtland, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
             if (oppgaveId != 0) {
                 PAPIRSM_FORDELINGSOPPGAVE.inc()

@@ -48,6 +48,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         journalpostId: String,
         tildeltEnhetsnr: String,
         aktoerId: String,
+        gjelderUtland: Boolean,
         sykmeldingId: String,
         loggingMeta: LoggingMeta
     ): Int {
@@ -55,6 +56,11 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
             return 0
+        }
+        var behandlingstype: String? = null
+        if (gjelderUtland) {
+            log.info("Gjelder utland, {}", fields(loggingMeta))
+            behandlingstype = "ae0106"
         }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
                 tildeltEnhetsnr = tildeltEnhetsnr,
@@ -66,6 +72,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
                 beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
                 tema = "SYM",
                 oppgavetype = "JFR",
+                behandlingstype = behandlingstype,
                 aktivDato = LocalDate.now(),
                 fristFerdigstillelse = LocalDate.now().plusDays(1),
                 prioritet = "NORM"
@@ -77,6 +84,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
     suspend fun opprettFordelingsOppgave(
         journalpostId: String,
         tildeltEnhetsnr: String,
+        gjelderUtland: Boolean,
         sykmeldingId: String,
         loggingMeta: LoggingMeta
     ): Int {
@@ -84,6 +92,11 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info("Det finnes allerede fordelingsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
             return 0
+        }
+        var behandlingstype: String? = null
+        if (gjelderUtland) {
+            log.info("Gjelder utland, {}", fields(loggingMeta))
+            behandlingstype = "ae0106"
         }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
             tildeltEnhetsnr = tildeltEnhetsnr,
@@ -93,6 +106,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             beskrivelse = "Fordelingsoppgave for mottatt papirsykmelding som må legges inn i infotrygd manuelt",
             tema = "SYM",
             oppgavetype = "FDR",
+            behandlingstype = behandlingstype,
             aktivDato = LocalDate.now(),
             fristFerdigstillelse = LocalDate.now().plusDays(1),
             prioritet = "NORM"
@@ -113,6 +127,7 @@ data class OpprettOppgaveRequest(
     val beskrivelse: String? = null,
     val tema: String? = null,
     val oppgavetype: String,
+    val behandlingstype: String? = null,
     val aktivDato: LocalDate,
     val fristFerdigstillelse: LocalDate? = null,
     val prioritet: String

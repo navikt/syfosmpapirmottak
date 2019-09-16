@@ -87,7 +87,7 @@ object OppgaveClientSpek : Spek({
         it("Oppretter ikke JFR-oppgave hvis finnes fra før") {
             var oppgaveId: Int = -1
             runBlocking {
-                oppgaveId = oppgaveClient.opprettOppgave("sakId", "123", "9999", "123456789", "sykmeldingId", loggingMetadata)
+                oppgaveId = oppgaveClient.opprettOppgave("sakId", "123", "9999", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
             oppgaveId shouldEqual 0
@@ -95,7 +95,7 @@ object OppgaveClientSpek : Spek({
         it("Oppretter ikke FDR-oppgave hvis finnes fra før") {
             var oppgaveId: Int = -1
             runBlocking {
-                oppgaveId = oppgaveClient.opprettFordelingsOppgave("123", "9999", "sykmeldingId", loggingMetadata)
+                oppgaveId = oppgaveClient.opprettFordelingsOppgave("123", "9999", false, "sykmeldingId", loggingMetadata)
             }
 
             oppgaveId shouldEqual 0
@@ -103,7 +103,7 @@ object OppgaveClientSpek : Spek({
         it("Oppretter JFR-oppgave hvis det ikke finnes fra før") {
             var oppgaveId: Int = -1
             runBlocking {
-                oppgaveId = oppgaveClient.opprettOppgave("sakId", "987", "9999", "123456789", "sykmeldingId", loggingMetadata)
+                oppgaveId = oppgaveClient.opprettOppgave("sakId", "987", "9999", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
             oppgaveId shouldEqual 42
@@ -111,7 +111,7 @@ object OppgaveClientSpek : Spek({
         it("Oppretter FDR-oppgave hvis det ikke finnes fra før") {
             var oppgaveId: Int = -1
             runBlocking {
-                oppgaveId = oppgaveClient.opprettFordelingsOppgave("987", "9999", "sykmeldingId", loggingMetadata)
+                oppgaveId = oppgaveClient.opprettFordelingsOppgave("987", "9999", false, "sykmeldingId", loggingMetadata)
             }
 
             oppgaveId shouldEqual 42

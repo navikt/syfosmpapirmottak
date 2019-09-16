@@ -79,16 +79,17 @@ fun finnDokumentIdForOcr(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, 
 const val BREVKODE_UTLAND: String = "900023"
 
 fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, dokumentId: String?, loggingMeta: LoggingMeta): Boolean {
-    var brevkode: String? = null
-    dokumentId?.let { id ->
-        dokumentListe?.let { liste ->
-            val dokumenterMedRiktigId = liste.takeWhile { it.dokumentInfoId() == id }
-            brevkode = dokumenterMedRiktigId[0].brevkode()
-        }
-    }
     if (dokumentId == null || dokumentListe == null || dokumentListe.isEmpty()) {
         log.warn("Mangler info om brevkode, antar utenlandsk sykmelding {}", fields(loggingMeta))
         return true
+    }
+
+    var brevkode: String? = null
+
+    val dokumenterMedRiktigId = dokumentListe.filter { it.dokumentInfoId() == dokumentId }
+
+    if (dokumenterMedRiktigId.isNotEmpty()) {
+        brevkode = dokumenterMedRiktigId[0].brevkode()
     }
 
     return if (brevkode == BREVKODE_UTLAND) {

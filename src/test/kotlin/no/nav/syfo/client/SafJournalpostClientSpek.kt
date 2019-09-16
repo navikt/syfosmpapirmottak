@@ -51,9 +51,23 @@ object SafJournalpostClientSpek : Spek({
                 FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoId", BREVKODE_UTLAND, emptyList()),
                 FindJournalpostQuery.Dokumenter("dokumentinfo", "annenDokumentInfoId", "brevkode", emptyList()))
 
-            val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, "dokumentInfoId", loggingMetadata)
+            val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, "dokumentInfoIdOriginal", loggingMetadata)
 
             utenlandskSykmelding shouldEqual true
+        }
+
+        it("Returnerer false hvis brevkoden ikke er utland") {
+            val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoIdArkiv", BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoIdOriginal", "NAV-skjema",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoId", "annen brevkode", emptyList()),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "annenDokumentInfoId", "brevkode", emptyList()))
+
+            val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, "dokumentInfoIdOriginal", loggingMetadata)
+
+            utenlandskSykmelding shouldEqual false
         }
 
         it("Returnerer true hvis dokumentId mangler") {
