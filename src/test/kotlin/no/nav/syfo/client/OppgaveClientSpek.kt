@@ -24,6 +24,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.syfo.LoggingMeta
+import no.nav.syfo.domain.OppgaveResultat
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -55,11 +56,11 @@ object OppgaveClientSpek : Spek({
             get("/oppgave") {
                 when {
                     call.request.queryParameters["oppgavetype"] == "JFR" && call.request.queryParameters["journalpostId"] == "123" -> call.respond(OppgaveResponse(1,
-                        listOf(Oppgave("1", "9999",
+                        listOf(Oppgave(1, "9999",
                             "123456789", "123", "2",
                             "SYM", "JFR"))))
                     call.request.queryParameters["oppgavetype"] == "FDR" && call.request.queryParameters["journalpostId"] == "123" -> call.respond(OppgaveResponse(1,
-                        listOf(Oppgave("1", "9999",
+                        listOf(Oppgave(1, "9999",
                             null, "123", "2",
                             "SYM", "FDR"))))
                     call.request.queryParameters["oppgavetype"] == "JFR" && call.request.queryParameters["journalpostId"] == "987" -> call.respond(OppgaveResponse(0, emptyList()))
@@ -85,36 +86,40 @@ object OppgaveClientSpek : Spek({
 
     describe("OppgaveClient oppretter oppgave når det ikke finnes fra før") {
         it("Oppretter ikke JFR-oppgave hvis finnes fra før") {
-            var oppgaveId: Int = -1
+            var oppgave: OppgaveResultat? = null
             runBlocking {
-                oppgaveId = oppgaveClient.opprettOppgave("sakId", "123", "9999", "123456789", false, "sykmeldingId", loggingMetadata)
+                oppgave = oppgaveClient.opprettOppgave("sakId", "123", "9999", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgaveId shouldEqual 0
+            oppgave?.oppgaveId shouldEqual 1
+            oppgave?.duplikat shouldEqual true
         }
         it("Oppretter ikke FDR-oppgave hvis finnes fra før") {
-            var oppgaveId: Int = -1
+            var oppgave: OppgaveResultat? = null
             runBlocking {
-                oppgaveId = oppgaveClient.opprettFordelingsOppgave("123", "9999", false, "sykmeldingId", loggingMetadata)
+                oppgave = oppgaveClient.opprettFordelingsOppgave("123", "9999", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgaveId shouldEqual 0
+            oppgave?.oppgaveId shouldEqual 1
+            oppgave?.duplikat shouldEqual true
         }
         it("Oppretter JFR-oppgave hvis det ikke finnes fra før") {
-            var oppgaveId: Int = -1
+            var oppgave: OppgaveResultat? = null
             runBlocking {
-                oppgaveId = oppgaveClient.opprettOppgave("sakId", "987", "9999", "123456789", false, "sykmeldingId", loggingMetadata)
+                oppgave = oppgaveClient.opprettOppgave("sakId", "987", "9999", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgaveId shouldEqual 42
+            oppgave?.oppgaveId shouldEqual 42
+            oppgave?.duplikat shouldEqual false
         }
         it("Oppretter FDR-oppgave hvis det ikke finnes fra før") {
-            var oppgaveId: Int = -1
+            var oppgave: OppgaveResultat? = null
             runBlocking {
-                oppgaveId = oppgaveClient.opprettFordelingsOppgave("987", "9999", false, "sykmeldingId", loggingMetadata)
+                oppgave = oppgaveClient.opprettFordelingsOppgave("987", "9999", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgaveId shouldEqual 42
+            oppgave?.oppgaveId shouldEqual 42
+            oppgave?.duplikat shouldEqual false
         }
     }
 })

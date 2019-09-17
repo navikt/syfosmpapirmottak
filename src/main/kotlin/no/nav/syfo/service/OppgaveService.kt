@@ -6,6 +6,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.STANDARD_NAV_ENHET
 import no.nav.syfo.client.OppgaveClient
+import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
@@ -44,7 +45,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
-    ): Int {
+    ): OppgaveResultat {
 
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
         val geografiskTilknytning = fetchGeografiskTilknytning(fnrPasient, loggingMeta)
@@ -65,7 +66,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
-    ): Int {
+    ): OppgaveResultat {
 
         log.info("Oppretter fordelingsoppgave for {}", fields(loggingMeta))
         val fordelingsenheter = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(gjelderUtland), loggingMeta)

@@ -10,6 +10,7 @@ import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.LoggingMeta
+import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import java.time.LocalDate
@@ -49,11 +50,11 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         gjelderUtland: Boolean,
         sykmeldingId: String,
         loggingMeta: LoggingMeta
-    ): Int {
+    ): OppgaveResultat {
         val oppgaveResponse = hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
-            return 0
+            return OppgaveResultat(oppgaveResponse.oppgaver.first().id, true)
         }
         var behandlingstype: String? = null
         if (gjelderUtland) {
@@ -76,7 +77,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
                 prioritet = "NORM"
         )
         log.info("Oppretter journalføringsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
-        return opprettOppgave(opprettOppgaveRequest, sykmeldingId).id
+        return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
     }
 
     suspend fun opprettFordelingsOppgave(
@@ -85,11 +86,11 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         gjelderUtland: Boolean,
         sykmeldingId: String,
         loggingMeta: LoggingMeta
-    ): Int {
+    ): OppgaveResultat {
         val oppgaveResponse = hentOppgave(oppgavetype = "FDR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info("Det finnes allerede fordelingsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
-            return 0
+            return OppgaveResultat(oppgaveResponse.oppgaver.first().id, true)
         }
         var behandlingstype: String? = null
         if (gjelderUtland) {
@@ -110,7 +111,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             prioritet = "NORM"
         )
         log.info("Oppretter fordelingsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
-        return opprettOppgave(opprettOppgaveRequest, sykmeldingId).id
+        return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
     }
 }
 
@@ -141,7 +142,7 @@ data class OppgaveResponse(
 )
 
 data class Oppgave(
-    val id: String?,
+    val id: Int,
     val tildeltEnhetsnr: String?,
     val aktoerId: String?,
     val journalpostId: String?,

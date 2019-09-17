@@ -12,6 +12,7 @@ import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
+import no.nav.syfo.domain.OppgaveResultat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
@@ -35,7 +36,7 @@ object BehandlingServiceSpek : Spek ({
 
         coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns "aktorId"
         coEvery { aktoerIdClientMock.finnFnr(any(), any()) } returns "fnr"
-        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) } returns 1000
+        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
         coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(Bruker("fnr", "FNR"), null, jpErIkkeJournalfort = true, gjelderUtland = false)
         coEvery { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any(), any()) } just Runs

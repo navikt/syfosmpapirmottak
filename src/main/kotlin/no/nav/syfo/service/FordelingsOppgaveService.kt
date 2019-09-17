@@ -21,12 +21,12 @@ class FordelingsOppgaveService(
     ) = coroutineScope {
         wrapExceptions(loggingMeta) {
             log.info("Oppretter fordelingsoppgave, {}", fields(loggingMeta))
-            val oppgaveId = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = gjelderUtland, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+            val oppgave = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = gjelderUtland, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-            if (oppgaveId != 0) {
+            if (!oppgave.duplikat) {
                 PAPIRSM_FORDELINGSOPPGAVE.inc()
                 log.info("Opprettet fordelingsoppgave med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgaveId),
+                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
                     StructuredArguments.keyValue("journalpostId", journalpostId),
                     fields(loggingMeta)
                 )

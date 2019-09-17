@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.STANDARD_NAV_ENHET
 import no.nav.syfo.client.OppgaveClient
+import no.nav.syfo.domain.OppgaveResultat
 import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
 import no.nav.tjeneste.pip.diskresjonskode.meldinger.WSHentDiskresjonskodeResponse
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
@@ -37,7 +38,7 @@ object FordelingsOppgaveServiceSpek : Spek ({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any(), any()) } returns 1
+        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false)
         coEvery { personV3Mock.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse().withGeografiskTilknytning(Kommune().withGeografiskTilknytning("1122"))
         coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse()
         coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns FinnBehandlendeEnhetListeResponse().apply {

@@ -71,12 +71,12 @@ class BehandlingService constructor(
                         } else {
                             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktoerIdPasient, loggingMeta = loggingMeta)
 
-                            val oppgaveId = oppgaveService.opprettOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
+                            val oppgave = oppgaveService.opprettOppgave(fnrPasient = fnrPasient, aktoerIdPasient = aktoerIdPasient, sakId = sakId,
                                 journalpostId = journalpostId, gjelderUtland = journalpostMetadata.gjelderUtland, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                            if (oppgaveId != 0) {
+                            if (!oppgave.duplikat) {
                                 log.info("Opprettet oppgave med {}, {} {}",
-                                    StructuredArguments.keyValue("oppgaveId", oppgaveId),
+                                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
                                     StructuredArguments.keyValue("sakid", sakId),
                                     fields(loggingMeta)
                                 )
