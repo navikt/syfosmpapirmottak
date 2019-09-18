@@ -16,6 +16,12 @@ val PAPIRSM_MOTTATT: Counter = Counter.build()
     .help("Antall mottatte papirsykmeldinger")
     .register()
 
+val PAPIRSM_MOTTATT_UTLAND: Counter = Counter.build()
+    .namespace(NAMESPACE)
+    .name("mottatt_papirsykmelding_utland_count")
+    .help("Antall mottatte utenlandske papirsykmeldinger")
+    .register()
+
 val PAPIRSM_MOTTATT_UTEN_BRUKER: Counter = Counter.build()
     .namespace(NAMESPACE)
     .name("mottatt_papirsm_uten_bruker_count")
