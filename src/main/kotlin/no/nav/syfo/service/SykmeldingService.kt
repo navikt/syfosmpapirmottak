@@ -7,6 +7,7 @@ import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.log
+import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
@@ -15,7 +16,6 @@ import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 class SykmeldingService constructor(
     private val sakClient: SakClient,
     private val oppgaveService: OppgaveService,
-    private val fordelingsOppgaveService: FordelingsOppgaveService,
     private val safDokumentClient: SafDokumentClient
 ) {
     suspend fun behandleSykmelding(
@@ -40,7 +40,17 @@ class SykmeldingService constructor(
         if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
             log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
-            fordelingsOppgaveService.handterJournalpostUtenBruker(journalpostId = journalpostId, gjelderUtland = false, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
+
+            val oppgave = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+
+            if (!oppgave.duplikat) {
+                PAPIRSM_FORDELINGSOPPGAVE.inc()
+                log.info("Opprettet fordelingsoppgave med {}, {} {}",
+                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                    StructuredArguments.keyValue("journalpostId", journalpostId),
+                    fields(loggingMeta)
+                )
+            }
         } else {
             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 

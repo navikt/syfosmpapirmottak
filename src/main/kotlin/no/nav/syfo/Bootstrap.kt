@@ -37,7 +37,6 @@ import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.service.BehandlingService
-import no.nav.syfo.service.FordelingsOppgaveService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.service.UtenlandskSykmeldingService
@@ -125,9 +124,8 @@ fun main() {
     }
 
     val oppgaveService = OppgaveService(oppgaveClient, personV3, diskresjonskodeV1, arbeidsfordelingV1)
-    val fordelingsOppgaveService = FordelingsOppgaveService(oppgaveService)
-    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, fordelingsOppgaveService, safDokumentClient)
-    val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService, fordelingsOppgaveService)
+    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient)
+    val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sykmeldingService, utenlandskSykmeldingService)
 
     launchListeners(

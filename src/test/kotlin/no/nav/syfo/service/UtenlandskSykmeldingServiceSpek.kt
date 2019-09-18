@@ -2,11 +2,9 @@ package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.Called
-import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.syfo.LoggingMeta
@@ -25,16 +23,15 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
 
     val oppgaveserviceMock = mockk<OppgaveService>()
     val sakClientMock = mockk<SakClient>()
-    val fordelingsOppgaveServiceMock = mockk<FordelingsOppgaveService>()
 
-    val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClientMock, oppgaveserviceMock, fordelingsOppgaveServiceMock)
+    val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClientMock, oppgaveserviceMock)
 
     beforeEachTest {
         clearAllMocks()
 
         coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
+        coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
-        coEvery { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any(), any()) } just Runs
     }
 
     describe("UtenlandskSykmeldingService ende-til-ende") {
@@ -43,7 +40,7 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
                 utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, true, any(), any()) }
         }
@@ -53,7 +50,7 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
                 utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = null, aktorId = aktorId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(journalpostId, true, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
         }
@@ -63,7 +60,7 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
                 utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = null, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(journalpostId, true, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
         }

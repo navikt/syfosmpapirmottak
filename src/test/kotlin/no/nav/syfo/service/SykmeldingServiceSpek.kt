@@ -2,11 +2,9 @@ package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.Called
-import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.syfo.LoggingMeta
@@ -27,17 +25,16 @@ object SykmeldingServiceSpek : Spek ({
 
     val oppgaveserviceMock = mockk<OppgaveService>()
     val sakClientMock = mockk<SakClient>()
-    val fordelingsOppgaveServiceMock = mockk<FordelingsOppgaveService>()
     val safDokumentClientMock = mockk<SafDokumentClient>()
 
-    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, fordelingsOppgaveServiceMock, safDokumentClientMock)
+    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock)
 
     beforeEachTest {
         clearAllMocks()
 
         coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
+        coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
-        coEvery { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any(), any()) } just Runs
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
     }
 
@@ -48,9 +45,9 @@ object SykmeldingServiceSpek : Spek ({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any(), any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
         it("Oppretter fordelingsoppgave hvis fnr mangler") {
@@ -59,7 +56,7 @@ object SykmeldingServiceSpek : Spek ({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
         }
@@ -70,7 +67,7 @@ object SykmeldingServiceSpek : Spek ({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
         }
@@ -83,9 +80,9 @@ object SykmeldingServiceSpek : Spek ({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any(), any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
         it("Henter ikke dokument hvis dokumentInfoId mangler") {
@@ -94,9 +91,9 @@ object SykmeldingServiceSpek : Spek ({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
-            coVerify { fordelingsOppgaveServiceMock.handterJournalpostUtenBruker(any(), any(), any(), any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
     }
 })
