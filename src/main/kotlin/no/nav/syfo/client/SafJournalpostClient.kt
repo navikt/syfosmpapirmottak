@@ -92,7 +92,7 @@ fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>
             brevkode = dokumenterMedRiktigId[0].brevkode()
         }
     } else {
-        log.info("Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}", loggingMeta)
+        log.info("Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}", fields(loggingMeta))
         val inneholderUtlandBrevkode: Boolean = dokumentListe.any { dok ->  dok.brevkode() == BREVKODE_UTLAND}
         if (inneholderUtlandBrevkode) {
             brevkode = BREVKODE_UTLAND
