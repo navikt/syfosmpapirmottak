@@ -79,19 +79,25 @@ fun finnDokumentIdForOcr(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, 
 const val BREVKODE_UTLAND: String = "900023"
 
 fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, dokumentId: String?, loggingMeta: LoggingMeta): Boolean {
-    if (dokumentId == null || dokumentListe == null || dokumentListe.isEmpty()) {
+    if (dokumentListe == null || dokumentListe.isEmpty()) {
         log.warn("Mangler info om brevkode, antar utenlandsk sykmelding {}", fields(loggingMeta))
         return true
     }
 
     var brevkode: String? = null
 
-    val dokumenterMedRiktigId = dokumentListe.filter { it.dokumentInfoId() == dokumentId }
-
-    if (dokumenterMedRiktigId.isNotEmpty()) {
-        brevkode = dokumenterMedRiktigId[0].brevkode()
+    if (dokumentId != null) {
+        val dokumenterMedRiktigId = dokumentListe.filter { it.dokumentInfoId() == dokumentId }
+        if (dokumenterMedRiktigId.isNotEmpty()) {
+            brevkode = dokumenterMedRiktigId[0].brevkode()
+        }
+    } else {
+        log.info("Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}", loggingMeta)
+        val inneholderUtlandBrevkode: Boolean = dokumentListe.any { dok ->  dok.brevkode() == BREVKODE_UTLAND}
+        if (inneholderUtlandBrevkode) {
+            brevkode = BREVKODE_UTLAND
+        }
     }
-
     return if (brevkode == BREVKODE_UTLAND) {
         log.info("Sykmelding gjelder utenlandsk sykmelding, brevkode: {}, {}", brevkode, fields(loggingMeta))
         true
