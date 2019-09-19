@@ -70,10 +70,34 @@ object SafJournalpostClientSpek : Spek({
             utenlandskSykmelding shouldEqual false
         }
 
-        it("Returnerer true hvis dokumentId mangler") {
+        it("Returnerer true hvis dokumentliste mangler") {
             val utenlandskSykmelding = sykmeldingGjelderUtland(null, null, loggingMetadata)
 
             utenlandskSykmelding shouldEqual true
+        }
+
+        it("Returnerer true hvis brevkoden er utland og OCR-dokument mangler") {
+            val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoIdArkiv", "annenBrevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoId", BREVKODE_UTLAND, emptyList()),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "annenDokumentInfoId", "brevkode", emptyList()))
+
+            val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, null, loggingMetadata)
+
+            utenlandskSykmelding shouldEqual true
+        }
+
+        it("Returnerer false hvis brevkoden ikke er utland og OCR-dokument mangler") {
+            val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoIdArkiv", "annenBrevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoId", "brevkode", emptyList()),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "annenDokumentInfoId", "brevkode", emptyList()))
+
+            val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, null, loggingMetadata)
+
+            utenlandskSykmelding shouldEqual false
         }
     }
 })
