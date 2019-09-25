@@ -29,14 +29,6 @@ class SykmeldingService constructor(
         log.info("Mottatt papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT.inc()
 
-        dokumentInfoId?.let {
-            try {
-                safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
-            } catch (e: Exception) {
-                log.warn("Kunne ikke hente OCR-dokument: ${e.message}, {}", fields(loggingMeta))
-            }
-        }
-
         if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
             log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
@@ -52,6 +44,15 @@ class SykmeldingService constructor(
                 )
             }
         } else {
+            dokumentInfoId?.let {
+                try {
+                    val ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
+                    ocrFil?.let { MappingService().apply { mapOcrFilTilReceivedSykmelding(skanningmetadata = ocrFil, fnr = fnr, aktorId = aktorId, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta) } }
+                } catch (e: Exception) {
+                    log.warn("Kunne ikke hente OCR-dokument: ${e.message}, {}", fields(loggingMeta))
+                }
+            }
+
             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
             val oppgave = oppgaveService.opprettOppgave(fnrPasient = fnr, aktoerIdPasient = aktorId, sakId = sakId,

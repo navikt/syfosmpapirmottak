@@ -55,7 +55,7 @@ object SykmeldingServiceSpek : Spek ({
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = null, aktorId = aktorId, dokumentInfoId = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
-            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
@@ -66,7 +66,7 @@ object SykmeldingServiceSpek : Spek ({
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = null, dokumentInfoId = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
-            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
