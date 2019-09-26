@@ -7,6 +7,7 @@ import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import type.Variantformat
+import java.time.Month
 
 @KtorExperimentalAPI
 object SafJournalpostClientSpek : Spek({
@@ -38,6 +39,35 @@ object SafJournalpostClientSpek : Spek({
             val dokumentId = finnDokumentIdForOcr(null, loggingMetadata)
 
             dokumentId shouldEqual null
+        }
+    }
+
+    describe("dateTimeStringTilLocalDate mapper dato riktig") {
+        it("Mapper dato riktig") {
+            val dateTime = "2019-09-24T11:27:23"
+
+            val dato = dateTimeStringTilLocalDateTime(dateTime, loggingMetadata)
+
+            dato?.year shouldEqual 2019
+            dato?.month shouldEqual Month.SEPTEMBER
+            dato?.dayOfMonth shouldEqual 24
+            dato?.hour shouldEqual 11
+            dato?.minute shouldEqual 27
+            dato?.second shouldEqual 23
+        }
+
+        it("Returnerer null hvis datoen ikke er en dato") {
+            val dateTime = "2019-09-"
+
+            val dato = dateTimeStringTilLocalDateTime(dateTime, loggingMetadata)
+
+            dato shouldEqual null
+        }
+
+        it("Returnerer null hvis datoen mangler") {
+            val dato = dateTimeStringTilLocalDateTime(null, loggingMetadata)
+
+            dato shouldEqual null
         }
     }
 

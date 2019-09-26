@@ -52,6 +52,8 @@ class SykmeldingService constructor(
                         log.error("Journalpost $journalpostId mangler datoOpprettet, {}", fields(loggingMeta))
                         throw IllegalStateException("Journalpost mangler opprettetDato")
                     }
+                    // hent behandler fra hpr
+                    // hent aktørid for lege
                     val ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
                     ocrFil?.let { MappingService().apply { mapOcrFilTilReceivedSykmelding(skanningmetadata = ocrFil, fnr = fnr, aktorId = aktorId, datoOpprettet = datoOpprettet, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta) } }
                 } catch (e: Exception) {
