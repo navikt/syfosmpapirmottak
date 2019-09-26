@@ -12,6 +12,7 @@ import no.nav.syfo.LoggingMeta
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
+import java.time.LocalDateTime
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -53,7 +54,8 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
                 ),
                 dokumentId,
                 erIkkeJournalfort(it.journalstatus()),
-                sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta)
+                sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta),
+                if (it.datoOpprettet() is LocalDateTime) it.datoOpprettet() as LocalDateTime else null
             )
         }
     }

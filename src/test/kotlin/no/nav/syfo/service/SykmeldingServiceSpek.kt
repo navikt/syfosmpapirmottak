@@ -13,6 +13,7 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.OppgaveResultat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.time.LocalDateTime
 
 @KtorExperimentalAPI
 object SykmeldingServiceSpek : Spek ({
@@ -21,6 +22,7 @@ object SykmeldingServiceSpek : Spek ({
     val fnr = "fnr"
     val aktorId = "aktorId"
     val dokumentInfoId = "dokumentInfoId"
+    val datoOpprettet = LocalDateTime.now()
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
 
     val oppgaveserviceMock = mockk<OppgaveService>()
@@ -41,7 +43,7 @@ object SykmeldingServiceSpek : Spek ({
     describe("SykmeldingService ende-til-ende") {
         it("Happy-case journalpost med bruker") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -52,7 +54,7 @@ object SykmeldingServiceSpek : Spek ({
 
         it("Oppretter fordelingsoppgave hvis fnr mangler") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = null, aktorId = aktorId, dokumentInfoId = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = null, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
@@ -63,7 +65,7 @@ object SykmeldingServiceSpek : Spek ({
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = null, dokumentInfoId = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = null, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
@@ -76,7 +78,7 @@ object SykmeldingServiceSpek : Spek ({
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws RuntimeException("Noe gikk galt")
 
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -87,7 +89,18 @@ object SykmeldingServiceSpek : Spek ({
 
         it("Henter ikke dokument hvis dokumentInfoId mangler") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = null, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = null, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
+            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+        }
+
+        it("Henter ikke dokument hvis datoOpprettet mangler") {
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = null, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }

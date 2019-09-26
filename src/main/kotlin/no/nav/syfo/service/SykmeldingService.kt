@@ -11,6 +11,7 @@ import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
+import java.time.LocalDateTime
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
@@ -23,6 +24,7 @@ class SykmeldingService constructor(
         fnr: String?,
         aktorId: String?,
         dokumentInfoId: String?,
+        datoOpprettet: LocalDateTime?,
         loggingMeta: LoggingMeta,
         sykmeldingId: String
     ) {
@@ -46,8 +48,12 @@ class SykmeldingService constructor(
         } else {
             dokumentInfoId?.let {
                 try {
+                    if (datoOpprettet == null) {
+                        log.error("Journalpost $journalpostId mangler datoOpprettet, {}", fields(loggingMeta))
+                        throw IllegalStateException("Journalpost mangler opprettetDato")
+                    }
                     val ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
-                    ocrFil?.let { MappingService().apply { mapOcrFilTilReceivedSykmelding(skanningmetadata = ocrFil, fnr = fnr, aktorId = aktorId, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta) } }
+                    ocrFil?.let { MappingService().apply { mapOcrFilTilReceivedSykmelding(skanningmetadata = ocrFil, fnr = fnr, aktorId = aktorId, datoOpprettet = datoOpprettet, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta) } }
                 } catch (e: Exception) {
                     log.warn("Kunne ikke hente OCR-dokument: ${e.message}, {}", fields(loggingMeta))
                 }

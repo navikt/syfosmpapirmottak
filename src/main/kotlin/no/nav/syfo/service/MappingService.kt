@@ -36,7 +36,13 @@ import java.time.LocalTime
 
 class MappingService {
 
-    fun mapOcrFilTilReceivedSykmelding(skanningmetadata: Skanningmetadata, fnr: String, aktorId: String, sykmeldingId: String, loggingMeta: LoggingMeta): ReceivedSykmelding {
+    fun mapOcrFilTilReceivedSykmelding(
+        skanningmetadata: Skanningmetadata,
+        fnr: String,
+        aktorId: String,
+        datoOpprettet: LocalDateTime,
+        sykmeldingId: String,
+        loggingMeta: LoggingMeta): ReceivedSykmelding {
         if (skanningmetadata.sykemeldinger.pasient.fnr != fnr) {
             log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
             throw IllegalStateException("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen")
@@ -54,7 +60,7 @@ class MappingService {
             legekontorHerId = null,
             legekontorReshId = null,
             legekontorOrgName = "",
-            mottattDato = LocalDateTime.now(),//hente fra saf
+            mottattDato = datoOpprettet,
             rulesetVersion = null,
             fellesformat = "",
             tssid = null)
