@@ -16,12 +16,15 @@ data class Environment(
     val aktoerregisterV1Url: String = getEnvVar("AKTORREGISTER_V1_URL"),
     val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL", "http://oppgave/api/v1/oppgaver"),
     val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL", "http://sak/api/v1/saker"),
-    val hentDokumentUrl: String = getEnvVar("HENT_DOKUMENT_URL")
+    val hentDokumentUrl: String = getEnvVar("HENT_DOKUMENT_URL"),
+    val clientId: String = getEnvVar("CLIENT_ID"),
+    val aadAccessTokenUrl: String = getEnvVar("AADACCESSTOKEN_URL")
 ) : KafkaConfig
 
 data class VaultCredentials(
     val serviceuserUsername: String,
-    val serviceuserPassword: String
+    val serviceuserPassword: String,
+    val clientsecret: String
 ) : KafkaCredentials {
     override val kafkaUsername: String = serviceuserUsername
     override val kafkaPassword: String = serviceuserPassword

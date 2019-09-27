@@ -24,7 +24,8 @@ object KafkaITSpek : Spek({
 
     val credentials = VaultCredentials(
             serviceuserUsername = " ",
-            serviceuserPassword = ""
+            serviceuserPassword = "",
+            clientsecret = "secret"
     )
 
     val embeddedEnvironment = KafkaEnvironment(
@@ -44,7 +45,9 @@ object KafkaITSpek : Spek({
             diskresjonskodeEndpointUrl = "diskresjonskodeUrl",
             securityTokenServiceUrl = "securl",
             oppgavebehandlingUrl = "oppgave/api",
-            hentDokumentUrl = "saf"
+            hentDokumentUrl = "saf",
+            clientId = "clientId",
+            aadAccessTokenUrl = "azuread/token"
     )
 
     fun Properties.overrideForTest(): Properties = apply {
