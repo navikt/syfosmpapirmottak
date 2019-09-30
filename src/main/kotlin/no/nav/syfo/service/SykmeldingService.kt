@@ -12,6 +12,8 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
+import no.nav.syfo.metrics.PAPIRSM_MAPPET_OK
+import no.nav.syfo.metrics.PAPIRSM_MAPPING_FEILET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
@@ -71,10 +73,12 @@ class SykmeldingService constructor(
                                 sykmelder = sykmelder,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
+                            PAPIRSM_MAPPET_OK.inc()
                         }
                     }
                 } catch (e: Exception) {
-                    log.warn("Kunne ikke hente OCR-dokument: ${e.message}, {}", fields(loggingMeta))
+                    PAPIRSM_MAPPING_FEILET.inc()
+                    log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
                 }
             }
 
