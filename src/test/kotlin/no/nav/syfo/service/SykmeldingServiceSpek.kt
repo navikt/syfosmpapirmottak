@@ -8,6 +8,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.syfo.LoggingMeta
+import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.OppgaveResultat
@@ -28,8 +30,10 @@ object SykmeldingServiceSpek : Spek ({
     val oppgaveserviceMock = mockk<OppgaveService>()
     val sakClientMock = mockk<SakClient>()
     val safDokumentClientMock = mockk<SafDokumentClient>()
+    val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
+    val aktoerIdClientMock = mockk<AktoerIdClient>()
 
-    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock)
+    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock)
 
     beforeEachTest {
         clearAllMocks()

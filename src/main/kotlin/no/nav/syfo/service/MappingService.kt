@@ -9,6 +9,7 @@ import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.SykemeldingerType
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.LoggingMeta
+import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.model.Adresse
 import no.nav.syfo.model.AktivitetIkkeMulig
@@ -41,6 +42,7 @@ class MappingService {
         fnr: String,
         aktorId: String,
         datoOpprettet: LocalDateTime,
+        sykmelder: Sykmelder,
         sykmeldingId: String,
         loggingMeta: LoggingMeta): ReceivedSykmelding {
         if (skanningmetadata.sykemeldinger.pasient.fnr != fnr) {
@@ -48,9 +50,8 @@ class MappingService {
             throw IllegalStateException("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen")
         }
 
-        // hent info om behandler (aktørid, fnr og HPR)
         return ReceivedSykmelding(
-            sykmelding = tilSykmelding(sykemeldinger = skanningmetadata.sykemeldinger, aktorId = aktorId, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta),
+            sykmelding = tilSykmelding(sykemeldinger = skanningmetadata.sykemeldinger, sykmelder = sykmelder, aktorId = aktorId, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta),
             personNrPasient = fnr,
             tlfPasient = null,
             personNrLege = "",
@@ -66,7 +67,7 @@ class MappingService {
             tssid = null)
     }
 
-    fun tilSykmelding(sykemeldinger: SykemeldingerType, aktorId: String, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelding {
+    fun tilSykmelding(sykemeldinger: SykemeldingerType, sykmelder: Sykmelder, aktorId: String, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelding {
         return Sykmelding(
             id = sykmeldingId, // riktig id?
             msgId = sykmeldingId,
@@ -88,11 +89,11 @@ class MappingService {
                 kontaktDato = sykemeldinger.kontaktMedPasient?.behandletDato,
                 begrunnelseIkkeKontakt = null),
             behandletTidspunkt = LocalDateTime.of(sykemeldinger.kontaktMedPasient?.behandletDato, LocalTime.NOON),//er dette greit..?
-            behandler = tilBehandler(), // fra hpr
+            behandler = tilBehandler(sykmelder),
             avsenderSystem = AvsenderSystem("Papirsykmelding", "1"), // ok..?
             syketilfelleStartDato = sykemeldinger.syketilfelleStartDato,
             signaturDato = LocalDateTime.of(sykemeldinger.kontaktMedPasient?.behandletDato, LocalTime.NOON),//er dette greit..?
-            navnFastlege = null// får inn
+            navnFastlege = sykmelder.navn
         )
     }
 
@@ -250,14 +251,14 @@ class MappingService {
         return utdypendeOpplysninger
     }
 
-    fun tilBehandler(): Behandler {
+    fun tilBehandler(sykmelder: Sykmelder): Behandler {
         return Behandler(
-            fornavn = "",
-            mellomnavn = "",
-            etternavn = "",
-            aktoerId = "",
-            fnr = "",
-            hpr = "",
+            fornavn = sykmelder.fornavn ?: "",
+            mellomnavn = sykmelder.mellomnavn,
+            etternavn = sykmelder.etternavn ?: "",
+            aktoerId = sykmelder.aktorId,
+            fnr = sykmelder.fnr,
+            hpr = sykmelder.hprNummer,
             her = null,
             adresse = Adresse(gate = null, postnummer = null, kommune = null, postboks = null, land = null),
             tlf = null

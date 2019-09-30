@@ -3,9 +3,13 @@ package no.nav.syfo.service
 import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.LoggingMeta
+import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
+import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
@@ -17,7 +21,9 @@ import java.time.LocalDateTime
 class SykmeldingService constructor(
     private val sakClient: SakClient,
     private val oppgaveService: OppgaveService,
-    private val safDokumentClient: SafDokumentClient
+    private val safDokumentClient: SafDokumentClient,
+    private val norskHelsenettClient: NorskHelsenettClient,
+    private val aktoerIdClient: AktoerIdClient
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -52,10 +58,21 @@ class SykmeldingService constructor(
                         log.error("Journalpost $journalpostId mangler datoOpprettet, {}", fields(loggingMeta))
                         throw IllegalStateException("Journalpost mangler opprettetDato")
                     }
-                    // hent behandler fra hpr
-                    // hent aktørid for lege
                     val ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
-                    ocrFil?.let { MappingService().apply { mapOcrFilTilReceivedSykmelding(skanningmetadata = ocrFil, fnr = fnr, aktorId = aktorId, datoOpprettet = datoOpprettet, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta) } }
+
+                    ocrFil?.let {
+                        val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+                        MappingService().apply {
+                            mapOcrFilTilReceivedSykmelding(
+                                skanningmetadata = ocrFil,
+                                fnr = fnr,
+                                aktorId = aktorId,
+                                datoOpprettet = datoOpprettet,
+                                sykmelder = sykmelder,
+                                sykmeldingId = sykmeldingId,
+                                loggingMeta = loggingMeta)
+                        }
+                    }
                 } catch (e: Exception) {
                     log.warn("Kunne ikke hente OCR-dokument: ${e.message}, {}", fields(loggingMeta))
                 }
@@ -75,5 +92,36 @@ class SykmeldingService constructor(
                 PAPIRSM_OPPGAVE.inc()
             }
         }
+    }
+
+    suspend fun hentSykmelder(ocrFil: Skanningmetadata, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelder {
+        if (ocrFil.sykemeldinger.behandler == null || ocrFil.sykemeldinger.behandler.hpr == null) {
+            log.error("Mangler informasjon om behandler, avbryter.. {}", fields(loggingMeta))
+            throw IllegalStateException("Mangler informasjon om behandler")
+        }
+        val hprNummer = ocrFil.sykemeldinger.behandler.hpr.toString()
+
+        val behandlerFraHpr = norskHelsenettClient.finnBehandler(hprNummer, sykmeldingId)
+
+        if (behandlerFraHpr == null || behandlerFraHpr.fnr.isNullOrEmpty()) {
+            log.error("Kunne ikke hente fnr for hpr {}, {}", hprNummer, fields(loggingMeta))
+            throw IllegalStateException("Kunne ikke hente fnr for hpr $hprNummer")
+        }
+
+        val aktorId = aktoerIdClient.finnAktorid(behandlerFraHpr.fnr, sykmeldingId)
+        if (aktorId.isNullOrEmpty()) {
+            log.error("Kunne ikke hente aktørid for hpr {}, {}", hprNummer, fields(loggingMeta))
+            throw IllegalStateException("Kunne ikke hente aktørid for hpr $hprNummer")
+        }
+
+        return Sykmelder(
+            hprNummer = hprNummer,
+            fnr = behandlerFraHpr.fnr,
+            aktorId = aktorId,
+            navn = behandlerFraHpr.mellomnavn?.let { "${behandlerFraHpr.fornavn} ${behandlerFraHpr.mellomnavn} ${behandlerFraHpr.etternavn}" } ?: "${behandlerFraHpr.fornavn} ${behandlerFraHpr.etternavn}",
+            fornavn = behandlerFraHpr.fornavn,
+            mellomnavn = behandlerFraHpr.mellomnavn,
+            etternavn = behandlerFraHpr.etternavn
+        )
     }
 }
