@@ -53,7 +53,7 @@ class BehandlingService constructor(
                     if (journalpostMetadata.gjelderUtland) {
                         utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
-                        sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = journalpostMetadata.dokumentInfoId, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
+                        sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, datoOpprettet = journalpostMetadata.datoOpprettet, dokumentInfoId = journalpostMetadata.dokumentInfoId, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     }
 
                 } else {

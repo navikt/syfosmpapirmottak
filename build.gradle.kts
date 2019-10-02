@@ -16,7 +16,7 @@ val ktorVersion = "1.2.3"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "5.2"
 val prometheusVersion = "0.5.0"
-val spekVersion = "2.0.5"
+val spekVersion = "2.0.6"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
@@ -36,7 +36,7 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "2019.09.03-11-07-64032e3b6381665e9f9c0914cef626331399e66d"
+val smCommonVersion = "2019.09.25-05-44-08e26429f4e37cd57d99ba4d39fc74099a078b97"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 
@@ -44,7 +44,7 @@ val javaTimeAdapterVersion = "1.1.3"
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
-    kotlin("jvm") version "1.3.40"
+    kotlin("jvm") version "1.3.50"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "4.0.4"
     id("com.apollographql.android") version "1.0.0"
@@ -114,6 +114,7 @@ dependencies {
     implementation ("no.nav.syfo.sm:syfosm-common-rest-sts:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-ws:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-kafka:$smCommonVersion")
+    implementation ("no.nav.syfo.sm:syfosm-common-diagnosis-codes:$smCommonVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")

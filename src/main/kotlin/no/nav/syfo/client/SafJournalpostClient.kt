@@ -12,6 +12,7 @@ import no.nav.syfo.LoggingMeta
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
+import java.time.LocalDateTime
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -53,7 +54,8 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
                 ),
                 dokumentId,
                 erIkkeJournalfort(it.journalstatus()),
-                sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta)
+                sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta),
+                dateTimeStringTilLocalDateTime(it.datoOpprettet(), loggingMeta)
             )
         }
     }
@@ -61,6 +63,19 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
     private fun erIkkeJournalfort(journalstatus: type.Journalstatus?): Boolean {
         return journalstatus?.name?.equals("MOTTATT", true) ?: false
     }
+}
+
+fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta): LocalDateTime? {
+    dateTime?.let {
+        return try {
+            LocalDateTime.parse(dateTime)
+        } catch (e: Exception) {
+            log.error("Journalpost har ikke en gyldig datoOpprettet {}, {}", e.message, fields(loggingMeta))
+            null
+        }
+    }
+    log.error("Journalpost mangler datoOpprettet {}", fields(loggingMeta))
+    return null
 }
 
 fun finnDokumentIdForOcr(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, loggingMeta: LoggingMeta): String? {
