@@ -71,7 +71,7 @@ object OppgaveServiceSpek : Spek ({
             coVerify { diskresjonskodeV1Mock.hentDiskresjonskode(coMatch { it.ident == "fnr" }) }
             coVerify {
                 arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning.value == "1122" && it.arbeidsfordelingKriterier.tema.value == "SYK" &&
+                    it.arbeidsfordelingKriterier.geografiskTilknytning.value == "1122" && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
                         it.arbeidsfordelingKriterier.oppgavetype.value == "JFR" && it.arbeidsfordelingKriterier.behandlingstype.value == "ae0106" && it.arbeidsfordelingKriterier.diskresjonskode == null
                 })
             }
