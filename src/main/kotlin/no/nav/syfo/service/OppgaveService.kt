@@ -108,15 +108,8 @@ class OppgaveService @KtorExperimentalAPI constructor(
                         value = tilknytting.geografiskTilknytning
                     }
                 }
-                if (gjelderUtland && tilknytting?.geografiskTilknytning != null) {
-                    // Fordi vi mangler korrekt arbeidsfordeling for SYM
-                    tema = Tema().apply {
-                        value = "SYK"
-                    }
-                } else {
-                    tema = Tema().apply {
-                        value = "SYM"
-                    }
+                tema = Tema().apply {
+                    value = "SYM"
                 }
                 oppgavetype = Oppgavetyper().apply {
                     value = "JFR"
