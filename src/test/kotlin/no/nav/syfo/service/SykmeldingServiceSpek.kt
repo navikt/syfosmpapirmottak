@@ -7,22 +7,33 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import no.nav.helse.sykSkanningMeta.BehandlerType
+import no.nav.helse.sykSkanningMeta.PasientType
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.helse.sykSkanningMeta.SykemeldingerType
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.Behandler
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.domain.Sykmelder
+import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.math.BigInteger
 import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
 object SykmeldingServiceSpek : Spek ({
     val sykmeldingId = "1234"
     val journalpostId = "123"
-    val fnr = "fnr"
+    val fnrPasient = "fnr"
     val aktorId = "aktorId"
+    val fnrLege = "fnrLege"
+    val aktorIdLege = "aktorIdLege"
     val dokumentInfoId = "dokumentInfoId"
     val datoOpprettet = LocalDateTime.now()
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
@@ -42,17 +53,19 @@ object SykmeldingServiceSpek : Spek ({
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
+        coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
+        coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns aktorIdLege
     }
 
     describe("SykmeldingService ende-til-ende") {
         it("Happy-case journalpost med bruker") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
@@ -69,7 +82,7 @@ object SykmeldingServiceSpek : Spek ({
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = null, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient, aktorId = null, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
@@ -82,35 +95,129 @@ object SykmeldingServiceSpek : Spek ({
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws RuntimeException("Noe gikk galt")
 
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
         it("Henter ikke dokument hvis dokumentInfoId mangler") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = null, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient, aktorId = aktorId, dokumentInfoId = null, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
         it("Henter ikke dokument hvis datoOpprettet mangler") {
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = null, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = null, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+        }
+    }
+
+    describe("SykmeldingService med OCR-fil") {
+        it("Happy-case") {
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                }
+            }
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+        }
+
+        it("Går videre og oppretter oppgave selv om mapping feiler") {
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "feilFnr" }
+                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                }
+            }
+
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient, aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+        }
+    }
+
+    describe("HentSykmelder") {
+        it("Happy-case") {
+            val ocrFil = Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                }
+            }
+
+            var sykmelder: Sykmelder? = null
+            runBlocking {
+                sykmelder = sykmeldingService.hentSykmelder(ocrFil= ocrFil, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            }
+
+            sykmelder?.hprNummer shouldEqual "123456"
+            sykmelder?.aktorId shouldEqual aktorIdLege
+            sykmelder?.fnr shouldEqual fnrLege
+            sykmelder?.fornavn shouldEqual "Fornavn"
+            sykmelder?.mellomnavn shouldEqual "Mellomnavn"
+            sykmelder?.etternavn shouldEqual "Etternavn"
+        }
+
+        it("Feiler hvis man ikke finner behandler i HPR") {
+            coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns null
+            val ocrFil = Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                }
+            }
+
+            assertFailsWith<IllegalStateException> {
+                runBlocking {
+                    sykmeldingService.hentSykmelder(ocrFil = ocrFil, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                }
+            }
+        }
+
+        it("Feiler hvis man ikke finner aktørid for behandler") {
+            coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns null
+            val ocrFil = Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                }
+            }
+
+            assertFailsWith<IllegalStateException> {
+                runBlocking {
+                    sykmeldingService.hentSykmelder(ocrFil = ocrFil, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                }
+            }
         }
     }
 })

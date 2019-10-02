@@ -44,6 +44,7 @@ import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.service.UtenlandskSykmeldingService
+import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.ws.createPort
 import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
 import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
@@ -81,6 +82,10 @@ fun main() {
         objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
 
     val applicationState = ApplicationState()
+
+    if (Diagnosekoder.icd10.isEmpty() || Diagnosekoder.icpc2.isEmpty()) {
+        throw RuntimeException("Kunne ikke laste ICD10/ICPC2-diagnosekoder.")
+    }
 
     val applicationServer = embeddedServer(Netty, env.applicationPort) {
         initRouting(applicationState)

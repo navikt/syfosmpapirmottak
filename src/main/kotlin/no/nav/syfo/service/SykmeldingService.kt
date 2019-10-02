@@ -122,7 +122,6 @@ class SykmeldingService constructor(
             hprNummer = hprNummer,
             fnr = behandlerFraHpr.fnr,
             aktorId = aktorId,
-            navn = behandlerFraHpr.mellomnavn?.let { "${behandlerFraHpr.fornavn} ${behandlerFraHpr.mellomnavn} ${behandlerFraHpr.etternavn}" } ?: "${behandlerFraHpr.fornavn} ${behandlerFraHpr.etternavn}",
             fornavn = behandlerFraHpr.fornavn,
             mellomnavn = behandlerFraHpr.mellomnavn,
             etternavn = behandlerFraHpr.etternavn

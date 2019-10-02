@@ -31,7 +31,10 @@ import no.nav.syfo.model.Periode
 import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.SporsmalSvar
+import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.model.Sykmelding
+import no.nav.syfo.sm.Diagnosekoder
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
@@ -54,7 +57,7 @@ class MappingService {
             sykmelding = tilSykmelding(sykemeldinger = skanningmetadata.sykemeldinger, sykmelder = sykmelder, aktorId = aktorId, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta),
             personNrPasient = fnr,
             tlfPasient = null,
-            personNrLege = "",
+            personNrLege = sykmelder.fnr,
             navLogId = sykmeldingId,
             msgId = sykmeldingId,
             legekontorOrgNr = null,
@@ -69,7 +72,7 @@ class MappingService {
 
     fun tilSykmelding(sykemeldinger: SykemeldingerType, sykmelder: Sykmelder, aktorId: String, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelding {
         return Sykmelding(
-            id = sykmeldingId, // riktig id?
+            id = sykmeldingId,
             msgId = sykmeldingId,
             pasientAktoerId = aktorId,
             medisinskVurdering = tilMedisinskVurdering(sykemeldinger.medisinskVurdering, loggingMeta),
@@ -81,19 +84,21 @@ class MappingService {
             tiltakArbeidsplassen = sykemeldinger.tiltak?.tiltakArbeidsplassen,
             tiltakNAV = sykemeldinger.tiltak?.tiltakNAV,
             andreTiltak = sykemeldinger.tiltak?.andreTiltak,
-            meldingTilNAV = MeldingTilNAV(
-                bistandUmiddelbart = sykemeldinger.meldingTilNAV?.isBistandNAVUmiddelbart ?: false,
-                beskrivBistand = sykemeldinger.meldingTilNAV?.beskrivBistandNAV),
+            meldingTilNAV = sykemeldinger.meldingTilNAV?.let {
+                MeldingTilNAV(
+                    bistandUmiddelbart = sykemeldinger.meldingTilNAV?.isBistandNAVUmiddelbart ?: false,
+                    beskrivBistand = sykemeldinger.meldingTilNAV?.beskrivBistandNAV)
+            },
             meldingTilArbeidsgiver = sykemeldinger.meldingTilArbeidsgiver,
             kontaktMedPasient = KontaktMedPasient(
                 kontaktDato = sykemeldinger.kontaktMedPasient?.behandletDato,
                 begrunnelseIkkeKontakt = null),
-            behandletTidspunkt = LocalDateTime.of(sykemeldinger.kontaktMedPasient?.behandletDato, LocalTime.NOON),//er dette greit..?
+            behandletTidspunkt = velgRiktigKontaktOgSignaturDato(behandletDato = sykemeldinger.kontaktMedPasient?.behandletDato, syketilfelleStartDato = sykemeldinger.syketilfelleStartDato, loggingMeta = loggingMeta),
             behandler = tilBehandler(sykmelder),
-            avsenderSystem = AvsenderSystem("Papirsykmelding", "1"), // ok..?
+            avsenderSystem = AvsenderSystem("Papirsykmelding", "1"),
             syketilfelleStartDato = sykemeldinger.syketilfelleStartDato,
-            signaturDato = LocalDateTime.of(sykemeldinger.kontaktMedPasient?.behandletDato, LocalTime.NOON),//er dette greit..?
-            navnFastlege = sykmelder.navn
+            signaturDato = velgRiktigKontaktOgSignaturDato(behandletDato = sykemeldinger.kontaktMedPasient?.behandletDato, syketilfelleStartDato = sykemeldinger.syketilfelleStartDato, loggingMeta = loggingMeta),
+            navnFastlege = null
         )
     }
 
@@ -103,24 +108,39 @@ class MappingService {
             throw IllegalStateException("Sykmelding mangler hoveddiagnose")
         }
 
-        val biDiagnoseListe: List<Diagnose>? = medisinskVurderingType.bidiagnose?.map { Diagnose(system = it.diagnosekodeSystem, kode = it.diagnosekode) }
+        val biDiagnoseListe: List<Diagnose>? = medisinskVurderingType.bidiagnose?.map {
+            Diagnose(
+                system = diagnosekodeSystemFraDiagnosekode(it.diagnosekode, loggingMeta),
+                kode = it.diagnosekode)
+        }
 
         return MedisinskVurdering(
             hovedDiagnose = Diagnose(
-                system = medisinskVurderingType.hovedDiagnose[0].diagnosekodeSystem,
+                system = diagnosekodeSystemFraDiagnosekode(medisinskVurderingType.hovedDiagnose[0].diagnosekode, loggingMeta),
                 kode = medisinskVurderingType.hovedDiagnose[0].diagnosekode),
             biDiagnoser = biDiagnoseListe ?: emptyList(),
-            svangerskap = medisinskVurderingType.isSvangerskap,
-            yrkesskade = medisinskVurderingType.isYrkesskade,
+            svangerskap = medisinskVurderingType.isSvangerskap ?: false,
+            yrkesskade = medisinskVurderingType.isYrkesskade ?: false,
             yrkesskadeDato = medisinskVurderingType.yrkesskadedato,
-            annenFraversArsak = AnnenFraversArsak(
-                medisinskVurderingType.annenFraversArsak,
-                emptyList()
-            )
+            annenFraversArsak = medisinskVurderingType.annenFraversArsak?.let {
+                AnnenFraversArsak(
+                    medisinskVurderingType.annenFraversArsak,
+                    emptyList())
+            }
         )
     }
 
-    fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType,  loggingMeta: LoggingMeta): Arbeidsgiver {
+    fun diagnosekodeSystemFraDiagnosekode(diagnosekode: String, loggingMeta: LoggingMeta): String {
+        if (Diagnosekoder.icd10.containsKey(diagnosekode)) {
+            return Diagnosekoder.ICD10_CODE
+        } else if (Diagnosekoder.icpc2.containsKey(diagnosekode)) {
+            return Diagnosekoder.ICPC2_CODE
+        }
+        log.error("Diagnosekode $diagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
+        throw IllegalStateException("Diagnosekode $diagnosekode tilhører ingen kjente kodeverk")
+    }
+
+    fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType, loggingMeta: LoggingMeta): Arbeidsgiver {
         val harArbeidsgiver = when {
             arbeidsgiverType.harArbeidsgiver == "Flere arbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
             arbeidsgiverType.harArbeidsgiver == "En arbeidsgiver" -> HarArbeidsgiver.EN_ARBEIDSGIVER
@@ -212,42 +232,41 @@ class MappingService {
             hensynArbeidsplassen = prognoseType.friskmelding?.beskrivHensynArbeidsplassen,
             erIArbeid = prognoseType.medArbeidsgiver?.let {
                 ErIArbeid(
-                egetArbeidPaSikt = it.isTilbakeSammeArbeidsgiver,
-                annetArbeidPaSikt = it.isTilbakeAnnenArbeidsgiver,// må sjekkes
-                arbeidFOM = it.tilbakeDato,
-                vurderingsdato = it.datoNyTilbakemelding)
+                    egetArbeidPaSikt = it.isTilbakeSammeArbeidsgiver,
+                    annetArbeidPaSikt = it.isTilbakeAnnenArbeidsgiver,
+                    arbeidFOM = it.tilbakeDato,
+                    vurderingsdato = it.datoNyTilbakemelding)
             },
             erIkkeIArbeid = prognoseType.utenArbeidsgiver?.let {
                 ErIkkeIArbeid(
-                arbeidsforPaSikt = it.isTilbakeArbeid,
-                arbeidsforFOM = it.tilbakeDato, //må sjekkes
-                vurderingsdato = it.datoNyTilbakemelding)
+                    arbeidsforPaSikt = it.isTilbakeArbeid,
+                    arbeidsforFOM = it.tilbakeDato,
+                    vurderingsdato = it.datoNyTilbakemelding)
             }
         )
 
-    fun tilUtdypendeOpplysninger(utdypendeOpplysningerType: UtdypendeOpplysningerType): Map<String, Map<String, SporsmalSvar>> {
+    fun tilUtdypendeOpplysninger(utdypendeOpplysningerType: UtdypendeOpplysningerType?): Map<String, Map<String, SporsmalSvar>> {
         val utdypendeOpplysninger = HashMap<String, Map<String, SporsmalSvar>>()
+        val sporsmalOgSvarMap = HashMap<String, SporsmalSvar>()
 
-        utdypendeOpplysningerType.sykehistorie?.let {
-            utdypendeOpplysninger["sykehistorie"] = mapOf(Pair(
-                "sykehistorie",
-                SporsmalSvar("sykehistorie", utdypendeOpplysningerType.sykehistorie, emptyList())))
+        // Spørsmålene kommer herfra: https://stash.adeo.no/projects/EIA/repos/nav-eia-external/browse/SM2013/xml/SM2013DynaSpm_1_5.xml
+        utdypendeOpplysningerType?.sykehistorie?.let {
+            sporsmalOgSvarMap["6.2.1"] = SporsmalSvar("Beskriv kort sykehistorie, symptomer og funn i dagens situasjon.", utdypendeOpplysningerType.sykehistorie, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
         }
-        utdypendeOpplysningerType.arbeidsevne?.let {
-            utdypendeOpplysninger["arbeidsevne"] = mapOf(Pair(
-                "arbeidsevne",
-                SporsmalSvar("arbeidsevne", utdypendeOpplysningerType.arbeidsevne, emptyList())))
+        utdypendeOpplysningerType?.arbeidsevne?.let {
+            sporsmalOgSvarMap["6.2.2"] = SporsmalSvar("Hvordan påvirker sykdommen arbeidsevnen?", utdypendeOpplysningerType.arbeidsevne, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
         }
-        utdypendeOpplysningerType.behandlingsresultat?.let {
-            utdypendeOpplysninger["behandlingsresultat"] = mapOf(Pair(
-                "behandlingsresultat",
-                SporsmalSvar("behandlingsresultat", utdypendeOpplysningerType.behandlingsresultat, emptyList())))
+        utdypendeOpplysningerType?.behandlingsresultat?.let {
+            sporsmalOgSvarMap["6.2.3"] = SporsmalSvar("Har behandlingen frem til nå bedret arbeidsevnen?", utdypendeOpplysningerType.behandlingsresultat, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
         }
-        utdypendeOpplysningerType.planlagtBehandling?.let {
-            utdypendeOpplysninger["planlagtBehandling"] = mapOf(Pair(
-                "planlagtBehandling",
-                SporsmalSvar("planlagtBehandling", utdypendeOpplysningerType.planlagtBehandling, emptyList())))
+        utdypendeOpplysningerType?.planlagtBehandling?.let {
+            sporsmalOgSvarMap["6.2.4"] = SporsmalSvar("Beskriv pågående og planlagt henvisning,utredning og/eller behandling.", utdypendeOpplysningerType.planlagtBehandling, listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
         }
+
+        if (sporsmalOgSvarMap.isNotEmpty()) {
+            utdypendeOpplysninger["6.2"] = sporsmalOgSvarMap
+        }
+
         return utdypendeOpplysninger
     }
 
@@ -263,5 +282,16 @@ class MappingService {
             adresse = Adresse(gate = null, postnummer = null, kommune = null, postboks = null, land = null),
             tlf = null
         )
+    }
+
+    fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, syketilfelleStartDato: LocalDate?, loggingMeta: LoggingMeta): LocalDateTime {
+        behandletDato?.let {
+            return LocalDateTime.of(it, LocalTime.NOON)
+        }
+        syketilfelleStartDato?.let {
+            return LocalDateTime.of(it, LocalTime.NOON)
+        }
+        log.error("Mangler både behandletDato og syketilfelleStartDato, kan ikke fortsette {}", fields(loggingMeta))
+        throw IllegalStateException("Mangler både behandletDato og syketilfelleStartDato, kan ikke fortsette")
     }
 }

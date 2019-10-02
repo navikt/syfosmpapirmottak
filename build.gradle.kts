@@ -36,7 +36,7 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "2019.09.03-11-07-64032e3b6381665e9f9c0914cef626331399e66d"
+val smCommonVersion = "2019.09.25-05-44-08e26429f4e37cd57d99ba4d39fc74099a078b97"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 
@@ -114,6 +114,7 @@ dependencies {
     implementation ("no.nav.syfo.sm:syfosm-common-rest-sts:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-ws:$smCommonVersion")
     implementation ("no.nav.syfo.sm:syfosm-common-kafka:$smCommonVersion")
+    implementation ("no.nav.syfo.sm:syfosm-common-diagnosis-codes:$smCommonVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
