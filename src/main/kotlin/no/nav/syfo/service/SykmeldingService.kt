@@ -73,6 +73,7 @@ class SykmeldingService constructor(
                                 sykmelder = sykmelder,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
+                            log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
                             PAPIRSM_MAPPET_OK.inc()
                         }
                     }
