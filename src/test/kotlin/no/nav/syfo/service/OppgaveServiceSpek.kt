@@ -62,7 +62,7 @@ object OppgaveServiceSpek : Spek ({
             coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("enhetId"), eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
 
-        it("Ende-til-ende utland") {
+        it("Ende-til-ende utland skal bruke SYK hvis GT!=null") {
             runBlocking {
                 oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, true, sykmeldingId, loggingMetadata)
             }
@@ -72,6 +72,24 @@ object OppgaveServiceSpek : Spek ({
             coVerify {
                 arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
                     it.arbeidsfordelingKriterier.geografiskTilknytning.value == "1122" && it.arbeidsfordelingKriterier.tema.value == "SYK" &&
+                        it.arbeidsfordelingKriterier.oppgavetype.value == "JFR" && it.arbeidsfordelingKriterier.behandlingstype.value == "ae0106" && it.arbeidsfordelingKriterier.diskresjonskode == null
+                })
+            }
+            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("enhetId"), eq("aktorId"), true, sykmeldingId, loggingMetadata) }
+        }
+
+        it("Ende-til-ende utland skal bruke SYM hvis GT==null") {
+            coEvery { personV3Mock.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse()
+
+            runBlocking {
+                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, true, sykmeldingId, loggingMetadata)
+            }
+
+            coVerify { personV3Mock.hentGeografiskTilknytning(any()) }
+            coVerify { diskresjonskodeV1Mock.hentDiskresjonskode(coMatch { it.ident == "fnr" }) }
+            coVerify {
+                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
+                    it.arbeidsfordelingKriterier.geografiskTilknytning == null && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
                         it.arbeidsfordelingKriterier.oppgavetype.value == "JFR" && it.arbeidsfordelingKriterier.behandlingstype.value == "ae0106" && it.arbeidsfordelingKriterier.diskresjonskode == null
                 })
             }
