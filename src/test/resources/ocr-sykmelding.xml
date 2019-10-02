@@ -13,7 +13,7 @@
         </arbeidsgiver>
         <medisinskVurdering>
             <hovedDiagnose>
-                <diagnosekode>S5250</diagnosekode>
+                <diagnosekode>S52.5</diagnosekode>
                 <diagnose>Brudd i distal ende av radius. Orbit: 19035908</diagnose>
             </hovedDiagnose>
         </medisinskVurdering>

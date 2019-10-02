@@ -130,14 +130,21 @@ class MappingService {
         )
     }
 
-    fun diagnosekodeSystemFraDiagnosekode(diagnosekode: String, loggingMeta: LoggingMeta): String {
+    fun diagnosekodeSystemFraDiagnosekode(originalDiagnosekode: String, loggingMeta: LoggingMeta): String {
+        val diagnosekode = if (originalDiagnosekode.contains(".")) {
+            originalDiagnosekode.replace(".", "")
+        } else {
+            originalDiagnosekode
+        }
         if (Diagnosekoder.icd10.containsKey(diagnosekode)) {
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {}", fields(loggingMeta))
             return Diagnosekoder.ICD10_CODE
         } else if (Diagnosekoder.icpc2.containsKey(diagnosekode)) {
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {}", fields(loggingMeta))
             return Diagnosekoder.ICPC2_CODE
         }
-        log.error("Diagnosekode $diagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
-        throw IllegalStateException("Diagnosekode $diagnosekode tilhører ingen kjente kodeverk")
+        log.error("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
+        throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
     }
 
     fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType, loggingMeta: LoggingMeta): Arbeidsgiver {

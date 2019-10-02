@@ -10,7 +10,7 @@
         </arbeidsgiver>
         <medisinskVurdering>
             <hovedDiagnose>
-                <diagnosekode>S5250</diagnosekode>
+                <diagnosekode>S52.5</diagnosekode>
             </hovedDiagnose>
         </medisinskVurdering>
         <aktivitet>

@@ -126,7 +126,7 @@ object MappingServiceSpek : Spek ({
             receivedSykmelding.mottattDato shouldEqual datoOpprettet
             receivedSykmelding.tssid shouldEqual null
             receivedSykmelding.sykmelding.pasientAktoerId shouldEqual aktorId
-            receivedSykmelding.sykmelding.medisinskVurdering.hovedDiagnose shouldEqual Diagnose(Diagnosekoder.ICD10_CODE, "S5250")
+            receivedSykmelding.sykmelding.medisinskVurdering.hovedDiagnose shouldEqual Diagnose(Diagnosekoder.ICD10_CODE, "S52.5")
             receivedSykmelding.sykmelding.medisinskVurdering.biDiagnoser shouldEqual emptyList()
             receivedSykmelding.sykmelding.medisinskVurdering.svangerskap shouldEqual false
             receivedSykmelding.sykmelding.medisinskVurdering.yrkesskade shouldEqual false
@@ -161,11 +161,11 @@ object MappingServiceSpek : Spek ({
             val dato = LocalDate.now()
             val medisinskVurderingType = MedisinskVurderingType().apply {
                 hovedDiagnose.add(HovedDiagnoseType().apply {
-                    diagnosekode = "S5250"
+                    diagnosekode = "S52.5"
                     diagnose = "Syk"
                 })
                 bidiagnose.add(BidiagnoseType().apply {
-                    diagnosekode = "S697"
+                    diagnosekode = "S69.7"
                     diagnose = "Sår hals"
                 })
                 isSvangerskap = false
@@ -176,10 +176,10 @@ object MappingServiceSpek : Spek ({
 
             val medisinskVurdering = mappingService.tilMedisinskVurdering(medisinskVurderingType, loggingMetadata)
 
-            medisinskVurdering.hovedDiagnose?.kode shouldEqual "S5250"
+            medisinskVurdering.hovedDiagnose?.kode shouldEqual "S52.5"
             medisinskVurdering.hovedDiagnose?.system shouldEqual Diagnosekoder.ICD10_CODE
             medisinskVurdering.biDiagnoser.size shouldEqual 1
-            medisinskVurdering.biDiagnoser[0] shouldEqual Diagnose(system = Diagnosekoder.ICD10_CODE, kode = "S697")
+            medisinskVurdering.biDiagnoser[0] shouldEqual Diagnose(system = Diagnosekoder.ICD10_CODE, kode = "S69.7")
             medisinskVurdering.svangerskap shouldEqual false
             medisinskVurdering.yrkesskade shouldEqual true
             medisinskVurdering.yrkesskadeDato shouldEqual dato
@@ -188,7 +188,7 @@ object MappingServiceSpek : Spek ({
         }
 
         it("diagnosekodeSystemFraDiagnosekode ICD10") {
-            val diagnosekodeSystem = mappingService.diagnosekodeSystemFraDiagnosekode("S5250", loggingMetadata)
+            val diagnosekodeSystem = mappingService.diagnosekodeSystemFraDiagnosekode("S52.5", loggingMetadata)
 
             diagnosekodeSystem shouldEqual Diagnosekoder.ICD10_CODE
         }
