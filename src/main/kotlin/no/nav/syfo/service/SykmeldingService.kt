@@ -12,8 +12,7 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
-import no.nav.syfo.metrics.PAPIRSM_MAPPET_OK
-import no.nav.syfo.metrics.PAPIRSM_MAPPING_FEILET
+import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
@@ -74,11 +73,11 @@ class SykmeldingService constructor(
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
                             log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
-                            PAPIRSM_MAPPET_OK.inc()
+                            PAPIRSM_MAPPET.labels("ok").inc()
                         }
                     }
                 } catch (e: Exception) {
-                    PAPIRSM_MAPPING_FEILET.inc()
+                    PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
                 }
             }
