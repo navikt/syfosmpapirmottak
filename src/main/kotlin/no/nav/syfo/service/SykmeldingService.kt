@@ -14,7 +14,6 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MAPPET_OK
 import no.nav.syfo.metrics.PAPIRSM_MAPPING_FEILET
-import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
