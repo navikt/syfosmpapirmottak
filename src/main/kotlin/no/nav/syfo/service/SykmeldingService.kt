@@ -14,7 +14,7 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MAPPET_OK
 import no.nav.syfo.metrics.PAPIRSM_MAPPING_FEILET
-import no.nav.syfo.metrics.PAPIRSM_MOTTATT
+import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import java.time.LocalDateTime
@@ -36,8 +36,8 @@ class SykmeldingService constructor(
         loggingMeta: LoggingMeta,
         sykmeldingId: String
     ) {
-        log.info("Mottatt papirsykmelding, {}", fields(loggingMeta))
-        PAPIRSM_MOTTATT.inc()
+        log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
+        PAPIRSM_MOTTATT_NORGE.inc()
 
         if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
