@@ -195,7 +195,7 @@ class MappingService {
                 aktivitetIkkeMulig = null,
                 avventendeInnspillTilArbeidsgiver = null,
                 behandlingsdager = null,
-                gradert = Gradert(reisetilskudd = aktivitetType.gradertSykmelding.isReisetilskudd, grad = Integer.valueOf(aktivitetType.gradertSykmelding.sykmeldingsgrad)),
+                gradert = Gradert(reisetilskudd = aktivitetType.gradertSykmelding.isReisetilskudd ?: false, grad = Integer.valueOf(aktivitetType.gradertSykmelding.sykmeldingsgrad)),
                 reisetilskudd = false)
             )
         }
