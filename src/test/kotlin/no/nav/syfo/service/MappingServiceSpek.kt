@@ -135,7 +135,7 @@ object MappingServiceSpek : Spek ({
             receivedSykmelding.sykmelding.skjermesForPasient shouldEqual false
             receivedSykmelding.sykmelding.arbeidsgiver shouldEqual Arbeidsgiver(HarArbeidsgiver.EN_ARBEIDSGIVER, null, null, null)
             receivedSykmelding.sykmelding.perioder.size shouldEqual 1
-            receivedSykmelding.sykmelding.perioder[0].aktivitetIkkeMulig shouldEqual AktivitetIkkeMulig(MedisinskArsak(null, emptyList()), null)
+            receivedSykmelding.sykmelding.perioder[0].aktivitetIkkeMulig shouldEqual AktivitetIkkeMulig(null, null)
             receivedSykmelding.sykmelding.perioder[0].fom shouldEqual LocalDate.of(2019, Month.AUGUST, 15)
             receivedSykmelding.sykmelding.perioder[0].tom shouldEqual LocalDate.of(2019, Month.SEPTEMBER, 30)
             receivedSykmelding.sykmelding.prognose shouldEqual null
@@ -150,7 +150,7 @@ object MappingServiceSpek : Spek ({
             receivedSykmelding.sykmelding.behandler shouldEqual Behandler(
                 fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null)
             receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", "1")
-            receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual LocalDate.of(2019, Month.AUGUST, 15)
+            receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual null
             receivedSykmelding.sykmelding.signaturDato shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.navnFastlege shouldEqual null
         }
@@ -371,6 +371,16 @@ object MappingServiceSpek : Spek ({
             behandler.her shouldEqual null
             behandler.adresse shouldNotEqual null
             behandler.tlf shouldEqual null
+        }
+
+        it("velgRiktigKontaktOgSignaturDato") {
+            val fom = LocalDate.of(2019, Month.SEPTEMBER, 1)
+            val periodeliste = listOf(Periode(fom, LocalDate.of(2019, Month.OCTOBER, 16),
+                AktivitetIkkeMulig(null, null), null, null, null, false))
+
+            val dato = mappingService.velgRiktigKontaktOgSignaturDato(null, periodeliste, loggingMetadata)
+
+            dato shouldEqual LocalDateTime.of(fom, LocalTime.NOON)
         }
     }
 })

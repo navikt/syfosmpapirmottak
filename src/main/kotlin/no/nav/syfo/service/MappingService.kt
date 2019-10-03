@@ -71,6 +71,7 @@ class MappingService {
     }
 
     fun tilSykmelding(sykemeldinger: SykemeldingerType, sykmelder: Sykmelder, aktorId: String, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelding {
+        val periodeliste = tilPeriodeListe(sykemeldinger.aktivitet)
         return Sykmelding(
             id = sykmeldingId,
             msgId = sykmeldingId,
@@ -78,7 +79,7 @@ class MappingService {
             medisinskVurdering = tilMedisinskVurdering(sykemeldinger.medisinskVurdering, loggingMeta),
             skjermesForPasient = sykemeldinger.medisinskVurdering?.isSkjermesForPasient ?: false,
             arbeidsgiver = tilArbeidsgiver(sykemeldinger.arbeidsgiver, loggingMeta),
-            perioder = tilPeriodeListe(sykemeldinger.aktivitet),
+            perioder = periodeliste,
             prognose = sykemeldinger.prognose?.let { tilPrognose(sykemeldinger.prognose) },
             utdypendeOpplysninger = tilUtdypendeOpplysninger(sykemeldinger.utdypendeOpplysninger),
             tiltakArbeidsplassen = sykemeldinger.tiltak?.tiltakArbeidsplassen,
@@ -93,18 +94,18 @@ class MappingService {
             kontaktMedPasient = KontaktMedPasient(
                 kontaktDato = sykemeldinger.kontaktMedPasient?.behandletDato,
                 begrunnelseIkkeKontakt = null),
-            behandletTidspunkt = velgRiktigKontaktOgSignaturDato(behandletDato = sykemeldinger.kontaktMedPasient?.behandletDato, syketilfelleStartDato = sykemeldinger.syketilfelleStartDato, loggingMeta = loggingMeta),
+            behandletTidspunkt = velgRiktigKontaktOgSignaturDato(behandletDato = sykemeldinger.kontaktMedPasient?.behandletDato, periodeliste = periodeliste, loggingMeta = loggingMeta),
             behandler = tilBehandler(sykmelder),
             avsenderSystem = AvsenderSystem("Papirsykmelding", "1"),
             syketilfelleStartDato = sykemeldinger.syketilfelleStartDato,
-            signaturDato = velgRiktigKontaktOgSignaturDato(behandletDato = sykemeldinger.kontaktMedPasient?.behandletDato, syketilfelleStartDato = sykemeldinger.syketilfelleStartDato, loggingMeta = loggingMeta),
+            signaturDato = velgRiktigKontaktOgSignaturDato(behandletDato = sykemeldinger.kontaktMedPasient?.behandletDato, periodeliste = periodeliste, loggingMeta = loggingMeta),
             navnFastlege = null
         )
     }
 
     fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggingMeta: LoggingMeta): MedisinskVurdering {
         if (medisinskVurderingType.hovedDiagnose.isNullOrEmpty()) {
-            log.error("Sykmelding mangler hoveddiagnose, avbryter.. {}", fields(loggingMeta))
+            log.warn("Sykmelding mangler hoveddiagnose, avbryter.. {}", fields(loggingMeta))
             throw IllegalStateException("Sykmelding mangler hoveddiagnose")
         }
 
@@ -143,26 +144,27 @@ class MappingService {
             log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {}", fields(loggingMeta))
             return Diagnosekoder.ICPC2_CODE
         }
-        log.error("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
+        log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
         throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
     }
 
-    fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType, loggingMeta: LoggingMeta): Arbeidsgiver {
+    fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?, loggingMeta: LoggingMeta): Arbeidsgiver {
         val harArbeidsgiver = when {
-            arbeidsgiverType.harArbeidsgiver == "Flere arbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
-            arbeidsgiverType.harArbeidsgiver == "En arbeidsgiver" -> HarArbeidsgiver.EN_ARBEIDSGIVER
-            arbeidsgiverType.harArbeidsgiver == "Ingen arbeidsgiver" -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
+            arbeidsgiverType?.harArbeidsgiver == "Flere arbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
+            arbeidsgiverType?.harArbeidsgiver == "Flerearbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
+            arbeidsgiverType?.harArbeidsgiver == "En arbeidsgiver" -> HarArbeidsgiver.EN_ARBEIDSGIVER
+            arbeidsgiverType?.harArbeidsgiver == "Ingen arbeidsgiver" -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
             else -> {
-                log.error("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, {}", arbeidsgiverType.harArbeidsgiver, fields(loggingMeta))
-                throw IllegalStateException("Klarte ikke å mappe harArbeidsgiver")
+                log.warn("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}", arbeidsgiverType?.harArbeidsgiver, fields(loggingMeta))
+                HarArbeidsgiver.EN_ARBEIDSGIVER
             }
         }
 
         return Arbeidsgiver(
             harArbeidsgiver = harArbeidsgiver,
-            navn = arbeidsgiverType.navnArbeidsgiver,
-            yrkesbetegnelse = arbeidsgiverType.yrkesbetegnelse,
-            stillingsprosent = arbeidsgiverType.stillingsprosent?.toInt()
+            navn = arbeidsgiverType?.navnArbeidsgiver,
+            yrkesbetegnelse = arbeidsgiverType?.yrkesbetegnelse,
+            stillingsprosent = arbeidsgiverType?.stillingsprosent?.toInt()
         )
     }
 
@@ -291,14 +293,25 @@ class MappingService {
         )
     }
 
-    fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, syketilfelleStartDato: LocalDate?, loggingMeta: LoggingMeta): LocalDateTime {
+    fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, periodeliste: List<Periode>, loggingMeta: LoggingMeta): LocalDateTime {
         behandletDato?.let {
             return LocalDateTime.of(it, LocalTime.NOON)
         }
-        syketilfelleStartDato?.let {
-            return LocalDateTime.of(it, LocalTime.NOON)
+
+        if (periodeliste.isEmpty()) {
+            log.warn("Periodeliste er tom, kan ikke fortsette {}", fields(loggingMeta))
+            throw IllegalStateException("Periodeliste er tom, kan ikke fortsette")
         }
-        log.error("Mangler både behandletDato og syketilfelleStartDato, kan ikke fortsette {}", fields(loggingMeta))
-        throw IllegalStateException("Mangler både behandletDato og syketilfelleStartDato, kan ikke fortsette")
+        if (periodeliste.size > 1) {
+            log.info("Periodeliste inneholder mer enn en periode {}", fields(loggingMeta))
+        }
+
+        periodeliste.forEach {
+            if (it.aktivitetIkkeMulig != null) {
+                return LocalDateTime.of(it.fom, LocalTime.NOON)
+            }
+        }
+        log.info("Periodeliste mangler aktivitetIkkeMulig, bruker FOM fra første periode {}", fields(loggingMeta))
+        return LocalDateTime.of(periodeliste.first().fom, LocalTime.NOON)
     }
 }
