@@ -101,21 +101,25 @@ class SykmeldingService constructor(
 
     suspend fun hentSykmelder(ocrFil: Skanningmetadata, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelder {
         if (ocrFil.sykemeldinger.behandler == null || ocrFil.sykemeldinger.behandler.hpr == null) {
-            log.error("Mangler informasjon om behandler, avbryter.. {}", fields(loggingMeta))
+            log.warn("Mangler informasjon om behandler, avbryter.. {}", fields(loggingMeta))
             throw IllegalStateException("Mangler informasjon om behandler")
         }
         val hprNummer = ocrFil.sykemeldinger.behandler.hpr.toString()
+        if (hprNummer.isEmpty()) {
+            log.warn("HPR-nummer mangler, kan ikke fortsette {}", fields(loggingMeta))
+            throw IllegalStateException("HPR-nummer mangler")
+        }
 
         val behandlerFraHpr = norskHelsenettClient.finnBehandler(hprNummer, sykmeldingId)
 
         if (behandlerFraHpr == null || behandlerFraHpr.fnr.isNullOrEmpty()) {
-            log.error("Kunne ikke hente fnr for hpr {}, {}", hprNummer, fields(loggingMeta))
+            log.warn("Kunne ikke hente fnr for hpr {}, {}", hprNummer, fields(loggingMeta))
             throw IllegalStateException("Kunne ikke hente fnr for hpr $hprNummer")
         }
 
         val aktorId = aktoerIdClient.finnAktorid(behandlerFraHpr.fnr, sykmeldingId)
         if (aktorId.isNullOrEmpty()) {
-            log.error("Kunne ikke hente aktørid for hpr {}, {}", hprNummer, fields(loggingMeta))
+            log.warn("Kunne ikke hente aktørid for hpr {}, {}", hprNummer, fields(loggingMeta))
             throw IllegalStateException("Kunne ikke hente aktørid for hpr $hprNummer")
         }
 
