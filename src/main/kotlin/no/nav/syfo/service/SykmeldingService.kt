@@ -7,6 +7,7 @@ import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.NorskHelsenettClient
+import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.Sykmelder
@@ -24,7 +25,8 @@ class SykmeldingService constructor(
     private val oppgaveService: OppgaveService,
     private val safDokumentClient: SafDokumentClient,
     private val norskHelsenettClient: NorskHelsenettClient,
-    private val aktoerIdClient: AktoerIdClient
+    private val aktoerIdClient: AktoerIdClient,
+    private val regelClient: RegelClient
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -63,8 +65,8 @@ class SykmeldingService constructor(
 
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
-                        MappingService().apply {
-                            mapOcrFilTilReceivedSykmelding(
+                        val mappingService = MappingService()
+                        val sykmelding = mappingService.mapOcrFilTilReceivedSykmelding(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
                                 aktorId = aktorId,
@@ -72,9 +74,12 @@ class SykmeldingService constructor(
                                 sykmelder = sykmelder,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
-                            log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
-                            PAPIRSM_MAPPET.labels("ok").inc()
-                        }
+                        log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
+                        PAPIRSM_MAPPET.labels("ok").inc()
+
+                        log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
+                        val validationResult = regelClient.valider(sykmelding, sykmeldingId)
+                        log.info("Resultat: {}, {}", validationResult.status.name, fields(loggingMeta))
                     }
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()

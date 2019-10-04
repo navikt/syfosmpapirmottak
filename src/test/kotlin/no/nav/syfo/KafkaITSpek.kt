@@ -48,7 +48,8 @@ object KafkaITSpek : Spek({
             hentDokumentUrl = "saf",
             clientId = "clientId",
             helsenettproxyId = "helsenettproxyId",
-            aadAccessTokenUrl = "azuread/token"
+            aadAccessTokenUrl = "azuread/token",
+            papirregelId = "papirregelId"
     )
 
     fun Properties.overrideForTest(): Properties = apply {
