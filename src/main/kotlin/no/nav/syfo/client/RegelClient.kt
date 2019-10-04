@@ -17,7 +17,7 @@ class RegelClient(
     private val client: HttpClient
 ) {
     suspend fun valider(sykmelding: ReceivedSykmelding, msgId: String): ValidationResult = retry("valider_regler") {
-        client.post<ValidationResult>("$endpointUrl/v1/rules/validate") {
+        client.post<ValidationResult>("$endpointUrl/api/v1/rules/validate") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
             val accessToken = accessTokenClient.hentAccessToken(resourceId)
