@@ -110,15 +110,11 @@ class MappingService {
         }
 
         val biDiagnoseListe: List<Diagnose>? = medisinskVurderingType.bidiagnose?.map {
-            Diagnose(
-                system = diagnosekodeSystemFraDiagnosekode(it.diagnosekode, loggingMeta),
-                kode = it.diagnosekode)
+            diagnoseFraDiagnosekode(it.diagnosekode, loggingMeta)
         }
 
         return MedisinskVurdering(
-            hovedDiagnose = Diagnose(
-                system = diagnosekodeSystemFraDiagnosekode(medisinskVurderingType.hovedDiagnose[0].diagnosekode, loggingMeta),
-                kode = medisinskVurderingType.hovedDiagnose[0].diagnosekode),
+            hovedDiagnose = diagnoseFraDiagnosekode(medisinskVurderingType.hovedDiagnose[0].diagnosekode, loggingMeta),
             biDiagnoser = biDiagnoseListe ?: emptyList(),
             svangerskap = medisinskVurderingType.isSvangerskap ?: false,
             yrkesskade = medisinskVurderingType.isYrkesskade ?: false,
@@ -131,7 +127,7 @@ class MappingService {
         )
     }
 
-    fun diagnosekodeSystemFraDiagnosekode(originalDiagnosekode: String, loggingMeta: LoggingMeta): String {
+    fun diagnoseFraDiagnosekode(originalDiagnosekode: String, loggingMeta: LoggingMeta): Diagnose {
         val diagnosekode = if (originalDiagnosekode.contains(".")) {
             originalDiagnosekode.replace(".", "")
         } else {
@@ -139,10 +135,10 @@ class MappingService {
         }
         if (Diagnosekoder.icd10.containsKey(diagnosekode)) {
             log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {}", fields(loggingMeta))
-            return Diagnosekoder.ICD10_CODE
+            return Diagnose(system = Diagnosekoder.ICD10_CODE, kode = diagnosekode)
         } else if (Diagnosekoder.icpc2.containsKey(diagnosekode)) {
             log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {}", fields(loggingMeta))
-            return Diagnosekoder.ICPC2_CODE
+            return Diagnose(system = Diagnosekoder.ICPC2_CODE, kode = diagnosekode)
         }
         log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
         throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")

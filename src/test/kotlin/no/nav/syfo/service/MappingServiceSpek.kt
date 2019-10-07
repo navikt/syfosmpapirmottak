@@ -126,7 +126,7 @@ object MappingServiceSpek : Spek ({
             receivedSykmelding.mottattDato shouldEqual datoOpprettet
             receivedSykmelding.tssid shouldEqual null
             receivedSykmelding.sykmelding.pasientAktoerId shouldEqual aktorId
-            receivedSykmelding.sykmelding.medisinskVurdering.hovedDiagnose shouldEqual Diagnose(Diagnosekoder.ICD10_CODE, "S52.5")
+            receivedSykmelding.sykmelding.medisinskVurdering.hovedDiagnose shouldEqual Diagnose(Diagnosekoder.ICD10_CODE, "S525")
             receivedSykmelding.sykmelding.medisinskVurdering.biDiagnoser shouldEqual emptyList()
             receivedSykmelding.sykmelding.medisinskVurdering.svangerskap shouldEqual false
             receivedSykmelding.sykmelding.medisinskVurdering.yrkesskade shouldEqual false
@@ -176,10 +176,10 @@ object MappingServiceSpek : Spek ({
 
             val medisinskVurdering = mappingService.tilMedisinskVurdering(medisinskVurderingType, loggingMetadata)
 
-            medisinskVurdering.hovedDiagnose?.kode shouldEqual "S52.5"
+            medisinskVurdering.hovedDiagnose?.kode shouldEqual "S525"
             medisinskVurdering.hovedDiagnose?.system shouldEqual Diagnosekoder.ICD10_CODE
             medisinskVurdering.biDiagnoser.size shouldEqual 1
-            medisinskVurdering.biDiagnoser[0] shouldEqual Diagnose(system = Diagnosekoder.ICD10_CODE, kode = "S69.7")
+            medisinskVurdering.biDiagnoser[0] shouldEqual Diagnose(system = Diagnosekoder.ICD10_CODE, kode = "S697")
             medisinskVurdering.svangerskap shouldEqual false
             medisinskVurdering.yrkesskade shouldEqual true
             medisinskVurdering.yrkesskadeDato shouldEqual dato
@@ -187,16 +187,18 @@ object MappingServiceSpek : Spek ({
             medisinskVurdering.annenFraversArsak?.grunn?.size shouldEqual 0
         }
 
-        it("diagnosekodeSystemFraDiagnosekode ICD10") {
-            val diagnosekodeSystem = mappingService.diagnosekodeSystemFraDiagnosekode("S52.5", loggingMetadata)
+        it("diagnoseFraDiagnosekode ICD10") {
+            val diagnose = mappingService.diagnoseFraDiagnosekode("S52.5", loggingMetadata)
 
-            diagnosekodeSystem shouldEqual Diagnosekoder.ICD10_CODE
+            diagnose.system shouldEqual Diagnosekoder.ICD10_CODE
+            diagnose.kode shouldEqual "S525"
         }
 
-        it("diagnosekodeSystemFraDiagnosekode ICPC2") {
-            val diagnosekodeSystem = mappingService.diagnosekodeSystemFraDiagnosekode("L72", loggingMetadata)
+        it("diagnoseFraDiagnosekode ICPC2") {
+            val diagnose = mappingService.diagnoseFraDiagnosekode("L72", loggingMetadata)
 
-            diagnosekodeSystem shouldEqual Diagnosekoder.ICPC2_CODE
+            diagnose.system shouldEqual Diagnosekoder.ICPC2_CODE
+            diagnose.kode shouldEqual "L72"
         }
 
         it("tilArbeidsgiver en arbeidsgiver") {
