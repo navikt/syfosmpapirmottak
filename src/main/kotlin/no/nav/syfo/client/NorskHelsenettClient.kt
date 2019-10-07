@@ -39,7 +39,7 @@ class NorskHelsenettClient(
         }
         when (NotFound) {
             httpResponse.status -> {
-                log.error("HprNummer mangler i request for msgId {}", msgId)
+                log.warn("Fant ikke behandler for HprNummer $hprNummer for msgId $msgId")
                 null
             }
             else -> {

@@ -20,7 +20,9 @@ data class Environment(
     val clientId: String = getEnvVar("CLIENT_ID"),
     val helsenettproxyId: String = getEnvVar("HELSENETTPROXY_ID"),
     val aadAccessTokenUrl: String = getEnvVar("AADACCESSTOKEN_URL"),
-    val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL", "http://syfohelsenettproxy")
+    val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL", "http://syfohelsenettproxy"),
+    val regelEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL", "http://syfosmpapirregler"),
+    val papirregelId: String = getEnvVar("PAPIRREGEL_ID")
 ) : KafkaConfig
 
 data class VaultCredentials(

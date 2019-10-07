@@ -7,7 +7,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
+import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.BehandlerType
+import no.nav.helse.sykSkanningMeta.HovedDiagnoseType
+import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
 import no.nav.helse.sykSkanningMeta.PasientType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.SykemeldingerType
@@ -15,14 +19,18 @@ import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.Behandler
 import no.nav.syfo.client.NorskHelsenettClient
+import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.domain.Sykmelder
+import no.nav.syfo.model.Status
+import no.nav.syfo.model.ValidationResult
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.math.BigInteger
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 
@@ -43,8 +51,9 @@ object SykmeldingServiceSpek : Spek ({
     val safDokumentClientMock = mockk<SafDokumentClient>()
     val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
     val aktoerIdClientMock = mockk<AktoerIdClient>()
+    val regelClientMock = mockk<RegelClient>()
 
-    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock)
+    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock)
 
     beforeEachTest {
         clearAllMocks()
@@ -55,6 +64,7 @@ object SykmeldingServiceSpek : Spek ({
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
         coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns aktorIdLege
+        coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.OK, emptyList())
     }
 
     describe("SykmeldingService ende-til-ende") {
@@ -132,7 +142,20 @@ object SykmeldingServiceSpek : Spek ({
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
                 sykemeldinger = SykemeldingerType().apply {
                     pasient = PasientType().apply { fnr = "fnr" }
-                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                    behandler = BehandlerType().apply {
+                        hpr = BigInteger("123456")
+                        aktivitet = AktivitetType().apply {
+                            aktivitetIkkeMulig = AktivitetIkkeMuligType().apply {
+                                periodeFOMDato = LocalDate.now().minusDays(2)
+                                periodeTOMDato = LocalDate.now().plusDays(10)
+                            }
+                        }
+                        medisinskVurdering = MedisinskVurderingType().apply {
+                            hovedDiagnose.add(HovedDiagnoseType().apply {
+                                diagnosekode = "S52.5"
+                            })
+                        }
+                    }
                 }
             }
             runBlocking {
@@ -142,6 +165,7 @@ object SykmeldingServiceSpek : Spek ({
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify { regelClientMock.valider(any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
         }
@@ -161,6 +185,7 @@ object SykmeldingServiceSpek : Spek ({
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify { regelClientMock.valider(any(), any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
         }
