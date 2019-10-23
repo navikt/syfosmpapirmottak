@@ -71,7 +71,7 @@ class MappingService {
     }
 
     fun tilSykmelding(sykemeldinger: SykemeldingerType, sykmelder: Sykmelder, aktorId: String, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelding {
-        val periodeliste = tilPeriodeListe(sykemeldinger.aktivitet)
+        val periodeliste = tilPeriodeListe(sykemeldinger.aktivitet, loggingMeta)
         return Sykmelding(
             id = sykmeldingId,
             msgId = sykmeldingId,
@@ -164,7 +164,7 @@ class MappingService {
         )
     }
 
-    fun tilPeriodeListe(aktivitetType: AktivitetType): List<Periode> {
+    fun tilPeriodeListe(aktivitetType: AktivitetType, loggingMeta: LoggingMeta): List<Periode> {
         val periodeListe = ArrayList<Periode>()
 
         if (aktivitetType.aktivitetIkkeMulig != null) {
@@ -227,6 +227,10 @@ class MappingService {
                 gradert = null,
                 reisetilskudd = true)
             )
+        }
+        if(periodeListe.isEmpty()) {
+            log.warn("Could not find aktivitetstype, {}", fields(loggingMeta))
+            throw IllegalStateException("Cound not find aktivitetstype")
         }
         return periodeListe
     }
