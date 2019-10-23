@@ -40,9 +40,11 @@ import no.nav.syfo.skanningMetadataUnmarshaller
 import no.nav.syfo.sm.Diagnosekoder
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotEqual
+import org.amshove.kluent.shouldThrow
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.io.StringReader
+import java.lang.IllegalStateException
 import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -241,6 +243,19 @@ object MappingServiceSpek : Spek ({
             arbeidsgiver.harArbeidsgiver shouldEqual HarArbeidsgiver.INGEN_ARBEIDSGIVER
         }
 
+        it("tilPeriodeListe shoulld throw exception, when missing aktivitetstype") {
+            val fom = LocalDate.now()
+            val tom = LocalDate.now().plusDays(1)
+
+            val aktivitetType = AktivitetType()
+
+
+            val func =  {   mappingService.tilPeriodeListe(aktivitetType, loggingMetadata)  }
+            func shouldThrow IllegalStateException::class
+
+
+        }
+
         it("tilPeriodeListe") {
             val fom = LocalDate.now()
             val tom = LocalDate.now().plusWeeks(3)
@@ -277,7 +292,7 @@ object MappingServiceSpek : Spek ({
                 }
             }
 
-            val periodeliste = mappingService.tilPeriodeListe(aktivitetType)
+            val periodeliste = mappingService.tilPeriodeListe(aktivitetType, loggingMetadata)
 
             periodeliste.size shouldEqual 5
             periodeliste[0] shouldEqual Periode(fom, tom, AktivitetIkkeMulig(
