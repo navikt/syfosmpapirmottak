@@ -12,7 +12,7 @@ val kafkaVersion = "2.3.0"
 val kafkaEmbeddedVersion = "2.2.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.39"
-val ktorVersion = "1.2.3"
+val ktorVersion = "1.2.5"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "5.2"
 val prometheusVersion = "0.5.0"
@@ -68,7 +68,6 @@ repositories {
     maven (url= "https://dl.bintray.com/kotlin/ktor")
     maven (url= "https://dl.bintray.com/spekframework/spek-dev")
     maven (url= "http://packages.confluent.io/maven/")
-    maven (url = "https://oss.sonatype.org/content/groups/staging/")
 }
 
 
