@@ -53,7 +53,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         val enhetsListe = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequest(geografiskTilknytning.geografiskTilknytning, diskresjonsKode, gjelderUtland), loggingMeta)
 
         val behandlerEnhetsId = enhetsListe?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
-            log.error("Kunne ikke finne NAV-enhet, bruker enhet $STANDARD_NAV_ENHET {}", fields(loggingMeta))
+            log.warn("Kunne ikke finne NAV-enhet, bruker enhet $STANDARD_NAV_ENHET {}", fields(loggingMeta))
             STANDARD_NAV_ENHET
         }
         return oppgaveClient.opprettOppgave(sakId, journalpostId, behandlerEnhetsId,
@@ -72,7 +72,7 @@ class OppgaveService @KtorExperimentalAPI constructor(
         val fordelingsenheter = fetchBehandlendeEnhet(lagFinnBehandlendeEnhetListeRequestForFordelingsenhet(gjelderUtland), loggingMeta)
 
         val behandlerEnhetsId = fordelingsenheter?.behandlendeEnhetListe?.firstOrNull()?.enhetId ?: run {
-            log.error("Kunne ikke finne NAV-enhet, bruker enhet $STANDARD_NAV_ENHET {}", fields(loggingMeta))
+            log.warn("Kunne ikke finne NAV-enhet, bruker enhet $STANDARD_NAV_ENHET {}", fields(loggingMeta))
             STANDARD_NAV_ENHET
         }
         return oppgaveClient.opprettFordelingsOppgave(journalpostId, behandlerEnhetsId, gjelderUtland, trackingId, loggingMeta)
