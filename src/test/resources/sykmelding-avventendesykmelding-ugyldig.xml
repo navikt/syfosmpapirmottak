@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<skanningmetadata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="skanning_meta.xsd">
+    <sykemeldinger>
+        <pasient>
+            <fnr>12345678910</fnr>
+        </pasient>
+        <medisinskVurdering>
+            <hovedDiagnose>
+                <diagnosekode>S52.5</diagnosekode>
+            </hovedDiagnose>
+        </medisinskVurdering>
+        <aktivitet>
+            <avventendeSykmelding>
+                <periodeFOMDato>2019-11-14</periodeFOMDato>
+                <periodeTOMDato>2019-11-15</periodeTOMDato>
+            </avventendeSykmelding>
+        </aktivitet>
+        <behandler>
+            <HPR>10052512</HPR>
+        </behandler>
+    </sykemeldinger>
+</skanningmetadata>
