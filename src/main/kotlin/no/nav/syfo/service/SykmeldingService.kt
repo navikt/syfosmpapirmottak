@@ -65,8 +65,7 @@ class SykmeldingService constructor(
 
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
-                        val mappingService = MappingService()
-                        val sykmelding = mappingService.mapOcrFilTilReceivedSykmelding(
+                        val sykmelding = MappingService.mapOcrFilTilReceivedSykmelding(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
                                 aktorId = aktorId,
