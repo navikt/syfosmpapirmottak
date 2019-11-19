@@ -3,7 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransf
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.syfo"
-version = "1.0.27-SNAPSHOT"
+version = "1.0.0"
 
 val apolloVersion = "1.0.0"
 val coroutinesVersion = "1.2.2"
@@ -16,7 +16,7 @@ val ktorVersion = "1.2.5"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "5.2"
 val prometheusVersion = "0.5.0"
-val spekVersion = "2.0.6"
+val spekVersion = "2.0.8"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"

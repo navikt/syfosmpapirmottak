@@ -20,30 +20,30 @@ class NorskHelsenettClient(
     private val httpClient: HttpClient
 ) {
 
-    suspend fun finnBehandler(hprNummer: String, msgId: String): Behandler? = retry(
+    suspend fun finnBehandler(hprNummer: String, sykmeldingId: String): Behandler? = retry(
         callName = "finnbehandler",
         retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L)) {
-        log.info("Henter behandler fra syfohelsenettproxy for msgId {}", msgId)
+        log.info("Henter behandler fra syfohelsenettproxy for sykmeldingId {}", sykmeldingId)
         val httpResponse = httpClient.get<HttpResponse>("$endpointUrl/api/behandlerMedHprNummer") {
             accept(ContentType.Application.Json)
             val accessToken = accessTokenClient.hentAccessToken(resourceId)
             headers {
                 append("Authorization", "Bearer $accessToken")
-                append("Nav-CallId", msgId)
+                append("Nav-CallId", sykmeldingId)
                 append("hprNummer", hprNummer)
             }
         }
         if (httpResponse.status == InternalServerError) {
-            log.error("Syfohelsenettproxy svarte med feilmelding for msgId {}", msgId)
-            throw IOException("Syfohelsenettproxy svarte med feilmelding for $msgId")
+            log.error("Syfohelsenettproxy svarte med feilmelding for sykmeldingId {}", sykmeldingId)
+            throw IOException("Syfohelsenettproxy svarte med feilmelding for $sykmeldingId")
         }
         when (NotFound) {
             httpResponse.status -> {
-                log.warn("Fant ikke behandler for HprNummer $hprNummer for msgId $msgId")
+                log.warn("Fant ikke behandler for HprNummer $hprNummer for sykmeldingId $sykmeldingId")
                 null
             }
             else -> {
-                log.info("Hentet behandler for msgId {}", msgId)
+                log.info("Hentet behandler for sykmeldingId {}", sykmeldingId)
                 httpResponse.call.response.receive<Behandler>()
             }
         }
