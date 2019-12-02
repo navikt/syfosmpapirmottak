@@ -29,6 +29,8 @@ import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 @KtorExperimentalAPI
@@ -121,5 +123,28 @@ object OppgaveClientSpek : Spek({
             oppgave?.oppgaveId shouldEqual 42
             oppgave?.duplikat shouldEqual false
         }
+    }
+
+    describe("OppgaveClient setter fristFerdigstillelse til forvenetet journalføringsfrist") {
+        it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på søndag") {
+          val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 12,1))
+            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.MONDAY
+        }
+
+        it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på lørdag") {
+            val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 11,30))
+            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.MONDAY
+        }
+
+        it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på fredag") {
+            val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 11,29))
+            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.MONDAY
+        }
+
+        it("Setter fristFerdigstillelse til tirsdag, viss oppgaven kom inn på mandag") {
+            val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 12,2))
+            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.TUESDAY
+        }
+
     }
 })

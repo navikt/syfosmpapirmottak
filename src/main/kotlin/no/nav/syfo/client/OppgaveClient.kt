@@ -13,6 +13,7 @@ import no.nav.syfo.LoggingMeta
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @KtorExperimentalAPI
@@ -73,7 +74,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
                 oppgavetype = "JFR",
                 behandlingstype = behandlingstype,
                 aktivDato = LocalDate.now(),
-                fristFerdigstillelse = LocalDate.now().plusDays(1),
+                fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
                 prioritet = "NORM"
         )
         log.info("Oppretter journalføringsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
@@ -107,7 +108,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             oppgavetype = "FDR",
             behandlingstype = behandlingstype,
             aktivDato = LocalDate.now(),
-            fristFerdigstillelse = LocalDate.now().plusDays(1),
+            fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
             prioritet = "NORM"
         )
         log.info("Oppretter fordelingsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
@@ -150,3 +151,11 @@ data class Oppgave(
     val tema: String?,
     val oppgavetype: String?
 )
+
+fun finnFristForFerdigstillingAvOppgave(today: LocalDate): LocalDate {
+    return when (today.dayOfWeek) {
+        DayOfWeek.FRIDAY -> today.plusDays(3)
+        DayOfWeek.SATURDAY -> today.plusDays(2)
+        else -> today.plusDays(1)
+    }
+}
