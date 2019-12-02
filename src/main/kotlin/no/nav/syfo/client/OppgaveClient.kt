@@ -74,7 +74,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
                 oppgavetype = "JFR",
                 behandlingstype = behandlingstype,
                 aktivDato = LocalDate.now(),
-                fristFerdigstillelse = LocalDate.now().plusDays(1),
+                fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
                 prioritet = "NORM"
         )
         log.info("Oppretter journalføringsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
@@ -156,7 +156,6 @@ fun finnFristForFerdigstillingAvOppgave(today: LocalDate): LocalDate {
     return when (today.dayOfWeek) {
         DayOfWeek.FRIDAY -> today.plusDays(3)
         DayOfWeek.SATURDAY -> today.plusDays(2)
-        DayOfWeek.SUNDAY -> today.plusDays(1)
         else -> today.plusDays(1)
     }
 }
