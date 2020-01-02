@@ -4,9 +4,9 @@ metadata:
   name: syfosmpapirmottak
   namespace: default
   labels:
-    team: {{team}}
+    team: teamsykefravr
 spec:
-  image: "docker.pkg.github.com/navikt/syfosmpapirmottak:{{tag}}"
+  image: {{ image }}
   replicas:
     min: 2
     max: 6

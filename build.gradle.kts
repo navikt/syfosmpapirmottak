@@ -36,7 +36,7 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "2019.09.25-05-44-08e26429f4e37cd57d99ba4d39fc74099a078b97"
+val smCommonVersion = "1.7bf5e6f"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 
@@ -44,9 +44,9 @@ val javaTimeAdapterVersion = "1.1.3"
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
-    kotlin("jvm") version "1.3.50"
+    kotlin("jvm") version "1.3.61"
     id("com.diffplug.gradle.spotless") version "3.18.0"
-    id("com.github.johnrengelman.shadow") version "4.0.4"
+    id("com.github.johnrengelman.shadow") version "5.2.0"
     id("com.apollographql.android") version "1.0.0"
 }
 
@@ -61,6 +61,9 @@ buildscript {
     }
 }
 
+val githubUser: String by project
+val githubPassword: String by project
+
 repositories {
     mavenCentral()
     jcenter()
@@ -68,6 +71,13 @@ repositories {
     maven (url= "https://dl.bintray.com/kotlin/ktor")
     maven (url= "https://dl.bintray.com/spekframework/spek-dev")
     maven (url= "http://packages.confluent.io/maven/")
+    maven {
+        url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
+        credentials {
+            username = githubUser
+            password = githubPassword
+        }
+    }
 }
 
 
@@ -108,12 +118,12 @@ dependencies {
 
     implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion")
 
-    implementation ("no.nav.syfo.sm:syfosm-common-models:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-networking:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-rest-sts:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-ws:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-kafka:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-diagnosis-codes:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-models:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-networking:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-rest-sts:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-ws:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")

@@ -126,7 +126,7 @@ object MappingServiceSpek : Spek({
             receivedSykmelding.mottattDato shouldEqual datoOpprettet
             receivedSykmelding.tssid shouldEqual null
             receivedSykmelding.sykmelding.pasientAktoerId shouldEqual aktorId
-            receivedSykmelding.sykmelding.medisinskVurdering.hovedDiagnose shouldEqual Diagnose(Diagnosekoder.ICD10_CODE, "S525")
+            receivedSykmelding.sykmelding.medisinskVurdering.hovedDiagnose shouldEqual Diagnose(Diagnosekoder.ICD10_CODE, "S525", "Brudd i distal ende av radius")
             receivedSykmelding.sykmelding.medisinskVurdering.biDiagnoser shouldEqual emptyList()
             receivedSykmelding.sykmelding.medisinskVurdering.svangerskap shouldEqual false
             receivedSykmelding.sykmelding.medisinskVurdering.yrkesskade shouldEqual false
@@ -217,7 +217,10 @@ object MappingServiceSpek : Spek({
             medisinskVurdering.hovedDiagnose?.kode shouldEqual "S525"
             medisinskVurdering.hovedDiagnose?.system shouldEqual Diagnosekoder.ICD10_CODE
             medisinskVurdering.biDiagnoser.size shouldEqual 1
-            medisinskVurdering.biDiagnoser[0] shouldEqual Diagnose(system = Diagnosekoder.ICD10_CODE, kode = "S697")
+            medisinskVurdering.biDiagnoser[0] shouldEqual Diagnose(
+                    system = Diagnosekoder.ICD10_CODE,
+                    kode = "S697",
+                    tekst = "Flere skader i håndledd og hånd")
             medisinskVurdering.svangerskap shouldEqual false
             medisinskVurdering.yrkesskade shouldEqual true
             medisinskVurdering.yrkesskadeDato shouldEqual dato
