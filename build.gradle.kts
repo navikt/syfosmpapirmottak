@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val apolloVersion = "1.0.0"
+val apolloVersion = "1.2.2"
 val coroutinesVersion = "1.2.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "2.3.0"
@@ -39,7 +39,7 @@ val jaxwsToolsVersion = "2.3.1"
 val smCommonVersion = "1.7bf5e6f"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
-
+val ioMockVersion = "1.9.3"
 
 plugins {
     java
@@ -47,10 +47,16 @@ plugins {
     kotlin("jvm") version "1.3.50"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
-    id("com.apollographql.android") version "1.0.0"
+    id("com.apollographql.android") version "1.2.2"
 }
 
 buildscript {
+    repositories {
+        jcenter()
+        gradlePluginPortal()
+        mavenCentral()
+        google()
+    }
     dependencies {
         classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
         classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
@@ -58,6 +64,7 @@ buildscript {
         classpath("com.sun.xml.ws:jaxws-tools:2.3.1") {
             exclude(group = "com.sun.xml.ws", module = "policy")
         }
+        classpath("com.apollographql.apollo:apollo-gradle-plugin:1.2.2")
     }
 }
 
@@ -150,7 +157,7 @@ dependencies {
     testImplementation ("org.eclipse.jetty:jetty-servlet:$jettyVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
-    testImplementation ("io.mockk:mockk:1.9.3")
+    testImplementation ("io.mockk:mockk:$ioMockVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
     }
