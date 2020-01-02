@@ -44,7 +44,7 @@ val javaTimeAdapterVersion = "1.1.3"
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
-    kotlin("jvm") version "1.3.61"
+    kotlin("jvm") version "1.3.50"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("com.apollographql.android") version "1.0.0"
