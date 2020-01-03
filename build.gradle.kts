@@ -5,11 +5,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val apolloVersion = "1.0.0"
+val apolloVersion = "1.2.2"
 val coroutinesVersion = "1.2.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "2.3.0"
-val kafkaEmbeddedVersion = "2.2.0"
+val kafkaEmbeddedVersion = "2.3.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.39"
 val ktorVersion = "1.2.5"
@@ -36,21 +36,27 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "2019.09.25-05-44-08e26429f4e37cd57d99ba4d39fc74099a078b97"
+val smCommonVersion = "1.7bf5e6f"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
-
+val ioMockVersion = "1.9.3"
 
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
     kotlin("jvm") version "1.3.50"
     id("com.diffplug.gradle.spotless") version "3.18.0"
-    id("com.github.johnrengelman.shadow") version "4.0.4"
-    id("com.apollographql.android") version "1.0.0"
+    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.apollographql.android") version "1.2.2"
 }
 
 buildscript {
+    repositories {
+        jcenter()
+        gradlePluginPortal()
+        mavenCentral()
+        google()
+    }
     dependencies {
         classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
         classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
@@ -58,8 +64,12 @@ buildscript {
         classpath("com.sun.xml.ws:jaxws-tools:2.3.1") {
             exclude(group = "com.sun.xml.ws", module = "policy")
         }
+        classpath("com.apollographql.apollo:apollo-gradle-plugin:1.2.2")
     }
 }
+
+val githubUser: String by project
+val githubPassword: String by project
 
 repositories {
     mavenCentral()
@@ -68,6 +78,13 @@ repositories {
     maven (url= "https://dl.bintray.com/kotlin/ktor")
     maven (url= "https://dl.bintray.com/spekframework/spek-dev")
     maven (url= "http://packages.confluent.io/maven/")
+    maven {
+        url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
+        credentials {
+            username = githubUser
+            password = githubPassword
+        }
+    }
 }
 
 
@@ -108,12 +125,12 @@ dependencies {
 
     implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion")
 
-    implementation ("no.nav.syfo.sm:syfosm-common-models:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-networking:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-rest-sts:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-ws:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-kafka:$smCommonVersion")
-    implementation ("no.nav.syfo.sm:syfosm-common-diagnosis-codes:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-models:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-networking:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-rest-sts:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-ws:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
+    implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
@@ -140,7 +157,7 @@ dependencies {
     testImplementation ("org.eclipse.jetty:jetty-servlet:$jettyVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
-    testImplementation ("io.mockk:mockk:1.9.3")
+    testImplementation ("io.mockk:mockk:$ioMockVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
     }

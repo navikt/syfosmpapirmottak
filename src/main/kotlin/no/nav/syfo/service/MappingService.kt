@@ -136,10 +136,16 @@ class MappingService private constructor() {
             }
             if (Diagnosekoder.icd10.containsKey(diagnosekode)) {
                 log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {}", fields(loggingMeta))
-                return Diagnose(system = Diagnosekoder.ICD10_CODE, kode = diagnosekode)
+                return Diagnose(
+                        system = Diagnosekoder.ICD10_CODE,
+                        kode = diagnosekode,
+                        tekst = Diagnosekoder.icd10[diagnosekode]?.text ?: "")
             } else if (Diagnosekoder.icpc2.containsKey(diagnosekode)) {
                 log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {}", fields(loggingMeta))
-                return Diagnose(system = Diagnosekoder.ICPC2_CODE, kode = diagnosekode)
+                return Diagnose(
+                        system = Diagnosekoder.ICPC2_CODE,
+                        kode = diagnosekode,
+                        tekst = Diagnosekoder.icpc2[diagnosekode]?.text ?: "")
             }
             log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
             throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
