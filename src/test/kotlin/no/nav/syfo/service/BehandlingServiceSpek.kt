@@ -64,6 +64,20 @@ object BehandlingServiceSpek : Spek ({
             coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) wasNot Called }
         }
 
+        it("Ende-til-ende journalpost med endret tema") {
+            val journalfoeringEvent = lagJournalfoeringEvent("TemaEndret", "SYM", "SKAN_NETS")
+
+            runBlocking {
+                behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId)
+            }
+
+            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(eq("fnr"), sykmeldingId) }
+            coVerify { aktoerIdClientMock.finnFnr(any(), any())!! wasNot Called }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), eq("fnr"), eq("aktorId"), null, datoOpprettet, any(), any()) }
+            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) wasNot Called }
+        }
+
         it("Ende-til-ende journalpost med aktorId") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(

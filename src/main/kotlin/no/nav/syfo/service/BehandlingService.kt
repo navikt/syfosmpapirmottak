@@ -30,7 +30,8 @@ class BehandlingService constructor(
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
                 journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" &&
-                journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført"
+                (journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" ||
+                 journalfoeringEvent.hendelsesType.toString() == "TemaEndret")
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
