@@ -39,16 +39,12 @@ spec:
     - "https://syfosmpapirmottak.nais.preprod.local"
   webproxy: true
   env:
-    - name: ARBEIDSFORDELING_V1_ENDPOINT_URL
-      value: https://app-q1.adeo.no/norg2/ws/Arbeidsfordeling/v1
     - name: SECURITY_TOKEN_SERVICE_URL
       value: https://sts-q1.preprod.local/SecurityTokenServiceProvider/
     - name: AKTORREGISTER_V1_URL
       value: https://app-q1.adeo.no/aktoerregister/api/v1
     - name: SAFGRAPHQL_URL
       value: https://saf-q1.nais.preprod.local/graphql
-    - name: DISKRESJONSKODE_ENDPOINT_URL
-      value: https://wasapp-q1.adeo.no/tpsws/Diskresjonskode
     - name: DOK_JOURNALFOERING_V1_TOPIC
       value: aapen-dok-journalfoering-v1-q1
     - name: HENT_DOKUMENT_URL
@@ -61,7 +57,5 @@ spec:
       value: c18eba24-f676-47db-9a97-3c66e9304aee
     - name: PAPIRREGEL_ID
       value: c35dd346-0d3d-4b68-b883-a324c0b1098d
-    - name: PERSON_V3_ENDPOINT_URL
-      value: https://wasapp-q1.adeo.no/tpsws/ws/Person/v3
     - name: KAFKA_BOOTSTRAP_SERVERS_URL
       value: SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443

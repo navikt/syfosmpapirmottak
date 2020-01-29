@@ -77,7 +77,7 @@ repositories {
     maven (url= "https://kotlin.bintray.com/kotlinx")
     maven (url= "https://dl.bintray.com/kotlin/ktor")
     maven (url= "https://dl.bintray.com/spekframework/spek-dev")
-    maven (url= "http://packages.confluent.io/maven/")
+    maven (url= "https://packages.confluent.io/maven/")
     maven {
         url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
         credentials {
@@ -112,9 +112,6 @@ dependencies {
     implementation ("no.nav.helse.xml:papirSykemelding:$papirSykemeldingVersion")
     implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
     implementation ("no.nav.syfo.schemas:syfosmoppgave-avro:$syfooppgaveSchemasVersion")
-    implementation ("no.nav.tjenestespesifikasjoner:person-v3-tjenestespesifikasjon:$navPersonv3Version")
-    implementation ("no.nav.tjenestespesifikasjoner:diskresjonskodev1-tjenestespesifikasjon:$diskresjonskodeV1Version")
-    implementation ("no.nav.tjenestespesifikasjoner:arbeidsfordeling-v1-tjenestespesifikasjon:$navArbeidsfordelingv1Version")
 
     implementation ("io.ktor:ktor-client-cio:$ktorVersion")
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")

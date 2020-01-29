@@ -29,7 +29,7 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
+        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
     }
@@ -42,7 +42,7 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnr, aktorId, eq("sakId"), journalpostId, true, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, true, any(), any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis fnr mangler") {
@@ -52,7 +52,7 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
         }
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
@@ -62,7 +62,7 @@ object UtenlandskSykmeldingServiceSpek : Spek ({
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
         }
     }
 })

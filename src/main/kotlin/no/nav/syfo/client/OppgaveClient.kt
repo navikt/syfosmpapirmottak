@@ -46,7 +46,6 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
     suspend fun opprettOppgave(
         sakId: String,
         journalpostId: String,
-        tildeltEnhetsnr: String,
         aktoerId: String,
         gjelderUtland: Boolean,
         sykmeldingId: String,
@@ -63,7 +62,6 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             behandlingstype = "ae0106"
         }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
-                tildeltEnhetsnr = tildeltEnhetsnr,
                 aktoerId = aktoerId,
                 opprettetAvEnhetsnr = "9999",
                 journalpostId = journalpostId,
@@ -77,13 +75,12 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
                 fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
                 prioritet = "NORM"
         )
-        log.info("Oppretter journalføringsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
+        log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
     }
 
     suspend fun opprettFordelingsOppgave(
         journalpostId: String,
-        tildeltEnhetsnr: String,
         gjelderUtland: Boolean,
         sykmeldingId: String,
         loggingMeta: LoggingMeta
@@ -99,7 +96,6 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             behandlingstype = "ae0106"
         }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
-            tildeltEnhetsnr = tildeltEnhetsnr,
             opprettetAvEnhetsnr = "9999",
             journalpostId = journalpostId,
             behandlesAvApplikasjon = "FS22",
@@ -111,7 +107,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
             prioritet = "NORM"
         )
-        log.info("Oppretter fordelingsoppgave på enhet $tildeltEnhetsnr, {}", fields(loggingMeta))
+        log.info("Oppretter fordelingsoppgave {}", fields(loggingMeta))
         return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
     }
 }

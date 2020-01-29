@@ -88,7 +88,7 @@ class SykmeldingService constructor(
 
             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
-            val oppgave = oppgaveService.opprettOppgave(fnrPasient = fnr, aktoerIdPasient = aktorId, sakId = sakId,
+            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
                 journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
             if (!oppgave.duplikat) {

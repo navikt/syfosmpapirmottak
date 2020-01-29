@@ -58,7 +58,7 @@ object SykmeldingServiceSpek : Spek ({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
+        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
@@ -75,7 +75,7 @@ object SykmeldingServiceSpek : Spek ({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
@@ -87,7 +87,7 @@ object SykmeldingServiceSpek : Spek ({
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
         }
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
@@ -98,7 +98,7 @@ object SykmeldingServiceSpek : Spek ({
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
         }
 
         it("Går videre selv om henting av dokument feiler") {
@@ -110,7 +110,7 @@ object SykmeldingServiceSpek : Spek ({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
@@ -121,7 +121,7 @@ object SykmeldingServiceSpek : Spek ({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
 
@@ -132,7 +132,7 @@ object SykmeldingServiceSpek : Spek ({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
     }
@@ -167,7 +167,7 @@ object SykmeldingServiceSpek : Spek ({
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
         }
 
         it("Går videre og oppretter oppgave selv om mapping feiler") {
@@ -187,7 +187,7 @@ object SykmeldingServiceSpek : Spek ({
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(fnrPasient, aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
         }
     }
 
