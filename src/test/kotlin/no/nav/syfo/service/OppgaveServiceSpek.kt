@@ -7,18 +7,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.syfo.LoggingMeta
-import no.nav.syfo.STANDARD_NAV_ENHET
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.domain.OppgaveResultat
-import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
-import no.nav.tjeneste.pip.diskresjonskode.meldinger.WSHentDiskresjonskodeResponse
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.informasjon.Organisasjonsenhet
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.meldinger.FinnBehandlendeEnhetListeResponse
-import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
-import no.nav.tjeneste.virksomhet.person.v3.informasjon.Kommune
-import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningResponse
-import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -29,89 +19,47 @@ object OppgaveServiceSpek : Spek ({
     val loggingMetadata = LoggingMeta(sykmeldingId,journalpostId, "hendelsesId")
 
     val oppgaveClientMock = mockk<OppgaveClient>()
-    val personV3Mock = mockk<PersonV3>()
-    val diskresjonskodeV1Mock = mockk<DiskresjonskodePortType>()
-    val arbeidsfordelingV1Mock = mockk<ArbeidsfordelingV1>()
 
-    val oppgaveService = OppgaveService(oppgaveClientMock, personV3Mock, diskresjonskodeV1Mock, arbeidsfordelingV1Mock)
+    val oppgaveService = OppgaveService(oppgaveClientMock)
 
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false)
-        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(2, false)
-        coEvery { personV3Mock.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse().withGeografiskTilknytning(Kommune().withGeografiskTilknytning("1122"))
-        coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse()
-        coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns lagFinnBehandlendeEnhetListeResponse("enhetId")
+        coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false)
+        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2, false)
     }
 
     describe("OppgaveService ende-til-ende") {
         it("Ende-til-ende") {
             runBlocking {
-                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { personV3Mock.hentGeografiskTilknytning(any()) }
-            coVerify { diskresjonskodeV1Mock.hentDiskresjonskode(coMatch { it.ident == "fnr" }) }
-            coVerify {
-                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning.value == "1122" && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
-                        it.arbeidsfordelingKriterier.oppgavetype.value == "JFR" && it.arbeidsfordelingKriterier.diskresjonskode == null
-                })
-            }
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("enhetId"), eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
 
         it("Ende-til-ende utland") {
             runBlocking {
-                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, true, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, true, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { personV3Mock.hentGeografiskTilknytning(any()) }
-            coVerify { diskresjonskodeV1Mock.hentDiskresjonskode(coMatch { it.ident == "fnr" }) }
-            coVerify {
-                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning.value == "1122" && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
-                        it.arbeidsfordelingKriterier.oppgavetype.value == "JFR" && it.arbeidsfordelingKriterier.behandlingstype.value == "ae0106" && it.arbeidsfordelingKriterier.diskresjonskode == null
-                })
-            }
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("enhetId"), eq("aktorId"), true, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), true, sykmeldingId, loggingMetadata) }
         }
 
         it("Ende-til-ende kode 6") {
-            coEvery { personV3Mock.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse()
-            coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("6")
-            coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns lagFinnBehandlendeEnhetListeResponse("2103")
             runBlocking {
-                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { personV3Mock.hentGeografiskTilknytning(any()) }
-            coVerify { diskresjonskodeV1Mock.hentDiskresjonskode(coMatch { it.ident == "fnr" }) }
-            coVerify {
-                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning == null && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
-                        it.arbeidsfordelingKriterier.oppgavetype.value == "JFR" && it.arbeidsfordelingKriterier.diskresjonskode.value == "SPSF"
-                })
-            }
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("2103"), eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
 
         it("Behandlende enhet mangler") {
-            coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns FinnBehandlendeEnhetListeResponse()
             runBlocking {
-                oppgaveService.opprettOppgave("fnr", "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { personV3Mock.hentGeografiskTilknytning(any()) }
-            coVerify { diskresjonskodeV1Mock.hentDiskresjonskode(coMatch { it.ident == "fnr" }) }
-            coVerify {
-                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning.value == "1122" && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
-                        it.arbeidsfordelingKriterier.oppgavetype.value == "JFR" && it.arbeidsfordelingKriterier.diskresjonskode == null
-                })
-            }
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, STANDARD_NAV_ENHET, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
     }
 
@@ -121,13 +69,7 @@ object OppgaveServiceSpek : Spek ({
                 oppgaveService.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify {
-                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning == null && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
-                        it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.diskresjonskode == null
-                })
-            }
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, eq("enhetId"), false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata) }
         }
 
         it("Ende-til-ende utland") {
@@ -135,67 +77,16 @@ object OppgaveServiceSpek : Spek ({
                 oppgaveService.opprettFordelingsOppgave(journalpostId, true, sykmeldingId, loggingMetadata)
             }
 
-            coVerify {
-                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning == null && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
-                        it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.behandlingstype.value == "ae0106" && it.arbeidsfordelingKriterier.diskresjonskode == null
-                })
-            }
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, eq("enhetId"), true, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, true, sykmeldingId, loggingMetadata) }
         }
 
         it("Behandlende enhet mangler") {
-            coEvery { arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(any()) } returns FinnBehandlendeEnhetListeResponse()
             runBlocking {
                 oppgaveService.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify {
-                arbeidsfordelingV1Mock.finnBehandlendeEnhetListe(coMatch {
-                    it.arbeidsfordelingKriterier.geografiskTilknytning == null && it.arbeidsfordelingKriterier.tema.value == "SYM" &&
-                        it.arbeidsfordelingKriterier.oppgavetype.value == "FDR" && it.arbeidsfordelingKriterier.diskresjonskode == null
-                })
-            }
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, STANDARD_NAV_ENHET, false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata) }
         }
     }
 
-    describe("Diskresjonskode mappes riktig") {
-        it("Kode 6") {
-            coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("6")
-            var diskresjonskode: String? = null
-            runBlocking {
-                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr", loggingMetadata)
-            }
-
-            diskresjonskode shouldEqual "SPSF"
-        }
-
-        it("Kode 7") {
-            coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("7")
-            var diskresjonskode: String? = null
-            runBlocking {
-                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr", loggingMetadata)
-            }
-
-            diskresjonskode shouldEqual "SPFO"
-        }
-
-        it("Annen diskresjonskode mappes til null") {
-            coEvery { diskresjonskodeV1Mock.hentDiskresjonskode(any()) } returns WSHentDiskresjonskodeResponse().withDiskresjonskode("5")
-            var diskresjonskode: String? = null
-            runBlocking {
-                diskresjonskode = oppgaveService.fetchDiskresjonsKode("fnr", loggingMetadata)
-            }
-
-            diskresjonskode shouldEqual null
-        }
-    }
 })
-
-private fun lagFinnBehandlendeEnhetListeResponse(id: String): FinnBehandlendeEnhetListeResponse =
-    FinnBehandlendeEnhetListeResponse().apply {
-        behandlendeEnhetListe.add(Organisasjonsenhet().apply {
-            enhetId = id
-        })
-    }

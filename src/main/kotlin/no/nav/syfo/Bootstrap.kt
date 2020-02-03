@@ -46,10 +46,6 @@ import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.service.UtenlandskSykmeldingService
 import no.nav.syfo.sm.Diagnosekoder
-import no.nav.syfo.ws.createPort
-import no.nav.tjeneste.pip.diskresjonskode.DiskresjonskodePortType
-import no.nav.tjeneste.virksomhet.arbeidsfordeling.v1.binding.ArbeidsfordelingV1
-import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
@@ -57,10 +53,9 @@ import org.slf4j.LoggerFactory
 import java.net.ProxySelector
 import java.nio.file.Paths
 import java.time.Duration
-import java.util.*
+import java.util.Properties
+import java.util.UUID
 import java.util.concurrent.TimeUnit
-
-const val STANDARD_NAV_ENHET = "0393"
 
 fun doReadynessCheck(): Boolean {
     return true
@@ -135,19 +130,7 @@ fun main() {
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
     val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
 
-    val arbeidsfordelingV1 = createPort<ArbeidsfordelingV1>(env.arbeidsfordelingV1EndpointURL) {
-        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-    }
-
-    val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
-        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-    }
-
-    val diskresjonskodeV1 = createPort<DiskresjonskodePortType>(env.diskresjonskodeEndpointUrl) {
-        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
-    }
-
-    val oppgaveService = OppgaveService(oppgaveClient, personV3, diskresjonskodeV1, arbeidsfordelingV1)
+    val oppgaveService = OppgaveService(oppgaveClient)
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClient, env.helsenettproxyId, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)

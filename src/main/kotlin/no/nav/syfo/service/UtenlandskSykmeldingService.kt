@@ -43,7 +43,7 @@ class UtenlandskSykmeldingService constructor(
         } else {
             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
-            val oppgave = oppgaveService.opprettOppgave(fnrPasient = fnr, aktoerIdPasient = aktorId, sakId = sakId,
+            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
                 journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
             if (!oppgave.duplikat) {
