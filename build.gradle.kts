@@ -40,6 +40,7 @@ val smCommonVersion = "1.7bf5e6f"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.9.3"
+val smCommonDiagnosisCodesVersion = "1.f898112"
 
 plugins {
     java
@@ -127,7 +128,7 @@ dependencies {
     implementation ("no.nav.helse:syfosm-common-rest-sts:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-ws:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
-    implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonVersion")
+    implementation("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonDiagnosisCodesVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
