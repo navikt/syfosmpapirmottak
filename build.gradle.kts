@@ -9,14 +9,14 @@ val apolloVersion = "1.2.2"
 val coroutinesVersion = "1.2.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "2.3.0"
-val kafkaEmbeddedVersion = "2.3.0"
+val kafkaEmbeddedVersion = "2.4.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.39"
 val ktorVersion = "1.2.5"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "5.2"
 val prometheusVersion = "0.5.0"
-val spekVersion = "2.0.8"
+val spekVersion = "2.0.9"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
@@ -36,7 +36,7 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "1.7bf5e6f"
+val smCommonVersion = "1.f898112"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.9.3"
@@ -45,10 +45,11 @@ val smCommonDiagnosisCodesVersion = "1.f898112"
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
-    kotlin("jvm") version "1.3.50"
+    kotlin("jvm") version "1.3.70"
     id("com.diffplug.gradle.spotless") version "3.18.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("com.apollographql.android") version "1.2.2"
+    id("org.jmailen.kotlinter") version "2.2.0"
 }
 
 buildscript {
@@ -114,7 +115,6 @@ dependencies {
     implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
     implementation ("no.nav.syfo.schemas:syfosmoppgave-avro:$syfooppgaveSchemasVersion")
 
-    implementation ("io.ktor:ktor-client-cio:$ktorVersion")
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")
     implementation ("io.ktor:ktor-client-auth-basic-jvm:$ktorVersion")
     implementation ("io.ktor:ktor-client-gson:$ktorVersion")
@@ -128,7 +128,7 @@ dependencies {
     implementation ("no.nav.helse:syfosm-common-rest-sts:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-ws:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
-    implementation("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonDiagnosisCodesVersion")
+    implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonDiagnosisCodesVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
@@ -183,7 +183,7 @@ tasks {
         }
     }
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "12"
     }
 
     withType<ShadowJar> {
@@ -198,5 +198,10 @@ tasks {
             includeEngines("spek2")
         }
         testLogging.showStandardStreams = true
+    }
+
+
+    "check" {
+        dependsOn("formatKotlin")
     }
 }

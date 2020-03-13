@@ -2,16 +2,16 @@ package no.nav.syfo.client
 
 import FindJournalpostQuery
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.syfo.LoggingMeta
+import java.time.Month
+import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import type.Variantformat
-import java.time.Month
 
 @KtorExperimentalAPI
 object SafJournalpostClientSpek : Spek({
-    val loggingMetadata = LoggingMeta("sykmeldingId","123", "hendelsesId")
+    val loggingMetadata = LoggingMeta("sykmeldingId", "123", "hendelsesId")
 
     describe("finnDokumentIdForOcr fungerer som den skal") {
         it("Henter riktig dokumentId for happy-case") {

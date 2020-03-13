@@ -1,6 +1,12 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import java.io.StringReader
+import java.math.BigInteger
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.Month
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
@@ -19,7 +25,6 @@ import no.nav.helse.sykSkanningMeta.ReisetilskuddType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.helse.sykSkanningMeta.UtenArbeidsgiverType
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.Adresse
@@ -36,20 +41,15 @@ import no.nav.syfo.model.MedisinskArsak
 import no.nav.syfo.model.Periode
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
-import no.nav.syfo.skanningMetadataUnmarshaller
 import no.nav.syfo.sm.Diagnosekoder
+import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.skanningMetadataUnmarshaller
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotEqual
 import org.amshove.kluent.shouldNotThrow
 import org.amshove.kluent.shouldThrow
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.io.StringReader
-import java.math.BigInteger
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.Month
 
 @KtorExperimentalAPI
 object MappingServiceSpek : Spek({
@@ -192,8 +192,6 @@ object MappingServiceSpek : Spek({
         }
     }
 
-
-
     describe("Hver del av MappingService mapper korrekt") {
         it("tilMedisinskVurdering") {
             val dato = LocalDate.now()
@@ -288,11 +286,8 @@ object MappingServiceSpek : Spek({
 
             val aktivitetType = AktivitetType()
 
-
             val func = { MappingService.tilPeriodeListe(aktivitetType, loggingMetadata) }
             func shouldThrow IllegalStateException::class
-
-
         }
 
         it("tilPeriodeListe") {

@@ -7,14 +7,14 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.util.LoggingMeta
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 @KtorExperimentalAPI
-object UtenlandskSykmeldingServiceSpek : Spek ({
+object UtenlandskSykmeldingServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"
     val fnr = "fnr"

@@ -1,5 +1,8 @@
 package no.nav.syfo.service
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
@@ -8,7 +11,6 @@ import no.nav.helse.sykSkanningMeta.PrognoseType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.SykemeldingerType
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.model.Adresse
@@ -34,20 +36,19 @@ import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.model.Sykmelding
 import no.nav.syfo.sm.Diagnosekoder
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
+import no.nav.syfo.util.LoggingMeta
 
 class MappingService private constructor() {
     companion object {
         fun mapOcrFilTilReceivedSykmelding(
-                skanningmetadata: Skanningmetadata,
-                fnr: String,
-                aktorId: String,
-                datoOpprettet: LocalDateTime,
-                sykmelder: Sykmelder,
-                sykmeldingId: String,
-                loggingMeta: LoggingMeta): ReceivedSykmelding {
+            skanningmetadata: Skanningmetadata,
+            fnr: String,
+            aktorId: String,
+            datoOpprettet: LocalDateTime,
+            sykmelder: Sykmelder,
+            sykmeldingId: String,
+            loggingMeta: LoggingMeta
+        ): ReceivedSykmelding {
 
             if (skanningmetadata.sykemeldinger.pasient.fnr != fnr) {
                 log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
@@ -323,5 +324,4 @@ class MappingService private constructor() {
             return LocalDateTime.of(periodeliste.first().fom, LocalTime.NOON)
         }
     }
-
 }

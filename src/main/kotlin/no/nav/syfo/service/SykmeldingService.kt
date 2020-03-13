@@ -1,10 +1,10 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import java.time.LocalDateTime
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
@@ -17,7 +17,7 @@ import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
-import java.time.LocalDateTime
+import no.nav.syfo.util.LoggingMeta
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(

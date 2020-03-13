@@ -7,15 +7,15 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
 import io.ktor.util.KtorExperimentalAPI
-import net.logstash.logback.argument.StructuredArguments.fields
-import no.nav.syfo.LoggingMeta
-import no.nav.syfo.domain.Bruker
-import no.nav.syfo.domain.JournalpostMetadata
-import no.nav.syfo.log
 import java.time.LocalDateTime
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.domain.Bruker
+import no.nav.syfo.domain.JournalpostMetadata
+import no.nav.syfo.log
+import no.nav.syfo.util.LoggingMeta
 
 suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { cont ->
     enqueue(object : ApolloCall.Callback<T>() {
@@ -108,7 +108,7 @@ fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>
         }
     } else {
         log.info("Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}", fields(loggingMeta))
-        val inneholderUtlandBrevkode: Boolean = dokumentListe.any { dok ->  dok.brevkode() == BREVKODE_UTLAND}
+        val inneholderUtlandBrevkode: Boolean = dokumentListe.any { dok -> dok.brevkode() == BREVKODE_UTLAND }
         if (inneholderUtlandBrevkode) {
             brevkode = BREVKODE_UTLAND
         }

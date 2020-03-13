@@ -6,6 +6,10 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import java.math.BigInteger
+import java.time.LocalDate
+import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
@@ -15,7 +19,6 @@ import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
 import no.nav.helse.sykSkanningMeta.PasientType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.SykemeldingerType
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.Behandler
 import no.nav.syfo.client.NorskHelsenettClient
@@ -26,16 +29,13 @@ import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.math.BigInteger
-import java.time.LocalDate
-import java.time.LocalDateTime
-import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
-object SykmeldingServiceSpek : Spek ({
+object SykmeldingServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"
     val fnrPasient = "fnr"
@@ -202,7 +202,7 @@ object SykmeldingServiceSpek : Spek ({
 
             var sykmelder: Sykmelder? = null
             runBlocking {
-                sykmelder = sykmeldingService.hentSykmelder(ocrFil= ocrFil, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                sykmelder = sykmeldingService.hentSykmelder(ocrFil = ocrFil, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             sykmelder?.hprNummer shouldEqual "123456"

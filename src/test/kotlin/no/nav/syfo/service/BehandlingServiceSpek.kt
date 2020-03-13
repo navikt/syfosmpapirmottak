@@ -8,23 +8,23 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
+import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.LoggingMeta
-import no.nav.syfo.TrackableException
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
+import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.TrackableException
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.time.LocalDateTime
-import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
-object BehandlingServiceSpek : Spek ({
+object BehandlingServiceSpek : Spek({
     val sykmeldingId = "1234"
-    val loggingMetadata = LoggingMeta(sykmeldingId,"123", "hendelsesId")
+    val loggingMetadata = LoggingMeta(sykmeldingId, "123", "hendelsesId")
     val datoOpprettet = LocalDateTime.now()
 
     val aktoerIdClientMock = mockk<AktoerIdClient>()

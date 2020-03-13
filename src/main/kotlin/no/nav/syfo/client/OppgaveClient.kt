@@ -8,13 +8,13 @@ import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
+import java.time.DayOfWeek
+import java.time.LocalDate
 import net.logstash.logback.argument.StructuredArguments.fields
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
-import java.time.DayOfWeek
-import java.time.LocalDate
+import no.nav.syfo.util.LoggingMeta
 
 @KtorExperimentalAPI
 class OppgaveClient constructor(private val url: String, private val oidcClient: StsOidcClient, private val httpClient: HttpClient) {

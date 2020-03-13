@@ -4,14 +4,14 @@ import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
-import no.nav.syfo.wrapExceptions
+import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.wrapExceptions
 
 @KtorExperimentalAPI
 class BehandlingService constructor(
@@ -29,14 +29,14 @@ class BehandlingService constructor(
             val journalpostId = journalfoeringEvent.journalpostId.toString()
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
-                journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" &&
-                journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført"
+                    journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" &&
+                    journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført"
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
                 log.info("Mottatt papirsykmelding, {}", fields(loggingMeta))
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
-                    ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
+                        ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
@@ -55,7 +55,6 @@ class BehandlingService constructor(
                     } else {
                         sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, datoOpprettet = journalpostMetadata.datoOpprettet, dokumentInfoId = journalpostMetadata.dokumentInfoId, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     }
-
                 } else {
                     log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))
                 }
