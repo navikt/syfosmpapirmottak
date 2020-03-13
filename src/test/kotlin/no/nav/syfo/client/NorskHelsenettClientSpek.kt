@@ -69,7 +69,7 @@ object NorskHelsenettClientSpek : Spek({
     val norskHelsenettClient = NorskHelsenettClient("$mockHttpServerUrl/syfohelsenettproxy", accessTokenClientMock, "resourceId", httpClient)
 
     afterGroup {
-        mockServer.stop(1L, 10L, TimeUnit.SECONDS)
+        mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
     beforeGroup {

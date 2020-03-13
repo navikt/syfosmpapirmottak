@@ -79,7 +79,7 @@ object OppgaveClientSpek : Spek({
     val oppgaveClient = OppgaveClient("$mockHttpServerUrl/oppgave", stsOidcClientMock, httpClient)
 
     afterGroup {
-        mockServer.stop(1L, 10L, TimeUnit.SECONDS)
+        mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
     beforeGroup {

@@ -6,13 +6,13 @@ group = "no.nav.syfo"
 version = "1.0.0"
 
 val apolloVersion = "1.2.2"
-val coroutinesVersion = "1.2.2"
+val coroutinesVersion = "1.3.3"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "2.3.0"
 val kafkaEmbeddedVersion = "2.4.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.39"
-val ktorVersion = "1.2.6"
+val ktorVersion = "1.3.1"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "5.2"
 val prometheusVersion = "0.5.0"
@@ -119,8 +119,7 @@ dependencies {
     implementation ("io.ktor:ktor-client-auth-basic-jvm:$ktorVersion")
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
     implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
-    implementation ("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation ("io.ktor:ktor-client-json:$ktorVersion")
+    implementation ("io.ktor:ktor-jackson:$ktorVersion")
 
     implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion")
 

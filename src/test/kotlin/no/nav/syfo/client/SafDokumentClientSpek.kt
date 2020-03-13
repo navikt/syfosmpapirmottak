@@ -74,7 +74,7 @@ object SafDokumentClientSpek : Spek({
     val safDokumentClient = SafDokumentClient("$mockHttpServerUrl/saf", stsOidcClientMock, httpClient)
 
     afterGroup {
-        mockServer.stop(1L, 10L, TimeUnit.SECONDS)
+        mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
     beforeGroup {
@@ -96,7 +96,7 @@ object SafDokumentClientSpek : Spek({
             skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.periodeTOMDato shouldEqual LocalDate.of(2019, Month.JANUARY, 14)
             skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.medisinskeArsaker?.isMedArsakerHindrer shouldEqual true
             skanningmetadata?.sykemeldinger?.tilbakedatering?.tilbakebegrunnelse shouldEqual "Legevakten\n" +
-                "                Sentrum"
+                    "                Sentrum"
             skanningmetadata?.sykemeldinger?.kontaktMedPasient?.behandletDato shouldEqual LocalDate.of(2019, Month.JANUARY, 11)
             skanningmetadata?.sykemeldinger?.behandler?.hpr shouldEqual BigInteger("12345678")
         }
