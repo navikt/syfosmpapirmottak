@@ -120,6 +120,7 @@ dependencies {
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
     implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
     implementation ("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation ("io.ktor:ktor-client-json:$ktorVersion")
 
     implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion")
 
