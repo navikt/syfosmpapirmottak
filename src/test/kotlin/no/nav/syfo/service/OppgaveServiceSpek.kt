@@ -6,17 +6,17 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.syfo.LoggingMeta
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.util.LoggingMeta
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 @KtorExperimentalAPI
-object OppgaveServiceSpek : Spek ({
+object OppgaveServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"
-    val loggingMetadata = LoggingMeta(sykmeldingId,journalpostId, "hendelsesId")
+    val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
 
     val oppgaveClientMock = mockk<OppgaveClient>()
 
@@ -32,7 +32,7 @@ object OppgaveServiceSpek : Spek ({
     describe("OppgaveService ende-til-ende") {
         it("Ende-til-ende") {
             runBlocking {
-                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
             coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
@@ -40,7 +40,7 @@ object OppgaveServiceSpek : Spek ({
 
         it("Ende-til-ende utland") {
             runBlocking {
-                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, true, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, true, sykmeldingId, loggingMetadata)
             }
 
             coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), true, sykmeldingId, loggingMetadata) }
@@ -48,7 +48,7 @@ object OppgaveServiceSpek : Spek ({
 
         it("Ende-til-ende kode 6") {
             runBlocking {
-                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
             coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
@@ -56,7 +56,7 @@ object OppgaveServiceSpek : Spek ({
 
         it("Behandlende enhet mangler") {
             runBlocking {
-                oppgaveService.opprettOppgave( "aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
             coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
@@ -88,5 +88,4 @@ object OppgaveServiceSpek : Spek ({
             coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata) }
         }
     }
-
 })

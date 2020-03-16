@@ -21,13 +21,13 @@ import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.net.ServerSocket
+import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.net.ServerSocket
-import java.util.concurrent.TimeUnit
-import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
 object AktoerIdClientSpek : Spek({
@@ -66,7 +66,7 @@ object AktoerIdClientSpek : Spek({
     val aktoerIdClient = AktoerIdClient("$mockHttpServerUrl/aktorregister", stsOidcClientMock, httpClient)
 
     afterGroup {
-        mockServer.stop(1L, 10L, TimeUnit.SECONDS)
+        mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
     beforeGroup {

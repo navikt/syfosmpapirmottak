@@ -21,13 +21,6 @@ import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.syfo.LoggingMeta
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldNotEqual
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.math.BigInteger
 import java.net.ServerSocket
 import java.nio.charset.StandardCharsets
@@ -36,6 +29,13 @@ import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.Month
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.runBlocking
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldNotEqual
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 @KtorExperimentalAPI
 object SafDokumentClientSpek : Spek({
@@ -50,7 +50,7 @@ object SafDokumentClientSpek : Spek({
             }
         }
     }
-    val loggingMetadata = LoggingMeta("sykmeldingId","123", "hendelsesId")
+    val loggingMetadata = LoggingMeta("sykmeldingId", "123", "hendelsesId")
 
     val mockHttpServerPort = ServerSocket(0).use { it.localPort }
     val mockHttpServerUrl = "http://localhost:$mockHttpServerPort"
@@ -74,7 +74,7 @@ object SafDokumentClientSpek : Spek({
     val safDokumentClient = SafDokumentClient("$mockHttpServerUrl/saf", stsOidcClientMock, httpClient)
 
     afterGroup {
-        mockServer.stop(1L, 10L, TimeUnit.SECONDS)
+        mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
     beforeGroup {
@@ -96,7 +96,7 @@ object SafDokumentClientSpek : Spek({
             skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.periodeTOMDato shouldEqual LocalDate.of(2019, Month.JANUARY, 14)
             skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.medisinskeArsaker?.isMedArsakerHindrer shouldEqual true
             skanningmetadata?.sykemeldinger?.tilbakedatering?.tilbakebegrunnelse shouldEqual "Legevakten\n" +
-                "                Sentrum"
+                    "                Sentrum"
             skanningmetadata?.sykemeldinger?.kontaktMedPasient?.behandletDato shouldEqual LocalDate.of(2019, Month.JANUARY, 11)
             skanningmetadata?.sykemeldinger?.behandler?.hpr shouldEqual BigInteger("12345678")
         }

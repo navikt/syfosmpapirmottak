@@ -9,6 +9,11 @@ This project contains just the receving a paper sykmelding2013 message
 * Gradle
 * Spek
 * Jackson
+* Vault
+
+#### Requirements
+
+* JDK 12
 
 ## Getting started
 ### Getting github-package-registry packages NAV-IT
@@ -49,7 +54,7 @@ or the command line:
 
 ### Building the application
 #### Compile and package application
-To build locally and run the integration tests you can simply run `./gradlew shadowJar` or  on windows 
+To build locally and run the integration tests you can simply run `./gradlew shadowJar` or on windows 
 `gradlew.bat shadowJar`
 
 #### Creating a docker image
@@ -62,6 +67,7 @@ Creating a docker image should be as simple as `docker build -t syfosmpapirmotta
 * Sebastian Knudsen, `sebastian.knudsen@nav.no`
 * Tia Firing, `tia.firing@nav.no`
 * Jonas Henie, `jonas.henie@nav.no`
+* Mathias Hellevang, `mathias.hellevang@nav.no`
 
 ### For NAV employees
 We are available at the Slack channel #team-sykmelding

@@ -1,9 +1,9 @@
-package no.nav.syfo
+package no.nav.syfo.util
 
 import com.migesok.jaxb.adapter.javatime.LocalDateXmlAdapter
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.Unmarshaller
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
 
 val jaxbContext: JAXBContext = JAXBContext.newInstance(Skanningmetadata::class.java)
 val skanningMetadataUnmarshaller: Unmarshaller = jaxbContext.createUnmarshaller().apply {
