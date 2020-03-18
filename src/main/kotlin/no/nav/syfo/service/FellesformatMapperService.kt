@@ -28,12 +28,12 @@ import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 
 fun mapOcrFilTilFellesformat(
-    skanningmetadata: Skanningmetadata,
-    fnr: String,
-    datoOpprettet: LocalDateTime,
-    sykmelder: Sykmelder,
-    sykmeldingId: String,
-    loggingMeta: LoggingMeta
+        skanningmetadata: Skanningmetadata,
+        fnr: String,
+        datoOpprettet: LocalDateTime,
+        sykmelder: Sykmelder,
+        sykmeldingId: String,
+        loggingMeta: LoggingMeta
 ): XMLEIFellesformat {
     if (skanningmetadata.sykemeldinger.pasient.fnr != fnr) {
         log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
@@ -192,11 +192,12 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): Helse
         if (!medisinskVurderingType.annenFraversArsak.isNullOrEmpty()) {
             annenFraversArsak = ArsakType().apply {
                 arsakskode.add(CS())
-                beskriv = medisinskVurderingType.annenFraversArsak
+                beskriv = medisinskVurderingType.fraversBeskrivelse
             }
         }
         isSvangerskap = medisinskVurderingType.isSvangerskap
         isYrkesskade = medisinskVurderingType.isYrkesskade
+        yrkesskadeDato = medisinskVurderingType.yrkesskadedato
     }
 }
 
