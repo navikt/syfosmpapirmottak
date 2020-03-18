@@ -65,6 +65,14 @@ class SykmeldingService constructor(
 
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+                        val fellesformat = mapOcrFilTilFellesformat(
+                                skanningmetadata = ocrFil,
+                                fnr = fnr,
+                                datoOpprettet = datoOpprettet,
+                                sykmelder = sykmelder,
+                                sykmeldingId = sykmeldingId,
+                                loggingMeta = loggingMeta)
+
                         val sykmelding = MappingService.mapOcrFilTilReceivedSykmelding(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
