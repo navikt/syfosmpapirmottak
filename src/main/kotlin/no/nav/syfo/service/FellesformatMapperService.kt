@@ -191,13 +191,12 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): Helse
         isSkjermesForPasient = medisinskVurderingType.isSkjermesForPasient
         if (!medisinskVurderingType.annenFraversArsak.isNullOrEmpty()) {
             annenFraversArsak = ArsakType().apply {
-                arsakskode.add(CS().apply {
-                    v = "1"
-                    dn = "Helsetilstanden hindrer pasienten i å være i aktivitet"
-                })
-                beskriv = "Kan ikkje jobbe"
+                arsakskode.add(CS())
+                beskriv = medisinskVurderingType.annenFraversArsak
             }
         }
+        isSvangerskap = medisinskVurderingType.isSvangerskap
+        isYrkesskade = medisinskVurderingType.isYrkesskade
     }
 }
 
