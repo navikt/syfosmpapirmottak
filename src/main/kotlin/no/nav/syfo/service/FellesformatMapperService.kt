@@ -14,18 +14,27 @@ import no.nav.helse.msgHead.XMLOrganisation
 import no.nav.helse.msgHead.XMLReceiver
 import no.nav.helse.msgHead.XMLRefDoc
 import no.nav.helse.msgHead.XMLSender
+import no.nav.helse.sm2013.Address
 import no.nav.helse.sm2013.ArsakType
 import no.nav.helse.sm2013.CS
 import no.nav.helse.sm2013.CV
+import no.nav.helse.sm2013.DynaSvarType
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.helse.sm2013.Ident
+import no.nav.helse.sm2013.NavnType
+import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
 import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
+import no.nav.helse.sykSkanningMeta.PrognoseType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
 
 fun mapOcrFilTilFellesformat(
         skanningmetadata: Skanningmetadata,
@@ -48,7 +57,7 @@ fun mapOcrFilTilFellesformat(
                     v = "SYKMELD"
                 }
                 miGversion = "v1.2 2006-05-24"
-                genDate = datoOpprettet
+                genDate = velgRiktigKontaktOgSignaturDato(skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                 msgId = sykmeldingId
                 ack = XMLCS().apply {
                     dn = "Ja"
@@ -130,10 +139,36 @@ fun mapOcrFilTilFellesformat(
                                     }
                                 }
                             }
-                            arbeidsgiver = HelseOpplysningerArbeidsuforhet.Arbeidsgiver().apply {
-                                harArbeidsgiver = tilArbeidsgiver(skanningmetadata.sykemeldinger.arbeidsgiver)
-                            }
+                            arbeidsgiver = tilArbeidsgiver(skanningmetadata.sykemeldinger.arbeidsgiver)
                             medisinskVurdering = tilMedisinskVurdering(skanningmetadata.sykemeldinger.medisinskVurdering)
+                            aktivitet = HelseOpplysningerArbeidsuforhet.Aktivitet().apply {
+                                periode.addAll(tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
+                            }
+                            prognose = skanningmetadata.sykemeldinger.prognose?.let { tilPrognose(skanningmetadata.sykemeldinger.prognose) }
+                            utdypendeOpplysninger = tilUtdypendeOpplysninger(skanningmetadata.sykemeldinger.utdypendeOpplysninger)
+                            tiltak = HelseOpplysningerArbeidsuforhet.Tiltak().apply {
+                                tiltakArbeidsplassen = skanningmetadata.sykemeldinger.tiltak?.tiltakArbeidsplassen
+                                tiltakNAV = skanningmetadata.sykemeldinger.tiltak?.tiltakNAV
+                                andreTiltak = skanningmetadata.sykemeldinger.tiltak?.andreTiltak
+                            }
+                            meldingTilNav = skanningmetadata.sykemeldinger.meldingTilNAV?.let {
+                                HelseOpplysningerArbeidsuforhet.MeldingTilNav().apply {
+                                    beskrivBistandNAV = skanningmetadata.sykemeldinger.meldingTilNAV?.beskrivBistandNAV
+                                    isBistandNAVUmiddelbart = skanningmetadata.sykemeldinger.meldingTilNAV?.isBistandNAVUmiddelbart
+                                            ?: false
+                                }
+                            }
+                            meldingTilArbeidsgiver = skanningmetadata.sykemeldinger.meldingTilArbeidsgiver
+                            kontaktMedPasient = HelseOpplysningerArbeidsuforhet.KontaktMedPasient().apply {
+                                kontaktDato = velgRiktigKontaktOgSignaturDato(skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet)).toLocalDate()
+                                begrunnIkkeKontakt = null
+                                behandletDato = velgRiktigKontaktOgSignaturDato(skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
+                            }
+                            behandler = tilBehandler(sykmelder)
+                            avsenderSystem = HelseOpplysningerArbeidsuforhet.AvsenderSystem().apply {
+                                systemNavn = "Papirsykmelding"
+                                systemVersjon = "1"
+                            }
                         })
                     }
                 }
@@ -142,31 +177,265 @@ fun mapOcrFilTilFellesformat(
     }
 }
 
-fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?): CS =
-        when {
-            arbeidsgiverType?.harArbeidsgiver == "Flere arbeidsgivere" -> CS().apply {
-                dn = "Flere arbeidsgivere"
-                v = "2"
+fun tilBehandler(sykmelder: Sykmelder): HelseOpplysningerArbeidsuforhet.Behandler =
+        HelseOpplysningerArbeidsuforhet.Behandler().apply {
+            navn = NavnType().apply {
+                fornavn = sykmelder.fornavn ?: ""
+                mellomnavn = sykmelder.mellomnavn
+                etternavn = sykmelder.etternavn ?: ""
             }
-            arbeidsgiverType?.harArbeidsgiver == "Flerearbeidsgivere" -> CS().apply {
-                dn = "Flere arbeidsgivere"
-                v = "2"
-            }
-            arbeidsgiverType?.harArbeidsgiver == "En arbeidsgiver" -> CS().apply {
-                dn = "Én arbeidsgiver"
-                v = "1"
-            }
-            arbeidsgiverType?.harArbeidsgiver == "Ingen arbeidsgiver" -> CS().apply {
-                dn = "Ingen arbeidsgiver"
-                v = "3"
-            }
-            else -> {
-                log.warn("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}", arbeidsgiverType?.harArbeidsgiver)
-                CS().apply {
-                    dn = "Én arbeidsgiver"
-                    v = "1"
+            id.addAll(listOf(
+                    Ident().apply {
+                        id = sykmelder.hprNummer
+                        typeId = CV().apply {
+                            dn = "HPR-nummer"
+                            s = "6.87.654.3.21.9.8.7.6543.2198"
+                            v = "HPR"
+                        }
+                    },
+                    Ident().apply {
+                        id = sykmelder.fnr
+                        typeId = CV().apply {
+                            dn = "Fødselsnummer"
+                            s = "2.16.578.1.12.4.1.1.8327"
+                            v = "FNR"
+                        }
+                    }))
+            adresse = Address()
+        }
+
+fun tilUtdypendeOpplysninger(utdypendeOpplysningerType: UtdypendeOpplysningerType?): HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger {
+    val utdypendeOpplysninger = HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger().apply {
+        spmGruppe.addAll(tilSpmGruppe(utdypendeOpplysningerType))
+    }
+
+    return utdypendeOpplysninger
+}
+
+fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe> {
+    // Spørsmålene kommer herfra: https://stash.adeo.no/projects/EIA/repos/nav-eia-external/browse/SM2013/xml/SM2013DynaSpm_1_5.xml
+    val spmGruppe = listOf(HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe().apply {
+        spmGruppeId = "6.2"
+        spmGruppeTekst = "Utdypende opplysninger ved 7/8,17 og 39 uker"
+    })
+
+    val spmSvar = ArrayList<DynaSvarType>()
+
+    if (utdypendeOpplysningerType?.sykehistorie != null) {
+        spmSvar.add(
+                DynaSvarType().apply {
+                    spmId = "6.2.1"
+                    spmTekst = "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon."
+                    restriksjon = DynaSvarType.Restriksjon().apply {
+                        restriksjonskode.add(CS().apply {
+                            v = "A"
+                            dn = "Informasjonen skal ikke vises arbeidsgiver"
+                        })
+                    }
+                    svarTekst = utdypendeOpplysningerType.sykehistorie
+                }
+        )
+    }
+
+    if (utdypendeOpplysningerType?.sykehistorie != null) {
+        spmSvar.add(
+                DynaSvarType().apply {
+                    spmId = "6.2.2"
+                    spmTekst = "Hvordan påvirker sykdommen arbeidsevnen?"
+                    restriksjon = DynaSvarType.Restriksjon().apply {
+                        restriksjonskode.add(CS().apply {
+                            v = "A"
+                            dn = "Informasjonen skal ikke vises arbeidsgiver"
+                        })
+                    }
+                    svarTekst = utdypendeOpplysningerType.arbeidsevne
+                }
+        )
+    }
+
+    if (utdypendeOpplysningerType?.sykehistorie != null) {
+        spmSvar.add(
+                DynaSvarType().apply {
+                    spmId = "6.2.3"
+                    spmTekst = "Har behandlingen frem til nå bedret arbeidsevnen?"
+                    restriksjon = DynaSvarType.Restriksjon().apply {
+                        restriksjonskode.add(CS().apply {
+                            v = "A"
+                            dn = "Informasjonen skal ikke vises arbeidsgiver"
+                        })
+                    }
+                    svarTekst = utdypendeOpplysningerType.behandlingsresultat
+                }
+        )
+    }
+
+    if (utdypendeOpplysningerType?.sykehistorie != null) {
+        spmSvar.add(
+                DynaSvarType().apply {
+                    spmId = "6.2.4"
+                    spmTekst = "Beskriv pågående og planlagt henvisning,utredning og/eller behandling."
+                    restriksjon = DynaSvarType.Restriksjon().apply {
+                        restriksjonskode.add(CS().apply {
+                            v = "A"
+                            dn = "Informasjonen skal ikke vises arbeidsgiver"
+                        })
+                    }
+                    svarTekst = utdypendeOpplysningerType.planlagtBehandling
+                }
+        )
+    }
+
+    if (spmGruppe.first().spmSvar.isEmpty()) {
+        return ArrayList<HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe>()
+    } else {
+        return spmGruppe
+    }
+}
+
+fun tilPrognose(prognoseType: PrognoseType): HelseOpplysningerArbeidsuforhet.Prognose =
+        HelseOpplysningerArbeidsuforhet.Prognose().apply {
+            isArbeidsforEtterEndtPeriode = prognoseType.friskmelding?.isArbeidsforEtterEndtPeriode ?: true
+            beskrivHensynArbeidsplassen = prognoseType.friskmelding?.beskrivHensynArbeidsplassen
+            erIArbeid = prognoseType.medArbeidsgiver?.let {
+                HelseOpplysningerArbeidsuforhet.Prognose.ErIArbeid().apply {
+                    isEgetArbeidPaSikt = it.isTilbakeSammeArbeidsgiver
+                    isAnnetArbeidPaSikt = it.isTilbakeAnnenArbeidsgiver
+                    arbeidFraDato = it.tilbakeDato
+                    vurderingDato = it.datoNyTilbakemelding
                 }
             }
+            erIkkeIArbeid = prognoseType.utenArbeidsgiver?.let {
+                HelseOpplysningerArbeidsuforhet.Prognose.ErIkkeIArbeid().apply {
+                    isArbeidsforPaSikt = it.isTilbakeArbeid
+                    arbeidsforFraDato = it.tilbakeDato
+                    vurderingDato = it.datoNyTilbakemelding
+                }
+            }
+        }
+
+fun tilPeriodeListe(aktivitetType: AktivitetType): List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode> {
+    val periodeListe = ArrayList<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>()
+
+    if (aktivitetType.aktivitetIkkeMulig != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.aktivitetIkkeMulig.periodeFOMDato
+            periodeTOMDato = aktivitetType.aktivitetIkkeMulig.periodeTOMDato
+            aktivitetIkkeMulig = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.AktivitetIkkeMulig().apply {
+                medisinskeArsaker = if (aktivitetType.aktivitetIkkeMulig.medisinskeArsaker != null) {
+                    ArsakType().apply {
+                        beskriv = aktivitetType.aktivitetIkkeMulig.medisinskeArsaker.medArsakerBesk
+                        arsakskode.add(CS())
+                    }
+                } else {
+                    null
+                }
+                arbeidsplassen = if (aktivitetType.aktivitetIkkeMulig.arbeidsplassen != null) {
+                    ArsakType().apply {
+                        beskriv = aktivitetType.aktivitetIkkeMulig.arbeidsplassen.arbeidsplassenBesk
+                        arsakskode.add(CS())
+                    }
+                } else {
+                    null
+                }
+            }
+            avventendeSykmelding = null
+            gradertSykmelding = null
+            behandlingsdager = null
+            isReisetilskudd = false
+        })
+    }
+
+    if (aktivitetType.gradertSykmelding != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.gradertSykmelding.periodeFOMDato
+            periodeTOMDato = aktivitetType.gradertSykmelding.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = null
+            gradertSykmelding = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.GradertSykmelding().apply {
+                isReisetilskudd = aktivitetType.gradertSykmelding.isReisetilskudd
+                        ?: false
+                sykmeldingsgrad = Integer.valueOf(aktivitetType.gradertSykmelding.sykmeldingsgrad)
+            }
+            behandlingsdager = null
+            isReisetilskudd = false
+        })
+    }
+    if (aktivitetType.avventendeSykmelding != null && !aktivitetType.innspillTilArbeidsgiver.isNullOrEmpty()) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.avventendeSykmelding.periodeFOMDato
+            periodeTOMDato = aktivitetType.avventendeSykmelding.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.AvventendeSykmelding().apply {
+                innspillTilArbeidsgiver = aktivitetType.innspillTilArbeidsgiver
+            }
+            gradertSykmelding = null
+            behandlingsdager = null
+            isReisetilskudd = false
+        })
+    }
+    if (aktivitetType.behandlingsdager != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.behandlingsdager.periodeFOMDato
+            periodeTOMDato = aktivitetType.behandlingsdager.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = null
+            gradertSykmelding = null
+            behandlingsdager = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.Behandlingsdager().apply {
+                antallBehandlingsdagerUke = aktivitetType.behandlingsdager.antallBehandlingsdager.toInt()
+            }
+            isReisetilskudd = false
+        })
+    }
+    if (aktivitetType.reisetilskudd != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.reisetilskudd.periodeFOMDato
+            periodeTOMDato = aktivitetType.reisetilskudd.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = null
+            gradertSykmelding = null
+            behandlingsdager = null
+            isReisetilskudd = true
+        })
+    }
+    if (periodeListe.isEmpty()) {
+        log.warn("Could not find aktivitetstype, {}")
+        throw IllegalStateException("Cound not find aktivitetstype")
+    }
+    return periodeListe
+}
+
+fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?): HelseOpplysningerArbeidsuforhet.Arbeidsgiver =
+        HelseOpplysningerArbeidsuforhet.Arbeidsgiver().apply {
+            harArbeidsgiver =
+                    when {
+                        arbeidsgiverType?.harArbeidsgiver == "Flere arbeidsgivere" -> CS().apply {
+                            dn = "Flere arbeidsgivere"
+                            v = "2"
+                        }
+                        arbeidsgiverType?.harArbeidsgiver == "Flerearbeidsgivere" -> CS().apply {
+                            dn = "Flere arbeidsgivere"
+                            v = "2"
+                        }
+                        arbeidsgiverType?.harArbeidsgiver == "En arbeidsgiver" -> CS().apply {
+                            dn = "Én arbeidsgiver"
+                            v = "1"
+                        }
+                        arbeidsgiverType?.harArbeidsgiver == "Ingen arbeidsgiver" -> CS().apply {
+                            dn = "Ingen arbeidsgiver"
+                            v = "3"
+                        }
+                        else -> {
+                            log.warn("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}", arbeidsgiverType?.harArbeidsgiver)
+                            CS().apply {
+                                dn = "Én arbeidsgiver"
+                                v = "1"
+                            }
+                        }
+                    }
+            navnArbeidsgiver = arbeidsgiverType?.navnArbeidsgiver
+            yrkesbetegnelse = arbeidsgiverType?.yrkesbetegnelse
+            stillingsprosent = arbeidsgiverType?.stillingsprosent?.toInt()
+
         }
 
 fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): HelseOpplysningerArbeidsuforhet.MedisinskVurdering {
@@ -224,4 +493,26 @@ fun toMedisinskVurderingDiagnode(originalDiagnosekode: String): CV {
     }
     log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}")
     throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
+}
+
+fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, periodeliste: List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>): LocalDateTime {
+    behandletDato?.let {
+        return LocalDateTime.of(it, LocalTime.NOON)
+    }
+
+    if (periodeliste.isEmpty()) {
+        log.warn("Periodeliste er tom, kan ikke fortsette")
+        throw IllegalStateException("Periodeliste er tom, kan ikke fortsette")
+    }
+    if (periodeliste.size > 1) {
+        log.info("Periodeliste inneholder mer enn en periode")
+    }
+
+    periodeliste.forEach {
+        if (it.aktivitetIkkeMulig != null) {
+            return LocalDateTime.of(it.periodeFOMDato, LocalTime.NOON)
+        }
+    }
+    log.info("Periodeliste mangler aktivitetIkkeMulig, bruker FOM fra første periode")
+    return LocalDateTime.of(periodeliste.first().periodeFOMDato, LocalTime.NOON)
 }
