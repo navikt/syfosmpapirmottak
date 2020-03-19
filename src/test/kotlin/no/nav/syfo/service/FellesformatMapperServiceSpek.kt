@@ -7,6 +7,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Month
+import java.util.UUID
+import no.nav.helse.msgHead.XMLMsgHead
+import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
@@ -30,19 +33,17 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.Adresse
 import no.nav.syfo.model.AktivitetIkkeMulig
 import no.nav.syfo.model.Arbeidsgiver
-import no.nav.syfo.model.ArbeidsrelatertArsak
 import no.nav.syfo.model.AvsenderSystem
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.Diagnose
-import no.nav.syfo.model.Gradert
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.KontaktMedPasient
-import no.nav.syfo.model.MedisinskArsak
-import no.nav.syfo.model.Periode
-import no.nav.syfo.model.SporsmalSvar
-import no.nav.syfo.model.SvarRestriksjon
+import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.objectMapper
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
+import no.nav.syfo.util.get
 import no.nav.syfo.util.skanningMetadataUnmarshaller
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotEqual
@@ -52,7 +53,7 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 @KtorExperimentalAPI
-object MappingServiceSpek : Spek({
+object FellesformatMapperServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"
     val fnrPasient = "12345678910"
@@ -68,14 +69,41 @@ object MappingServiceSpek : Spek({
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Etternavn")
 
-            val receivedSykmelding = MappingService.mapOcrFilTilReceivedSykmelding(
+            val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
                     fnr = fnrPasient,
-                    aktorId = aktorId,
                     datoOpprettet = datoOpprettet,
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
                     loggingMeta = loggingMetadata)
+
+            val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
+            val msgHead = fellesformat.get<XMLMsgHead>()
+
+            val sykmelding = healthInformation.toSykmelding(
+                    sykmeldingId = UUID.randomUUID().toString(),
+                    pasientAktoerId = aktorId,
+                    legeAktoerId = sykmelder.aktorId,
+                    msgId = sykmeldingId,
+                    signaturDato = msgHead.msgInfo.genDate
+            )
+
+            val receivedSykmelding = ReceivedSykmelding(
+                    sykmelding = sykmelding,
+                    personNrPasient = fnrPasient,
+                    tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                    personNrLege = sykmelder.fnr,
+                    navLogId = sykmeldingId,
+                    msgId = sykmeldingId,
+                    legekontorOrgNr = null,
+                    legekontorOrgName = "",
+                    legekontorHerId = null,
+                    legekontorReshId = null,
+                    mottattDato = datoOpprettet,
+                    rulesetVersion = healthInformation.regelSettVersjon,
+                    fellesformat = objectMapper.writeValueAsString(fellesformat),
+                    tssid = null
+            )
 
             receivedSykmelding.personNrPasient shouldEqual fnrPasient
             receivedSykmelding.personNrLege shouldEqual fnrLege
@@ -109,14 +137,41 @@ object MappingServiceSpek : Spek({
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/minimal-ocr-sykmelding.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null)
 
-            val receivedSykmelding = MappingService.mapOcrFilTilReceivedSykmelding(
+            val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
                     fnr = fnrPasient,
-                    aktorId = aktorId,
                     datoOpprettet = datoOpprettet,
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
                     loggingMeta = loggingMetadata)
+
+            val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
+            val msgHead = fellesformat.get<XMLMsgHead>()
+
+            val sykmelding = healthInformation.toSykmelding(
+                    sykmeldingId = UUID.randomUUID().toString(),
+                    pasientAktoerId = aktorId,
+                    legeAktoerId = sykmelder.aktorId,
+                    msgId = sykmeldingId,
+                    signaturDato = msgHead.msgInfo.genDate
+            )
+
+            val receivedSykmelding = ReceivedSykmelding(
+                    sykmelding = sykmelding,
+                    personNrPasient = fnrPasient,
+                    tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                    personNrLege = sykmelder.fnr,
+                    navLogId = sykmeldingId,
+                    msgId = sykmeldingId,
+                    legekontorOrgNr = null,
+                    legekontorOrgName = "",
+                    legekontorHerId = null,
+                    legekontorReshId = null,
+                    mottattDato = datoOpprettet,
+                    rulesetVersion = healthInformation.regelSettVersjon,
+                    fellesformat = objectMapper.writeValueAsString(fellesformat),
+                    tssid = null
+            )
 
             receivedSykmelding.personNrPasient shouldEqual fnrPasient
             receivedSykmelding.personNrLege shouldEqual fnrLege
@@ -160,10 +215,9 @@ object MappingServiceSpek : Spek({
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null)
 
             val func = {
-                MappingService.mapOcrFilTilReceivedSykmelding(
+                mapOcrFilTilFellesformat(
                         skanningmetadata = skanningMetadata,
                         fnr = fnrPasient,
-                        aktorId = aktorId,
                         datoOpprettet = datoOpprettet,
                         sykmelder = sykmelder,
                         sykmeldingId = sykmeldingId,
@@ -178,10 +232,9 @@ object MappingServiceSpek : Spek({
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null)
 
             val func = {
-                MappingService.mapOcrFilTilReceivedSykmelding(
+                mapOcrFilTilFellesformat(
                         skanningmetadata = skanningMetadata,
                         fnr = fnrPasient,
-                        aktorId = aktorId,
                         datoOpprettet = datoOpprettet,
                         sykmelder = sykmelder,
                         sykmeldingId = sykmeldingId,
@@ -210,34 +263,33 @@ object MappingServiceSpek : Spek({
                 annenFraversArsak = "Kan ikke jobbe"
             }
 
-            val medisinskVurdering = MappingService.tilMedisinskVurdering(medisinskVurderingType, loggingMetadata)
+            val medisinskVurdering = tilMedisinskVurdering(medisinskVurderingType)
 
-            medisinskVurdering.hovedDiagnose?.kode shouldEqual "S525"
-            medisinskVurdering.hovedDiagnose?.system shouldEqual Diagnosekoder.ICD10_CODE
-            medisinskVurdering.biDiagnoser.size shouldEqual 1
-            medisinskVurdering.biDiagnoser[0] shouldEqual Diagnose(
-                    system = Diagnosekoder.ICD10_CODE,
-                    kode = "S697",
-                    tekst = "Flere skader i håndledd og hånd")
-            medisinskVurdering.svangerskap shouldEqual false
-            medisinskVurdering.yrkesskade shouldEqual true
+            medisinskVurdering.hovedDiagnose?.diagnosekode?.v shouldEqual "S525"
+            medisinskVurdering.hovedDiagnose?.diagnosekode?.s shouldEqual Diagnosekoder.ICD10_CODE
+            medisinskVurdering.biDiagnoser.diagnosekode.size shouldEqual 1
+            medisinskVurdering.biDiagnoser.diagnosekode[0].v shouldEqual "S697"
+            medisinskVurdering.biDiagnoser.diagnosekode[0].s shouldEqual Diagnosekoder.ICD10_CODE
+            medisinskVurdering.biDiagnoser.diagnosekode[0].dn shouldEqual "Flere skader i håndledd og hånd"
+            medisinskVurdering.isSvangerskap shouldEqual false
+            medisinskVurdering.isYrkesskade shouldEqual true
             medisinskVurdering.yrkesskadeDato shouldEqual dato
-            medisinskVurdering.annenFraversArsak?.beskrivelse shouldEqual "Kan ikke jobbe"
-            medisinskVurdering.annenFraversArsak?.grunn?.size shouldEqual 0
+            medisinskVurdering.annenFraversArsak?.beskriv shouldEqual "Kan ikke jobbe"
+            medisinskVurdering.annenFraversArsak?.arsakskode?.size shouldEqual 1
         }
 
         it("diagnoseFraDiagnosekode ICD10") {
-            val diagnose = MappingService.diagnoseFraDiagnosekode("S52.5", loggingMetadata)
+            val diagnose = toMedisinskVurderingDiagnode("S52.5")
 
-            diagnose.system shouldEqual Diagnosekoder.ICD10_CODE
-            diagnose.kode shouldEqual "S525"
+            diagnose.s shouldEqual Diagnosekoder.ICD10_CODE
+            diagnose.v shouldEqual "S525"
         }
 
         it("diagnoseFraDiagnosekode ICPC2") {
-            val diagnose = MappingService.diagnoseFraDiagnosekode("L72", loggingMetadata)
+            val diagnose = toMedisinskVurderingDiagnode("L72")
 
-            diagnose.system shouldEqual Diagnosekoder.ICPC2_CODE
-            diagnose.kode shouldEqual "L72"
+            diagnose.s shouldEqual Diagnosekoder.ICPC2_CODE
+            diagnose.v shouldEqual "L72"
         }
 
         it("tilArbeidsgiver en arbeidsgiver") {
@@ -248,10 +300,10 @@ object MappingServiceSpek : Spek({
                 stillingsprosent = BigInteger("80")
             }
 
-            val arbeidsgiver = MappingService.tilArbeidsgiver(arbeidsgiverType, loggingMetadata)
+            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
 
-            arbeidsgiver.harArbeidsgiver shouldEqual HarArbeidsgiver.EN_ARBEIDSGIVER
-            arbeidsgiver.navn shouldEqual "Arbeidsgiver"
+            arbeidsgiver.harArbeidsgiver.v shouldEqual "1"
+            arbeidsgiver.navnArbeidsgiver shouldEqual "Arbeidsgiver"
             arbeidsgiver.yrkesbetegnelse shouldEqual "Lærer"
             arbeidsgiver.stillingsprosent shouldEqual 80
         }
@@ -263,10 +315,10 @@ object MappingServiceSpek : Spek({
                 yrkesbetegnelse = "Lærer"
             }
 
-            val arbeidsgiver = MappingService.tilArbeidsgiver(arbeidsgiverType, loggingMetadata)
+            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
 
-            arbeidsgiver.harArbeidsgiver shouldEqual HarArbeidsgiver.FLERE_ARBEIDSGIVERE
-            arbeidsgiver.navn shouldEqual "Arbeidsgiver"
+            arbeidsgiver.harArbeidsgiver.v shouldEqual "2"
+            arbeidsgiver.navnArbeidsgiver shouldEqual "Arbeidsgiver"
             arbeidsgiver.yrkesbetegnelse shouldEqual "Lærer"
         }
 
@@ -275,18 +327,15 @@ object MappingServiceSpek : Spek({
                 harArbeidsgiver = "Ingen arbeidsgiver"
             }
 
-            val arbeidsgiver = MappingService.tilArbeidsgiver(arbeidsgiverType, loggingMetadata)
+            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
 
-            arbeidsgiver.harArbeidsgiver shouldEqual HarArbeidsgiver.INGEN_ARBEIDSGIVER
+            arbeidsgiver.harArbeidsgiver.v shouldEqual "3"
         }
 
         it("tilPeriodeListe shoulld throw exception, when missing aktivitetstype") {
-            val fom = LocalDate.now()
-            val tom = LocalDate.now().plusDays(1)
-
             val aktivitetType = AktivitetType()
 
-            val func = { MappingService.tilPeriodeListe(aktivitetType, loggingMetadata) }
+            val func = { tilPeriodeListe(aktivitetType) }
             func shouldThrow IllegalStateException::class
         }
 
@@ -326,20 +375,51 @@ object MappingServiceSpek : Spek({
                 }
             }
 
-            val periodeliste = MappingService.tilPeriodeListe(aktivitetType, loggingMetadata)
+            val periodeliste = tilPeriodeListe(aktivitetType)
 
             periodeliste.size shouldEqual 5
-            periodeliste[0] shouldEqual Periode(fom, tom, AktivitetIkkeMulig(
-                    MedisinskArsak("syk", emptyList()), ArbeidsrelatertArsak("miljø", emptyList())),
-                    null, null, null, false)
-            periodeliste[1] shouldEqual Periode(fom, tom, null,
-                    null, null, Gradert(false, 60), false)
-            periodeliste[2] shouldEqual Periode(fom, tom, null,
-                    "Innspill", null, null, false)
-            periodeliste[3] shouldEqual Periode(fom, tom, null,
-                    null, 2, null, false)
-            periodeliste[4] shouldEqual Periode(fom, tom, null,
-                    null, null, null, true)
+            periodeliste[0].periodeFOMDato shouldEqual fom
+            periodeliste[0].periodeTOMDato shouldEqual tom
+            periodeliste[0].aktivitetIkkeMulig.medisinskeArsaker.beskriv shouldEqual "syk"
+            periodeliste[0].aktivitetIkkeMulig.medisinskeArsaker.arsakskode.size shouldEqual 1
+            periodeliste[0].aktivitetIkkeMulig.arbeidsplassen.beskriv shouldEqual "miljø"
+            periodeliste[0].aktivitetIkkeMulig.arbeidsplassen.arsakskode.size shouldEqual 1
+            periodeliste[0].avventendeSykmelding shouldEqual null
+            periodeliste[0].gradertSykmelding shouldEqual null
+            periodeliste[0].behandlingsdager shouldEqual null
+            periodeliste[0].isReisetilskudd shouldEqual false
+
+            periodeliste[1].periodeFOMDato shouldEqual fom
+            periodeliste[1].periodeTOMDato shouldEqual tom
+            periodeliste[1].aktivitetIkkeMulig shouldEqual null
+            periodeliste[1].avventendeSykmelding shouldEqual null
+            periodeliste[1].gradertSykmelding.sykmeldingsgrad shouldEqual 60
+            periodeliste[1].behandlingsdager shouldEqual null
+            periodeliste[1].isReisetilskudd shouldEqual false
+
+            periodeliste[2].periodeFOMDato shouldEqual fom
+            periodeliste[2].periodeTOMDato shouldEqual tom
+            periodeliste[2].aktivitetIkkeMulig shouldEqual null
+            periodeliste[2].avventendeSykmelding.innspillTilArbeidsgiver shouldEqual "Innspill"
+            periodeliste[2].gradertSykmelding shouldEqual null
+            periodeliste[2].behandlingsdager shouldEqual null
+            periodeliste[2].isReisetilskudd shouldEqual false
+
+            periodeliste[3].periodeFOMDato shouldEqual fom
+            periodeliste[3].periodeTOMDato shouldEqual tom
+            periodeliste[3].aktivitetIkkeMulig shouldEqual null
+            periodeliste[3].avventendeSykmelding shouldEqual null
+            periodeliste[3].gradertSykmelding shouldEqual null
+            periodeliste[3].behandlingsdager.antallBehandlingsdagerUke shouldEqual 2
+            periodeliste[3].isReisetilskudd shouldEqual false
+
+            periodeliste[4].periodeFOMDato shouldEqual fom
+            periodeliste[4].periodeTOMDato shouldEqual tom
+            periodeliste[4].aktivitetIkkeMulig shouldEqual null
+            periodeliste[4].avventendeSykmelding shouldEqual null
+            periodeliste[4].gradertSykmelding shouldEqual null
+            periodeliste[4].behandlingsdager shouldEqual null
+            periodeliste[4].isReisetilskudd shouldEqual true
         }
 
         it("tilPrognose i arbeid") {
@@ -358,14 +438,14 @@ object MappingServiceSpek : Spek({
                 }
             }
 
-            val prognose = MappingService.tilPrognose(prognoseType)
+            val prognose = tilPrognose(prognoseType)
 
-            prognose.arbeidsforEtterPeriode shouldEqual false
-            prognose.hensynArbeidsplassen shouldEqual "Hensyn"
-            prognose.erIArbeid?.egetArbeidPaSikt shouldEqual true
-            prognose.erIArbeid?.annetArbeidPaSikt shouldEqual false
-            prognose.erIArbeid?.arbeidFOM shouldEqual tilbakeIArbeidDato
-            prognose.erIArbeid?.vurderingsdato shouldEqual datoForNyTilbakemelding
+            prognose.isArbeidsforEtterEndtPeriode shouldEqual false
+            prognose.beskrivHensynArbeidsplassen shouldEqual "Hensyn"
+            prognose.erIArbeid?.isEgetArbeidPaSikt shouldEqual true
+            prognose.erIArbeid?.isAnnetArbeidPaSikt shouldEqual false
+            prognose.erIArbeid?.arbeidFraDato shouldEqual tilbakeIArbeidDato
+            prognose.erIArbeid?.vurderingDato shouldEqual datoForNyTilbakemelding
             prognose.erIkkeIArbeid shouldEqual null
         }
 
@@ -380,13 +460,13 @@ object MappingServiceSpek : Spek({
                 }
             }
 
-            val prognose = MappingService.tilPrognose(prognoseType)
+            val prognose = tilPrognose(prognoseType)
 
-            prognose.arbeidsforEtterPeriode shouldEqual true
-            prognose.hensynArbeidsplassen shouldEqual null
-            prognose.erIkkeIArbeid?.arbeidsforPaSikt shouldEqual true
-            prognose.erIkkeIArbeid?.arbeidsforFOM shouldEqual tilbakeIArbeidDato
-            prognose.erIkkeIArbeid?.vurderingsdato shouldEqual datoForNyTilbakemelding
+            prognose.isArbeidsforEtterEndtPeriode shouldEqual true
+            prognose.beskrivHensynArbeidsplassen shouldEqual null
+            prognose.erIkkeIArbeid?.isArbeidsforPaSikt shouldEqual true
+            prognose.erIkkeIArbeid?.arbeidsforFraDato shouldEqual tilbakeIArbeidDato
+            prognose.erIkkeIArbeid?.vurderingDato shouldEqual datoForNyTilbakemelding
             prognose.erIArbeid shouldEqual null
         }
 
@@ -398,38 +478,55 @@ object MappingServiceSpek : Spek({
                 planlagtBehandling = "Legebesøk"
             }
 
-            val utdypendeOpplysninger = MappingService.tilUtdypendeOpplysninger(utdypendeOpplysningerType)
+            val utdypendeOpplysninger = tilUtdypendeOpplysninger(utdypendeOpplysningerType)
 
-            utdypendeOpplysninger.size shouldEqual 1
-            utdypendeOpplysninger["6.2"]?.size shouldEqual 4
-            utdypendeOpplysninger["6.2"]?.get("6.2.1") shouldEqual SporsmalSvar(sporsmal = "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon.", svar = "Er syk", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
-            utdypendeOpplysninger["6.2"]?.get("6.2.2") shouldEqual SporsmalSvar(sporsmal = "Hvordan påvirker sykdommen arbeidsevnen?", svar = "Ikke så bra", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
-            utdypendeOpplysninger["6.2"]?.get("6.2.3") shouldEqual SporsmalSvar(sporsmal = "Har behandlingen frem til nå bedret arbeidsevnen?", svar = "Krysser fingrene", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
-            utdypendeOpplysninger["6.2"]?.get("6.2.4") shouldEqual SporsmalSvar(sporsmal = "Beskriv pågående og planlagt henvisning,utredning og/eller behandling.", svar = "Legebesøk", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
+            utdypendeOpplysninger.spmGruppe.size shouldEqual 1
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.size shouldEqual 4
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.spmId shouldEqual "6.2.1"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.spmTekst shouldEqual "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon."
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
+
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.spmId shouldEqual "6.2.2"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.spmTekst shouldEqual "Hvordan påvirker sykdommen arbeidsevnen?"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
+
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.spmId shouldEqual "6.2.3"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.spmTekst shouldEqual "Har behandlingen frem til nå bedret arbeidsevnen?"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
+
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.spmId shouldEqual "6.2.4"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.spmTekst shouldEqual "Beskriv pågående og planlagt henvisning,utredning og/eller behandling."
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
         }
 
         it("tilBehandler") {
             val sykmelder = Sykmelder(hprNummer = "654321", fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = "Mellomnavn", etternavn = "Etternavn")
 
-            val behandler = MappingService.tilBehandler(sykmelder)
+            val behandler = tilBehandler(sykmelder)
 
-            behandler.fornavn shouldEqual "Fornavn"
-            behandler.mellomnavn shouldEqual "Mellomnavn"
-            behandler.etternavn shouldEqual "Etternavn"
-            behandler.aktoerId shouldEqual aktorIdLege
-            behandler.fnr shouldEqual fnrLege
-            behandler.hpr shouldEqual "654321"
-            behandler.her shouldEqual null
+            behandler.navn.fornavn shouldEqual "Fornavn"
+            behandler.navn.mellomnavn shouldEqual "Mellomnavn"
+            behandler.navn.etternavn shouldEqual "Etternavn"
+            behandler.id.find { it.typeId.v == "FNR" }?.id shouldEqual fnrLege
+            behandler.id.find { it.typeId.v == "HPR" }?.id shouldEqual "654321"
+            behandler.id.find { it.typeId.v == "HER" }?.id shouldEqual null
             behandler.adresse shouldNotEqual null
-            behandler.tlf shouldEqual null
+            behandler.kontaktInfo.firstOrNull()?.typeTelecom?.dn shouldEqual null
         }
 
         it("velgRiktigKontaktOgSignaturDato") {
             val fom = LocalDate.of(2019, Month.SEPTEMBER, 1)
-            val periodeliste = listOf(Periode(fom, LocalDate.of(2019, Month.OCTOBER, 16),
-                    AktivitetIkkeMulig(null, null), null, null, null, false))
+            val periodeliste = listOf(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+                periodeFOMDato = fom
+                periodeTOMDato = LocalDate.of(2019, Month.OCTOBER, 16)
+                aktivitetIkkeMulig = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.AktivitetIkkeMulig()
+            })
 
-            val dato = MappingService.velgRiktigKontaktOgSignaturDato(null, periodeliste, loggingMetadata)
+            val dato = velgRiktigKontaktOgSignaturDato(null, periodeliste)
 
             dato shouldEqual LocalDateTime.of(fom, LocalTime.NOON)
         }

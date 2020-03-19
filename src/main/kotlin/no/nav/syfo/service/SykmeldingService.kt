@@ -2,8 +2,10 @@ package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
 import java.time.LocalDateTime
+import java.util.UUID
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.NorskHelsenettClient
@@ -17,7 +19,11 @@ import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
+import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.objectMapper
 import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
+import no.nav.syfo.util.get
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
@@ -49,9 +55,9 @@ class SykmeldingService constructor(
             if (!oppgave.duplikat) {
                 PAPIRSM_FORDELINGSOPPGAVE.inc()
                 log.info("Opprettet fordelingsoppgave med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                    StructuredArguments.keyValue("journalpostId", journalpostId),
-                    fields(loggingMeta)
+                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                        StructuredArguments.keyValue("journalpostId", journalpostId),
+                        fields(loggingMeta)
                 )
             }
         } else {
@@ -65,19 +71,47 @@ class SykmeldingService constructor(
 
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
-                        val sykmelding = MappingService.mapOcrFilTilReceivedSykmelding(
+                        val fellesformat = mapOcrFilTilFellesformat(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
-                                aktorId = aktorId,
                                 datoOpprettet = datoOpprettet,
                                 sykmelder = sykmelder,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
+
+                        val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
+                        val msgHead = fellesformat.get<XMLMsgHead>()
+
+                        val sykmelding = healthInformation.toSykmelding(
+                                sykmeldingId = UUID.randomUUID().toString(),
+                                pasientAktoerId = aktorId,
+                                legeAktoerId = sykmelder.aktorId,
+                                msgId = sykmeldingId,
+                                signaturDato = msgHead.msgInfo.genDate
+                        )
+
+                        val receivedSykmelding = ReceivedSykmelding(
+                                sykmelding = sykmelding,
+                                personNrPasient = fnr,
+                                tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                                personNrLege = sykmelder.fnr,
+                                navLogId = sykmeldingId,
+                                msgId = sykmeldingId,
+                                legekontorOrgNr = null,
+                                legekontorOrgName = "",
+                                legekontorHerId = null,
+                                legekontorReshId = null,
+                                mottattDato = datoOpprettet,
+                                rulesetVersion = healthInformation.regelSettVersjon,
+                                fellesformat = objectMapper.writeValueAsString(fellesformat),
+                                tssid = ""
+                        )
+
                         log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
                         PAPIRSM_MAPPET.labels("ok").inc()
 
                         log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
-                        val validationResult = regelClient.valider(sykmelding, sykmeldingId)
+                        val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
                         log.info("Resultat: {}, {}", validationResult.status.name, fields(loggingMeta))
                     }
                 } catch (e: Exception) {
@@ -89,13 +123,13 @@ class SykmeldingService constructor(
             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
             val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
             if (!oppgave.duplikat) {
                 log.info("Opprettet oppgave med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                    StructuredArguments.keyValue("sakid", sakId),
-                    fields(loggingMeta)
+                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                        StructuredArguments.keyValue("sakid", sakId),
+                        fields(loggingMeta)
                 )
                 PAPIRSM_OPPGAVE.inc()
             }
@@ -127,12 +161,12 @@ class SykmeldingService constructor(
         }
 
         return Sykmelder(
-            hprNummer = hprNummer,
-            fnr = behandlerFraHpr.fnr,
-            aktorId = aktorId,
-            fornavn = behandlerFraHpr.fornavn,
-            mellomnavn = behandlerFraHpr.mellomnavn,
-            etternavn = behandlerFraHpr.etternavn
+                hprNummer = hprNummer,
+                fnr = behandlerFraHpr.fnr,
+                aktorId = aktorId,
+                fornavn = behandlerFraHpr.fornavn,
+                mellomnavn = behandlerFraHpr.mellomnavn,
+                etternavn = behandlerFraHpr.etternavn
         )
     }
 }
