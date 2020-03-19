@@ -333,9 +333,6 @@ object FellesformatMapperServiceSpek : Spek({
         }
 
         it("tilPeriodeListe shoulld throw exception, when missing aktivitetstype") {
-            val fom = LocalDate.now()
-            val tom = LocalDate.now().plusDays(1)
-
             val aktivitetType = AktivitetType()
 
             val func = { tilPeriodeListe(aktivitetType) }
@@ -423,18 +420,6 @@ object FellesformatMapperServiceSpek : Spek({
             periodeliste[4].gradertSykmelding shouldEqual null
             periodeliste[4].behandlingsdager shouldEqual null
             periodeliste[4].isReisetilskudd shouldEqual true
-
-            /*
-            periodeliste[1] shouldEqual Periode(fom, tom, null,
-                    null, null, Gradert(false, 60), false)
-            periodeliste[2] shouldEqual Periode(fom, tom, null,
-                    "Innspill", null, null, false)
-            periodeliste[3] shouldEqual Periode(fom, tom, null,
-                    null, 2, null, false)
-            periodeliste[4] shouldEqual Periode(fom, tom, null,
-                    null, null, null, true)
-
-             */
         }
 
         it("tilPrognose i arbeid") {
