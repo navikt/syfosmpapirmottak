@@ -2,6 +2,9 @@ package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.helse.msgHead.XMLMsgHead
+import no.nav.helse.sm2013.ArsakType
+import no.nav.helse.sm2013.CS
+import no.nav.helse.sm2013.DynaSvarType
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import java.io.StringReader
 import java.math.BigInteger
@@ -32,17 +35,11 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.Adresse
 import no.nav.syfo.model.AktivitetIkkeMulig
 import no.nav.syfo.model.Arbeidsgiver
-import no.nav.syfo.model.ArbeidsrelatertArsak
 import no.nav.syfo.model.AvsenderSystem
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.Diagnose
-import no.nav.syfo.model.Gradert
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.KontaktMedPasient
-import no.nav.syfo.model.MedisinskArsak
-import no.nav.syfo.model.Periode
-import no.nav.syfo.model.SporsmalSvar
-import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
@@ -108,7 +105,7 @@ object FellesformatMapperServiceSpek : Spek({
                     mottattDato = datoOpprettet,
                     rulesetVersion = healthInformation.regelSettVersjon,
                     fellesformat = objectMapper.writeValueAsString(fellesformat),
-                    tssid = ""
+                    tssid = null
             )
 
             receivedSykmelding.personNrPasient shouldEqual fnrPasient
@@ -176,7 +173,7 @@ object FellesformatMapperServiceSpek : Spek({
                     mottattDato = datoOpprettet,
                     rulesetVersion = healthInformation.regelSettVersjon,
                     fellesformat = objectMapper.writeValueAsString(fellesformat),
-                    tssid = ""
+                    tssid = null
             )
 
             receivedSykmelding.personNrPasient shouldEqual fnrPasient
@@ -325,7 +322,7 @@ object FellesformatMapperServiceSpek : Spek({
 
             val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
 
-            arbeidsgiver.harArbeidsgiver shouldEqual HarArbeidsgiver.FLERE_ARBEIDSGIVERE
+            arbeidsgiver.harArbeidsgiver.v shouldEqual "2"
             arbeidsgiver.navnArbeidsgiver shouldEqual "Arbeidsgiver"
             arbeidsgiver.yrkesbetegnelse shouldEqual "Lærer"
         }
@@ -337,7 +334,7 @@ object FellesformatMapperServiceSpek : Spek({
 
             val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
 
-            arbeidsgiver.harArbeidsgiver shouldEqual HarArbeidsgiver.INGEN_ARBEIDSGIVER
+            arbeidsgiver.harArbeidsgiver.v shouldEqual "3"
         }
 
         it("tilPeriodeListe shoulld throw exception, when missing aktivitetstype") {
@@ -389,9 +386,51 @@ object FellesformatMapperServiceSpek : Spek({
             val periodeliste = tilPeriodeListe(aktivitetType)
 
             periodeliste.size shouldEqual 5
-            periodeliste[0] shouldEqual Periode(fom, tom, AktivitetIkkeMulig(
-                    MedisinskArsak("syk", emptyList()), ArbeidsrelatertArsak("miljø", emptyList())),
-                    null, null, null, false)
+            periodeliste[0].periodeFOMDato shouldEqual fom
+            periodeliste[0].periodeTOMDato shouldEqual tom
+            periodeliste[0].aktivitetIkkeMulig.medisinskeArsaker.beskriv shouldEqual "syk"
+            periodeliste[0].aktivitetIkkeMulig.medisinskeArsaker.arsakskode.size shouldEqual 1
+            periodeliste[0].aktivitetIkkeMulig.arbeidsplassen.beskriv shouldEqual "miljø"
+            periodeliste[0].aktivitetIkkeMulig.arbeidsplassen.arsakskode.size shouldEqual 1
+            periodeliste[0].avventendeSykmelding shouldEqual null
+            periodeliste[0].gradertSykmelding shouldEqual null
+            periodeliste[0].behandlingsdager shouldEqual null
+            periodeliste[0].isReisetilskudd shouldEqual false
+
+            periodeliste[1].periodeFOMDato shouldEqual fom
+            periodeliste[1].periodeTOMDato shouldEqual tom
+            periodeliste[1].aktivitetIkkeMulig shouldEqual null
+            periodeliste[1].avventendeSykmelding shouldEqual null
+            periodeliste[1].gradertSykmelding.sykmeldingsgrad shouldEqual 60
+            periodeliste[1].behandlingsdager shouldEqual null
+            periodeliste[1].isReisetilskudd shouldEqual false
+
+            periodeliste[2].periodeFOMDato shouldEqual fom
+            periodeliste[2].periodeTOMDato shouldEqual tom
+            periodeliste[2].aktivitetIkkeMulig shouldEqual null
+            periodeliste[2].avventendeSykmelding.innspillTilArbeidsgiver shouldEqual "Innspill"
+            periodeliste[2].gradertSykmelding shouldEqual null
+            periodeliste[2].behandlingsdager shouldEqual null
+            periodeliste[2].isReisetilskudd shouldEqual false
+
+            periodeliste[3].periodeFOMDato shouldEqual fom
+            periodeliste[3].periodeTOMDato shouldEqual tom
+            periodeliste[3].aktivitetIkkeMulig shouldEqual null
+            periodeliste[3].avventendeSykmelding shouldEqual null
+            periodeliste[3].gradertSykmelding shouldEqual null
+            periodeliste[3].behandlingsdager.antallBehandlingsdagerUke shouldEqual 2
+            periodeliste[3].isReisetilskudd shouldEqual false
+
+            periodeliste[4].periodeFOMDato shouldEqual fom
+            periodeliste[4].periodeTOMDato shouldEqual tom
+            periodeliste[4].aktivitetIkkeMulig shouldEqual null
+            periodeliste[4].avventendeSykmelding shouldEqual null
+            periodeliste[4].gradertSykmelding shouldEqual null
+            periodeliste[4].behandlingsdager shouldEqual null
+            periodeliste[4].isReisetilskudd shouldEqual true
+
+
+            /*
             periodeliste[1] shouldEqual Periode(fom, tom, null,
                     null, null, Gradert(false, 60), false)
             periodeliste[2] shouldEqual Periode(fom, tom, null,
@@ -400,6 +439,8 @@ object FellesformatMapperServiceSpek : Spek({
                     null, 2, null, false)
             periodeliste[4] shouldEqual Periode(fom, tom, null,
                     null, null, null, true)
+
+             */
         }
 
         it("tilPrognose i arbeid") {
@@ -462,10 +503,26 @@ object FellesformatMapperServiceSpek : Spek({
 
             utdypendeOpplysninger.spmGruppe.size shouldEqual 1
             utdypendeOpplysninger.spmGruppe.first().spmSvar?.size shouldEqual 4
-            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" } shouldEqual SporsmalSvar(sporsmal = "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon.", svar = "Er syk", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
-            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" } shouldEqual SporsmalSvar(sporsmal = "Hvordan påvirker sykdommen arbeidsevnen?", svar = "Ikke så bra", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
-            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" } shouldEqual SporsmalSvar(sporsmal = "Har behandlingen frem til nå bedret arbeidsevnen?", svar = "Krysser fingrene", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
-            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" } shouldEqual SporsmalSvar(sporsmal = "Beskriv pågående og planlagt henvisning,utredning og/eller behandling.", svar = "Legebesøk", restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER))
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.spmId shouldEqual "6.2.1"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.spmTekst shouldEqual "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon."
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.1" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
+
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.spmId shouldEqual "6.2.2"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.spmTekst shouldEqual "Hvordan påvirker sykdommen arbeidsevnen?"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.2" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
+
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.spmId shouldEqual "6.2.3"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.spmTekst shouldEqual "Har behandlingen frem til nå bedret arbeidsevnen?"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.3" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
+
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.spmId shouldEqual "6.2.4"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.spmTekst shouldEqual "Beskriv pågående og planlagt henvisning,utredning og/eller behandling."
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
+            utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
+
         }
 
         it("tilBehandler") {

@@ -103,7 +103,7 @@ fun ArsakType.toAnnenFraversArsak() = AnnenFraversArsak(
         beskrivelse = beskriv,
         // TODO: Remove if-wrapping whenever the EPJ systems stops sending garbage data
         grunn = arsakskode.mapNotNull { code ->
-            if (code.v == "0") {
+            if (code.v == null || code.v == "0") {
                 null
             } else {
                 AnnenFraverGrunn.values().first { it.codeValue == code.v.trim() }

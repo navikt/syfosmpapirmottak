@@ -34,7 +34,6 @@ import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneOffset
 
 fun mapOcrFilTilFellesformat(
         skanningmetadata: Skanningmetadata,
@@ -160,7 +159,7 @@ fun mapOcrFilTilFellesformat(
                             }
                             meldingTilArbeidsgiver = skanningmetadata.sykemeldinger.meldingTilArbeidsgiver
                             kontaktMedPasient = HelseOpplysningerArbeidsuforhet.KontaktMedPasient().apply {
-                                kontaktDato = velgRiktigKontaktOgSignaturDato(skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet)).toLocalDate()
+                                kontaktDato = skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato
                                 begrunnIkkeKontakt = null
                                 behandletDato = velgRiktigKontaktOgSignaturDato(skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                             }
@@ -213,16 +212,11 @@ fun tilUtdypendeOpplysninger(utdypendeOpplysningerType: UtdypendeOpplysningerTyp
 }
 
 fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe> {
-    // Spørsmålene kommer herfra: https://stash.adeo.no/projects/EIA/repos/nav-eia-external/browse/SM2013/xml/SM2013DynaSpm_1_5.xml
-    val spmGruppe = listOf(HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe().apply {
-        spmGruppeId = "6.2"
-        spmGruppeTekst = "Utdypende opplysninger ved 7/8,17 og 39 uker"
-    })
 
-    val spmSvar = ArrayList<DynaSvarType>()
+    val listeDynaSvarType = ArrayList<DynaSvarType>()
 
     if (utdypendeOpplysningerType?.sykehistorie != null) {
-        spmSvar.add(
+        listeDynaSvarType.add(
                 DynaSvarType().apply {
                     spmId = "6.2.1"
                     spmTekst = "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon."
@@ -238,7 +232,7 @@ fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<He
     }
 
     if (utdypendeOpplysningerType?.sykehistorie != null) {
-        spmSvar.add(
+        listeDynaSvarType.add(
                 DynaSvarType().apply {
                     spmId = "6.2.2"
                     spmTekst = "Hvordan påvirker sykdommen arbeidsevnen?"
@@ -254,7 +248,7 @@ fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<He
     }
 
     if (utdypendeOpplysningerType?.sykehistorie != null) {
-        spmSvar.add(
+        listeDynaSvarType.add(
                 DynaSvarType().apply {
                     spmId = "6.2.3"
                     spmTekst = "Har behandlingen frem til nå bedret arbeidsevnen?"
@@ -270,7 +264,7 @@ fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<He
     }
 
     if (utdypendeOpplysningerType?.sykehistorie != null) {
-        spmSvar.add(
+        listeDynaSvarType.add(
                 DynaSvarType().apply {
                     spmId = "6.2.4"
                     spmTekst = "Beskriv pågående og planlagt henvisning,utredning og/eller behandling."
@@ -285,11 +279,18 @@ fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<He
         )
     }
 
-    if (spmGruppe.first().spmSvar.isEmpty()) {
-        return ArrayList<HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe>()
-    } else {
+    // Spørsmålene kommer herfra: https://stash.adeo.no/projects/EIA/repos/nav-eia-external/browse/SM2013/xml/SM2013DynaSpm_1_5.xml
+    val spmGruppe = listOf(HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe().apply {
+        spmGruppeId = "6.2"
+        spmGruppeTekst = "Utdypende opplysninger ved 7/8,17 og 39 uker"
+        spmSvar.addAll(listeDynaSvarType)
+    })
+
+    if (spmGruppe.first().spmSvar.isNotEmpty()) {
         return spmGruppe
     }
+
+    return ArrayList<HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger.SpmGruppe>()
 }
 
 fun tilPrognose(prognoseType: PrognoseType): HelseOpplysningerArbeidsuforhet.Prognose =
@@ -455,7 +456,9 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): Helse
             }
         }
         if (biDiagnoseListe != null && biDiagnoseListe.isNotEmpty()) {
-            biDiagnoser.diagnosekode.addAll(biDiagnoseListe)
+            biDiagnoser = HelseOpplysningerArbeidsuforhet.MedisinskVurdering.BiDiagnoser().apply {
+                diagnosekode.addAll(biDiagnoseListe)
+            }
         }
         isSkjermesForPasient = medisinskVurderingType.isSkjermesForPasient
         if (!medisinskVurderingType.annenFraversArsak.isNullOrEmpty()) {
