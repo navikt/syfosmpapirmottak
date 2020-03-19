@@ -1,6 +1,8 @@
 package no.nav.syfo.service
 
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.eiFellesformat.XMLEIFellesformat
 import no.nav.helse.msgHead.XMLCS
@@ -32,16 +34,14 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
-import java.time.LocalDate
-import java.time.LocalTime
 
 fun mapOcrFilTilFellesformat(
-        skanningmetadata: Skanningmetadata,
-        fnr: String,
-        datoOpprettet: LocalDateTime,
-        sykmelder: Sykmelder,
-        sykmeldingId: String,
-        loggingMeta: LoggingMeta
+    skanningmetadata: Skanningmetadata,
+    fnr: String,
+    datoOpprettet: LocalDateTime,
+    sykmelder: Sykmelder,
+    sykmeldingId: String,
+    loggingMeta: LoggingMeta
 ): XMLEIFellesformat {
     if (skanningmetadata.sykemeldinger.pasient.fnr != fnr) {
         log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
@@ -436,7 +436,6 @@ fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?): HelseOpplysningerArbei
             navnArbeidsgiver = arbeidsgiverType?.navnArbeidsgiver
             yrkesbetegnelse = arbeidsgiverType?.yrkesbetegnelse
             stillingsprosent = arbeidsgiverType?.stillingsprosent?.toInt()
-
         }
 
 fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): HelseOpplysningerArbeidsuforhet.MedisinskVurdering {
@@ -450,9 +449,9 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): Helse
     }
 
     return HelseOpplysningerArbeidsuforhet.MedisinskVurdering().apply {
-        if (medisinskVurderingType.hovedDiagnose.isNullOrEmpty()) {
+        if (!medisinskVurderingType.hovedDiagnose.isNullOrEmpty()) {
             hovedDiagnose = HelseOpplysningerArbeidsuforhet.MedisinskVurdering.HovedDiagnose().apply {
-                toMedisinskVurderingDiagnode(medisinskVurderingType.hovedDiagnose[0].diagnosekode)
+                diagnosekode = toMedisinskVurderingDiagnode(medisinskVurderingType.hovedDiagnose[0].diagnosekode)
             }
         }
         if (biDiagnoseListe != null && biDiagnoseListe.isNotEmpty()) {
@@ -461,10 +460,10 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): Helse
             }
         }
         isSkjermesForPasient = medisinskVurderingType.isSkjermesForPasient
-        if (!medisinskVurderingType.annenFraversArsak.isNullOrEmpty()) {
-            annenFraversArsak = ArsakType().apply {
+        annenFraversArsak = medisinskVurderingType.annenFraversArsak?.let {
+            ArsakType().apply {
                 arsakskode.add(CS())
-                beskriv = medisinskVurderingType.fraversBeskrivelse
+                beskriv = medisinskVurderingType.annenFraversArsak
             }
         }
         isSvangerskap = medisinskVurderingType.isSvangerskap

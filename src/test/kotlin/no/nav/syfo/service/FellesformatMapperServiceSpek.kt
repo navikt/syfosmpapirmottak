@@ -1,17 +1,15 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.helse.msgHead.XMLMsgHead
-import no.nav.helse.sm2013.ArsakType
-import no.nav.helse.sm2013.CS
-import no.nav.helse.sm2013.DynaSvarType
-import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import java.io.StringReader
 import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Month
+import java.util.UUID
+import no.nav.helse.msgHead.XMLMsgHead
+import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
@@ -40,6 +38,8 @@ import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.Diagnose
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.KontaktMedPasient
+import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.objectMapper
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
@@ -51,9 +51,6 @@ import org.amshove.kluent.shouldNotThrow
 import org.amshove.kluent.shouldThrow
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.util.UUID
-import no.nav.syfo.model.ReceivedSykmelding
-import no.nav.syfo.objectMapper
 
 @KtorExperimentalAPI
 object FellesformatMapperServiceSpek : Spek({
@@ -234,7 +231,6 @@ object FellesformatMapperServiceSpek : Spek({
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-gyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null)
 
-
             val func = {
                 mapOcrFilTilFellesformat(
                         skanningmetadata = skanningMetadata,
@@ -272,15 +268,14 @@ object FellesformatMapperServiceSpek : Spek({
             medisinskVurdering.hovedDiagnose?.diagnosekode?.v shouldEqual "S525"
             medisinskVurdering.hovedDiagnose?.diagnosekode?.s shouldEqual Diagnosekoder.ICD10_CODE
             medisinskVurdering.biDiagnoser.diagnosekode.size shouldEqual 1
-            medisinskVurdering.biDiagnoser.diagnosekode[0] shouldEqual Diagnose(
-                    system = Diagnosekoder.ICD10_CODE,
-                    kode = "S697",
-                    tekst = "Flere skader i håndledd og hånd")
+            medisinskVurdering.biDiagnoser.diagnosekode[0].v shouldEqual "S697"
+            medisinskVurdering.biDiagnoser.diagnosekode[0].s shouldEqual Diagnosekoder.ICD10_CODE
+            medisinskVurdering.biDiagnoser.diagnosekode[0].dn shouldEqual "Flere skader i håndledd og hånd"
             medisinskVurdering.isSvangerskap shouldEqual false
             medisinskVurdering.isYrkesskade shouldEqual true
             medisinskVurdering.yrkesskadeDato shouldEqual dato
             medisinskVurdering.annenFraversArsak?.beskriv shouldEqual "Kan ikke jobbe"
-            medisinskVurdering.annenFraversArsak?.arsakskode?.size shouldEqual 0
+            medisinskVurdering.annenFraversArsak?.arsakskode?.size shouldEqual 1
         }
 
         it("diagnoseFraDiagnosekode ICD10") {
@@ -429,7 +424,6 @@ object FellesformatMapperServiceSpek : Spek({
             periodeliste[4].behandlingsdager shouldEqual null
             periodeliste[4].isReisetilskudd shouldEqual true
 
-
             /*
             periodeliste[1] shouldEqual Periode(fom, tom, null,
                     null, null, Gradert(false, 60), false)
@@ -522,7 +516,6 @@ object FellesformatMapperServiceSpek : Spek({
             utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.spmTekst shouldEqual "Beskriv pågående og planlagt henvisning,utredning og/eller behandling."
             utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.restriksjon?.restriksjonskode?.firstOrNull()?.v shouldEqual "A"
             utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldEqual "Informasjonen skal ikke vises arbeidsgiver"
-
         }
 
         it("tilBehandler") {
@@ -546,7 +539,6 @@ object FellesformatMapperServiceSpek : Spek({
                 periodeFOMDato = fom
                 periodeTOMDato = LocalDate.of(2019, Month.OCTOBER, 16)
                 aktivitetIkkeMulig = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.AktivitetIkkeMulig()
-
             })
 
             val dato = velgRiktigKontaktOgSignaturDato(null, periodeliste)

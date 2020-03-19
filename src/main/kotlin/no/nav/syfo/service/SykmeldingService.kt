@@ -27,21 +27,21 @@ import no.nav.syfo.util.get
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
-        private val sakClient: SakClient,
-        private val oppgaveService: OppgaveService,
-        private val safDokumentClient: SafDokumentClient,
-        private val norskHelsenettClient: NorskHelsenettClient,
-        private val aktoerIdClient: AktoerIdClient,
-        private val regelClient: RegelClient
+    private val sakClient: SakClient,
+    private val oppgaveService: OppgaveService,
+    private val safDokumentClient: SafDokumentClient,
+    private val norskHelsenettClient: NorskHelsenettClient,
+    private val aktoerIdClient: AktoerIdClient,
+    private val regelClient: RegelClient
 ) {
     suspend fun behandleSykmelding(
-            journalpostId: String,
-            fnr: String?,
-            aktorId: String?,
-            dokumentInfoId: String?,
-            datoOpprettet: LocalDateTime?,
-            loggingMeta: LoggingMeta,
-            sykmeldingId: String
+        journalpostId: String,
+        fnr: String?,
+        aktorId: String?,
+        dokumentInfoId: String?,
+        datoOpprettet: LocalDateTime?,
+        loggingMeta: LoggingMeta,
+        sykmeldingId: String
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
