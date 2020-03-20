@@ -12,8 +12,10 @@ import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
+import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
+import org.apache.kafka.clients.producer.KafkaProducer
 
 @KtorExperimentalAPI
 class BehandlingService constructor(
@@ -27,7 +29,9 @@ class BehandlingService constructor(
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
         syfoserviceProducer: MessageProducer,
-        session: Session
+        session: Session,
+        sm2013AutomaticHandlingTopic: String,
+        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -62,7 +66,8 @@ class BehandlingService constructor(
                                 dokumentInfoId = journalpostMetadata.dokumentInfoId,
                                 loggingMeta = loggingMeta, sykmeldingId = sykmeldingId,
                                 syfoserviceProducer = syfoserviceProducer,
-                                session = session)
+                                session = session, sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding)
                     }
                 } else {
                     log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))

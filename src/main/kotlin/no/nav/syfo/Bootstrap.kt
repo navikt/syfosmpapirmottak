@@ -45,6 +45,8 @@ import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
+import no.nav.syfo.kafka.toProducerConfig
+import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.mq.connectionFactory
 import no.nav.syfo.mq.producerForQueue
 import no.nav.syfo.service.BehandlingService
@@ -52,10 +54,12 @@ import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.service.UtenlandskSykmeldingService
 import no.nav.syfo.sm.Diagnosekoder
+import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -94,6 +98,10 @@ fun main() {
             "${env.applicationName}-consumer-v2",
             valueDeserializer = KafkaAvroDeserializer::class
     )
+
+    val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
+
+    val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerProperties)
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
@@ -141,7 +149,8 @@ fun main() {
             applicationState,
             consumerProperties,
             behandlingService,
-            credentials
+            credentials,
+            kafkaProducerReceivedSykmelding
     )
 }
 
@@ -162,7 +171,8 @@ fun launchListeners(
     applicationState: ApplicationState,
     consumerProperties: Properties,
     behandlingService: BehandlingService,
-    credentials: VaultCredentials
+    credentials: VaultCredentials,
+    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -176,7 +186,8 @@ fun launchListeners(
 
             val syfoserviceProducer = session.producerForQueue(env.syfoserviceQueueName)
             blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse,
-                    behandlingService, syfoserviceProducer, session)
+                    behandlingService, syfoserviceProducer, session,
+                    env.sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding)
         }
     }
 }
@@ -187,7 +198,9 @@ suspend fun blockingApplicationLogic(
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService,
     syfoserviceProducer: MessageProducer,
-    session: Session
+    session: Session,
+    sm2013AutomaticHandlingTopic: String,
+    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -200,7 +213,8 @@ suspend fun blockingApplicationLogic(
             )
 
             behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta,
-                    sykmeldingId, syfoserviceProducer, session)
+                    sykmeldingId, syfoserviceProducer, session,
+                    sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding)
         }
         delay(100)
     }

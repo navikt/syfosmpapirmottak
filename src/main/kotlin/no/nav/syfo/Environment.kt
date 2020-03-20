@@ -25,7 +25,8 @@ data class Environment(
     override val mqHostname: String = getEnvVar("MQ_HOST_NAME"),
     override val mqPort: Int = getEnvVar("MQ_PORT").toInt(),
     override val mqGatewayName: String = getEnvVar("MQ_GATEWAY_NAME"),
-    override val mqChannelName: String = getEnvVar("MQ_CHANNEL_NAME")
+    override val mqChannelName: String = getEnvVar("MQ_CHANNEL_NAME"),
+    val sm2013AutomaticHandlingTopic: String = getEnvVar("KAFKA_SM2013_AUTOMATIC_TOPIC", "privat-syfo-sm2013-automatiskBehandling")
 ) : KafkaConfig, MqConfig
 
 data class VaultCredentials(

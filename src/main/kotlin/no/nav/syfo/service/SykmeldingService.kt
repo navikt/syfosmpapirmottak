@@ -26,6 +26,8 @@ import no.nav.syfo.objectMapper
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.get
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerRecord
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
@@ -45,7 +47,9 @@ class SykmeldingService constructor(
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
         syfoserviceProducer: MessageProducer,
-        session: Session
+        session: Session,
+        sm2013AutomaticHandlingTopic: String,
+        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -117,19 +121,18 @@ class SykmeldingService constructor(
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
                         log.info("Resultat: {}, {}", validationResult.status.name, fields(loggingMeta))
 
-                        /*
+                        kafkaproducerreceivedSykmelding.send(ProducerRecord(sm2013AutomaticHandlingTopic, receivedSykmelding.sykmelding.id, receivedSykmelding))
+                        log.info("Message send to kafka {}, {}", sm2013AutomaticHandlingTopic, fields(loggingMeta))
+
                         notifySyfoService(session = session, receiptProducer = syfoserviceProducer, ediLoggId = sykmeldingId,
                                 sykmeldingId = receivedSykmelding.sykmelding.id, msgId = sykmeldingId, healthInformation = healthInformation)
                         log.info("Message send to syfoService, {}", fields(loggingMeta))
-                        */
                     }
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
                 }
             }
-
-            try {
 
                 val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
@@ -144,9 +147,6 @@ class SykmeldingService constructor(
                     )
                     PAPIRSM_OPPGAVE.inc()
                 }
-            } catch (e: Exception) {
-                log.warn("Noe gikk galt ved sak, eller oppgave generering: ${e.message}, {}", fields(loggingMeta))
-            }
         }
     }
 
