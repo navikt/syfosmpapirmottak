@@ -117,9 +117,11 @@ class SykmeldingService constructor(
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
                         log.info("Resultat: {}, {}", validationResult.status.name, fields(loggingMeta))
 
+                        /*
                         notifySyfoService(session = session, receiptProducer = syfoserviceProducer, ediLoggId = sykmeldingId,
                                 sykmeldingId = receivedSykmelding.sykmelding.id, msgId = sykmeldingId, healthInformation = healthInformation)
                         log.info("Message send to syfoService, {}", fields(loggingMeta))
+                        */
                     }
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()

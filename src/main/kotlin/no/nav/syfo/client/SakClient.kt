@@ -78,7 +78,7 @@ data class OpprettSakRequest(
 
 data class SakResponse(
     val id: Long,
-    val tema: String?,
+    val tema: String,
     val aktoerId: String,
     val orgnr: String?,
     val fagsakNr: String?,

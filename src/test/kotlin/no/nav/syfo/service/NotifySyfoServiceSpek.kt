@@ -1,11 +1,12 @@
 package no.nav.syfo.service
 
 import java.io.StringReader
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
-import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
-import no.nav.syfo.util.fellesformatUnmarshaller
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.syfo.client.getFileAsString
+import no.nav.syfo.domain.Sykmelder
+import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
+import no.nav.syfo.util.skanningMetadataUnmarshaller
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -13,9 +14,27 @@ import org.spekframework.spek2.style.specification.describe
 object NotifySyfoServiceSpek : Spek({
     describe("Legger sykmelding på kø til syfoservice") {
         it("Sykmeldingen Base64-encodes på UTF-8 format") {
-            val sm = fellesformatUnmarshaller.unmarshal(StringReader(String(Files.readAllBytes(Paths.get(("src/test/resources/helseopplysninger-UTF-8.xml"))), StandardCharsets.UTF_8))) as HelseOpplysningerArbeidsuforhet
+            val sykmeldingId = "1234"
+            val journalpostId = "123"
+            val fnrPasient = "12345678910"
+            val fnrLege = "fnrLege"
+            val aktorIdLege = "aktorIdLege"
+            val hprNummer = "10052512"
+            val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
 
-            val sykemeldingsBytes = convertSykemeldingToBase64(sm)
+            val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Bodø")
+
+            val fellesformat = mapOcrFilTilFellesformat(
+                    skanningmetadata = skanningMetadata,
+                    fnr = fnrPasient,
+                    sykmelder = sykmelder,
+                    sykmeldingId = sykmeldingId,
+                    loggingMeta = loggingMetadata)
+
+            val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
+
+            val sykemeldingsBytes = convertSykemeldingToBase64(healthInformation)
 
             val sykmelding = String(sykemeldingsBytes, Charsets.UTF_8)
             sykmelding.contains("Bodø") shouldEqual true
