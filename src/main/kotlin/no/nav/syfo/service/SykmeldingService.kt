@@ -74,7 +74,6 @@ class SykmeldingService constructor(
                         val fellesformat = mapOcrFilTilFellesformat(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
-                                datoOpprettet = datoOpprettet,
                                 sykmelder = sykmelder,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
@@ -120,8 +119,6 @@ class SykmeldingService constructor(
                 }
             }
 
-            try {
-
                 val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
                 val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
@@ -135,10 +132,6 @@ class SykmeldingService constructor(
                     )
                     PAPIRSM_OPPGAVE.inc()
                 }
-            } catch (e: Exception) {
-                PAPIRSM_MAPPET.labels("feil").inc()
-                log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
-            }
         }
     }
 

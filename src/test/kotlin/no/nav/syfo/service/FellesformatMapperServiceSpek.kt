@@ -72,7 +72,6 @@ object FellesformatMapperServiceSpek : Spek({
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
                     fnr = fnrPasient,
-                    datoOpprettet = datoOpprettet,
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
                     loggingMeta = loggingMetadata)
@@ -140,7 +139,6 @@ object FellesformatMapperServiceSpek : Spek({
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
                     fnr = fnrPasient,
-                    datoOpprettet = datoOpprettet,
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
                     loggingMeta = loggingMetadata)
@@ -218,7 +216,6 @@ object FellesformatMapperServiceSpek : Spek({
                 mapOcrFilTilFellesformat(
                         skanningmetadata = skanningMetadata,
                         fnr = fnrPasient,
-                        datoOpprettet = datoOpprettet,
                         sykmelder = sykmelder,
                         sykmeldingId = sykmeldingId,
                         loggingMeta = loggingMetadata)
@@ -235,7 +232,6 @@ object FellesformatMapperServiceSpek : Spek({
                 mapOcrFilTilFellesformat(
                         skanningmetadata = skanningMetadata,
                         fnr = fnrPasient,
-                        datoOpprettet = datoOpprettet,
                         sykmelder = sykmelder,
                         sykmeldingId = sykmeldingId,
                         loggingMeta = loggingMetadata)
@@ -263,7 +259,7 @@ object FellesformatMapperServiceSpek : Spek({
                 annenFraversArsak = "Kan ikke jobbe"
             }
 
-            val medisinskVurdering = tilMedisinskVurdering(medisinskVurderingType)
+            val medisinskVurdering = tilMedisinskVurdering(medisinskVurderingType, loggingMetadata)
 
             medisinskVurdering.hovedDiagnose?.diagnosekode?.v shouldEqual "S525"
             medisinskVurdering.hovedDiagnose?.diagnosekode?.s shouldEqual Diagnosekoder.ICD10_CODE
@@ -279,14 +275,14 @@ object FellesformatMapperServiceSpek : Spek({
         }
 
         it("diagnoseFraDiagnosekode ICD10") {
-            val diagnose = toMedisinskVurderingDiagnode("S52.5")
+            val diagnose = toMedisinskVurderingDiagnode("S52.5", loggingMetadata)
 
             diagnose.s shouldEqual Diagnosekoder.ICD10_CODE
             diagnose.v shouldEqual "S525"
         }
 
         it("diagnoseFraDiagnosekode ICPC2") {
-            val diagnose = toMedisinskVurderingDiagnode("L72")
+            val diagnose = toMedisinskVurderingDiagnode("L72", loggingMetadata)
 
             diagnose.s shouldEqual Diagnosekoder.ICPC2_CODE
             diagnose.v shouldEqual "L72"
@@ -300,7 +296,7 @@ object FellesformatMapperServiceSpek : Spek({
                 stillingsprosent = BigInteger("80")
             }
 
-            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
+            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType, loggingMetadata)
 
             arbeidsgiver.harArbeidsgiver.v shouldEqual "1"
             arbeidsgiver.navnArbeidsgiver shouldEqual "Arbeidsgiver"
@@ -315,7 +311,7 @@ object FellesformatMapperServiceSpek : Spek({
                 yrkesbetegnelse = "Lærer"
             }
 
-            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
+            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType, loggingMetadata)
 
             arbeidsgiver.harArbeidsgiver.v shouldEqual "2"
             arbeidsgiver.navnArbeidsgiver shouldEqual "Arbeidsgiver"
@@ -327,7 +323,7 @@ object FellesformatMapperServiceSpek : Spek({
                 harArbeidsgiver = "Ingen arbeidsgiver"
             }
 
-            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType)
+            val arbeidsgiver = tilArbeidsgiver(arbeidsgiverType, loggingMetadata)
 
             arbeidsgiver.harArbeidsgiver.v shouldEqual "3"
         }
