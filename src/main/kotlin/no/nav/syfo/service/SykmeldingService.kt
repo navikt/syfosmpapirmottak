@@ -22,10 +22,11 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
-import no.nav.syfo.objectMapper
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
+import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
+import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 
@@ -110,7 +111,7 @@ class SykmeldingService constructor(
                                 legekontorReshId = null,
                                 mottattDato = datoOpprettet,
                                 rulesetVersion = healthInformation.regelSettVersjon,
-                                fellesformat = objectMapper.writeValueAsString(fellesformat),
+                                fellesformat = fellesformatMarshaller.toString(fellesformat),
                                 tssid = ""
                         )
 
