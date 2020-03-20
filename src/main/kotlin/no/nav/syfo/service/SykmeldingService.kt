@@ -127,18 +127,23 @@ class SykmeldingService constructor(
                 }
             }
 
-            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+            try {
 
-            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
-            if (!oppgave.duplikat) {
-                log.info("Opprettet oppgave med {}, {} {}",
-                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                        StructuredArguments.keyValue("sakid", sakId),
-                        fields(loggingMeta)
-                )
-                PAPIRSM_OPPGAVE.inc()
+                val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                        journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+
+                if (!oppgave.duplikat) {
+                    log.info("Opprettet oppgave med {}, {} {}",
+                            StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                            StructuredArguments.keyValue("sakid", sakId),
+                            fields(loggingMeta)
+                    )
+                    PAPIRSM_OPPGAVE.inc()
+                }
+            } catch (e: Exception) {
+                log.warn("Noe gikk galt ved sak, eller oppgave generering: ${e.message}, {}", fields(loggingMeta))
             }
         }
     }
