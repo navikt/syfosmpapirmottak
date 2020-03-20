@@ -203,7 +203,7 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.behandler shouldEqual Behandler(
                     fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null)
             receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", "1")
-            receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual null
+            receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual LocalDate.of(2019, Month.AUGUST, 15)
             receivedSykmelding.sykmelding.signaturDato shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.navnFastlege shouldEqual null
         }

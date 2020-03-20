@@ -126,7 +126,8 @@ fun mapOcrFilTilFellesformat(
                     }
                     content = XMLRefDoc.Content().apply {
                         any.add(HelseOpplysningerArbeidsuforhet().apply {
-                            syketilfelleStartDato = skanningmetadata.sykemeldinger.syketilfelleStartDato
+                            syketilfelleStartDato = velgRiktigSyketilfelleDato(skanningmetadata.sykemeldinger.syketilfelleStartDato,
+                                    skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                             pasient = HelseOpplysningerArbeidsuforhet.Pasient().apply {
                                 fodselsnummer = Ident().apply {
                                     id = skanningmetadata.sykemeldinger.pasient.fnr
@@ -516,4 +517,29 @@ fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, periodeliste: Lis
     }
     log.info("Periodeliste mangler aktivitetIkkeMulig, bruker FOM fra første periode")
     return LocalDateTime.of(periodeliste.first().periodeFOMDato, LocalTime.NOON)
+}
+
+fun velgRiktigSyketilfelleDato(
+    syketilfelledato: LocalDate?,
+    behandletDato: LocalDate?,
+    periodeliste: List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>
+): LocalDate {
+    syketilfelledato?.let {
+        return syketilfelledato
+    }
+
+    behandletDato?.let {
+        return behandletDato
+    }
+
+    if (periodeliste.isNotEmpty() && periodeliste.size > 1) {
+        periodeliste.forEach {
+            if (it.aktivitetIkkeMulig != null) {
+                return it.periodeFOMDato
+            }
+        }
+    }
+
+    log.info("Periodeliste mangler aktivitetIkkeMulig, bruker FOM fra første periode")
+    return periodeliste.first().periodeFOMDato
 }
