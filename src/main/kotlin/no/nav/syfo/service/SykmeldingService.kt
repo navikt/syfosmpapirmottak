@@ -14,6 +14,8 @@ import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
+import no.nav.syfo.client.SarClient
+import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
@@ -51,7 +53,8 @@ class SykmeldingService constructor(
         syfoserviceProducer: MessageProducer,
         session: Session,
         sm2013AutomaticHandlingTopic: String,
-        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>
+        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+        kuhrSarClient: SarClient
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -81,6 +84,13 @@ class SykmeldingService constructor(
 
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+
+                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder.fnr)
+                        val samhandlerPraksisMatch = findBestSamhandlerPraksis(
+                                samhandlerInfo,
+                                loggingMeta)
+                        val samhandlerPraksis = samhandlerPraksisMatch?.samhandlerPraksis
+
                         val fellesformat = mapOcrFilTilFellesformat(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
@@ -113,7 +123,7 @@ class SykmeldingService constructor(
                                 mottattDato = datoOpprettet,
                                 rulesetVersion = healthInformation.regelSettVersjon,
                                 fellesformat = fellesformatMarshaller.toString(fellesformat),
-                                tssid = ""
+                                tssid = samhandlerPraksis?.tss_ident ?: ""
                         )
 
                         log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))

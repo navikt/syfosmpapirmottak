@@ -8,6 +8,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.SafJournalpostClient
+import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
@@ -31,7 +32,8 @@ class BehandlingService constructor(
         syfoserviceProducer: MessageProducer,
         session: Session,
         sm2013AutomaticHandlingTopic: String,
-        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>
+        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+        kuhrSarClient: SarClient
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -67,7 +69,8 @@ class BehandlingService constructor(
                                 loggingMeta = loggingMeta, sykmeldingId = sykmeldingId,
                                 syfoserviceProducer = syfoserviceProducer,
                                 session = session, sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
-                                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding)
+                                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
+                                kuhrSarClient = kuhrSarClient)
                     }
                 } else {
                     log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))

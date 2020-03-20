@@ -1,0 +1,98 @@
+[
+  {
+    "samh_id": "1000123456",
+    "navn": "Lege Legesen",
+    "samh_type_kode": "LE",
+    "behandling_utfall_kode": "auto",
+    "unntatt_veiledning": "0",
+    "godkjent_manuell_krav": "0",
+    "ikke_godkjent_for_refusjon": "0",
+    "godkjent_egenandel_refusjon": "0",
+    "godkjent_for_fil": "0",
+    "endringslogg_tidspunkt_siste": "2019-05-05T12:00:00.000+0000",
+    "samh_ident": [
+      {
+        "samh_id": "1000123456",
+        "samh_ident_id": "1000345678",
+        "ident": "1010101",
+        "ident_type_kode": "HPR",
+        "aktiv_ident": "1"
+      }
+    ],
+    "samh_praksis": [
+      {
+        "refusjon_type_kode": "normal_refusjon",
+        "lege_i_spesialisering": "0",
+        "tidspunkt_registrert": "2019-02-02T12:00:00.000+0000",
+        "samh_praksis_status_kode": "inaktiv",
+        "arbeids_kommune_nr": "0219",
+        "arbeids_postnr": "1337",
+        "arbeids_poststed": "SANDVIKA",
+        "arbeids_adresse_linje_1": "Testveien 1",
+        "tss_ident": "80908090123",
+        "samh_praksis_type_kode": "LEVA",
+        "samh_id": "1000123456",
+        "samh_praksis_id": "1000456789",
+        "samh_praksis_konto": [
+          {
+            "tidspunkt_registrert": "2019-01-01T12:00:00.000+0000",
+            "registrert_av_id": "ABC1337",
+            "konto": "666666666666",
+            "samh_praksis_id": "1000123456",
+            "samh_praksis_konto_id": "1000000789"
+          }
+        ],
+        "samh_praksis_periode": [
+          {
+            "endret_ved_import": "0",
+            "sist_endret": "2019-01-01T12:00:00.000+0000",
+            "slettet": "0",
+            "gyldig_fra": "1999-12-12T12:00:00.000+0000",
+            "samh_praksis_id": "1000123456",
+            "samh_praksis_periode_id": "1001111111"
+          }
+        ],
+        "samh_praksis_email": []
+      },
+      {
+        "refusjon_type_kode": "normal_refusjon",
+        "lege_i_spesialisering": "0",
+        "tidspunkt_registrert": "2019-02-02T12:00:00.000+0000",
+        "samh_praksis_status_kode": "inaktiv",
+        "arbeids_kommune_nr": "0219",
+        "arbeids_postnr": "1337",
+        "arbeids_poststed": "SANDVIKA",
+        "arbeids_adresse_linje_1": "Testveien 1",
+        "tss_ident": "80908090123",
+        "her_id": "12345",
+        "navn": "Testlegesenteret - org nr",
+        "samh_praksis_type_kode": "LEVA",
+        "samh_id": "1000123456",
+        "samh_praksis_id": "1000456788",
+        "samh_praksis_konto": [
+          {
+            "tidspunkt_registrert": "2019-01-01T12:00:00.000+0000",
+            "registrert_av_id": "ABC1337",
+            "konto": "666666666666",
+            "samh_praksis_id": "1000123456",
+            "samh_praksis_konto_id": "1000000789"
+          }
+        ],
+        "samh_praksis_periode": [
+          {
+            "endret_ved_import": "0",
+            "sist_endret": "2019-01-01T12:00:00.000+0000",
+            "slettet": "0",
+            "gyldig_fra": "1999-12-12T12:00:00.000+0000",
+            "samh_praksis_id": "1000123456",
+            "samh_praksis_periode_id": "1001111111"
+          }
+        ],
+        "samh_praksis_email": []
+      }
+    ],
+    "samh_avtale": [],
+    "samh_direkte_oppgjor_avtale": [],
+    "samh_email": []
+  }
+]
