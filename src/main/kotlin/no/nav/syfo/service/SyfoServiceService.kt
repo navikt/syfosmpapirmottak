@@ -24,7 +24,9 @@ fun notifySyfoService(
         log.info("Klargjør til innsending")
 
         val syketilfelleStartDato = extractSyketilfelleStartDato(healthInformation)
+        log.info("syketilfelleStartDato funnet")
         val sykmelding = convertSykemeldingToBase64(healthInformation)
+        log.info("convertSykemeldingToBase64 gjort")
         val syfo = Syfo(
                 tilleggsdata = Tilleggsdata(ediLoggId = ediLoggId, sykmeldingId = sykmeldingId, msgId = msgId, syketilfelleStartDato = syketilfelleStartDato),
                 sykmelding = Base64.getEncoder().encodeToString(sykmelding))
