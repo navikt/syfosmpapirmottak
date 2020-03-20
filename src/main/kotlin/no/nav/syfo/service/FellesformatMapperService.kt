@@ -38,7 +38,6 @@ import no.nav.syfo.util.LoggingMeta
 fun mapOcrFilTilFellesformat(
     skanningmetadata: Skanningmetadata,
     fnr: String,
-    datoOpprettet: LocalDateTime,
     sykmelder: Sykmelder,
     sykmeldingId: String,
     loggingMeta: LoggingMeta
@@ -138,8 +137,8 @@ fun mapOcrFilTilFellesformat(
                                     }
                                 }
                             }
-                            arbeidsgiver = tilArbeidsgiver(skanningmetadata.sykemeldinger.arbeidsgiver)
-                            medisinskVurdering = tilMedisinskVurdering(skanningmetadata.sykemeldinger.medisinskVurdering)
+                            arbeidsgiver = tilArbeidsgiver(skanningmetadata.sykemeldinger.arbeidsgiver, loggingMeta)
+                            medisinskVurdering = tilMedisinskVurdering(skanningmetadata.sykemeldinger.medisinskVurdering, loggingMeta)
                             aktivitet = HelseOpplysningerArbeidsuforhet.Aktivitet().apply {
                                 periode.addAll(tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                             }
@@ -405,7 +404,7 @@ fun tilPeriodeListe(aktivitetType: AktivitetType): List<HelseOpplysningerArbeids
     return periodeListe
 }
 
-fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?): HelseOpplysningerArbeidsuforhet.Arbeidsgiver =
+fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?, loggingMeta: LoggingMeta): HelseOpplysningerArbeidsuforhet.Arbeidsgiver =
         HelseOpplysningerArbeidsuforhet.Arbeidsgiver().apply {
             harArbeidsgiver =
                     when {
@@ -426,7 +425,7 @@ fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?): HelseOpplysningerArbei
                             v = "3"
                         }
                         else -> {
-                            log.warn("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}", arbeidsgiverType?.harArbeidsgiver)
+                            log.warn("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}", arbeidsgiverType?.harArbeidsgiver, loggingMeta)
                             CS().apply {
                                 dn = "Én arbeidsgiver"
                                 v = "1"
@@ -438,20 +437,20 @@ fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?): HelseOpplysningerArbei
             stillingsprosent = arbeidsgiverType?.stillingsprosent?.toInt()
         }
 
-fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): HelseOpplysningerArbeidsuforhet.MedisinskVurdering {
+fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggingMeta: LoggingMeta): HelseOpplysningerArbeidsuforhet.MedisinskVurdering {
     if (medisinskVurderingType.hovedDiagnose.isNullOrEmpty() && medisinskVurderingType.annenFraversArsak.isNullOrEmpty()) {
         log.warn("Sykmelding mangler hoveddiagnose og annenFraversArsak, avbryter..")
         throw IllegalStateException("Sykmelding mangler hoveddiagnose")
     }
 
     val biDiagnoseListe: List<CV>? = medisinskVurderingType.bidiagnose?.map {
-        toMedisinskVurderingDiagnode(it.diagnosekode)
+        toMedisinskVurderingDiagnode(it.diagnosekode, loggingMeta)
     }
 
     return HelseOpplysningerArbeidsuforhet.MedisinskVurdering().apply {
         if (!medisinskVurderingType.hovedDiagnose.isNullOrEmpty()) {
             hovedDiagnose = HelseOpplysningerArbeidsuforhet.MedisinskVurdering.HovedDiagnose().apply {
-                diagnosekode = toMedisinskVurderingDiagnode(medisinskVurderingType.hovedDiagnose[0].diagnosekode)
+                diagnosekode = toMedisinskVurderingDiagnode(medisinskVurderingType.hovedDiagnose[0].diagnosekode, loggingMeta)
             }
         }
         if (biDiagnoseListe != null && biDiagnoseListe.isNotEmpty()) {
@@ -472,28 +471,28 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType): Helse
     }
 }
 
-fun toMedisinskVurderingDiagnode(originalDiagnosekode: String): CV {
+fun toMedisinskVurderingDiagnode(originalDiagnosekode: String, loggingMeta: LoggingMeta): CV {
     val diagnosekode = if (originalDiagnosekode.contains(".")) {
         originalDiagnosekode.replace(".", "")
     } else {
         originalDiagnosekode
     }
     if (Diagnosekoder.icd10.containsKey(diagnosekode)) {
-        log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {}")
+        log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {}", fields(loggingMeta))
         return CV().apply {
             s = Diagnosekoder.ICD10_CODE
             v = diagnosekode
             dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
         }
     } else if (Diagnosekoder.icpc2.containsKey(diagnosekode)) {
-        log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {}")
+        log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {}", fields(loggingMeta))
         return CV().apply {
             s = Diagnosekoder.ICPC2_CODE
             v = diagnosekode
             dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: ""
         }
     }
-    log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}")
+    log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
     throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
 }
 

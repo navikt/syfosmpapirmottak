@@ -74,7 +74,6 @@ class SykmeldingService constructor(
                         val fellesformat = mapOcrFilTilFellesformat(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
-                                datoOpprettet = datoOpprettet,
                                 sykmelder = sykmelder,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
@@ -120,19 +119,19 @@ class SykmeldingService constructor(
                 }
             }
 
-            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
-            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+                val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                        journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-            if (!oppgave.duplikat) {
-                log.info("Opprettet oppgave med {}, {} {}",
-                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                        StructuredArguments.keyValue("sakid", sakId),
-                        fields(loggingMeta)
-                )
-                PAPIRSM_OPPGAVE.inc()
-            }
+                if (!oppgave.duplikat) {
+                    log.info("Opprettet oppgave med {}, {} {}",
+                            StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                            StructuredArguments.keyValue("sakid", sakId),
+                            fields(loggingMeta)
+                    )
+                    PAPIRSM_OPPGAVE.inc()
+                }
         }
     }
 
