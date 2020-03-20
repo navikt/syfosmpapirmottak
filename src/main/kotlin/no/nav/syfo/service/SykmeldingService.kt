@@ -3,6 +3,8 @@ package no.nav.syfo.service
 import io.ktor.util.KtorExperimentalAPI
 import java.time.LocalDateTime
 import java.util.UUID
+import javax.jms.MessageProducer
+import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -41,7 +43,9 @@ class SykmeldingService constructor(
         dokumentInfoId: String?,
         datoOpprettet: LocalDateTime?,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String
+        sykmeldingId: String,
+        syfoserviceProducer: MessageProducer,
+        session: Session
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -112,6 +116,10 @@ class SykmeldingService constructor(
                         log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
                         log.info("Resultat: {}, {}", validationResult.status.name, fields(loggingMeta))
+
+                        notifySyfoService(session = session, receiptProducer = syfoserviceProducer, ediLoggId = sykmeldingId,
+                                sykmeldingId = receivedSykmelding.sykmelding.id, msgId = sykmeldingId, healthInformation = healthInformation)
+                        log.info("Message send to syfoService, {}", fields(loggingMeta))
                     }
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
@@ -119,19 +127,19 @@ class SykmeldingService constructor(
                 }
             }
 
-                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
-                val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                        journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                if (!oppgave.duplikat) {
-                    log.info("Opprettet oppgave med {}, {} {}",
-                            StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                            StructuredArguments.keyValue("sakid", sakId),
-                            fields(loggingMeta)
-                    )
-                    PAPIRSM_OPPGAVE.inc()
-                }
+            if (!oppgave.duplikat) {
+                log.info("Opprettet oppgave med {}, {} {}",
+                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                        StructuredArguments.keyValue("sakid", sakId),
+                        fields(loggingMeta)
+                )
+                PAPIRSM_OPPGAVE.inc()
+            }
         }
     }
 

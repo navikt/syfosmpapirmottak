@@ -129,6 +129,7 @@ dependencies {
     implementation ("no.nav.helse:syfosm-common-ws:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonDiagnosisCodesVersion")
+    implementation ("no.nav.helse:syfosm-common-mq:$smCommonVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")

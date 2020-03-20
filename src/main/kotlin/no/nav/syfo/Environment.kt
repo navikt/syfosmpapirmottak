@@ -2,6 +2,7 @@ package no.nav.syfo
 
 import no.nav.syfo.kafka.KafkaConfig
 import no.nav.syfo.kafka.KafkaCredentials
+import no.nav.syfo.mq.MqConfig
 
 data class Environment(
     val applicationPort: Int = getEnvVar("APPLICATION_PORT", "8080").toInt(),
@@ -19,13 +20,20 @@ data class Environment(
     val aadAccessTokenUrl: String = getEnvVar("AADACCESSTOKEN_URL"),
     val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL", "http://syfohelsenettproxy"),
     val regelEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL", "http://syfosmpapirregler"),
-    val papirregelId: String = getEnvVar("PAPIRREGEL_ID")
-) : KafkaConfig
+    val papirregelId: String = getEnvVar("PAPIRREGEL_ID"),
+    val syfoserviceQueueName: String = getEnvVar("MQ_SYFOSERVICE_QUEUE_NAME"),
+    override val mqHostname: String = getEnvVar("MQ_HOST_NAME"),
+    override val mqPort: Int = getEnvVar("MQ_PORT").toInt(),
+    override val mqGatewayName: String = getEnvVar("MQ_GATEWAY_NAME"),
+    override val mqChannelName: String = getEnvVar("MQ_CHANNEL_NAME")
+) : KafkaConfig, MqConfig
 
 data class VaultCredentials(
     val serviceuserUsername: String,
     val serviceuserPassword: String,
-    val clientsecret: String
+    val clientsecret: String,
+    val mqUsername: String,
+    val mqPassword: String
 ) : KafkaCredentials {
     override val kafkaUsername: String = serviceuserUsername
     override val kafkaPassword: String = serviceuserPassword

@@ -59,3 +59,13 @@ spec:
       value: 77a0df77-18de-4bab-887a-ed65f5c44927
     - name: KAFKA_BOOTSTRAP_SERVERS_URL
       value: SASL_SSL://a01apvl00145.adeo.no:8443,SASL_SSL://a01apvl00146.adeo.no:8443,SASL_SSL://a01apvl00147.adeo.no:8443,SASL_SSL://a01apvl00149.adeo.no:8443
+    - name: MQ_HOST_NAME
+      value: a01apvl064.adeo.no
+    - name: MQ_PORT
+      value: '1414'
+    - name: MQ_GATEWAY_NAME
+      value: MPLSC04
+    - name: MQ_CHANNEL_NAME
+      value: P_SYFOSMPAPIRMOTTAK
+    - name: MQ_SYFOSERVICE_QUEUE_NAME
+      value: QA.P_EIA_SYFO_OUTBOUND

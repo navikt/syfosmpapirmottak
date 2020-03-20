@@ -21,6 +21,8 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.util.Properties
 import java.util.UUID
+import javax.jms.MessageProducer
+import javax.jms.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -43,6 +45,8 @@ import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
+import no.nav.syfo.mq.connectionFactory
+import no.nav.syfo.mq.producerForQueue
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
@@ -67,7 +71,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 fun main() {
     val env = Environment()
     val credentials =
-        objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
+            objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
 
     val applicationState = ApplicationState()
     val applicationEngine = createApplicationEngine(
@@ -116,8 +120,8 @@ fun main() {
     val httpClient = HttpClient(Apache, config)
 
     val apolloClient: ApolloClient = ApolloClient.builder()
-        .serverUrl(env.safV1Url)
-        .build()
+            .serverUrl(env.safV1Url)
+            .build()
     val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient, httpClient)
     val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
     val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
@@ -136,7 +140,8 @@ fun main() {
             env,
             applicationState,
             consumerProperties,
-            behandlingService
+            behandlingService,
+            credentials
     )
 }
 
@@ -156,7 +161,8 @@ fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerProperties: Properties,
-    behandlingService: BehandlingService
+    behandlingService: BehandlingService,
+    credentials: VaultCredentials
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -164,7 +170,14 @@ fun launchListeners(
     applicationState.ready = true
 
     createListener(applicationState) {
-        blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse, behandlingService)
+        connectionFactory(env).createConnection(credentials.mqUsername, credentials.mqPassword).use { connection ->
+            connection.start()
+            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+
+            val syfoserviceProducer = session.producerForQueue(env.syfoserviceQueueName)
+            blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse,
+                    behandlingService, syfoserviceProducer, session)
+        }
     }
 }
 
@@ -172,7 +185,9 @@ fun launchListeners(
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    behandlingService: BehandlingService
+    behandlingService: BehandlingService,
+    syfoserviceProducer: MessageProducer,
+    session: Session
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -184,7 +199,8 @@ suspend fun blockingApplicationLogic(
                     hendelsesId = journalfoeringHendelseRecord.hendelsesId
             )
 
-            behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta, sykmeldingId)
+            behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta,
+                    sykmeldingId, syfoserviceProducer, session)
         }
         delay(100)
     }

@@ -1,6 +1,8 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import javax.jms.MessageProducer
+import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
@@ -23,7 +25,9 @@ class BehandlingService constructor(
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String
+        sykmeldingId: String,
+        syfoserviceProducer: MessageProducer,
+        session: Session
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -53,7 +57,12 @@ class BehandlingService constructor(
                     if (journalpostMetadata.gjelderUtland) {
                         utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
-                        sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, datoOpprettet = journalpostMetadata.datoOpprettet, dokumentInfoId = journalpostMetadata.dokumentInfoId, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
+                        sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnr,
+                                aktorId = aktorId, datoOpprettet = journalpostMetadata.datoOpprettet,
+                                dokumentInfoId = journalpostMetadata.dokumentInfoId,
+                                loggingMeta = loggingMeta, sykmeldingId = sykmeldingId,
+                                syfoserviceProducer = syfoserviceProducer,
+                                session = session)
                     }
                 } else {
                     log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))
