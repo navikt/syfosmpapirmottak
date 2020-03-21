@@ -145,25 +145,26 @@ class SykmeldingService constructor(
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
-                }
-            }
 
-            try {
-                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+                    val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
-                val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                        journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+                    val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                            journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                if (!oppgave.duplikat) {
-                    log.info("Opprettet oppgave med {}, {} {}",
+                    if (!oppgave.duplikat) {
+                        log.info("Opprettet oppgave med {}, {} {}",
+                                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                                StructuredArguments.keyValue("sakid", sakId),
+                                fields(loggingMeta)
+                        )
+                        PAPIRSM_OPPGAVE.inc()
+                    }
+                    log.info("Oppgave med {}, {} er duplikat oppgave {}",
                             StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
                             StructuredArguments.keyValue("sakid", sakId),
                             fields(loggingMeta)
                     )
-                    PAPIRSM_OPPGAVE.inc()
                 }
-            } catch (e: Exception) {
-                log.warn("Noe gikk galt ved sak eller oppgave: ${e.message}, {}", fields(loggingMeta))
             }
         }
     }
