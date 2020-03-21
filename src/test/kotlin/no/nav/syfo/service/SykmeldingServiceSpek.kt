@@ -1,5 +1,6 @@
 package no.nav.syfo.service
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.Called
 import io.mockk.clearAllMocks
@@ -33,6 +34,7 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.objectMapper
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -74,6 +76,7 @@ object SykmeldingServiceSpek : Spek({
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
         coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns aktorIdLege
         coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.OK, emptyList())
+        coEvery { kuhrSarClientMock.getSamhandler(any()) } returns objectMapper.readValue(SykmeldingServiceSpek::class.java.getResourceAsStream("/kuhr_sahr_response_inaktive.json").readBytes().toString(Charsets.UTF_8))
     }
 
     describe("SykmeldingService ende-til-ende") {
