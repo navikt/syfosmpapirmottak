@@ -24,6 +24,8 @@ import no.nav.helse.sm2013.DynaSvarType
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.helse.sm2013.Ident
 import no.nav.helse.sm2013.NavnType
+import no.nav.helse.sm2013.TeleCom
+import no.nav.helse.sm2013.URL
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
 import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
@@ -129,6 +131,11 @@ fun mapOcrFilTilFellesformat(
                             syketilfelleStartDato = velgRiktigSyketilfelleDato(skanningmetadata.sykemeldinger.syketilfelleStartDato,
                                     skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                             pasient = HelseOpplysningerArbeidsuforhet.Pasient().apply {
+                                navn = NavnType().apply {
+                                    fornavn = ""
+                                    mellomnavn = ""
+                                    etternavn = ""
+                                }
                                 fodselsnummer = Ident().apply {
                                     id = skanningmetadata.sykemeldinger.pasient.fnr
                                     typeId = CV().apply {
@@ -201,6 +208,15 @@ fun tilBehandler(sykmelder: Sykmelder): HelseOpplysningerArbeidsuforhet.Behandle
                         }
                     }))
             adresse = Address()
+            kontaktInfo.add(TeleCom().apply {
+                typeTelecom = CS().apply {
+                    v = "HP"
+                    dn = "Hovedtelefon"
+                }
+                teleAddress = URL().apply {
+                    v = "tel:55553336"
+                }
+            })
         }
 
 fun tilUtdypendeOpplysninger(utdypendeOpplysningerType: UtdypendeOpplysningerType?): HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger {
