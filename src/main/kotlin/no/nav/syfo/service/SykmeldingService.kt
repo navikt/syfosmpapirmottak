@@ -2,7 +2,6 @@ package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
 import java.time.LocalDateTime
-import java.util.UUID
 import javax.jms.MessageProducer
 import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
@@ -97,7 +96,7 @@ class SykmeldingService constructor(
                         val msgHead = fellesformat.get<XMLMsgHead>()
 
                         val sykmelding = healthInformation.toSykmelding(
-                                sykmeldingId = UUID.randomUUID().toString(),
+                                sykmeldingId = sykmeldingId,
                                 pasientAktoerId = aktorId,
                                 legeAktoerId = sykmelder.aktorId,
                                 msgId = sykmeldingId,
@@ -125,7 +124,7 @@ class SykmeldingService constructor(
                                 tssid = samhandlerPraksis?.tss_ident ?: ""
                         )
 
-                        if(receivedSykmelding.tssid.equals("") && ocrFil.sykemeldinger.behandler.hpr != null ) {
+                        if (receivedSykmelding.tssid.equals("") && ocrFil.sykemeldinger.behandler.hpr != null) {
                             log.info("Fant ikkje tssid til behandler, {}, {}",
                                     StructuredArguments.keyValue("hpr", ocrFil.sykemeldinger.behandler.hpr),
                                     fields(loggingMeta))
