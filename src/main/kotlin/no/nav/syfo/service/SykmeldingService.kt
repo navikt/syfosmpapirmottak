@@ -16,13 +16,13 @@ import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
-import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
+import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.util.LoggingMeta
@@ -31,7 +31,6 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
@@ -65,7 +64,14 @@ class SykmeldingService constructor(
 
             val oppgave = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-            checkIfOppgaveIsDuplikat(oppgave, journalpostId, null, loggingMeta)
+            if (!oppgave.duplikat) {
+                PAPIRSM_FORDELINGSOPPGAVE.inc()
+                log.info("Opprettet fordelingsoppgave med {}, {} {}",
+                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                        StructuredArguments.keyValue("journalpostId", journalpostId),
+                        fields(loggingMeta)
+                )
+            }
         } else {
             try {
                 dokumentInfoId?.let {
@@ -125,20 +131,26 @@ class SykmeldingService constructor(
                         log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
                         log.info("Resultat: {}, {}", validationResult.status.name, fields(loggingMeta))
-                        if (validationResult.status == Status.OK) {
-                            kafkaproducerreceivedSykmelding.send(ProducerRecord(sm2013AutomaticHandlingTopic, receivedSykmelding.sykmelding.id, receivedSykmelding))
-                            log.info("Message send to kafka {}, {}", sm2013AutomaticHandlingTopic, fields(loggingMeta))
-
-                            notifySyfoService(session = session, receiptProducer = syfoserviceProducer, ediLoggId = sykmeldingId,
-                                    sykmeldingId = receivedSykmelding.sykmelding.id, msgId = sykmeldingId, healthInformation = healthInformation)
-                            log.info("Message send to syfoService, {}", fields(loggingMeta))
-                        } else if (validationResult.status == Status.MANUAL_PROCESSING) {
-                            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
-
-                            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-
-                            checkIfOppgaveIsDuplikat(oppgave, null, sakId, loggingMeta)
+                        when (validationResult.status) {
+                            Status.OK -> handleOk(
+                                    kafkaproducerreceivedSykmelding,
+                                    sm2013AutomaticHandlingTopic,
+                                    receivedSykmelding,
+                                    session,
+                                    syfoserviceProducer,
+                                    receivedSykmelding.sykmelding.id,
+                                    healthInformation,
+                                    loggingMeta
+                            )
+                            Status.MANUAL_PROCESSING -> handleManuell(
+                                    sakClient,
+                                    aktorId,
+                                    sykmeldingId,
+                                    oppgaveService,
+                                    journalpostId,
+                                    loggingMeta
+                            )
+                            else -> throw IllegalStateException("Ukjent status: ${validationResult.status} , Papirsykmeldinger kan kun ha ein av to typer statuser enten OK eller MANUAL_PROCESSING")
                         }
                     }
                 }
@@ -151,7 +163,14 @@ class SykmeldingService constructor(
                 val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
                         journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                checkIfOppgaveIsDuplikat(oppgave, null, sakId, loggingMeta)
+                if (!oppgave.duplikat) {
+                    log.info("Opprettet oppgave med {}, {} {}",
+                            StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                            StructuredArguments.keyValue("sakid", sakId),
+                            fields(loggingMeta)
+                    )
+                    PAPIRSM_OPPGAVE.inc()
+                }
             }
         }
     }
@@ -188,20 +207,5 @@ class SykmeldingService constructor(
                 mellomnavn = behandlerFraHpr.mellomnavn,
                 etternavn = behandlerFraHpr.etternavn
         )
-    }
-
-    fun checkIfOppgaveIsDuplikat(oppgave: OppgaveResultat, journalpostId: String?, sakid: String?, loggingMeta: LoggingMeta) {
-        if (!oppgave.duplikat) {
-            PAPIRSM_FORDELINGSOPPGAVE.inc()
-            log.info("Opprettet fordelingsoppgave med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                    if (journalpostId == null) {
-                        StructuredArguments.keyValue("journalpostId", journalpostId)
-                    } else {
-                        StructuredArguments.keyValue("sakid", sakid)
-                    },
-                    fields(loggingMeta)
-            )
-        }
     }
 }
