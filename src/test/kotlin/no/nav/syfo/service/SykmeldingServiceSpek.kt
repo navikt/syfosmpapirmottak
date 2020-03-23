@@ -186,8 +186,8 @@ object SykmeldingServiceSpek : Spek({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave( any(),  any(),  any(),  any(), any(), any()) wasNot Called }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
         }
     }
