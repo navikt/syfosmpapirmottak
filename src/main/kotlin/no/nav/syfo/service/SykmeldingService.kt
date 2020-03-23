@@ -125,6 +125,12 @@ class SykmeldingService constructor(
                                 tssid = samhandlerPraksis?.tss_ident ?: ""
                         )
 
+                        if(receivedSykmelding.tssid.equals("") && ocrFil.sykemeldinger.behandler.hpr != null ) {
+                            log.info("Fant ikkje tssid til behandler, {}, {}",
+                                    StructuredArguments.keyValue("hpr", ocrFil.sykemeldinger.behandler.hpr),
+                                    fields(loggingMeta))
+                        }
+
                         log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
                         PAPIRSM_MAPPET.labels("ok").inc()
 
