@@ -175,6 +175,7 @@ fun mapOcrFilTilFellesformat(
                                 systemNavn = "Papirsykmelding"
                                 systemVersjon = "1"
                             }
+                            strekkode = "123456789qwerty"
                         })
                     }
                 }
