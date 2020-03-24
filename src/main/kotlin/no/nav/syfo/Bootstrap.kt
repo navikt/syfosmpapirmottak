@@ -35,6 +35,7 @@ import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.client.AccessTokenClient
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.RegelClient
@@ -137,6 +138,7 @@ fun main() {
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
     val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
     val kuhrsarClient = SarClient(env.kuhrSarApiUrl, httpClient)
+    val dokArkivClient = DokArkivClient(env.dokArkivUrl, oidcClient, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
@@ -153,7 +155,8 @@ fun main() {
             behandlingService,
             credentials,
             kafkaProducerReceivedSykmelding,
-            kuhrsarClient
+            kuhrsarClient,
+            dokArkivClient
     )
 }
 
@@ -176,7 +179,8 @@ fun launchListeners(
     behandlingService: BehandlingService,
     credentials: VaultCredentials,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-    kuhrSarClient: SarClient
+    kuhrSarClient: SarClient,
+    dokArkivClient: DokArkivClient
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -191,7 +195,7 @@ fun launchListeners(
             val syfoserviceProducer = session.producerForQueue(env.syfoserviceQueueName)
             blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse,
                     behandlingService, syfoserviceProducer, session,
-                    env.sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding, kuhrSarClient)
+                    env.sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding, kuhrSarClient, dokArkivClient)
         }
     }
 }
@@ -205,7 +209,8 @@ suspend fun blockingApplicationLogic(
     session: Session,
     sm2013AutomaticHandlingTopic: String,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-    kuhrSarClient: SarClient
+    kuhrSarClient: SarClient,
+    dokArkivClient: DokArkivClient
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -219,7 +224,7 @@ suspend fun blockingApplicationLogic(
 
             behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta,
                     sykmeldingId, syfoserviceProducer, session,
-                    sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding, kuhrSarClient)
+                    sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding, kuhrSarClient, dokArkivClient)
         }
         delay(100)
     }

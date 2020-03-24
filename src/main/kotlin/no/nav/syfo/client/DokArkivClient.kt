@@ -1,0 +1,55 @@
+package no.nav.syfo.client
+
+import io.ktor.client.HttpClient
+import io.ktor.client.call.receive
+import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.header
+import io.ktor.client.request.patch
+import io.ktor.client.statement.HttpStatement
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
+import io.ktor.http.contentType
+import io.ktor.util.KtorExperimentalAPI
+import java.io.IOException
+import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.helpers.retry
+import no.nav.syfo.log
+import no.nav.syfo.util.LoggingMeta
+
+@KtorExperimentalAPI
+class DokArkivClient(
+    private val url: String,
+    private val oidcClient: StsOidcClient,
+    private val httpClient: HttpClient
+) {
+    suspend fun ferdigStillJournalpost(
+        journalpostId: String,
+        msgId: String,
+        loggingMeta: LoggingMeta
+    ): String? = retry("ferdigstill_journalpost") {
+        val httpResponse = httpClient.patch<HttpStatement>("$url/$journalpostId/ferdigstill") {
+            contentType(ContentType.Application.Json)
+            val oidcToken = oidcClient.oidcToken()
+            header("Authorization", "Bearer ${oidcToken.access_token}")
+            header("Nav-Callid", msgId)
+            body = FormDataContent(Parameters.build {
+                append("journalfoerendeEnhet", "9999")
+            })
+        }.execute()
+        if (httpResponse.status == HttpStatusCode.InternalServerError) {
+            log.error("Saf svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+            throw IOException("Saf svarte med feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId")
+        }
+        when (HttpStatusCode.NotFound) {
+            httpResponse.status -> {
+                log.error("Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
+                null
+            }
+            else -> {
+                log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
+                httpResponse.call.response.receive<String>()
+            }
+        }
+    }
+}

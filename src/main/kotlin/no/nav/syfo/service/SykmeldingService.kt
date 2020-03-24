@@ -9,6 +9,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
@@ -52,7 +53,8 @@ class SykmeldingService constructor(
         session: Session,
         sm2013AutomaticHandlingTopic: String,
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-        kuhrSarClient: SarClient
+        kuhrSarClient: SarClient,
+        dokArkivClient: DokArkivClient
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -139,7 +141,7 @@ class SykmeldingService constructor(
                                     syfoserviceProducer,
                                     receivedSykmelding.sykmelding.id,
                                     healthInformation,
-                                    safDokumentClient,
+                                    dokArkivClient,
                                     journalpostId,
                                     loggingMeta
                             )

@@ -53,7 +53,8 @@ object KafkaITSpek : Spek({
             mqGatewayName = "mqGateway",
             mqHostname = "mqcl01",
             mqPort = 1413,
-            syfoserviceQueueName = "syfoservicekø"
+            syfoserviceQueueName = "syfoservicekø",
+            dokArkivUrl = "dokapi/"
     )
 
     fun Properties.overrideForTest(): Properties = apply {

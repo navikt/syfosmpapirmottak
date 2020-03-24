@@ -69,3 +69,5 @@ spec:
       value: Q1_SYFOSMPAPIRMOTTAK
     - name: MQ_SYFOSERVICE_QUEUE_NAME
       value: QA.Q1_EIA_SYFO_OUTBOUND
+    - name: DOK_ARKIV_URL
+      value: https://dokarkiv-q1.nais.preprod.local/rest/journalpostapi/v1/journalpost
