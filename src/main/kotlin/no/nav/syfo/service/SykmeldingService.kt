@@ -33,26 +33,26 @@ import org.apache.kafka.clients.producer.KafkaProducer
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
-        private val sakClient: SakClient,
-        private val oppgaveService: OppgaveService,
-        private val safDokumentClient: SafDokumentClient,
-        private val norskHelsenettClient: NorskHelsenettClient,
-        private val aktoerIdClient: AktoerIdClient,
-        private val regelClient: RegelClient
+    private val sakClient: SakClient,
+    private val oppgaveService: OppgaveService,
+    private val safDokumentClient: SafDokumentClient,
+    private val norskHelsenettClient: NorskHelsenettClient,
+    private val aktoerIdClient: AktoerIdClient,
+    private val regelClient: RegelClient
 ) {
     suspend fun behandleSykmelding(
-            journalpostId: String,
-            fnr: String?,
-            aktorId: String?,
-            dokumentInfoId: String?,
-            datoOpprettet: LocalDateTime?,
-            loggingMeta: LoggingMeta,
-            sykmeldingId: String,
-            syfoserviceProducer: MessageProducer,
-            session: Session,
-            sm2013AutomaticHandlingTopic: String,
-            kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-            kuhrSarClient: SarClient
+        journalpostId: String,
+        fnr: String?,
+        aktorId: String?,
+        dokumentInfoId: String?,
+        datoOpprettet: LocalDateTime?,
+        loggingMeta: LoggingMeta,
+        sykmeldingId: String,
+        syfoserviceProducer: MessageProducer,
+        session: Session,
+        sm2013AutomaticHandlingTopic: String,
+        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+        kuhrSarClient: SarClient
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -74,10 +74,6 @@ class SykmeldingService constructor(
         } else {
             dokumentInfoId?.let {
                 try {
-                    if (datoOpprettet == null) {
-                        log.error("Journalpost $journalpostId mangler datoOpprettet, {}", fields(loggingMeta))
-                        throw IllegalStateException("Journalpost mangler opprettetDato")
-                    }
                     val ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
 
                     ocrFil?.let {
@@ -118,11 +114,7 @@ class SykmeldingService constructor(
                                 legekontorOrgName = "",
                                 legekontorHerId = null,
                                 legekontorReshId = null,
-                                mottattDato = if (datoOpprettet != null) {
-                                    datoOpprettet
-                                } else {
-                                    msgHead.msgInfo.genDate
-                                },
+                                mottattDato = datoOpprettet ?: msgHead.msgInfo.genDate,
                                 rulesetVersion = healthInformation.regelSettVersjon,
                                 fellesformat = fellesformatMarshaller.toString(fellesformat),
                                 tssid = samhandlerPraksis?.tss_ident ?: ""
@@ -163,6 +155,7 @@ class SykmeldingService constructor(
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
+
                     val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
                     val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
@@ -180,24 +173,6 @@ class SykmeldingService constructor(
                                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId))
                     }
                 }
-            }
-            // TODO remove try catch, when going to prod
-            try {
-                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
-
-                val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                        journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-
-                if (!oppgave.duplikat) {
-                    log.info("Opprettet oppgave med {}, {} {}",
-                            StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                            StructuredArguments.keyValue("sakid", sakId),
-                            fields(loggingMeta)
-                    )
-                    PAPIRSM_OPPGAVE.inc()
-                }
-            } catch (e: Exception) {
-                log.info("Oppgve eller sak trynet.. ${e.message}")
             }
         }
     }

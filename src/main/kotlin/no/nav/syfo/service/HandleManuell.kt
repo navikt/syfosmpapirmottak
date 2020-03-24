@@ -1,5 +1,6 @@
 package no.nav.syfo.service
 
+import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.client.SakClient
@@ -7,6 +8,7 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.util.LoggingMeta
 
+@KtorExperimentalAPI
 suspend fun handleManuell(
     sakClient: SakClient,
     aktorId: String,
