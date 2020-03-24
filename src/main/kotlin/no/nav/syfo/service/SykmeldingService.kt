@@ -111,7 +111,11 @@ class SykmeldingService constructor(
 
                         log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
-                        log.info("Resultat: {}, {}", validationResult.status.name, fields(loggingMeta))
+                        log.info("Resultat: {}, {}, {}",
+                                StructuredArguments.keyValue("ruleStatus" ,validationResult.status.name),
+                                StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
+                                fields(loggingMeta)
+                        )
                     }
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
