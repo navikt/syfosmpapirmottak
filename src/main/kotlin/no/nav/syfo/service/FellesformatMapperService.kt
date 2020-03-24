@@ -491,9 +491,9 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggin
 
 fun toMedisinskVurderingDiagnode(originalDiagnosekode: String, loggingMeta: LoggingMeta): CV {
     val diagnosekode = if (originalDiagnosekode.contains(".")) {
-        originalDiagnosekode.replace(".", "")
+        originalDiagnosekode.replace(".", "").toUpperCase().replace(" ", "")
     } else {
-        originalDiagnosekode
+        originalDiagnosekode.toUpperCase().replace(" ", "")
     }
     if (Diagnosekoder.icd10.containsKey(diagnosekode)) {
         log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {}", fields(loggingMeta))
@@ -512,6 +512,13 @@ fun toMedisinskVurderingDiagnode(originalDiagnosekode: String, loggingMeta: Logg
     }
     log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
     throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
+}
+
+fun containsDotAndLowerCaseLetters(originalDiagnosekode: String): String {
+    val modificedDiagnosekod = originalDiagnosekode.replace(".", "")
+    modificedDiagnosekod.replace(Regex("[a-z]").find(modificedDiagnosekod)!!.value, Regex("[a-z]").find(modificedDiagnosekod)!!.value.toUpperCase())
+
+    return modificedDiagnosekod
 }
 
 fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, periodeliste: List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>): LocalDateTime {
