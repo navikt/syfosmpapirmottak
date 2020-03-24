@@ -112,7 +112,7 @@ class SykmeldingService constructor(
                         log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
                         log.info("Resultat: {}, {}, {}",
-                                StructuredArguments.keyValue("ruleStatus" ,validationResult.status.name),
+                                StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
                                 StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
                                 fields(loggingMeta)
                         )
@@ -123,22 +123,18 @@ class SykmeldingService constructor(
                 }
             }
 
-            try {
-                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
-                val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                        journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                if (!oppgave.duplikat) {
-                    log.info("Opprettet oppgave med {}, {} {}",
-                            StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                            StructuredArguments.keyValue("sakid", sakId),
-                            fields(loggingMeta)
-                    )
-                    PAPIRSM_OPPGAVE.inc()
-                }
-            } catch (e: Exception) {
-                log.warn("Noe i sak, eller oppgave trynet, {}", fields(loggingMeta))
+            if (!oppgave.duplikat) {
+                log.info("Opprettet oppgave med {}, {} {}",
+                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                        StructuredArguments.keyValue("sakid", sakId),
+                        fields(loggingMeta)
+                )
+                PAPIRSM_OPPGAVE.inc()
             }
         }
     }
