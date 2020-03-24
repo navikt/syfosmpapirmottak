@@ -10,6 +10,7 @@ import io.ktor.client.statement.HttpStatement
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
+import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
 import java.io.IOException
 import java.io.StringReader
@@ -73,6 +74,7 @@ class SafDokumentClient constructor(
         loggingMeta: LoggingMeta
     ): String? = retry("ferdigstill_journalpost") {
         val httpResponse = httpClient.patch<HttpStatement>("$url/rest/journalpostapi/v1/journalpost/$journalpostId/ferdigstill") {
+            contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
             val oidcToken = oidcClient.oidcToken()
             header("Authorization", "Bearer ${oidcToken.access_token}")
