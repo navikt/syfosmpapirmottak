@@ -119,6 +119,7 @@ class SykmeldingService constructor(
                 }
             }
 
+            try {
                 val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
 
                 val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
@@ -132,6 +133,9 @@ class SykmeldingService constructor(
                     )
                     PAPIRSM_OPPGAVE.inc()
                 }
+            } catch (e: Exception) {
+                log.warn("Noe i sak, eller oppgave trynet, {}", fields(loggingMeta))
+            }
         }
     }
 

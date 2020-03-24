@@ -526,5 +526,56 @@ object FellesformatMapperServiceSpek : Spek({
 
             dato shouldEqual LocalDateTime.of(fom, LocalTime.NOON)
         }
+
+        it("diagnosekodemapping små bokstaver") {
+            val gyldigdiagnose = "t81.9"
+            val loggingmetea = LoggingMeta(
+                    sykmeldingId = "1313",
+                    journalpostId = "5",
+                    hendelsesId = "2"
+            )
+
+            val houveddiagnose = toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea)
+
+            houveddiagnose.v shouldEqual "T819"
+        }
+
+        it("Ugyldig diagnosekode mapping") {
+            val gyldigdiagnose = "t8221.9"
+            val loggingmetea = LoggingMeta(
+                    sykmeldingId = "1313",
+                    journalpostId = "5",
+                    hendelsesId = "2"
+            )
+
+            val func = { toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea) }
+            func shouldThrow IllegalStateException::class
+        }
+
+        it("Gyldig diagnosekode mapping") {
+            val gyldigdiagnose = "T81.9"
+            val loggingmetea = LoggingMeta(
+                    sykmeldingId = "1313",
+                    journalpostId = "5",
+                    hendelsesId = "2"
+            )
+
+            val houveddiagnose = toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea)
+
+            houveddiagnose.v shouldEqual "T819"
+        }
+
+        it("Gyldig diagnosekode mapping med space") {
+            val gyldigdiagnose = "t 81.9"
+            val loggingmetea = LoggingMeta(
+                    sykmeldingId = "1313",
+                    journalpostId = "5",
+                    hendelsesId = "2"
+            )
+
+            val houveddiagnose = toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea)
+
+            houveddiagnose.v shouldEqual "T819"
+        }
     }
 })
