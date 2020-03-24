@@ -5,6 +5,7 @@ import io.ktor.client.call.receive
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.patch
 import io.ktor.client.statement.HttpStatement
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
@@ -15,6 +16,7 @@ import java.io.StringReader
 import javax.xml.bind.JAXBException
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.syfo.domain.JournalpostFerdigstill
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
@@ -62,6 +64,35 @@ class SafDokumentClient constructor(
             log.warn("Klarte ikke å tolke OCR-dokument, {}: ${ex.message}", fields(loggingMeta))
             PAPIRSM_HENTDOK_FEIL.inc()
             null
+        }
+    }
+
+    suspend fun ferdigStillJournalpost(
+        journalpostId: String,
+        msgId: String,
+        loggingMeta: LoggingMeta
+    ): String? = retry("ferdigstill_journalpost") {
+        val httpResponse = httpClient.patch<HttpStatement>("$url/rest/journalpostapi/v1/journalpost/$journalpostId/ferdigstill") {
+            accept(ContentType.Application.Json)
+            val oidcToken = oidcClient.oidcToken()
+            header("Authorization", "Bearer ${oidcToken.access_token}")
+            header("Nav-Callid", msgId)
+            header("Nav-Consumer-Id", "syfosmpapirmottak")
+            body = JournalpostFerdigstill(journalfoerendeEnhet = "9999")
+        }.execute()
+        if (httpResponse.status == InternalServerError) {
+            log.error("Saf svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+            throw IOException("Saf svarte med feilmelding ved ferdigstilling av journalpost  for msgId $msgId")
+        }
+        when (NotFound) {
+            httpResponse.status -> {
+                log.error("Journalposten finnes ikke for msgId {}, {}", msgId, fields(loggingMeta))
+                null
+            }
+            else -> {
+                log.info("ferdigstilling av journalpost ok for msgId {}, {}", msgId, fields(loggingMeta))
+                httpResponse.call.response.receive<String>()
+            }
         }
     }
 }

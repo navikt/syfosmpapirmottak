@@ -1,16 +1,19 @@
 package no.nav.syfo.service
 
+import io.ktor.util.KtorExperimentalAPI
 import javax.jms.MessageProducer
 import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
+import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.log
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.util.LoggingMeta
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 
-fun handleOk(
+@KtorExperimentalAPI
+suspend fun handleOk(
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     sm2013AutomaticHandlingTopic: String,
     receivedSykmelding: ReceivedSykmelding,
@@ -18,8 +21,12 @@ fun handleOk(
     syfoserviceProducer: MessageProducer,
     sykmeldingId: String,
     healthInformation: HelseOpplysningerArbeidsuforhet,
+    safDokumentClient: SafDokumentClient,
+    journalpostid: String,
     loggingMeta: LoggingMeta
 ) {
+
+    safDokumentClient.ferdigStillJournalpost(journalpostid, sykmeldingId, loggingMeta)
     kafkaproducerreceivedSykmelding.send(ProducerRecord(sm2013AutomaticHandlingTopic, receivedSykmelding.sykmelding.id, receivedSykmelding))
     log.info("Message send to kafka {}, {}", sm2013AutomaticHandlingTopic, fields(loggingMeta))
 

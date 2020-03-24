@@ -139,6 +139,8 @@ class SykmeldingService constructor(
                                     syfoserviceProducer,
                                     receivedSykmelding.sykmelding.id,
                                     healthInformation,
+                                    safDokumentClient,
+                                    journalpostId,
                                     loggingMeta
                             )
                             Status.MANUAL_PROCESSING -> handleManuell(
