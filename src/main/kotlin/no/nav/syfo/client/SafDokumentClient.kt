@@ -3,6 +3,7 @@ package no.nav.syfo.client
 import io.ktor.client.HttpClient
 import io.ktor.client.call.receive
 import io.ktor.client.request.accept
+import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
@@ -10,6 +11,7 @@ import io.ktor.client.statement.HttpStatement
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
+import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
 import java.io.IOException
@@ -80,19 +82,21 @@ class SafDokumentClient constructor(
             header("Authorization", "Bearer ${oidcToken.access_token}")
             header("Nav-Callid", msgId)
             header("Nav-Consumer-Id", "syfosmpapirmottak")
-            body = JournalpostFerdigstill(journalfoerendeEnhet = "9999")
+            body = FormDataContent(Parameters.build {
+                append("journalfoerendeEnhet", "9999")
+            })
         }.execute()
         if (httpResponse.status == InternalServerError) {
             log.error("Saf svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
-            throw IOException("Saf svarte med feilmelding ved ferdigstilling av journalpost  for msgId $msgId")
+            throw IOException("Saf svarte med feilmelding ved ferdigstilling av journalpost for ${journalpostId} msgid ${msgId}")
         }
         when (NotFound) {
             httpResponse.status -> {
-                log.error("Journalposten finnes ikke for msgId {}, {}", msgId, fields(loggingMeta))
+                log.error("Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
                 null
             }
             else -> {
-                log.info("ferdigstilling av journalpost ok for msgId {}, {}", msgId, fields(loggingMeta))
+                log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
                 httpResponse.call.response.receive<String>()
             }
         }
