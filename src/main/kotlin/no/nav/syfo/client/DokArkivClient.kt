@@ -38,16 +38,32 @@ class DokArkivClient(
             })
         }.execute()
         if (httpResponse.status == HttpStatusCode.InternalServerError) {
-            log.error("Saf svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+            log.error("Dokakriv svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
             throw IOException("Saf svarte med feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId")
         }
-        when (HttpStatusCode.NotFound) {
-            httpResponse.status -> {
+        when (httpResponse.status) {
+            HttpStatusCode.NotFound -> {
                 log.error("Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
                 null
             }
+            HttpStatusCode.BadRequest -> {
+                log.error("Fikk http status {} for journalpostid {}, msgId {}, {}", HttpStatusCode.BadRequest.value, journalpostId, msgId, fields(loggingMeta))
+                null
+            }
+            HttpStatusCode.Unauthorized -> {
+                log.error("Fikk http status {} for journalpostid {}, msgId {}, {}", HttpStatusCode.Unauthorized.value, journalpostId, msgId, fields(loggingMeta))
+                null
+            }
+            HttpStatusCode.PaymentRequired -> {
+                log.error("Fikk http status {} for journalpostid {}, msgId {}, {}", HttpStatusCode.PaymentRequired.value, journalpostId, msgId, fields(loggingMeta))
+                null
+            }
+            HttpStatusCode.Forbidden -> {
+                log.error("Fikk http status {} for journalpostid {}, msgId {}, {}", HttpStatusCode.Forbidden.value, journalpostId, msgId, fields(loggingMeta))
+                null
+            }
             else -> {
-                log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
+                log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, http status {} , {}", journalpostId, msgId, httpResponse.status.value, fields(loggingMeta))
                 httpResponse.call.response.receive<String>()
             }
         }
