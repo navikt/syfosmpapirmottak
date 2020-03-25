@@ -2,6 +2,7 @@ package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.receive
+import io.ktor.client.request.accept
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
@@ -30,12 +31,11 @@ class DokArkivClient(
     ): String? = retry("ferdigstill_journalpost") {
         val httpResponse = httpClient.patch<HttpStatement>("$url/$journalpostId/ferdigstill") {
             contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Json)
             val oidcToken = oidcClient.oidcToken()
             header("Authorization", "Bearer ${oidcToken.access_token}")
             header("Nav-Callid", msgId)
-            body = FormDataContent(Parameters.build {
-                append("journalfoerendeEnhet", "9999")
-            })
+            body = FerdigstillJournal("9999")
         }.execute()
         if (httpResponse.status == HttpStatusCode.InternalServerError) {
             log.error("Dokakriv svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
@@ -68,4 +68,9 @@ class DokArkivClient(
             }
         }
     }
+
+    data class FerdigstillJournal(
+            val journalfoerendeEnhet: String
+    )
+
 }
