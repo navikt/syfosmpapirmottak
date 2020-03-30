@@ -25,6 +25,8 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
+import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.fellesformatMarshaller
@@ -54,7 +56,12 @@ class SykmeldingService constructor(
         sm2013AutomaticHandlingTopic: String,
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
         kuhrSarClient: SarClient,
-        dokArkivClient: DokArkivClient
+        dokArkivClient: DokArkivClient,
+        kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
+        kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+        sm2013ManualHandlingTopic: String,
+        sm2013BehandlingsUtfallTopic: String
+
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -146,10 +153,17 @@ class SykmeldingService constructor(
                                     loggingMeta
                             )
                             Status.MANUAL_PROCESSING -> handleManuell(
-                                    sakClient,
-                                    aktorId,
-                                    sykmeldingId,
-                                    oppgaveService,
+                                    kafkaManuelTaskProducer,
+                                    kafkaproducerreceivedSykmelding,
+                                    sm2013ManualHandlingTopic,
+                                    kafkaValidationResultProducer,
+                                    sm2013BehandlingsUtfallTopic,
+                                    syfoserviceProducer,
+                                    session,
+                                    receivedSykmelding,
+                                    validationResult,
+                                    healthInformation,
+                                    dokArkivClient,
                                     journalpostId,
                                     loggingMeta
                             )

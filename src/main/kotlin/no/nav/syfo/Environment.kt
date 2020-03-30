@@ -28,7 +28,9 @@ data class Environment(
     override val mqChannelName: String = getEnvVar("MQ_CHANNEL_NAME"),
     val sm2013AutomaticHandlingTopic: String = getEnvVar("KAFKA_SM2013_AUTOMATIC_TOPIC", "privat-syfo-smpapir-automatiskBehandling"),
     val kuhrSarApiUrl: String = getEnvVar("KUHR_SAR_API_URL", "http://kuhr-sar-api"),
-    val dokArkivUrl: String = getEnvVar("DOK_ARKIV_URL")
+    val dokArkivUrl: String = getEnvVar("DOK_ARKIV_URL"),
+    val sm2013BehandlingsUtfallTopic: String = getEnvVar("KAFKA_SM2013_BEHANDLING_TOPIC", "privat-syfo-sm2013-behandlingsUtfall"),
+    val smpapirManualHandlingTopic: String = getEnvVar("KAFKA_SMPAPIR_MANUAL_TOPIC", "privat-syfo-smpapir-manuellBehandling")
 ) : KafkaConfig, MqConfig
 
 data class VaultCredentials(

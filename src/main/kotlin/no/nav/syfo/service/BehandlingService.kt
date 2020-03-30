@@ -15,6 +15,8 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -35,7 +37,11 @@ class BehandlingService constructor(
         sm2013AutomaticHandlingTopic: String,
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
         kuhrSarClient: SarClient,
-        dokArkivClient: DokArkivClient
+        dokArkivClient: DokArkivClient,
+        kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
+        kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+        sm2013ManualHandlingTopic: String,
+        sm2013BehandlingsUtfallTopic: String
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -72,7 +78,12 @@ class BehandlingService constructor(
                                 syfoserviceProducer = syfoserviceProducer,
                                 session = session, sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
                                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
-                                kuhrSarClient = kuhrSarClient, dokArkivClient = dokArkivClient)
+                                kuhrSarClient = kuhrSarClient, dokArkivClient = dokArkivClient,
+                                kafkaValidationResultProducer = kafkaValidationResultProducer,
+                                kafkaManuelTaskProducer = kafkaManuelTaskProducer,
+                                sm2013ManualHandlingTopic = sm2013ManualHandlingTopic,
+                                sm2013BehandlingsUtfallTopic = sm2013BehandlingsUtfallTopic
+                        )
                     }
                 } else {
                     log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))

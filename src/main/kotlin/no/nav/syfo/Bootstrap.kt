@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
+import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.apache.Apache
@@ -49,8 +50,10 @@ import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.model.ValidationResult
 import no.nav.syfo.mq.connectionFactory
 import no.nav.syfo.mq.producerForQueue
+import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
@@ -102,8 +105,11 @@ fun main() {
     )
 
     val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
+    val manualValidationProducerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = KafkaAvroSerializer::class)
 
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerProperties)
+    val manualValidationKafkaProducer = KafkaProducer<String, ProduceTask>(manualValidationProducerProperties)
+    val kafkaProducerValidationResult = KafkaProducer<String, ValidationResult>(producerProperties)
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
@@ -156,7 +162,11 @@ fun main() {
             credentials,
             kafkaProducerReceivedSykmelding,
             kuhrsarClient,
-            dokArkivClient
+            dokArkivClient,
+            kafkaProducerValidationResult,
+            manualValidationKafkaProducer,
+            env.smpapirManualHandlingTopic,
+            env.sm2013BehandlingsUtfallTopic
     )
 }
 
@@ -180,7 +190,11 @@ fun launchListeners(
     credentials: VaultCredentials,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     kuhrSarClient: SarClient,
-    dokArkivClient: DokArkivClient
+    dokArkivClient: DokArkivClient,
+    kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
+    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+    sm2013ManualHandlingTopic: String,
+    sm2013BehandlingsUtfallTopic: String
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -195,7 +209,9 @@ fun launchListeners(
             val syfoserviceProducer = session.producerForQueue(env.syfoserviceQueueName)
             blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse,
                     behandlingService, syfoserviceProducer, session,
-                    env.sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding, kuhrSarClient, dokArkivClient)
+                    env.sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding,
+                    kuhrSarClient, dokArkivClient, kafkaValidationResultProducer,
+                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic)
         }
     }
 }
@@ -210,7 +226,11 @@ suspend fun blockingApplicationLogic(
     sm2013AutomaticHandlingTopic: String,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     kuhrSarClient: SarClient,
-    dokArkivClient: DokArkivClient
+    dokArkivClient: DokArkivClient,
+    kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
+    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+    sm2013ManualHandlingTopic: String,
+    sm2013BehandlingsUtfallTopic: String
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -224,7 +244,10 @@ suspend fun blockingApplicationLogic(
 
             behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta,
                     sykmeldingId, syfoserviceProducer, session,
-                    sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding, kuhrSarClient, dokArkivClient)
+                    sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding,
+                    kuhrSarClient, dokArkivClient, kafkaValidationResultProducer,
+                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic
+            )
         }
         delay(100)
     }

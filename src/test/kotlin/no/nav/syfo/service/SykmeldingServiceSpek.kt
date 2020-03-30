@@ -36,6 +36,7 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -65,6 +66,8 @@ object SykmeldingServiceSpek : Spek({
     val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>()
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
+    val kafkaValidationResultProducerMock = mockk<KafkaProducer<String, ValidationResult>>()
+    val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>()
 
     val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock)
 
@@ -102,7 +105,10 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -118,7 +124,10 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
@@ -134,7 +143,10 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
@@ -152,7 +164,10 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -168,7 +183,10 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
@@ -184,7 +202,10 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
@@ -221,7 +242,10 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -247,7 +271,10 @@ object SykmeldingServiceSpek : Spek({
                         sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
                         session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock)
+                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
