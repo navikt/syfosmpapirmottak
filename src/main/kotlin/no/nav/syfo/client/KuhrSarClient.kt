@@ -46,7 +46,7 @@ data class Samhandler(
 
 data class SamhandlerPraksis(
     val org_id: String?,
-    val refusjon_type_kode: String,
+    val refusjon_type_kode: String?,
     val laerer: String?,
     val lege_i_spesialisering: String?,
     val tidspunkt_resync_periode: Date?,
