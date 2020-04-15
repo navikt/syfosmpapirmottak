@@ -165,7 +165,7 @@ fun main() {
             dokArkivClient,
             kafkaProducerValidationResult,
             manualValidationKafkaProducer,
-            env.smpapirManualHandlingTopic,
+            env.sm2013ManualHandlingTopic,
             env.sm2013BehandlingsUtfallTopic
     )
 }
