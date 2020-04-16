@@ -2,6 +2,8 @@ package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import javax.jms.MessageProducer
 import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
@@ -123,7 +125,7 @@ class SykmeldingService constructor(
                                 legekontorOrgName = "",
                                 legekontorHerId = null,
                                 legekontorReshId = null,
-                                mottattDato = datoOpprettet ?: msgHead.msgInfo.genDate,
+                                mottattDato = (datoOpprettet ?: msgHead.msgInfo.genDate).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
                                 rulesetVersion = healthInformation.regelSettVersjon,
                                 fellesformat = fellesformatMarshaller.toString(fellesformat),
                                 tssid = samhandlerPraksis?.tss_ident ?: ""
