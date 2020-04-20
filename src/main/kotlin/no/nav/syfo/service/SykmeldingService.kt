@@ -15,16 +15,15 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
-import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
+import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
-import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
@@ -35,10 +34,10 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerRecord
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
-    private val sakClient: SakClient,
     private val oppgaveService: OppgaveService,
     private val safDokumentClient: SafDokumentClient,
     private val norskHelsenettClient: NorskHelsenettClient,
@@ -62,11 +61,21 @@ class SykmeldingService constructor(
         kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
         kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
         sm2013ManualHandlingTopic: String,
-        sm2013BehandlingsUtfallTopic: String
-
+        sm2013BehandlingsUtfallTopic: String,
+        kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
+        sm2013SmregistreringTopic: String
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
+
+        val papirSmRegistering = PapirSmRegistering(
+                journalpostId = journalpostId,
+                fnr = fnr,
+                aktorId = aktorId,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet,
+                sykmeldingId = sykmeldingId
+        )
 
         if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
@@ -176,22 +185,8 @@ class SykmeldingService constructor(
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
 
-                    val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
-
-                    val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                            journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-
-                    if (!oppgave.duplikat) {
-                        log.info("Opprettet oppgave med {}, {} {}",
-                                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                                StructuredArguments.keyValue("sakid", sakId),
-                                fields(loggingMeta)
-                        )
-                        PAPIRSM_OPPGAVE.inc()
-                    } else {
-                        log.info("duplikat oppgave med {}, {}",
-                                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId))
-                    }
+                    kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
+                    log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
                 }
             }
         }

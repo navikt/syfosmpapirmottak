@@ -32,6 +32,7 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.Samhandler
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
@@ -68,15 +69,15 @@ object SykmeldingServiceSpek : Spek({
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaValidationResultProducerMock = mockk<KafkaProducer<String, ValidationResult>>()
     val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>()
+    val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>()
 
-    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock)
+    val sykmeldingService = SykmeldingService(oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock)
 
     beforeEachTest {
         clearAllMocks()
 
         coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
-        coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
         coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns aktorIdLege
@@ -95,6 +96,7 @@ object SykmeldingServiceSpek : Spek({
                 samh_praksis = listOf(),
                 samh_ident = listOf()
         ))
+        coEvery { kafkaproducerPapirSmRegistering.send(any()) } returns null
     }
 
     describe("SykmeldingService ende-til-ende") {
@@ -108,7 +110,9 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -127,7 +131,9 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
@@ -146,7 +152,9 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
@@ -167,13 +175,13 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+            coVerify { kafkaproducerPapirSmRegistering.send(any()) }
         }
 
         it("Henter ikke dokument hvis dokumentInfoId mangler") {
@@ -186,7 +194,9 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
@@ -205,7 +215,9 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
@@ -245,15 +257,16 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify { kafkaproducerPapirSmRegistering.send(any()) }
         }
 
         it("Går videre og oppretter oppgave selv om mapping feiler") {
@@ -274,15 +287,15 @@ object SykmeldingServiceSpek : Spek({
                         kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
         }
     }
 

@@ -45,6 +45,7 @@ import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.StsOidcClient
+import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
@@ -110,6 +111,7 @@ fun main() {
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerProperties)
     val manualValidationKafkaProducer = KafkaProducer<String, ProduceTask>(manualValidationProducerProperties)
     val kafkaProducerValidationResult = KafkaProducer<String, ValidationResult>(producerProperties)
+    val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerProperties)
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
@@ -150,7 +152,7 @@ fun main() {
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClient, env.helsenettproxyId, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
-    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, aktoerIdClient, regelClient)
+    val sykmeldingService = SykmeldingService(oppgaveService, safDokumentClient, norskHelsenettClient, aktoerIdClient, regelClient)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sykmeldingService, utenlandskSykmeldingService)
 
@@ -166,7 +168,8 @@ fun main() {
             kafkaProducerValidationResult,
             manualValidationKafkaProducer,
             env.sm2013ManualHandlingTopic,
-            env.sm2013BehandlingsUtfallTopic
+            env.sm2013BehandlingsUtfallTopic,
+            kafkaProducerPapirSmRegistering
     )
 }
 
@@ -194,7 +197,8 @@ fun launchListeners(
     kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
     kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
     sm2013ManualHandlingTopic: String,
-    sm2013BehandlingsUtfallTopic: String
+    sm2013BehandlingsUtfallTopic: String,
+    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -211,7 +215,8 @@ fun launchListeners(
                     behandlingService, syfoserviceProducer, session,
                     env.sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding,
                     kuhrSarClient, dokArkivClient, kafkaValidationResultProducer,
-                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic)
+                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic,
+                    kafkaproducerPapirSmRegistering, env.sm2013SmregistreringTopic)
         }
     }
 }
@@ -230,7 +235,9 @@ suspend fun blockingApplicationLogic(
     kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
     kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
     sm2013ManualHandlingTopic: String,
-    sm2013BehandlingsUtfallTopic: String
+    sm2013BehandlingsUtfallTopic: String,
+    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
+    sm2013SmregistreringTopic: String
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -246,7 +253,8 @@ suspend fun blockingApplicationLogic(
                     sykmeldingId, syfoserviceProducer, session,
                     sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding,
                     kuhrSarClient, dokArkivClient, kafkaValidationResultProducer,
-                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic
+                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic,
+                    kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic
             )
         }
         delay(100)

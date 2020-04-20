@@ -11,6 +11,7 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.JournalpostMetadata
+import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
@@ -41,7 +42,9 @@ class BehandlingService constructor(
         kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
         kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
         sm2013ManualHandlingTopic: String,
-        sm2013BehandlingsUtfallTopic: String
+        sm2013BehandlingsUtfallTopic: String,
+        kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
+        sm2013SmregistreringTopic: String
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -82,7 +85,9 @@ class BehandlingService constructor(
                                 kafkaValidationResultProducer = kafkaValidationResultProducer,
                                 kafkaManuelTaskProducer = kafkaManuelTaskProducer,
                                 sm2013ManualHandlingTopic = sm2013ManualHandlingTopic,
-                                sm2013BehandlingsUtfallTopic = sm2013BehandlingsUtfallTopic
+                                sm2013BehandlingsUtfallTopic = sm2013BehandlingsUtfallTopic,
+                                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                                sm2013SmregistreringTopic = sm2013SmregistreringTopic
                         )
                     }
                 } else {
