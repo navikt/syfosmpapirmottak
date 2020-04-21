@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
+import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.apache.Apache
@@ -21,6 +22,8 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.util.Properties
 import java.util.UUID
+import javax.jms.MessageProducer
+import javax.jms.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -33,25 +36,35 @@ import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.client.AccessTokenClient
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SakClient
+import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
+import no.nav.syfo.kafka.toProducerConfig
+import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.mq.connectionFactory
+import no.nav.syfo.mq.producerForQueue
+import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.service.UtenlandskSykmeldingService
 import no.nav.syfo.sm.Diagnosekoder
+import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -67,7 +80,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 fun main() {
     val env = Environment()
     val credentials =
-        objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
+            objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
 
     val applicationState = ApplicationState()
     val applicationEngine = createApplicationEngine(
@@ -90,6 +103,13 @@ fun main() {
             "${env.applicationName}-consumer-v2",
             valueDeserializer = KafkaAvroDeserializer::class
     )
+
+    val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
+    val manualValidationProducerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = KafkaAvroSerializer::class)
+
+    val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerProperties)
+    val manualValidationKafkaProducer = KafkaProducer<String, ProduceTask>(manualValidationProducerProperties)
+    val kafkaProducerValidationResult = KafkaProducer<String, ValidationResult>(producerProperties)
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
@@ -116,13 +136,15 @@ fun main() {
     val httpClient = HttpClient(Apache, config)
 
     val apolloClient: ApolloClient = ApolloClient.builder()
-        .serverUrl(env.safV1Url)
-        .build()
+            .serverUrl(env.safV1Url)
+            .build()
     val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient, httpClient)
     val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
     val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
     val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
+    val kuhrsarClient = SarClient(env.kuhrSarApiUrl, httpClient)
+    val dokArkivClient = DokArkivClient(env.dokArkivUrl, oidcClient, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
@@ -136,7 +158,15 @@ fun main() {
             env,
             applicationState,
             consumerProperties,
-            behandlingService
+            behandlingService,
+            credentials,
+            kafkaProducerReceivedSykmelding,
+            kuhrsarClient,
+            dokArkivClient,
+            kafkaProducerValidationResult,
+            manualValidationKafkaProducer,
+            env.sm2013ManualHandlingTopic,
+            env.sm2013BehandlingsUtfallTopic
     )
 }
 
@@ -156,7 +186,15 @@ fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerProperties: Properties,
-    behandlingService: BehandlingService
+    behandlingService: BehandlingService,
+    credentials: VaultCredentials,
+    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+    kuhrSarClient: SarClient,
+    dokArkivClient: DokArkivClient,
+    kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
+    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+    sm2013ManualHandlingTopic: String,
+    sm2013BehandlingsUtfallTopic: String
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -164,7 +202,17 @@ fun launchListeners(
     applicationState.ready = true
 
     createListener(applicationState) {
-        blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse, behandlingService)
+        connectionFactory(env).createConnection(credentials.mqUsername, credentials.mqPassword).use { connection ->
+            connection.start()
+            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+
+            val syfoserviceProducer = session.producerForQueue(env.syfoserviceQueueName)
+            blockingApplicationLogic(applicationState, kafkaconsumerJournalfoeringHendelse,
+                    behandlingService, syfoserviceProducer, session,
+                    env.sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding,
+                    kuhrSarClient, dokArkivClient, kafkaValidationResultProducer,
+                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic)
+        }
     }
 }
 
@@ -172,7 +220,17 @@ fun launchListeners(
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    behandlingService: BehandlingService
+    behandlingService: BehandlingService,
+    syfoserviceProducer: MessageProducer,
+    session: Session,
+    sm2013AutomaticHandlingTopic: String,
+    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+    kuhrSarClient: SarClient,
+    dokArkivClient: DokArkivClient,
+    kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
+    kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+    sm2013ManualHandlingTopic: String,
+    sm2013BehandlingsUtfallTopic: String
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -184,7 +242,12 @@ suspend fun blockingApplicationLogic(
                     hendelsesId = journalfoeringHendelseRecord.hendelsesId
             )
 
-            behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta, sykmeldingId)
+            behandlingService.handleJournalpost(journalfoeringHendelseRecord, loggingMeta,
+                    sykmeldingId, syfoserviceProducer, session,
+                    sm2013AutomaticHandlingTopic, kafkaproducerreceivedSykmelding,
+                    kuhrSarClient, dokArkivClient, kafkaValidationResultProducer,
+                    kafkaManuelTaskProducer, sm2013ManualHandlingTopic, sm2013BehandlingsUtfallTopic
+            )
         }
         delay(100)
     }

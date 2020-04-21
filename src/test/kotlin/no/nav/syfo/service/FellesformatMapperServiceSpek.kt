@@ -201,9 +201,9 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.kontaktMedPasient shouldEqual KontaktMedPasient(null, null)
             receivedSykmelding.sykmelding.behandletTidspunkt shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.behandler shouldEqual Behandler(
-                    fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null)
+                    fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = "tel:55553336")
             receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", "1")
-            receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual null
+            receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual LocalDate.of(2019, Month.AUGUST, 15)
             receivedSykmelding.sykmelding.signaturDato shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.navnFastlege shouldEqual null
         }
@@ -511,7 +511,7 @@ object FellesformatMapperServiceSpek : Spek({
             behandler.id.find { it.typeId.v == "HPR" }?.id shouldEqual "654321"
             behandler.id.find { it.typeId.v == "HER" }?.id shouldEqual null
             behandler.adresse shouldNotEqual null
-            behandler.kontaktInfo.firstOrNull()?.typeTelecom?.dn shouldEqual null
+            behandler.kontaktInfo.firstOrNull()?.typeTelecom?.dn shouldEqual "Hovedtelefon"
         }
 
         it("velgRiktigKontaktOgSignaturDato") {

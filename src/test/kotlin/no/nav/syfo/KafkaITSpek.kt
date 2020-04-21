@@ -25,7 +25,9 @@ object KafkaITSpek : Spek({
     val credentials = VaultCredentials(
             serviceuserUsername = " ",
             serviceuserPassword = "",
-            clientsecret = "secret"
+            clientsecret = "secret",
+            mqPassword = "",
+            mqUsername = ""
     )
 
     val embeddedEnvironment = KafkaEnvironment(
@@ -46,7 +48,13 @@ object KafkaITSpek : Spek({
             clientId = "clientId",
             helsenettproxyId = "helsenettproxyId",
             aadAccessTokenUrl = "azuread/token",
-            papirregelId = "papirregelId"
+            papirregelId = "papirregelId",
+            mqChannelName = "mqchannel",
+            mqGatewayName = "mqGateway",
+            mqHostname = "mqcl01",
+            mqPort = 1413,
+            syfoserviceQueueName = "syfoservicekø",
+            dokArkivUrl = "dokapi/"
     )
 
     fun Properties.overrideForTest(): Properties = apply {

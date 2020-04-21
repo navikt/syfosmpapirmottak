@@ -2,16 +2,22 @@ package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
 import java.time.LocalDateTime
-import java.util.UUID
+import java.time.ZoneId
+import java.time.ZoneOffset
+import javax.jms.MessageProducer
+import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.AktoerIdClient
+import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SakClient
+import no.nav.syfo.client.SarClient
+import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
@@ -20,10 +26,15 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
-import no.nav.syfo.objectMapper
+import no.nav.syfo.model.Status
+import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
+import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
+import no.nav.syfo.util.toString
+import org.apache.kafka.clients.producer.KafkaProducer
 
 @KtorExperimentalAPI
 class SykmeldingService constructor(
@@ -41,7 +52,18 @@ class SykmeldingService constructor(
         dokumentInfoId: String?,
         datoOpprettet: LocalDateTime?,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String
+        sykmeldingId: String,
+        syfoserviceProducer: MessageProducer,
+        session: Session,
+        sm2013AutomaticHandlingTopic: String,
+        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+        kuhrSarClient: SarClient,
+        dokArkivClient: DokArkivClient,
+        kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
+        kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
+        sm2013ManualHandlingTopic: String,
+        sm2013BehandlingsUtfallTopic: String
+
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -63,14 +85,17 @@ class SykmeldingService constructor(
         } else {
             dokumentInfoId?.let {
                 try {
-                    if (datoOpprettet == null) {
-                        log.error("Journalpost $journalpostId mangler datoOpprettet, {}", fields(loggingMeta))
-                        throw IllegalStateException("Journalpost mangler opprettetDato")
-                    }
                     val ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
 
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+
+                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder.fnr)
+                        val samhandlerPraksisMatch = findBestSamhandlerPraksis(
+                                samhandlerInfo,
+                                loggingMeta)
+                        val samhandlerPraksis = samhandlerPraksisMatch?.samhandlerPraksis
+
                         val fellesformat = mapOcrFilTilFellesformat(
                                 skanningmetadata = ocrFil,
                                 fnr = fnr,
@@ -82,7 +107,7 @@ class SykmeldingService constructor(
                         val msgHead = fellesformat.get<XMLMsgHead>()
 
                         val sykmelding = healthInformation.toSykmelding(
-                                sykmeldingId = UUID.randomUUID().toString(),
+                                sykmeldingId = sykmeldingId,
                                 pasientAktoerId = aktorId,
                                 legeAktoerId = sykmelder.aktorId,
                                 msgId = sykmeldingId,
@@ -100,10 +125,10 @@ class SykmeldingService constructor(
                                 legekontorOrgName = "",
                                 legekontorHerId = null,
                                 legekontorReshId = null,
-                                mottattDato = datoOpprettet,
+                                mottattDato = (datoOpprettet ?: msgHead.msgInfo.genDate).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
                                 rulesetVersion = healthInformation.regelSettVersjon,
-                                fellesformat = objectMapper.writeValueAsString(fellesformat),
-                                tssid = ""
+                                fellesformat = fellesformatMarshaller.toString(fellesformat),
+                                tssid = samhandlerPraksis?.tss_ident ?: ""
                         )
 
                         log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
@@ -116,25 +141,58 @@ class SykmeldingService constructor(
                                 StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
                                 fields(loggingMeta)
                         )
+                        when (validationResult.status) {
+                            Status.OK -> handleOk(
+                                    kafkaproducerreceivedSykmelding,
+                                    sm2013AutomaticHandlingTopic,
+                                    receivedSykmelding,
+                                    session,
+                                    syfoserviceProducer,
+                                    receivedSykmelding.sykmelding.id,
+                                    healthInformation,
+                                    dokArkivClient,
+                                    journalpostId,
+                                    loggingMeta
+                            )
+                            Status.MANUAL_PROCESSING -> handleManuell(
+                                    kafkaManuelTaskProducer,
+                                    kafkaproducerreceivedSykmelding,
+                                    sm2013ManualHandlingTopic,
+                                    kafkaValidationResultProducer,
+                                    sm2013BehandlingsUtfallTopic,
+                                    syfoserviceProducer,
+                                    session,
+                                    receivedSykmelding,
+                                    validationResult,
+                                    healthInformation,
+                                    dokArkivClient,
+                                    journalpostId,
+                                    loggingMeta
+                            )
+                            else -> throw IllegalStateException("Ukjent status: ${validationResult.status} , Papirsykmeldinger kan kun ha ein av to typer statuser enten OK eller MANUAL_PROCESSING")
+                        }
                     }
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
+
+                    val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+
+                    val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                            journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+
+                    if (!oppgave.duplikat) {
+                        log.info("Opprettet oppgave med {}, {} {}",
+                                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                                StructuredArguments.keyValue("sakid", sakId),
+                                fields(loggingMeta)
+                        )
+                        PAPIRSM_OPPGAVE.inc()
+                    } else {
+                        log.info("duplikat oppgave med {}, {}",
+                                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId))
+                    }
                 }
-            }
-
-            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
-
-            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-
-            if (!oppgave.duplikat) {
-                log.info("Opprettet oppgave med {}, {} {}",
-                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                        StructuredArguments.keyValue("sakid", sakId),
-                        fields(loggingMeta)
-                )
-                PAPIRSM_OPPGAVE.inc()
             }
         }
     }

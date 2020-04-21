@@ -24,6 +24,8 @@ import no.nav.helse.sm2013.DynaSvarType
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.helse.sm2013.Ident
 import no.nav.helse.sm2013.NavnType
+import no.nav.helse.sm2013.TeleCom
+import no.nav.helse.sm2013.URL
 import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
 import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
@@ -126,8 +128,14 @@ fun mapOcrFilTilFellesformat(
                     }
                     content = XMLRefDoc.Content().apply {
                         any.add(HelseOpplysningerArbeidsuforhet().apply {
-                            syketilfelleStartDato = skanningmetadata.sykemeldinger.syketilfelleStartDato
+                            syketilfelleStartDato = velgRiktigSyketilfelleDato(skanningmetadata.sykemeldinger.syketilfelleStartDato,
+                                    skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                             pasient = HelseOpplysningerArbeidsuforhet.Pasient().apply {
+                                navn = NavnType().apply {
+                                    fornavn = ""
+                                    mellomnavn = ""
+                                    etternavn = ""
+                                }
                                 fodselsnummer = Ident().apply {
                                     id = skanningmetadata.sykemeldinger.pasient.fnr
                                     typeId = CV().apply {
@@ -167,6 +175,7 @@ fun mapOcrFilTilFellesformat(
                                 systemNavn = "Papirsykmelding"
                                 systemVersjon = "1"
                             }
+                            strekkode = "123456789qwerty"
                         })
                     }
                 }
@@ -200,6 +209,15 @@ fun tilBehandler(sykmelder: Sykmelder): HelseOpplysningerArbeidsuforhet.Behandle
                         }
                     }))
             adresse = Address()
+            kontaktInfo.add(TeleCom().apply {
+                typeTelecom = CS().apply {
+                    v = "HP"
+                    dn = "Hovedtelefon"
+                }
+                teleAddress = URL().apply {
+                    v = "tel:55553336"
+                }
+            })
         }
 
 fun tilUtdypendeOpplysninger(utdypendeOpplysningerType: UtdypendeOpplysningerType?): HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger {
@@ -523,4 +541,29 @@ fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, periodeliste: Lis
     }
     log.info("Periodeliste mangler aktivitetIkkeMulig, bruker FOM fra første periode")
     return LocalDateTime.of(periodeliste.first().periodeFOMDato, LocalTime.NOON)
+}
+
+fun velgRiktigSyketilfelleDato(
+    syketilfelledato: LocalDate?,
+    behandletDato: LocalDate?,
+    periodeliste: List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>
+): LocalDate {
+    syketilfelledato?.let {
+        return syketilfelledato
+    }
+
+    behandletDato?.let {
+        return behandletDato
+    }
+
+    if (periodeliste.isNotEmpty() && periodeliste.size > 1) {
+        periodeliste.forEach {
+            if (it.aktivitetIkkeMulig != null) {
+                return it.periodeFOMDato
+            }
+        }
+    }
+
+    log.info("Periodeliste mangler aktivitetIkkeMulig, bruker FOM fra første periode")
+    return periodeliste.first().periodeFOMDato
 }

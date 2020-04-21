@@ -1,31 +1,10 @@
 {
   "topics": [
     {
-      "topicName": "privat-syfo-smpapir-automatiskBehandling",
+      "topicName": "privat-syfo-papir-sm-registering",
       "members": [
         {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"},
-        {"member":"srvsyfosmregister", "role":"CONSUMER"},
-        {"member":"srvsyfosminfotrygd", "role":"CONSUMER"},
-        {"member":"srvsyfostorebror", "role":"CONSUMER"},
-        {"member":"s151890", "role":"MANAGER"},
-        {"member":"k143566", "role":"MANAGER"},
-        {"member":"f133008", "role":"MANAGER"},
-        {"member":"n157016", "role":"MANAGER"},
-        {"member":"k157140", "role":"MANAGER"},
-        {"member":"g153850", "role":"MANAGER"}
-      ],
-      "numPartitions": 3,
-      "configEntries": {
-        "retention.ms": "-1"
-      }
-    },
-    {
-      "topicName": "privat-syfo-smpapir-manuellBehandling",
-      "members": [
-        {"member":"srvsyfosmpapirmottak", "role":"PRODUCER"},
-        {"member":"srvsyfosmarena", "role":"CONSUMER"},
-        {"member":"srvsyfosmregister", "role":"CONSUMER"},
-        {"member":"srvsyfostorebror", "role":"CONSUMER"},
+        {"member":"srvregpapirsm", "role":"CONSUMER"},
         {"member":"s151890", "role":"MANAGER"},
         {"member":"k143566", "role":"MANAGER"},
         {"member":"f133008", "role":"MANAGER"},
