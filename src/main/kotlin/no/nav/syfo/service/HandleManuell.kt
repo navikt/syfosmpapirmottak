@@ -35,7 +35,7 @@ suspend fun handleManuell(
     loggingMeta: LoggingMeta
 ) {
 
-    dokArkivClient.oppdaterOgFerdigstillJournalpost(journalpostId = journalpostid, sykmeldingId = receivedSykmelding.sykmelding.id, hprnummer = receivedSykmelding.sykmelding.behandler.hpr!!, loggingMeta = loggingMeta)
+    dokArkivClient.oppdaterOgFerdigstillJournalpost(journalpostId = journalpostid, fnr = receivedSykmelding.personNrPasient, sykmeldingId = receivedSykmelding.sykmelding.id, hprnummer = receivedSykmelding.sykmelding.behandler.hpr!!, loggingMeta = loggingMeta)
 
     log.info("Sending manuell oppgave to syfosmoppgave {}", fields(loggingMeta))
     opprettOppgave(kafkaManuelTaskProducer, receivedSykmelding, validationResult, loggingMeta)

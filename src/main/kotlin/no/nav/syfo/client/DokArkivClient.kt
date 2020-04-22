@@ -25,11 +25,12 @@ class DokArkivClient(
 ) {
     suspend fun oppdaterOgFerdigstillJournalpost(
         journalpostId: String,
+        fnr: String,
         sykmeldingId: String,
         hprnummer: String,
         loggingMeta: LoggingMeta
     ): String? {
-        oppdaterJournalpost(journalpostId = journalpostId, hprnummer = hprnummer, msgId = sykmeldingId, loggingMeta = loggingMeta)
+        oppdaterJournalpost(journalpostId = journalpostId, fnr = fnr, hprnummer = hprnummer, msgId = sykmeldingId, loggingMeta = loggingMeta)
         return ferdigstillJournalpost(journalpostId = journalpostId, msgId = sykmeldingId, loggingMeta = loggingMeta)
     }
 
@@ -76,6 +77,7 @@ class DokArkivClient(
 
     suspend fun oppdaterJournalpost(
         journalpostId: String,
+        fnr: String,
         hprnummer: String,
         msgId: String,
         loggingMeta: LoggingMeta
@@ -90,6 +92,7 @@ class DokArkivClient(
                 AvsenderMottaker(
                     id = hprnummerMedRiktigLengde(hprnummer)
                 ),
+                Bruker(id = fnr),
                 Sak()
             )
         }.execute()
@@ -133,12 +136,18 @@ class DokArkivClient(
 
     data class OppdaterJournalpost(
         val avsenderMottaker: AvsenderMottaker,
+        val bruker: Bruker,
         val sak: Sak
     )
 
     data class AvsenderMottaker(
         val id: String,
         val idType: String = "HPRNR"
+    )
+
+    data class Bruker(
+        val id: String,
+        val idType: String = "FNR"
     )
 
     data class Sak(
