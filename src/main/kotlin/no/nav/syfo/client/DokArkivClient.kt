@@ -89,11 +89,11 @@ class DokArkivClient(
             header("Authorization", "Bearer ${oidcToken.access_token}")
             header("Nav-Callid", msgId)
             body = OppdaterJournalpost(
-                AvsenderMottaker(
+                avsenderMottaker = AvsenderMottaker(
                     id = hprnummerMedRiktigLengde(hprnummer)
                 ),
-                Bruker(id = fnr),
-                Sak()
+                bruker = Bruker(id = fnr),
+                sak = Sak()
             )
         }.execute()
         if (httpResponse.status == HttpStatusCode.InternalServerError) {
@@ -135,6 +135,7 @@ class DokArkivClient(
     )
 
     data class OppdaterJournalpost(
+        val tema: String = "SYM",
         val avsenderMottaker: AvsenderMottaker,
         val bruker: Bruker,
         val sak: Sak
