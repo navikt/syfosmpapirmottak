@@ -15,6 +15,7 @@ import java.io.IOException
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
+import no.nav.syfo.model.Behandler
 import no.nav.syfo.util.LoggingMeta
 
 @KtorExperimentalAPI
@@ -27,10 +28,10 @@ class DokArkivClient(
         journalpostId: String,
         fnr: String,
         sykmeldingId: String,
-        hprnummer: String,
+        behandler: Behandler,
         loggingMeta: LoggingMeta
     ): String? {
-        oppdaterJournalpost(journalpostId = journalpostId, fnr = fnr, hprnummer = hprnummer, msgId = sykmeldingId, loggingMeta = loggingMeta)
+        oppdaterJournalpost(journalpostId = journalpostId, fnr = fnr, behandler = behandler, msgId = sykmeldingId, loggingMeta = loggingMeta)
         return ferdigstillJournalpost(journalpostId = journalpostId, msgId = sykmeldingId, loggingMeta = loggingMeta)
     }
 
@@ -78,7 +79,7 @@ class DokArkivClient(
     suspend fun oppdaterJournalpost(
         journalpostId: String,
         fnr: String,
-        hprnummer: String,
+        behandler: Behandler,
         msgId: String,
         loggingMeta: LoggingMeta
     ) = retry("oppdater_journalpost") {
@@ -90,7 +91,8 @@ class DokArkivClient(
             header("Nav-Callid", msgId)
             body = OppdaterJournalpost(
                 avsenderMottaker = AvsenderMottaker(
-                    id = hprnummerMedRiktigLengde(hprnummer)
+                    id = hprnummerMedRiktigLengde(behandler.hpr!!),
+                    navn = finnNavn(behandler)
                 ),
                 bruker = Bruker(id = fnr),
                 sak = Sak()
@@ -130,6 +132,10 @@ class DokArkivClient(
         return hprnummer
     }
 
+    fun finnNavn(behandler: Behandler): String {
+        return "${behandler.fornavn} ${behandler.etternavn}"
+    }
+
     data class FerdigstillJournal(
         val journalfoerendeEnhet: String
     )
@@ -143,7 +149,8 @@ class DokArkivClient(
 
     data class AvsenderMottaker(
         val id: String,
-        val idType: String = "HPRNR"
+        val idType: String = "HPRNR",
+        val navn: String
     )
 
     data class Bruker(
