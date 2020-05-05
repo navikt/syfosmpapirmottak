@@ -6,5 +6,6 @@ data class Sykmelder(
     val aktorId: String,
     val fornavn: String?,
     val mellomnavn: String?,
-    val etternavn: String?
+    val etternavn: String?,
+    val telefonnummer: String?
 )

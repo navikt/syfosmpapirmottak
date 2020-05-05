@@ -1,6 +1,6 @@
 [![Build status](https://github.com/navikt/syfosmpapirmottak/workflows/Deploy%20to%20dev%20and%20prod/badge.svg)](https://github.com/navikt/syfosmpapirmottak/workflows/Deploy%20to%20dev%20and%20prod/badge.svg)
 
-# SYFO mottak
+# SYFOpapirmottak
 This project contains just the receving a paper sykmelding2013 message
 
 ## Technologies used
