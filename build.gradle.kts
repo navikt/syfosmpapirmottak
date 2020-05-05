@@ -40,7 +40,7 @@ val smCommonVersion = "1.f898112"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.9.3"
-val smCommonDiagnosisCodesVersion = "1.f898112"
+val smCommonDiagnosisCodesVersion = "1.68817ee"
 
 plugins {
     java
