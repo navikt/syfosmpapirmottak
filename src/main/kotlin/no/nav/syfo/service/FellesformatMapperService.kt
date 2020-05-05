@@ -215,7 +215,7 @@ fun tilBehandler(sykmelder: Sykmelder): HelseOpplysningerArbeidsuforhet.Behandle
                     dn = "Hovedtelefon"
                 }
                 teleAddress = URL().apply {
-                    v = "tel:55553336"
+                    v = if (sykmelder.telefonnummer != null) "tel:${sykmelder.telefonnummer}" else null
                 }
             })
         }

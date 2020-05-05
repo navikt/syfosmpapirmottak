@@ -67,7 +67,7 @@ object FellesformatMapperServiceSpek : Spek({
     describe("MappingService ende-til-ende") {
         it("Realistisk case ende-til-ende") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Etternavn")
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Etternavn", telefonnummer = null)
 
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
@@ -134,7 +134,7 @@ object FellesformatMapperServiceSpek : Spek({
 
         it("Minimal ocr-fil") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/minimal-ocr-sykmelding.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null)
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
 
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
@@ -201,7 +201,7 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.kontaktMedPasient shouldEqual KontaktMedPasient(null, null)
             receivedSykmelding.sykmelding.behandletTidspunkt shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.behandler shouldEqual Behandler(
-                    fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = "tel:55553336")
+                    fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null)
             receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", "1")
             receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual LocalDate.of(2019, Month.AUGUST, 15)
             receivedSykmelding.sykmelding.signaturDato shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
@@ -210,7 +210,7 @@ object FellesformatMapperServiceSpek : Spek({
 
         it("Map with avventendeSykmelding uten innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-ugyldig.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null)
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
 
             val func = {
                 mapOcrFilTilFellesformat(
@@ -226,7 +226,7 @@ object FellesformatMapperServiceSpek : Spek({
 
         it("map with avventendeSykmelding og innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-gyldig.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null)
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
 
             val func = {
                 mapOcrFilTilFellesformat(
@@ -500,7 +500,7 @@ object FellesformatMapperServiceSpek : Spek({
         }
 
         it("tilBehandler") {
-            val sykmelder = Sykmelder(hprNummer = "654321", fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = "Mellomnavn", etternavn = "Etternavn")
+            val sykmelder = Sykmelder(hprNummer = "654321", fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = "Mellomnavn", etternavn = "Etternavn", telefonnummer = "12345678")
 
             val behandler = tilBehandler(sykmelder)
 
@@ -512,6 +512,7 @@ object FellesformatMapperServiceSpek : Spek({
             behandler.id.find { it.typeId.v == "HER" }?.id shouldEqual null
             behandler.adresse shouldNotEqual null
             behandler.kontaktInfo.firstOrNull()?.typeTelecom?.dn shouldEqual "Hovedtelefon"
+            behandler.kontaktInfo.firstOrNull()?.teleAddress?.v shouldEqual "tel:12345678"
         }
 
         it("velgRiktigKontaktOgSignaturDato") {

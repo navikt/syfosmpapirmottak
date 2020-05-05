@@ -227,7 +227,8 @@ class SykmeldingService constructor(
                 aktorId = aktorId,
                 fornavn = behandlerFraHpr.fornavn,
                 mellomnavn = behandlerFraHpr.mellomnavn,
-                etternavn = behandlerFraHpr.etternavn
+                etternavn = behandlerFraHpr.etternavn,
+                telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString()
         )
     }
 }
