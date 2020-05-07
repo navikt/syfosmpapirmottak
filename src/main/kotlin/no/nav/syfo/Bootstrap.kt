@@ -152,7 +152,7 @@ fun main() {
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClient, env.helsenettproxyId, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
-    val sykmeldingService = SykmeldingService(oppgaveService, safDokumentClient, norskHelsenettClient, aktoerIdClient, regelClient)
+    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, aktoerIdClient, regelClient)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sykmeldingService, utenlandskSykmeldingService)
 

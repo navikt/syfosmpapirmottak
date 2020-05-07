@@ -15,6 +15,7 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
+import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.domain.PapirSmRegistering
@@ -37,7 +38,8 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 
 @KtorExperimentalAPI
-class SykmeldingService constructor(
+class SykmeldingService(
+    private val sakClient: SakClient,
     private val oppgaveService: OppgaveService,
     private val safDokumentClient: SafDokumentClient,
     private val norskHelsenettClient: NorskHelsenettClient,
@@ -185,8 +187,15 @@ class SykmeldingService constructor(
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
 
-                    kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
-                    log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
+                    val duplikatOppgave = oppgaveService.duplikatOppgave(
+                            journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+
+                    if (!duplikatOppgave) {
+                        kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
+                        log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
+                    } else {
+                        log.info("duplikat oppgave {}", fields(loggingMeta))
+                    }
                 }
             }
         }

@@ -27,6 +27,15 @@ class OppgaveService @KtorExperimentalAPI constructor(
     }
 
     @KtorExperimentalAPI
+    suspend fun duplikatOppgave(
+        journalpostId: String,
+        trackingId: String,
+        loggingMeta: LoggingMeta
+    ): Boolean {
+        return oppgaveClient.duplikatOppgave(journalpostId, trackingId, loggingMeta)
+    }
+
+    @KtorExperimentalAPI
     suspend fun opprettFordelingsOppgave(
         journalpostId: String,
         gjelderUtland: Boolean,

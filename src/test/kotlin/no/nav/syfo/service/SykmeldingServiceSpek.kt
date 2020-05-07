@@ -71,12 +71,13 @@ object SykmeldingServiceSpek : Spek({
     val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>()
 
-    val sykmeldingService = SykmeldingService(oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock)
+    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock)
 
     beforeEachTest {
         clearAllMocks()
 
         coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
+        coEvery { oppgaveserviceMock.duplikatOppgave(any(), any(), any()) } returns false
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
