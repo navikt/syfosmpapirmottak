@@ -1,7 +1,12 @@
 package no.nav.syfo.domain
 
-import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
-import java.math.BigInteger
+import no.nav.syfo.model.Arbeidsgiver
+import no.nav.syfo.model.Behandler
+import no.nav.syfo.model.KontaktMedPasient
+import no.nav.syfo.model.MedisinskVurdering
+import no.nav.syfo.model.MeldingTilNAV
+import no.nav.syfo.model.Prognose
+import no.nav.syfo.model.SporsmalSvar
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -13,19 +18,17 @@ data class PapirSmRegistering(
         val datoOpprettet: LocalDateTime?,
         val sykmeldingId: String,
         val syketilfelleStartDato: LocalDate?,
-        val arbeidsgiver: HelseOpplysningerArbeidsuforhet.Arbeidsgiver?,
-        val medisinskVurdering: HelseOpplysningerArbeidsuforhet.MedisinskVurdering?,
-        val aktivitet: HelseOpplysningerArbeidsuforhet.Aktivitet?,
-        val prognose: HelseOpplysningerArbeidsuforhet.Prognose?,
-        val utdypendeOpplysninger: HelseOpplysningerArbeidsuforhet.UtdypendeOpplysninger?,
-        val tiltak: HelseOpplysningerArbeidsuforhet.Tiltak?,
-        val meldingTilNav: HelseOpplysningerArbeidsuforhet.MeldingTilNav?,
+        val arbeidsgiver: Arbeidsgiver?,
+        val medisinskVurdering: MedisinskVurdering?,
+        val aktivitet: Any,
+        val prognose: Prognose?,
+        val utdypendeOpplysninger: Map<String, Map<String, SporsmalSvar>>?,
+        val tiltakNAV: String?,
+        val tiltakArbeidsplassen: String?,
+        val andreTiltak: String?,
+        val meldingTilNAV: MeldingTilNAV?,
         val meldingTilArbeidsgiver: String?,
-        val tilbakedateringDato: LocalDate?,
-        val tilbakedateringBegrunnelse: String?,
-        val behandletDato: LocalDate?,
-        val behandlerHpr: BigInteger?,
-        val behandlerAdresse: String?,
-        val behandlerTelefon: BigInteger?
-
+        val kontaktMedPasient: KontaktMedPasient?,
+        val behandletTidspunkt: LocalDate?,
+        val behandler: Behandler?
 )

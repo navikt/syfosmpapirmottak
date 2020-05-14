@@ -73,8 +73,9 @@ object PapirSmMapperServiceSpek : Spek({
                     dokumentInfoId = dokumentInfoId,
                     datoOpprettet = datoOpprettet,
                     sykmeldingId = sykmeldingId,
-                    ocrFil = ocrFil,
-                    loggingMeta = loggingMetadata)
+                    sykmelder = null,
+                    ocrFil = ocrFil
+            )
 
             papirSm.journalpostId shouldEqual journalpostId
             papirSm.fnr shouldEqual fnrPasient

@@ -71,6 +71,7 @@ class SykmeldingService(
         PAPIRSM_MOTTATT_NORGE.inc()
 
         var ocrFil : Skanningmetadata? = null
+        var sykmelder : Sykmelder? = null
 
         if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
@@ -94,7 +95,7 @@ class SykmeldingService(
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil!!, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder.fnr)
+                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
                         val samhandlerPraksisMatch = findBestSamhandlerPraksis(
                                 samhandlerInfo,
                                 loggingMeta)
@@ -103,7 +104,7 @@ class SykmeldingService(
                         val fellesformat = mapOcrFilTilFellesformat(
                                 skanningmetadata = ocrFil!!,
                                 fnr = fnr,
-                                sykmelder = sykmelder,
+                                sykmelder = sykmelder!!,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
 
@@ -187,8 +188,8 @@ class SykmeldingService(
                             dokumentInfoId = dokumentInfoId,
                             datoOpprettet = datoOpprettet,
                             sykmeldingId = sykmeldingId,
-                            ocrFil = ocrFil,
-                            loggingMeta = loggingMeta
+                            sykmelder = sykmelder,
+                            ocrFil = ocrFil
                     )
 
                     val duplikatOppgave = oppgaveService.duplikatOppgave(
