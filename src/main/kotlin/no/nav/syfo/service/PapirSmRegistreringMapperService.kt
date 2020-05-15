@@ -1,7 +1,7 @@
 package no.nav.syfo.service
 
-import io.ktor.util.Hash
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
+import no.nav.helse.sykSkanningMeta.BehandlerType
 import no.nav.helse.sykSkanningMeta.BidiagnoseType
 import no.nav.helse.sykSkanningMeta.HovedDiagnoseType
 import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
@@ -11,6 +11,8 @@ import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.Adresse
+import no.nav.syfo.model.AnnenFraverGrunn
+import no.nav.syfo.model.AnnenFraversArsak
 import no.nav.syfo.model.Arbeidsgiver
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.Diagnose
@@ -23,9 +25,7 @@ import no.nav.syfo.model.MeldingTilNAV
 import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
-import no.nav.syfo.model.Sykmelding
 import no.nav.syfo.sm.Diagnosekoder
-import no.nav.syfo.util.LoggingMeta
 import java.time.LocalDateTime
 
 fun mapOcrFilTilPapirSmRegistrering(
@@ -45,6 +45,7 @@ fun mapOcrFilTilPapirSmRegistrering(
             syketilfelleStartDato = sykmelding?.syketilfelleStartDato,
             arbeidsgiver = toArbeidsgiver(sykmelding?.arbeidsgiver),
             medisinskVurdering = toMedisinskVurdering(sykmelding?.medisinskVurdering),
+            skjermesForPasient = sykmelding?.medisinskVurdering?.isSkjermesForPasient,
             aktivitet = Any(),
             prognose = toPrognose(sykmelding?.prognose),
             utdypendeOpplysninger = toUtdypendeOpplysninger(sykmelding?.utdypendeOpplysninger),
@@ -63,20 +64,20 @@ fun mapOcrFilTilPapirSmRegistrering(
                 )
             },
             behandletTidspunkt = sykmelding?.kontaktMedPasient?.behandletDato,
-            behandler = toBehandler(sykmelder)
+            behandler = toBehandler(sykmelder, sykmelding?.behandler)
     )
 }
 
-fun toBehandler(sykmelder: Sykmelder?): Behandler = Behandler(
-        fornavn = sykmelder?.fornavn?: "",
+fun toBehandler(sykmelder: Sykmelder?, behandler: BehandlerType?): Behandler = Behandler(
+        fornavn = sykmelder?.fornavn?:  "",
         mellomnavn = sykmelder?.mellomnavn,
         etternavn = sykmelder?.etternavn?: "",
         aktoerId = sykmelder?.aktorId?: "",
         fnr = sykmelder?.fnr?: "",
-        hpr = sykmelder?.hprNummer,
+        hpr = (sykmelder?.hprNummer?: behandler?.hpr?: "").toString(),
         her = "",
         adresse = Adresse("", 0, "", "",""),
-        tlf = sykmelder?.telefonnummer
+        tlf = (sykmelder?.telefonnummer?: behandler?.telefon?: "").toString()
 )
 
 
@@ -151,6 +152,8 @@ fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
 fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgiver(
         navn = arbeidsgiver?.navnArbeidsgiver,
         harArbeidsgiver = when (arbeidsgiver?.harArbeidsgiver) {
+
+            // Copied from FellesformatMapperService.kt
             "Flere arbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
             "Flerearbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
             "En arbeidsgiver" -> HarArbeidsgiver.EN_ARBEIDSGIVER
@@ -171,7 +174,12 @@ fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?): Medis
             svangerskap = medisinskVurderingType?.isSvangerskap?: false,
             yrkesskade = medisinskVurderingType?.isYrkesskade?: false,
             yrkesskadeDato = medisinskVurderingType?.yrkesskadedato,
-            annenFraversArsak = null // Can't map this,
+            annenFraversArsak = medisinskVurderingType?.annenFraversArsak.let {
+                AnnenFraversArsak(
+                        beskrivelse = it,
+                        grunn = listOf(AnnenFraverGrunn.GODKJENT_HELSEINSTITUSJON) // TODO: I'm just guessing here
+                )
+            }
     )
 }
 

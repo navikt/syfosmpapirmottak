@@ -20,6 +20,7 @@ data class PapirSmRegistering(
         val syketilfelleStartDato: LocalDate?,
         val arbeidsgiver: Arbeidsgiver?,
         val medisinskVurdering: MedisinskVurdering?,
+        val skjermesForPasient: Boolean?,
         val aktivitet: Any,
         val prognose: Prognose?,
         val utdypendeOpplysninger: Map<String, Map<String, SporsmalSvar>>?,

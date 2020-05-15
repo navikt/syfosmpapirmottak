@@ -45,6 +45,7 @@ import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.get
 import no.nav.syfo.util.skanningMetadataUnmarshaller
+import org.amshove.kluent.should
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotEqual
 import org.amshove.kluent.shouldNotThrow
@@ -62,9 +63,9 @@ object PapirSmMapperServiceSpek : Spek({
     val datoOpprettet = LocalDateTime.now()
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
 
-    describe("PapirSmMappingService ende-til-ende") {
-        it("Realistisk case ende-til-ende") {
-            val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
+    describe("PapirSmMappingService") {
+        it("Should work") {
+            val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett.xml"))) as Skanningmetadata
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
                     journalpostId = journalpostId,
@@ -84,7 +85,22 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.datoOpprettet shouldEqual datoOpprettet
             papirSm.sykmeldingId shouldEqual sykmeldingId
 
+            papirSm.arbeidsgiver?.harArbeidsgiver shouldEqual HarArbeidsgiver.EN_ARBEIDSGIVER
+            papirSm.arbeidsgiver?.navn shouldEqual ocrFil.sykemeldinger.arbeidsgiver.navnArbeidsgiver
+            papirSm.arbeidsgiver?.stillingsprosent shouldEqual ocrFil.sykemeldinger.arbeidsgiver.stillingsprosent.toInt()
+            papirSm.arbeidsgiver?.yrkesbetegnelse shouldEqual ocrFil.sykemeldinger.arbeidsgiver.yrkesbetegnelse
+
+            papirSm.medisinskVurdering?.hovedDiagnose?.kode shouldEqual ocrFil.sykemeldinger.medisinskVurdering.hovedDiagnose.first().diagnosekode
+            papirSm.medisinskVurdering?.hovedDiagnose?.system shouldEqual Diagnosekoder.ICD10_CODE
+            papirSm.medisinskVurdering?.hovedDiagnose?.tekst shouldEqual ocrFil.sykemeldinger.medisinskVurdering.hovedDiagnose.first().diagnose
+            papirSm.medisinskVurdering?.biDiagnoser?.first()?.system shouldEqual Diagnosekoder.ICD10_CODE
+            papirSm.medisinskVurdering?.annenFraversArsak?.beskrivelse shouldEqual ocrFil.sykemeldinger.medisinskVurdering.annenFraversArsak
+            papirSm.medisinskVurdering?.svangerskap shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isSvangerskap
+            papirSm.medisinskVurdering?.yrkesskade shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isYrkesskade
+            papirSm.skjermesForPasient shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isSkjermesForPasient
+
             // Todo: Trenger et fullverdig eksempel på en OCR-melding for å kunne teste helheten.
+            // TODO: Ikke ferdig
 
         }
 
