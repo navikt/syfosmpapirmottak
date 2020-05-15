@@ -99,7 +99,6 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.medisinskVurdering?.yrkesskade shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isYrkesskade
             papirSm.skjermesForPasient shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isSkjermesForPasient
 
-            // Todo: Trenger et fullverdig eksempel på en OCR-melding for å kunne teste helheten.
             // TODO: Ikke ferdig
 
         }
