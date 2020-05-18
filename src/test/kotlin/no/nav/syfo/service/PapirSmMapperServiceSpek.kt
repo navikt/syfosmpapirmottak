@@ -1,57 +1,20 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import java.io.StringReader
-import java.math.BigInteger
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.Month
-import java.util.UUID
-import no.nav.helse.msgHead.XMLMsgHead
-import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
-import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
-import no.nav.helse.sykSkanningMeta.AktivitetType
-import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
-import no.nav.helse.sykSkanningMeta.ArbeidsplassenType
-import no.nav.helse.sykSkanningMeta.AvventendeSykmeldingType
-import no.nav.helse.sykSkanningMeta.BehandlingsdagerType
-import no.nav.helse.sykSkanningMeta.BidiagnoseType
-import no.nav.helse.sykSkanningMeta.FriskmeldingType
-import no.nav.helse.sykSkanningMeta.GradertSykmeldingType
-import no.nav.helse.sykSkanningMeta.HovedDiagnoseType
-import no.nav.helse.sykSkanningMeta.MedArbeidsgiverType
-import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
-import no.nav.helse.sykSkanningMeta.MedisinskeArsakerType
-import no.nav.helse.sykSkanningMeta.PrognoseType
-import no.nav.helse.sykSkanningMeta.ReisetilskuddType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
-import no.nav.helse.sykSkanningMeta.UtenArbeidsgiverType
 import no.nav.syfo.client.getFileAsString
-import no.nav.syfo.domain.Sykmelder
-import no.nav.syfo.model.Adresse
-import no.nav.syfo.model.AktivitetIkkeMulig
-import no.nav.syfo.model.Arbeidsgiver
-import no.nav.syfo.model.AvsenderSystem
-import no.nav.syfo.model.Behandler
-import no.nav.syfo.model.Diagnose
 import no.nav.syfo.model.HarArbeidsgiver
-import no.nav.syfo.model.KontaktMedPasient
-import no.nav.syfo.model.ReceivedSykmelding
-import no.nav.syfo.objectMapper
+import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
-import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
-import no.nav.syfo.util.get
 import no.nav.syfo.util.skanningMetadataUnmarshaller
-import org.amshove.kluent.should
+import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldNotEqual
-import org.amshove.kluent.shouldNotThrow
-import org.amshove.kluent.shouldThrow
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.io.StringReader
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @KtorExperimentalAPI
 object PapirSmMapperServiceSpek : Spek({
@@ -64,7 +27,7 @@ object PapirSmMapperServiceSpek : Spek({
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
 
     describe("PapirSmMappingService") {
-        it("Should work") {
+        it("Tests a complete OCR file, and should parse fine") {
             val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett.xml"))) as Skanningmetadata
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
@@ -84,6 +47,7 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.dokumentInfoId shouldEqual dokumentInfoId
             papirSm.datoOpprettet shouldEqual datoOpprettet
             papirSm.sykmeldingId shouldEqual sykmeldingId
+            papirSm.syketilfelleStartDato shouldEqual ocrFil.sykemeldinger.syketilfelleStartDato
 
             papirSm.arbeidsgiver?.harArbeidsgiver shouldEqual HarArbeidsgiver.EN_ARBEIDSGIVER
             papirSm.arbeidsgiver?.navn shouldEqual ocrFil.sykemeldinger.arbeidsgiver.navnArbeidsgiver
@@ -97,10 +61,47 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.medisinskVurdering?.annenFraversArsak?.beskrivelse shouldEqual ocrFil.sykemeldinger.medisinskVurdering.annenFraversArsak
             papirSm.medisinskVurdering?.svangerskap shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isSvangerskap
             papirSm.medisinskVurdering?.yrkesskade shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isYrkesskade
+
             papirSm.skjermesForPasient shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isSkjermesForPasient
 
-            // TODO: Ikke ferdig
+            papirSm.perioder?.get(0)?.aktivitetIkkeMulig?.medisinskArsak?.beskrivelse!! shouldEqual "Han kan ikke gå rundt og være stasjonsmester med en pågående lungesykdom, i et miljø med kullfyrte tog"
+            papirSm.perioder?.get(0)?.aktivitetIkkeMulig?.arbeidsrelatertArsak?.beskrivelse!! shouldEqual "Ordner seg!"
+            papirSm.perioder?.get(1)?.gradert?.grad shouldEqual 50
+            papirSm.perioder?.get(2)?.avventendeInnspillTilArbeidsgiver shouldEqual "Dere burde vurdere å skifte fra kulldrevne lokomotiver til moderne elektriske lokomotiver uten utslipp."
+            papirSm.perioder?.get(3)?.behandlingsdager shouldEqual 30
+            papirSm.perioder?.get(4)?.reisetilskudd shouldEqual true
 
+            papirSm.prognose?.arbeidsforEtterPeriode shouldEqual true
+            papirSm.prognose?.hensynArbeidsplassen shouldEqual "Dette vet jeg ikke hva betyr engang."
+            papirSm.prognose?.erIArbeid?.egetArbeidPaSikt shouldEqual true
+            papirSm.prognose?.erIArbeid?.annetArbeidPaSikt shouldEqual true
+            papirSm.prognose?.erIArbeid?.vurderingsdato shouldEqual LocalDate.of(2020, 6, 1)
+            papirSm.prognose?.erIkkeIArbeid?.vurderingsdato shouldEqual LocalDate.of(2020, 6, 1)
+            papirSm.prognose?.erIkkeIArbeid?.arbeidsforPaSikt shouldEqual true
+
+            papirSm.utdypendeOpplysninger?.size shouldBe 1
+            papirSm.utdypendeOpplysninger?.containsKey("6.2") shouldBe true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.size shouldEqual 4
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.1") shouldBe true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.2") shouldBe true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.3") shouldBe true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.4") shouldBe true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.get("6.2.4")?.sporsmal shouldEqual "Beskriv pågående og planlagt henvisning,utredning og/eller behandling"
+            papirSm.utdypendeOpplysninger?.get("6.2")?.get("6.2.4")?.svar shouldEqual "Rolig ferie i kullfritt miljø"
+            papirSm.utdypendeOpplysninger?.get("6.2")?.get("6.2.4")?.restriksjoner?.first() shouldEqual SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER
+
+            papirSm.tiltakNAV shouldEqual "Stønad til ferie"
+            papirSm.tiltakArbeidsplassen shouldEqual "Slutt med kulldrevne lokomotiver"
+            papirSm.andreTiltak shouldEqual "Helsebringende opphold på Luster sanatorium"
+
+            papirSm.meldingTilNAV?.bistandUmiddelbart shouldEqual true
+            papirSm.meldingTilNAV?.beskrivBistand shouldEqual "Her må NAV få fingeren ut. Skandale!"
+            papirSm.meldingTilArbeidsgiver shouldEqual "Ja, dere bør slutte med kull da."
+            papirSm.kontaktMedPasient?.kontaktDato shouldEqual LocalDate.of(2020,5,2)
+            papirSm.behandletTidspunkt shouldEqual LocalDate.of(2020,5,2)
+
+            papirSm.behandler?.hpr shouldEqual "100"
+            papirSm.behandler?.tlf shouldEqual "103"
         }
 
     }

@@ -1,5 +1,9 @@
 package no.nav.syfo.service
 
+import no.nav.helse.sm2013.ArsakType
+import no.nav.helse.sm2013.CS
+import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
+import no.nav.helse.sykSkanningMeta.AktivitetType
 import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
 import no.nav.helse.sykSkanningMeta.BehandlerType
 import no.nav.helse.sykSkanningMeta.BidiagnoseType
@@ -10,22 +14,29 @@ import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
+import no.nav.syfo.log
 import no.nav.syfo.model.Adresse
+import no.nav.syfo.model.AktivitetIkkeMulig
 import no.nav.syfo.model.AnnenFraverGrunn
 import no.nav.syfo.model.AnnenFraversArsak
 import no.nav.syfo.model.Arbeidsgiver
+import no.nav.syfo.model.ArbeidsrelatertArsak
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.Diagnose
 import no.nav.syfo.model.ErIArbeid
 import no.nav.syfo.model.ErIkkeIArbeid
+import no.nav.syfo.model.Gradert
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.KontaktMedPasient
+import no.nav.syfo.model.MedisinskArsak
 import no.nav.syfo.model.MedisinskVurdering
 import no.nav.syfo.model.MeldingTilNAV
+import no.nav.syfo.model.Periode
 import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
+import java.lang.NumberFormatException
 import java.time.LocalDateTime
 
 fun mapOcrFilTilPapirSmRegistrering(
@@ -41,12 +52,18 @@ fun mapOcrFilTilPapirSmRegistrering(
 
     val sykmelding = ocrFil?.sykemeldinger
 
-    return PapirSmRegistering(journalpostId, fnr, aktorId, dokumentInfoId, datoOpprettet, sykmeldingId,
+    return PapirSmRegistering(
+            journalpostId,
+            fnr,
+            aktorId,
+            dokumentInfoId,
+            datoOpprettet,
+            sykmeldingId,
             syketilfelleStartDato = sykmelding?.syketilfelleStartDato,
             arbeidsgiver = toArbeidsgiver(sykmelding?.arbeidsgiver),
             medisinskVurdering = toMedisinskVurdering(sykmelding?.medisinskVurdering),
             skjermesForPasient = sykmelding?.medisinskVurdering?.isSkjermesForPasient,
-            aktivitet = Any(),
+            perioder = toPerioder(aktivitetType = sykmelding?.aktivitet),
             prognose = toPrognose(sykmelding?.prognose),
             utdypendeOpplysninger = toUtdypendeOpplysninger(sykmelding?.utdypendeOpplysninger),
             tiltakArbeidsplassen = sykmelding?.tiltak?.tiltakArbeidsplassen,
@@ -54,7 +71,7 @@ fun mapOcrFilTilPapirSmRegistrering(
             andreTiltak = sykmelding?.tiltak?.andreTiltak,
             meldingTilNAV = sykmelding?.meldingTilNAV.let {
                 MeldingTilNAV(bistandUmiddelbart = it?.isBistandNAVUmiddelbart ?: false,
-                beskrivBistand = it?.beskrivBistandNAV)
+                        beskrivBistand = it?.beskrivBistandNAV)
             },
             meldingTilArbeidsgiver = sykmelding?.meldingTilArbeidsgiver,
             kontaktMedPasient = sykmelding?.kontaktMedPasient?.behandletDato.let {
@@ -68,21 +85,115 @@ fun mapOcrFilTilPapirSmRegistrering(
     )
 }
 
-fun toBehandler(sykmelder: Sykmelder?, behandler: BehandlerType?): Behandler = Behandler(
-        fornavn = sykmelder?.fornavn?:  "",
+private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
+
+    val periodeListe = ArrayList<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>()
+
+    if (aktivitetType?.aktivitetIkkeMulig != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.aktivitetIkkeMulig.periodeFOMDato
+            periodeTOMDato = aktivitetType.aktivitetIkkeMulig.periodeTOMDato
+            aktivitetIkkeMulig = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.AktivitetIkkeMulig().apply {
+                medisinskeArsaker = if (aktivitetType.aktivitetIkkeMulig.medisinskeArsaker != null) {
+                    ArsakType().apply {
+                        beskriv = aktivitetType.aktivitetIkkeMulig.medisinskeArsaker.medArsakerBesk
+                        arsakskode.add(CS())
+                    }
+                } else {
+                    null
+                }
+                arbeidsplassen = if (aktivitetType.aktivitetIkkeMulig.arbeidsplassen != null) {
+                    ArsakType().apply {
+                        beskriv = aktivitetType.aktivitetIkkeMulig.arbeidsplassen.arbeidsplassenBesk
+                        arsakskode.add(CS())
+                    }
+                } else {
+                    null
+                }
+            }
+            avventendeSykmelding = null
+            gradertSykmelding = null
+            behandlingsdager = null
+            isReisetilskudd = false
+        })
+    }
+
+    if (aktivitetType?.gradertSykmelding != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.gradertSykmelding.periodeFOMDato
+            periodeTOMDato = aktivitetType.gradertSykmelding.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = null
+            gradertSykmelding = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.GradertSykmelding().apply {
+                isReisetilskudd = aktivitetType.gradertSykmelding.isReisetilskudd?: false
+                sykmeldingsgrad = try {
+                    Integer.valueOf(aktivitetType.gradertSykmelding.sykmeldingsgrad)
+                } catch (e: NumberFormatException) {
+                    0
+                }
+            }
+            behandlingsdager = null
+            isReisetilskudd = false
+        })
+    }
+    if (aktivitetType?.avventendeSykmelding != null && !aktivitetType.innspillTilArbeidsgiver.isNullOrEmpty()) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.avventendeSykmelding.periodeFOMDato
+            periodeTOMDato = aktivitetType.avventendeSykmelding.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.AvventendeSykmelding().apply {
+                innspillTilArbeidsgiver = aktivitetType.innspillTilArbeidsgiver
+            }
+            gradertSykmelding = null
+            behandlingsdager = null
+            isReisetilskudd = false
+        })
+    }
+    if (aktivitetType?.behandlingsdager != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType.behandlingsdager.periodeFOMDato
+            periodeTOMDato = aktivitetType.behandlingsdager.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = null
+            gradertSykmelding = null
+            behandlingsdager = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.Behandlingsdager().apply {
+                antallBehandlingsdagerUke = aktivitetType.behandlingsdager.antallBehandlingsdager.toInt()
+            }
+            isReisetilskudd = false
+        })
+    }
+    if (aktivitetType?.reisetilskudd != null) {
+        periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
+            periodeFOMDato = aktivitetType?.reisetilskudd.periodeFOMDato
+            periodeTOMDato = aktivitetType?.reisetilskudd.periodeTOMDato
+            aktivitetIkkeMulig = null
+            avventendeSykmelding = null
+            gradertSykmelding = null
+            behandlingsdager = null
+            isReisetilskudd = true
+        })
+    }
+    if (periodeListe.isEmpty()) {
+        return emptyList()
+    }
+
+    return periodeListe.map(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode::toPeriode)
+}
+
+private fun toBehandler(sykmelder: Sykmelder?, behandler: BehandlerType?): Behandler = Behandler(
+        fornavn = sykmelder?.fornavn ?: "",
         mellomnavn = sykmelder?.mellomnavn,
-        etternavn = sykmelder?.etternavn?: "",
-        aktoerId = sykmelder?.aktorId?: "",
-        fnr = sykmelder?.fnr?: "",
-        hpr = (sykmelder?.hprNummer?: behandler?.hpr?: "").toString(),
+        etternavn = sykmelder?.etternavn ?: "",
+        aktoerId = sykmelder?.aktorId ?: "",
+        fnr = sykmelder?.fnr ?: "",
+        hpr = (sykmelder?.hprNummer ?: behandler?.hpr ?: "").toString(),
         her = "",
-        adresse = Adresse("", 0, "", "",""),
-        tlf = (sykmelder?.telefonnummer?: behandler?.telefon?: "").toString()
+        adresse = Adresse("", 0, "", "", ""),
+        tlf = (sykmelder?.telefonnummer ?: behandler?.telefon ?: "").toString()
 )
 
 
-fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysningerType?): Map<String, Map<String, SporsmalSvar>> {
-
+private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysningerType?): Map<String, Map<String, SporsmalSvar>> {
     val map = HashMap<String, SporsmalSvar>()
 
     if (utdypendeOpplysninger?.sykehistorie != null) {
@@ -129,7 +240,7 @@ fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysningerType?): 
     } else return emptyMap()
 }
 
-fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
+private fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
         arbeidsforEtterPeriode = prognose?.friskmelding?.isArbeidsforEtterEndtPeriode ?: true,
         hensynArbeidsplassen = prognose?.friskmelding?.beskrivHensynArbeidsplassen,
         erIArbeid = if (prognose != null && prognose.medArbeidsgiver != null) {
@@ -149,7 +260,7 @@ fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
         } else null
 )
 
-fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgiver(
+private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgiver(
         navn = arbeidsgiver?.navnArbeidsgiver,
         harArbeidsgiver = when (arbeidsgiver?.harArbeidsgiver) {
 
@@ -164,15 +275,15 @@ fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgive
         yrkesbetegnelse = arbeidsgiver?.yrkesbetegnelse
 )
 
-fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?): MedisinskVurdering {
+private fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?): MedisinskVurdering {
 
     return MedisinskVurdering(
             hovedDiagnose = toMedisinskVurderingDiagnose(medisinskVurderingType?.hovedDiagnose?.first()),
             biDiagnoser = medisinskVurderingType?.bidiagnose?.map {
                 toMedisinskVurderingDiagnose(it)!!
-            }?: ArrayList(),
-            svangerskap = medisinskVurderingType?.isSvangerskap?: false,
-            yrkesskade = medisinskVurderingType?.isYrkesskade?: false,
+            } ?: ArrayList(),
+            svangerskap = medisinskVurderingType?.isSvangerskap ?: false,
+            yrkesskade = medisinskVurderingType?.isYrkesskade ?: false,
             yrkesskadeDato = medisinskVurderingType?.yrkesskadedato,
             annenFraversArsak = medisinskVurderingType?.annenFraversArsak.let {
                 AnnenFraversArsak(
@@ -183,22 +294,23 @@ fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?): Medis
     )
 }
 
-fun toMedisinskVurderingDiagnose(hovedDiagnoseType: HovedDiagnoseType?): Diagnose? = toMedisinskVurderingDiagnose(
+private fun toMedisinskVurderingDiagnose(hovedDiagnoseType: HovedDiagnoseType?): Diagnose? = toMedisinskVurderingDiagnose(
         diagnoseKode = hovedDiagnoseType?.diagnosekode,
         diagnoseKodeSystem = hovedDiagnoseType?.diagnosekodeSystem,
         diagnoseTekst = hovedDiagnoseType?.diagnose)
 
-fun toMedisinskVurderingDiagnose(bidiagnoseType: BidiagnoseType?): Diagnose? = toMedisinskVurderingDiagnose(
+private fun toMedisinskVurderingDiagnose(bidiagnoseType: BidiagnoseType?): Diagnose? = toMedisinskVurderingDiagnose(
         diagnoseKode = bidiagnoseType?.diagnosekode,
         diagnoseKodeSystem = bidiagnoseType?.diagnosekodeSystem,
         diagnoseTekst = bidiagnoseType?.diagnose)
 
-fun toMedisinskVurderingDiagnose(diagnoseKodeSystem: String?, diagnoseKode: String?, diagnoseTekst: String?): Diagnose {
+private fun toMedisinskVurderingDiagnose(diagnoseKodeSystem: String?, diagnoseKode: String?, diagnoseTekst: String?): Diagnose {
     if (diagnoseKode != null) {
         val sanitisertDiagnoseKode = when {
             diagnoseKode?.contains(".") -> {
                 diagnoseKode?.replace(".", "").toUpperCase().replace(" ", "")
-            } else -> diagnoseKode?.toUpperCase().replace(" ", "")
+            }
+            else -> diagnoseKode?.toUpperCase().replace(" ", "")
         }
 
         if (Diagnosekoder.icd10.containsKey(sanitisertDiagnoseKode)) {

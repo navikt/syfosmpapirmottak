@@ -69,7 +69,7 @@
         <!--Optional:-->
         <periodeTOMDato>2020-05-30</periodeTOMDato>
         <!--Optional:-->
-        <sykmeldingsgrad>2/3</sykmeldingsgrad>
+        <sykmeldingsgrad>50</sykmeldingsgrad>
         <!--Optional:-->
         <reisetilskudd>true</reisetilskudd>
       </gradertSykmelding>
@@ -118,7 +118,7 @@
         <!--Optional:-->
         <arbeidsforEtterEndtPeriode>true</arbeidsforEtterEndtPeriode>
         <!--Optional:-->
-        <beskrivHensynArbeidsplassen>Dettte vet jeg ikke hva betyr engang.</beskrivHensynArbeidsplassen>
+        <beskrivHensynArbeidsplassen>Dette vet jeg ikke hva betyr engang.</beskrivHensynArbeidsplassen>
       </friskmelding>
       <!--Optional:-->
       <medArbeidsgiver>
@@ -169,7 +169,7 @@
       <beskrivBistandNAV>Her må NAV få fingeren ut. Skandale!</beskrivBistandNAV>
     </meldingTilNAV>
     <!--Optional:-->
-    <meldingTilArbeidsgiver>Ja, dere bør slutte med kull da. Og skift navn tilbake til NSB.</meldingTilArbeidsgiver>
+    <meldingTilArbeidsgiver>Ja, dere bør slutte med kull da.</meldingTilArbeidsgiver>
     <!--Optional:-->
     <tilbakedatering>
       <!--Optional:-->
@@ -180,7 +180,7 @@
     <!--Optional:-->
     <kontaktMedPasient>
       <!--Optional:-->
-      <behandletDato>20020-05-02</behandletDato>
+      <behandletDato>2020-05-02</behandletDato>
     </kontaktMedPasient>
     <!--Optional:-->
     <behandler>

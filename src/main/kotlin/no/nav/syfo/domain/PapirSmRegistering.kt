@@ -5,6 +5,7 @@ import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.KontaktMedPasient
 import no.nav.syfo.model.MedisinskVurdering
 import no.nav.syfo.model.MeldingTilNAV
+import no.nav.syfo.model.Periode
 import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import java.time.LocalDate
@@ -21,7 +22,7 @@ data class PapirSmRegistering(
         val arbeidsgiver: Arbeidsgiver?,
         val medisinskVurdering: MedisinskVurdering?,
         val skjermesForPasient: Boolean?,
-        val aktivitet: Any,
+        val perioder: List<Periode>?,
         val prognose: Prognose?,
         val utdypendeOpplysninger: Map<String, Map<String, SporsmalSvar>>?,
         val tiltakNAV: String?,
