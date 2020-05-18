@@ -58,7 +58,6 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.medisinskVurdering?.hovedDiagnose?.system shouldEqual Diagnosekoder.ICD10_CODE
             papirSm.medisinskVurdering?.hovedDiagnose?.tekst shouldEqual ocrFil.sykemeldinger.medisinskVurdering.hovedDiagnose.first().diagnose
             papirSm.medisinskVurdering?.biDiagnoser?.first()?.system shouldEqual Diagnosekoder.ICD10_CODE
-            papirSm.medisinskVurdering?.annenFraversArsak?.beskrivelse shouldEqual ocrFil.sykemeldinger.medisinskVurdering.annenFraversArsak
             papirSm.medisinskVurdering?.svangerskap shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isSvangerskap
             papirSm.medisinskVurdering?.yrkesskade shouldEqual ocrFil.sykemeldinger.medisinskVurdering.isYrkesskade
 

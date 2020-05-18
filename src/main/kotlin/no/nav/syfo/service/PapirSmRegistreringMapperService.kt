@@ -285,12 +285,7 @@ private fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?
             svangerskap = medisinskVurderingType?.isSvangerskap ?: false,
             yrkesskade = medisinskVurderingType?.isYrkesskade ?: false,
             yrkesskadeDato = medisinskVurderingType?.yrkesskadedato,
-            annenFraversArsak = medisinskVurderingType?.annenFraversArsak.let {
-                AnnenFraversArsak(
-                        beskrivelse = it,
-                        grunn = listOf(AnnenFraverGrunn.GODKJENT_HELSEINSTITUSJON) // TODO: I'm just guessing here
-                )
-            }
+            annenFraversArsak = null // Can't safely map this
     )
 }
 
