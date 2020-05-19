@@ -70,14 +70,8 @@ class SykmeldingService(
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
 
-        val papirSmRegistering = PapirSmRegistering(
-                journalpostId = journalpostId,
-                fnr = fnr,
-                aktorId = aktorId,
-                dokumentInfoId = dokumentInfoId,
-                datoOpprettet = datoOpprettet,
-                sykmeldingId = sykmeldingId
-        )
+        var ocrFil : Skanningmetadata? = null
+        var sykmelder : Sykmelder? = null
 
         if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
@@ -96,21 +90,21 @@ class SykmeldingService(
         } else {
             dokumentInfoId?.let {
                 try {
-                    val ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
+                    ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
 
                     ocrFil?.let {
-                        val sykmelder = hentSykmelder(ocrFil = ocrFil, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+                        val sykmelder = hentSykmelder(ocrFil = ocrFil!!, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder.fnr)
+                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
                         val samhandlerPraksisMatch = findBestSamhandlerPraksis(
                                 samhandlerInfo,
                                 loggingMeta)
                         val samhandlerPraksis = samhandlerPraksisMatch?.samhandlerPraksis
 
                         val fellesformat = mapOcrFilTilFellesformat(
-                                skanningmetadata = ocrFil,
+                                skanningmetadata = ocrFil!!,
                                 fnr = fnr,
-                                sykmelder = sykmelder,
+                                sykmelder = sykmelder!!,
                                 sykmeldingId = sykmeldingId,
                                 loggingMeta = loggingMeta)
 
@@ -186,6 +180,17 @@ class SykmeldingService(
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
+
+                    val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
+                            journalpostId = journalpostId,
+                            fnr = fnr,
+                            aktorId = aktorId,
+                            dokumentInfoId = dokumentInfoId,
+                            datoOpprettet = datoOpprettet,
+                            sykmeldingId = sykmeldingId,
+                            sykmelder = sykmelder,
+                            ocrFil = ocrFil
+                    )
 
                     val duplikatOppgave = oppgaveService.duplikatOppgave(
                             journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
