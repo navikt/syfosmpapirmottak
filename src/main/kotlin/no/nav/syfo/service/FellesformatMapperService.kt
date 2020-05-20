@@ -462,13 +462,13 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggin
     }
 
     val biDiagnoseListe: List<CV>? = medisinskVurderingType.bidiagnose?.map {
-        toMedisinskVurderingDiagnose(it.diagnosekode, it.diagnosekodeSystem, loggingMeta)
+        toMedisinskVurderingDiagnose(it.diagnosekode, it.diagnosekodeSystem, it.diagnose, loggingMeta)
     }
 
     return HelseOpplysningerArbeidsuforhet.MedisinskVurdering().apply {
         if (!medisinskVurderingType.hovedDiagnose.isNullOrEmpty()) {
             hovedDiagnose = HelseOpplysningerArbeidsuforhet.MedisinskVurdering.HovedDiagnose().apply {
-                diagnosekode = toMedisinskVurderingDiagnose(medisinskVurderingType.hovedDiagnose[0].diagnosekode, medisinskVurderingType.hovedDiagnose[0].diagnosekodeSystem, loggingMeta)
+                diagnosekode = toMedisinskVurderingDiagnose(medisinskVurderingType.hovedDiagnose[0].diagnosekode, medisinskVurderingType.hovedDiagnose[0].diagnosekodeSystem, medisinskVurderingType.hovedDiagnose[0].diagnose, loggingMeta)
             }
         }
         if (biDiagnoseListe != null && biDiagnoseListe.isNotEmpty()) {
@@ -489,7 +489,7 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggin
     }
 }
 
-fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?): String {
+fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?, diagnose: String?): String {
     val sanitisertSystem = system?.replace(".", "")?.replace(" ", "")?.replace("-", "")?.toUpperCase()
     val sanitisertKode = diagnoseKode.replace(".", "").replace(" ", "").toUpperCase()
 
@@ -497,23 +497,25 @@ fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?): String {
         return Diagnosekoder.ICD10_CODE
     } else if (sanitisertSystem == "ICPC2" && Diagnosekoder.icpc2.containsKey(sanitisertKode)) {
         return Diagnosekoder.ICPC2_CODE
-    }
-
-    return ""
+    } else if (Diagnosekoder.icd10.containsKey(sanitisertKode) && Diagnosekoder.icd10[sanitisertKode]?.text == diagnose) {
+        return Diagnosekoder.ICD10_CODE
+    } else if (Diagnosekoder.icpc2.containsKey(sanitisertKode) && Diagnosekoder.icpc2[sanitisertKode]?.text == diagnose) {
+        return Diagnosekoder.ICPC2_CODE
+    } else return ""
 }
 
-fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: String?, loggingMeta: LoggingMeta): CV {
+fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: String?, diagnose: String?, loggingMeta: LoggingMeta): CV {
     val diagnosekode = if (originalDiagnosekode.contains(".")) {
         originalDiagnosekode.replace(".", "").toUpperCase().replace(" ", "")
     } else {
         originalDiagnosekode.toUpperCase().replace(" ", "")
     }
 
-    val identifisertKodeverk = identifiserDiagnoseKodeverk(originalDiagnosekode, originalSystem)
+    val identifisertKodeverk = identifiserDiagnoseKodeverk(originalDiagnosekode, originalSystem, diagnose)
 
     when {
         identifisertKodeverk == Diagnosekoder.ICD10_CODE -> {
-            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode og kodeverk", fields(loggingMeta))
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode og kodeverk/diagnosetekst", fields(loggingMeta))
             return CV().apply {
                 s = Diagnosekoder.ICD10_CODE
                 v = diagnosekode
@@ -521,7 +523,7 @@ fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: S
             }
         }
         identifisertKodeverk == Diagnosekoder.ICPC2_CODE -> {
-            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode og kodeverk", fields(loggingMeta))
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode og kodeverk/diagnosetekst", fields(loggingMeta))
             return CV().apply {
                 s = Diagnosekoder.ICPC2_CODE
                 v = diagnosekode
