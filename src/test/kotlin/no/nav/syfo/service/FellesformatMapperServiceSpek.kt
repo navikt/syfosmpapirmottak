@@ -275,17 +275,48 @@ object FellesformatMapperServiceSpek : Spek({
         }
 
         it("diagnoseFraDiagnosekode ICD10") {
-            val diagnose = toMedisinskVurderingDiagnode("S52.5", loggingMetadata)
+            val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode =  "S52.5", originalSystem = "ICD-10", diagnose = "foo Bar", loggingMeta = loggingMetadata)
 
             diagnose.s shouldEqual Diagnosekoder.ICD10_CODE
             diagnose.v shouldEqual "S525"
         }
 
         it("diagnoseFraDiagnosekode ICPC2") {
-            val diagnose = toMedisinskVurderingDiagnode("L72", loggingMetadata)
+            val diagnose = toMedisinskVurderingDiagnose("L72", originalSystem = "ICPC2", diagnose = "foo Bar", loggingMeta = loggingMetadata)
 
             diagnose.s shouldEqual Diagnosekoder.ICPC2_CODE
             diagnose.v shouldEqual "L72"
+        }
+
+        it("diagnoseFraDiagnosekode ICD10, ugyldig kode") {
+            val system = identifiserDiagnoseKodeverk( diagnoseKode =  "foobar", system = "ICD-10", diagnose = "foo bar")
+            system shouldEqual ""
+        }
+
+        it("diagnoseFraDiagnosekode ICD10, gyldig kode") {
+            val system = identifiserDiagnoseKodeverk( diagnoseKode =  "S52.5", system = "ICD-10", diagnose = "foo bar")
+            system shouldEqual Diagnosekoder.ICD10_CODE
+        }
+
+
+        it("diagnoseFraDiagnosekode ICD10, gyldig kode, gyldig diagnose, ugyldig system") {
+            val system = identifiserDiagnoseKodeverk( diagnoseKode =  "S52.5", system = "foo bar", diagnose = "Brudd i distal ende av radius")
+            system shouldEqual Diagnosekoder.ICD10_CODE
+        }
+
+        it("diagnoseFraDiagnosekode ICPC-2, gyldig kode") {
+            val system = identifiserDiagnoseKodeverk( diagnoseKode =  "L72", system = "ICPC-2", diagnose = "foo bar")
+            system shouldEqual Diagnosekoder.ICPC2_CODE
+        }
+
+        it("diagnoseFraDiagnosekode ICPC-2, gyldig kode, gyldig diagnose, manglende kodeverk") {
+            val system = identifiserDiagnoseKodeverk( diagnoseKode =  "L72", system = "", diagnose = "Brudd underarm")
+            system shouldEqual Diagnosekoder.ICPC2_CODE
+        }
+
+        it("diagnoseFraDiagnosekode ICPC-2, ugyldig kode") {
+            val system = identifiserDiagnoseKodeverk( diagnoseKode =  "foobar", system = "ICPC-2", diagnose = "foo bar")
+            system shouldEqual ""
         }
 
         it("tilArbeidsgiver en arbeidsgiver") {
@@ -536,7 +567,7 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea)
+            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2",  "foo Bar", loggingmetea)
 
             houveddiagnose.v shouldEqual "T819"
         }
@@ -549,7 +580,7 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val func = { toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea) }
+            val func = { toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2",  "foo Bar", loggingmetea) }
             func shouldThrow IllegalStateException::class
         }
 
@@ -561,7 +592,7 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea)
+            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2",  "foo Bar", loggingmetea)
 
             houveddiagnose.v shouldEqual "T819"
         }
@@ -574,7 +605,7 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnode(gyldigdiagnose, loggingmetea)
+            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2",  "foo Bar", loggingmetea)
 
             houveddiagnose.v shouldEqual "T819"
         }
