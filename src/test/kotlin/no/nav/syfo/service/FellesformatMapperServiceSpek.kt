@@ -489,7 +489,7 @@ object FellesformatMapperServiceSpek : Spek({
 
             val prognose = tilPrognose(prognoseType)
 
-            prognose.isArbeidsforEtterEndtPeriode shouldEqual true
+            prognose.isArbeidsforEtterEndtPeriode shouldEqual false
             prognose.beskrivHensynArbeidsplassen shouldEqual null
             prognose.erIkkeIArbeid?.isArbeidsforPaSikt shouldEqual true
             prognose.erIkkeIArbeid?.arbeidsforFraDato shouldEqual tilbakeIArbeidDato

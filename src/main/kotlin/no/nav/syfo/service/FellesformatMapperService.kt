@@ -312,7 +312,7 @@ fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<He
 
 fun tilPrognose(prognoseType: PrognoseType): HelseOpplysningerArbeidsuforhet.Prognose =
         HelseOpplysningerArbeidsuforhet.Prognose().apply {
-            isArbeidsforEtterEndtPeriode = prognoseType.friskmelding?.isArbeidsforEtterEndtPeriode ?: true
+            isArbeidsforEtterEndtPeriode = prognoseType.friskmelding?.isArbeidsforEtterEndtPeriode ?: false
             beskrivHensynArbeidsplassen = prognoseType.friskmelding?.beskrivHensynArbeidsplassen
             erIArbeid = prognoseType.medArbeidsgiver?.let {
                 HelseOpplysningerArbeidsuforhet.Prognose.ErIArbeid().apply {
