@@ -95,7 +95,7 @@ class SykmeldingService(
                     ocrFil?.let {
                         val sykmelder = hentSykmelder(ocrFil = ocrFil!!, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
+                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder.fnr)
                         val samhandlerPraksisMatch = findBestSamhandlerPraksis(
                                 samhandlerInfo,
                                 loggingMeta)
