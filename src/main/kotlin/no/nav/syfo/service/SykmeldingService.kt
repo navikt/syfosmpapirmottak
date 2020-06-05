@@ -186,7 +186,7 @@ class SykmeldingService(
                             fnr = fnr,
                             aktorId = aktorId,
                             dokumentInfoId = dokumentInfoId,
-                            datoOpprettet = datoOpprettet,
+                            datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toLocalDateTime(),
                             sykmeldingId = sykmeldingId,
                             sykmelder = sykmelder,
                             ocrFil = ocrFil
