@@ -1,6 +1,9 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import java.io.StringReader
+import java.time.LocalDate
+import java.time.LocalDateTime
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
@@ -12,9 +15,6 @@ import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.io.StringReader
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 @KtorExperimentalAPI
 object PapirSmMapperServiceSpek : Spek({
@@ -96,13 +96,11 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.meldingTilNAV?.bistandUmiddelbart shouldEqual true
             papirSm.meldingTilNAV?.beskrivBistand shouldEqual "Her må NAV få fingeren ut. Skandale!"
             papirSm.meldingTilArbeidsgiver shouldEqual "Ja, dere bør slutte med kull da."
-            papirSm.kontaktMedPasient?.kontaktDato shouldEqual LocalDate.of(2020,5,2)
-            papirSm.behandletTidspunkt shouldEqual LocalDate.of(2020,5,2)
+            papirSm.kontaktMedPasient?.kontaktDato shouldEqual LocalDate.of(2020, 5, 2)
+            papirSm.behandletTidspunkt shouldEqual LocalDate.of(2020, 5, 2)
 
             papirSm.behandler?.hpr shouldEqual "100"
             papirSm.behandler?.tlf shouldEqual "103"
         }
-
     }
-
 })

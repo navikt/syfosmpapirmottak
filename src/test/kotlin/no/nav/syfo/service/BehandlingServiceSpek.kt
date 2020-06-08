@@ -95,14 +95,15 @@ object BehandlingServiceSpek : Spek({
                     syfoserviceProducerMock, sessionMock, "topic",
                     kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
                     kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
-                    "topic1", "topic2"
+                    "topic1", "topic2",
+                    kafkaproducerPapirSmRegistering, "topic3"
                 )
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(eq("fnr"), sykmeldingId) }
             coVerify { aktoerIdClientMock.finnFnr(any(), any())!! wasNot Called }
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), eq("fnr"), eq("aktorId"), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), eq("fnr"), eq("aktorId"), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
         }
 

@@ -70,8 +70,8 @@ class SykmeldingService(
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
 
-        var ocrFil : Skanningmetadata? = null
-        var sykmelder : Sykmelder? = null
+        var ocrFil: Skanningmetadata? = null
+        var sykmelder: Sykmelder? = null
 
         if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()

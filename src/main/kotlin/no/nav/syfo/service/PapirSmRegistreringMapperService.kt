@@ -1,5 +1,7 @@
 package no.nav.syfo.service
 
+import java.lang.NumberFormatException
+import java.time.LocalDateTime
 import no.nav.helse.sm2013.ArsakType
 import no.nav.helse.sm2013.CS
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
@@ -14,21 +16,14 @@ import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
-import no.nav.syfo.log
 import no.nav.syfo.model.Adresse
-import no.nav.syfo.model.AktivitetIkkeMulig
-import no.nav.syfo.model.AnnenFraverGrunn
-import no.nav.syfo.model.AnnenFraversArsak
 import no.nav.syfo.model.Arbeidsgiver
-import no.nav.syfo.model.ArbeidsrelatertArsak
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.Diagnose
 import no.nav.syfo.model.ErIArbeid
 import no.nav.syfo.model.ErIkkeIArbeid
-import no.nav.syfo.model.Gradert
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.KontaktMedPasient
-import no.nav.syfo.model.MedisinskArsak
 import no.nav.syfo.model.MedisinskVurdering
 import no.nav.syfo.model.MeldingTilNAV
 import no.nav.syfo.model.Periode
@@ -36,18 +31,16 @@ import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
-import java.lang.NumberFormatException
-import java.time.LocalDateTime
 
 fun mapOcrFilTilPapirSmRegistrering(
-        journalpostId: String,
-        fnr: String?,
-        aktorId: String?,
-        dokumentInfoId: String?,
-        datoOpprettet: LocalDateTime?,
-        sykmeldingId: String,
-        sykmelder: Sykmelder?,
-        ocrFil: Skanningmetadata?
+    journalpostId: String,
+    fnr: String?,
+    aktorId: String?,
+    dokumentInfoId: String?,
+    datoOpprettet: LocalDateTime?,
+    sykmeldingId: String,
+    sykmelder: Sykmelder?,
+    ocrFil: Skanningmetadata?
 ): PapirSmRegistering {
 
     val sykmelding = ocrFil?.sykemeldinger
@@ -125,7 +118,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
             aktivitetIkkeMulig = null
             avventendeSykmelding = null
             gradertSykmelding = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.GradertSykmelding().apply {
-                isReisetilskudd = aktivitetType.gradertSykmelding.isReisetilskudd?: false
+                isReisetilskudd = aktivitetType.gradertSykmelding.isReisetilskudd ?: false
                 sykmeldingsgrad = try {
                     Integer.valueOf(aktivitetType.gradertSykmelding.sykmeldingsgrad)
                 } catch (e: NumberFormatException) {
@@ -164,8 +157,8 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
     }
     if (aktivitetType?.reisetilskudd != null) {
         periodeListe.add(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
-            periodeFOMDato = aktivitetType?.reisetilskudd.periodeFOMDato
-            periodeTOMDato = aktivitetType?.reisetilskudd.periodeTOMDato
+            periodeFOMDato = aktivitetType.reisetilskudd.periodeFOMDato
+            periodeTOMDato = aktivitetType.reisetilskudd.periodeTOMDato
             aktivitetIkkeMulig = null
             avventendeSykmelding = null
             gradertSykmelding = null
@@ -192,7 +185,6 @@ private fun toBehandler(sykmelder: Sykmelder?, behandler: BehandlerType?): Behan
         tlf = (sykmelder?.telefonnummer ?: behandler?.telefon ?: "").toString()
 )
 
-
 private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysningerType?): Map<String, Map<String, SporsmalSvar>> {
     val map = HashMap<String, SporsmalSvar>()
 
@@ -200,7 +192,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val id = "6.2.1"
         val sporsmalSvar = SporsmalSvar(
                 sporsmal = "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon",
-                svar = utdypendeOpplysninger?.sykehistorie,
+                svar = utdypendeOpplysninger.sykehistorie,
                 restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
         )
         map[id] = sporsmalSvar
@@ -210,7 +202,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val id = "6.2.2"
         val sporsmalSvar = SporsmalSvar(
                 sporsmal = "Hvordan påvirker sykdommen arbeidsevnen",
-                svar = utdypendeOpplysninger?.arbeidsevne,
+                svar = utdypendeOpplysninger.arbeidsevne,
                 restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
         )
         map[id] = sporsmalSvar
@@ -220,7 +212,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val id = "6.2.3"
         val sporsmalSvar = SporsmalSvar(
                 sporsmal = "Har behandlingen frem til nå bedret arbeidsevnen",
-                svar = utdypendeOpplysninger?.behandlingsresultat,
+                svar = utdypendeOpplysninger.behandlingsresultat,
                 restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
         )
         map[id] = sporsmalSvar
@@ -230,7 +222,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val id = "6.2.4"
         val sporsmalSvar = SporsmalSvar(
                 sporsmal = "Beskriv pågående og planlagt henvisning,utredning og/eller behandling",
-                svar = utdypendeOpplysninger?.planlagtBehandling,
+                svar = utdypendeOpplysninger.planlagtBehandling,
                 restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
         )
         map[id] = sporsmalSvar
@@ -302,10 +294,10 @@ private fun toMedisinskVurderingDiagnose(bidiagnoseType: BidiagnoseType?): Diagn
 private fun toMedisinskVurderingDiagnose(diagnoseKodeSystem: String?, diagnoseKode: String?, diagnoseTekst: String?): Diagnose {
     if (diagnoseKode != null) {
         val sanitisertDiagnoseKode = when {
-            diagnoseKode?.contains(".") -> {
-                diagnoseKode?.replace(".", "").toUpperCase().replace(" ", "")
+            diagnoseKode.contains(".") -> {
+                diagnoseKode.replace(".", "").toUpperCase().replace(" ", "")
             }
-            else -> diagnoseKode?.toUpperCase().replace(" ", "")
+            else -> diagnoseKode.toUpperCase().replace(" ", "")
         }
 
         if (Diagnosekoder.icd10.containsKey(sanitisertDiagnoseKode)) {
