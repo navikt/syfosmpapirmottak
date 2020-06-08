@@ -44,8 +44,7 @@ suspend fun handleManuell(
             sykmeldingId = receivedSykmelding.sykmelding.id, msgId = receivedSykmelding.sykmelding.msgId, healthInformation = healthInformation)
     log.info("Message send to syfoService, {}", fields(loggingMeta))
 
-    kafkaproducerreceivedSykmelding.send(ProducerRecord(sm2013ManualHandlingTopic, receivedSykmelding.sykmelding.id, receivedSykmelding))
-    log.info("Message send to kafka {}, {}", sm2013ManualHandlingTopic, fields(loggingMeta))
+    sendReceivedSykmeldingToKafka(kafkaproducerreceivedSykmelding, sm2013ManualHandlingTopic, receivedSykmelding, loggingMeta)
 
     sendValidationResult(validationResult, kafkaproducervalidationResult, sm2013BehandlingsUtfallTopic, receivedSykmelding, loggingMeta)
 }
@@ -58,10 +57,15 @@ fun sendValidationResult(
     loggingMeta: LoggingMeta
 ) {
 
-    kafkaproducervalidationResult.send(
-            ProducerRecord(sm2013BehandlingsUtfallToipic, receivedSykmelding.sykmelding.id, validationResult)
-    )
-    log.info("Validation results send to kafka {}, {}", sm2013BehandlingsUtfallToipic, fields(loggingMeta))
+    try {
+        kafkaproducervalidationResult.send(
+                ProducerRecord(sm2013BehandlingsUtfallToipic, receivedSykmelding.sykmelding.id, validationResult)
+        ).get()
+        log.info("Validation results send to kafka {}, {}", sm2013BehandlingsUtfallToipic, fields(loggingMeta))
+    } catch (ex: Exception) {
+        log.error("Failed to send validation result to kafka {}", fields(loggingMeta))
+        throw ex
+    }
 }
 
 fun opprettOppgave(
@@ -70,29 +74,33 @@ fun opprettOppgave(
     results: ValidationResult,
     loggingMeta: LoggingMeta
 ) {
-    kafkaProducer.send(
-            ProducerRecord(
-                    "aapen-syfo-oppgave-produserOppgave",
-                    receivedSykmelding.sykmelding.id,
-                    ProduceTask().apply {
-                        messageId = receivedSykmelding.msgId
-                        aktoerId = receivedSykmelding.sykmelding.pasientAktoerId
-                        tildeltEnhetsnr = ""
-                        opprettetAvEnhetsnr = "9999"
-                        behandlesAvApplikasjon = "FS22" // Gosys
-                        orgnr = receivedSykmelding.legekontorOrgNr ?: ""
-                        beskrivelse = "Manuell behandling av sykmelding grunnet følgende regler: ${results.ruleHits.joinToString(", ", "(", ")") { it.messageForSender }}"
-                        temagruppe = "ANY"
-                        tema = "SYM"
-                        behandlingstema = "ANY"
-                        oppgavetype = "BEH_EL_SYM"
-                        behandlingstype = "ANY"
-                        mappeId = 1
-                        aktivDato = DateTimeFormatter.ISO_DATE.format(LocalDate.now())
-                        fristFerdigstillelse = DateTimeFormatter.ISO_DATE.format(finnFristForFerdigstillingAvOppgave(LocalDate.now().plusDays(4)))
-                        prioritet = PrioritetType.NORM
-                        metadata = mapOf()
-                    }))
-
-    log.info("Message sendt to topic: aapen-syfo-oppgave-produserOppgave {}", fields(loggingMeta))
+    try {
+        kafkaProducer.send(
+                ProducerRecord(
+                        "aapen-syfo-oppgave-produserOppgave",
+                        receivedSykmelding.sykmelding.id,
+                        ProduceTask().apply {
+                            messageId = receivedSykmelding.msgId
+                            aktoerId = receivedSykmelding.sykmelding.pasientAktoerId
+                            tildeltEnhetsnr = ""
+                            opprettetAvEnhetsnr = "9999"
+                            behandlesAvApplikasjon = "FS22" // Gosys
+                            orgnr = receivedSykmelding.legekontorOrgNr ?: ""
+                            beskrivelse = "Manuell behandling av sykmelding grunnet følgende regler: ${results.ruleHits.joinToString(", ", "(", ")") { it.messageForSender }}"
+                            temagruppe = "ANY"
+                            tema = "SYM"
+                            behandlingstema = "ANY"
+                            oppgavetype = "BEH_EL_SYM"
+                            behandlingstype = "ANY"
+                            mappeId = 1
+                            aktivDato = DateTimeFormatter.ISO_DATE.format(LocalDate.now())
+                            fristFerdigstillelse = DateTimeFormatter.ISO_DATE.format(finnFristForFerdigstillingAvOppgave(LocalDate.now().plusDays(4)))
+                            prioritet = PrioritetType.NORM
+                            metadata = mapOf()
+                        })).get()
+        log.info("Message sendt to topic: aapen-syfo-oppgave-produserOppgave {}", fields(loggingMeta))
+    } catch (ex: Exception) {
+        log.error("Failed to send oppgave to kafka {}", fields(loggingMeta))
+        throw ex
+    }
 }
