@@ -312,7 +312,7 @@ fun tilSpmGruppe(utdypendeOpplysningerType: UtdypendeOpplysningerType?): List<He
 
 fun tilPrognose(prognoseType: PrognoseType): HelseOpplysningerArbeidsuforhet.Prognose =
         HelseOpplysningerArbeidsuforhet.Prognose().apply {
-            isArbeidsforEtterEndtPeriode = prognoseType.friskmelding?.isArbeidsforEtterEndtPeriode ?: true
+            isArbeidsforEtterEndtPeriode = prognoseType.friskmelding?.isArbeidsforEtterEndtPeriode ?: false
             beskrivHensynArbeidsplassen = prognoseType.friskmelding?.beskrivHensynArbeidsplassen
             erIArbeid = prognoseType.medArbeidsgiver?.let {
                 HelseOpplysningerArbeidsuforhet.Prognose.ErIArbeid().apply {
@@ -462,13 +462,13 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggin
     }
 
     val biDiagnoseListe: List<CV>? = medisinskVurderingType.bidiagnose?.map {
-        toMedisinskVurderingDiagnode(it.diagnosekode, loggingMeta)
+        toMedisinskVurderingDiagnose(it.diagnosekode, it.diagnosekodeSystem, it.diagnose, loggingMeta)
     }
 
     return HelseOpplysningerArbeidsuforhet.MedisinskVurdering().apply {
         if (!medisinskVurderingType.hovedDiagnose.isNullOrEmpty()) {
             hovedDiagnose = HelseOpplysningerArbeidsuforhet.MedisinskVurdering.HovedDiagnose().apply {
-                diagnosekode = toMedisinskVurderingDiagnode(medisinskVurderingType.hovedDiagnose[0].diagnosekode, loggingMeta)
+                diagnosekode = toMedisinskVurderingDiagnose(medisinskVurderingType.hovedDiagnose[0].diagnosekode, medisinskVurderingType.hovedDiagnose[0].diagnosekodeSystem, medisinskVurderingType.hovedDiagnose[0].diagnose, loggingMeta)
             }
         }
         if (biDiagnoseListe != null && biDiagnoseListe.isNotEmpty()) {
@@ -489,29 +489,69 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggin
     }
 }
 
-fun toMedisinskVurderingDiagnode(originalDiagnosekode: String, loggingMeta: LoggingMeta): CV {
+fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?, diagnose: String?): String {
+    val sanitisertSystem = system?.replace(".", "")?.replace(" ", "")?.replace("-", "")?.toUpperCase()
+    val sanitisertKode = diagnoseKode.replace(".", "").replace(" ", "").toUpperCase()
+
+    if (sanitisertSystem == "ICD10" && Diagnosekoder.icd10.containsKey(sanitisertKode)) {
+        return Diagnosekoder.ICD10_CODE
+    } else if (sanitisertSystem == "ICPC2" && Diagnosekoder.icpc2.containsKey(sanitisertKode)) {
+        return Diagnosekoder.ICPC2_CODE
+    } else if (Diagnosekoder.icd10.containsKey(sanitisertKode) && Diagnosekoder.icd10[sanitisertKode]?.text == diagnose) {
+        return Diagnosekoder.ICD10_CODE
+    } else if (Diagnosekoder.icpc2.containsKey(sanitisertKode) && Diagnosekoder.icpc2[sanitisertKode]?.text == diagnose) {
+        return Diagnosekoder.ICPC2_CODE
+    } else return ""
+}
+
+fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: String?, diagnose: String?, loggingMeta: LoggingMeta): CV {
     val diagnosekode = if (originalDiagnosekode.contains(".")) {
         originalDiagnosekode.replace(".", "").toUpperCase().replace(" ", "")
     } else {
         originalDiagnosekode.toUpperCase().replace(" ", "")
     }
-    if (Diagnosekoder.icd10.containsKey(diagnosekode)) {
-        log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {}", fields(loggingMeta))
-        return CV().apply {
-            s = Diagnosekoder.ICD10_CODE
-            v = diagnosekode
-            dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
+
+    val identifisertKodeverk = identifiserDiagnoseKodeverk(originalDiagnosekode, originalSystem, diagnose)
+
+    when {
+        identifisertKodeverk == Diagnosekoder.ICD10_CODE -> {
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode og kodeverk/diagnosetekst", fields(loggingMeta))
+            return CV().apply {
+                s = Diagnosekoder.ICD10_CODE
+                v = diagnosekode
+                dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
+            }
         }
-    } else if (Diagnosekoder.icpc2.containsKey(diagnosekode)) {
-        log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {}", fields(loggingMeta))
-        return CV().apply {
-            s = Diagnosekoder.ICPC2_CODE
-            v = diagnosekode
-            dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: ""
+        identifisertKodeverk == Diagnosekoder.ICPC2_CODE -> {
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode og kodeverk/diagnosetekst", fields(loggingMeta))
+            return CV().apply {
+                s = Diagnosekoder.ICPC2_CODE
+                v = diagnosekode
+                dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: ""
+            }
+        }
+        Diagnosekoder.icd10.containsKey(diagnosekode) -> {
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode (kodeverk ikke angitt)", fields(loggingMeta))
+            return CV().apply {
+                s = Diagnosekoder.ICD10_CODE
+                v = diagnosekode
+                dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
+            }
+        }
+        Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
+            log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode (kodeverk ikke angitt)", fields(loggingMeta))
+            return CV().apply {
+                s = Diagnosekoder.ICPC2_CODE
+                v = diagnosekode
+                dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: ""
+            }
+        }
+        else -> {
+            log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
+            throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
         }
     }
-    log.warn("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}", fields(loggingMeta))
-    throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
+
 }
 
 fun containsDotAndLowerCaseLetters(originalDiagnosekode: String): String {

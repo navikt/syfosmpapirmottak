@@ -87,6 +87,25 @@ object BehandlingServiceSpek : Spek({
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
         }
 
+        it("Ende-til-ende journalpost med fnr ny skanningleverandør") {
+            val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_IM")
+
+            runBlocking {
+                behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
+                    syfoserviceProducerMock, sessionMock, "topic",
+                    kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                    kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
+                    "topic1", "topic2"
+                )
+            }
+
+            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(eq("fnr"), sykmeldingId) }
+            coVerify { aktoerIdClientMock.finnFnr(any(), any())!! wasNot Called }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), eq("fnr"), eq("aktorId"), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
+        }
+
         it("Ende-til-ende journalpost med aktorId") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
