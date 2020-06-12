@@ -1,11 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import javax.jms.MessageProducer
-import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -36,6 +31,11 @@ import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import javax.jms.MessageProducer
+import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -93,9 +93,9 @@ class SykmeldingService(
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
 
                     ocrFil?.let {
-                        val sykmelder = hentSykmelder(ocrFil = ocrFil!!, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+                        sykmelder = hentSykmelder(ocrFil = ocrFil!!, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder.fnr)
+                        val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
                         val samhandlerPraksisMatch = findBestSamhandlerPraksis(
                                 samhandlerInfo,
                                 loggingMeta)
@@ -114,7 +114,7 @@ class SykmeldingService(
                         val sykmelding = healthInformation.toSykmelding(
                                 sykmeldingId = sykmeldingId,
                                 pasientAktoerId = aktorId,
-                                legeAktoerId = sykmelder.aktorId,
+                                legeAktoerId = sykmelder!!.aktorId,
                                 msgId = sykmeldingId,
                                 signaturDato = msgHead.msgInfo.genDate
                         )
@@ -123,7 +123,7 @@ class SykmeldingService(
                                 sykmelding = sykmelding,
                                 personNrPasient = fnr,
                                 tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
-                                personNrLege = sykmelder.fnr,
+                                personNrLege = sykmelder!!.fnr,
                                 navLogId = sykmeldingId,
                                 msgId = sykmeldingId,
                                 legekontorOrgNr = null,
@@ -180,6 +180,9 @@ class SykmeldingService(
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
+
+                    // TODO: Dette må slås av for prod og på i dev
+                    // TODO: Støtte for pilotkontorer må legges til
 
                     val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
                             journalpostId = journalpostId,
