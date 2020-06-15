@@ -196,7 +196,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
         }
 
-        it("Henter ikke dokument hvis dokumentInfoId mangler") {
+        it("Henter ikke dokument hvis dokumentInfoId mangler, oppretter oppgave") {
             runBlocking {
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
                         aktorId = aktorId, dokumentInfoId = null, datoOpprettet = datoOpprettet,
@@ -212,8 +212,8 @@ object SykmeldingServiceSpek : Spek({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
         }
@@ -282,8 +282,8 @@ object SykmeldingServiceSpek : Spek({
             coVerify { regelClientMock.valider(any(), any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) wasNot Called }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
         }
 
         it("Går videre og oppretter oppgave hvis mapping feiler i prod") {
@@ -338,8 +338,8 @@ object SykmeldingServiceSpek : Spek({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) wasNot Called }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
         }
 
@@ -383,7 +383,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify { regelClientMock.valider(any(), any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
@@ -414,8 +414,8 @@ object SykmeldingServiceSpek : Spek({
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) wasNot Called }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) wasNot Called }
         }

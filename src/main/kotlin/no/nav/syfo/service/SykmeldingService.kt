@@ -84,9 +84,9 @@ class SykmeldingService(
             if (!oppgave.duplikat) {
                 PAPIRSM_FORDELINGSOPPGAVE.inc()
                 log.info("Opprettet fordelingsoppgave med {}, {} {}",
-                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                        StructuredArguments.keyValue("journalpostId", journalpostId),
-                        fields(loggingMeta)
+                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                    StructuredArguments.keyValue("journalpostId", journalpostId),
+                    fields(loggingMeta)
                 )
             }
         } else {
@@ -94,48 +94,49 @@ class SykmeldingService(
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
 
-                    ocrFil?.let {
-                        sykmelder = hentSykmelder(ocrFil = ocrFil!!, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+                    ocrFil?.let { ocr ->
+                        sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
                         val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
                         val samhandlerPraksisMatch = findBestSamhandlerPraksis(
-                                samhandlerInfo,
-                                loggingMeta)
+                            samhandlerInfo,
+                            loggingMeta)
                         val samhandlerPraksis = samhandlerPraksisMatch?.samhandlerPraksis
 
                         val fellesformat = mapOcrFilTilFellesformat(
-                                skanningmetadata = ocrFil!!,
-                                fnr = fnr,
-                                sykmelder = sykmelder!!,
-                                sykmeldingId = sykmeldingId,
-                                loggingMeta = loggingMeta)
+                            skanningmetadata = ocr,
+                            fnr = fnr,
+                            sykmelder = sykmelder!!,
+                            sykmeldingId = sykmeldingId,
+                            loggingMeta = loggingMeta)
 
                         val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
                         val msgHead = fellesformat.get<XMLMsgHead>()
 
                         val sykmelding = healthInformation.toSykmelding(
-                                sykmeldingId = sykmeldingId,
-                                pasientAktoerId = aktorId,
-                                legeAktoerId = sykmelder!!.aktorId,
-                                msgId = sykmeldingId,
-                                signaturDato = msgHead.msgInfo.genDate
+                            sykmeldingId = sykmeldingId,
+                            pasientAktoerId = aktorId,
+                            legeAktoerId = sykmelder!!.aktorId,
+                            msgId = sykmeldingId,
+                            signaturDato = msgHead.msgInfo.genDate
                         )
 
                         val receivedSykmelding = ReceivedSykmelding(
-                                sykmelding = sykmelding,
-                                personNrPasient = fnr,
-                                tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
-                                personNrLege = sykmelder!!.fnr,
-                                navLogId = sykmeldingId,
-                                msgId = sykmeldingId,
-                                legekontorOrgNr = null,
-                                legekontorOrgName = "",
-                                legekontorHerId = null,
-                                legekontorReshId = null,
-                                mottattDato = (datoOpprettet ?: msgHead.msgInfo.genDate).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
-                                rulesetVersion = healthInformation.regelSettVersjon,
-                                fellesformat = fellesformatMarshaller.toString(fellesformat),
-                                tssid = samhandlerPraksis?.tss_ident ?: ""
+                            sykmelding = sykmelding,
+                            personNrPasient = fnr,
+                            tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                            personNrLege = sykmelder!!.fnr,
+                            navLogId = sykmeldingId,
+                            msgId = sykmeldingId,
+                            legekontorOrgNr = null,
+                            legekontorOrgName = "",
+                            legekontorHerId = null,
+                            legekontorReshId = null,
+                            mottattDato = (datoOpprettet
+                                ?: msgHead.msgInfo.genDate).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
+                            rulesetVersion = healthInformation.regelSettVersjon,
+                            fellesformat = fellesformatMarshaller.toString(fellesformat),
+                            tssid = samhandlerPraksis?.tss_ident ?: ""
                         )
 
                         log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
@@ -144,83 +145,84 @@ class SykmeldingService(
                         log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
                         log.info("Resultat: {}, {}, {}",
-                                StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
-                                StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
-                                fields(loggingMeta)
+                            StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
+                            StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
+                            fields(loggingMeta)
                         )
                         when (validationResult.status) {
                             Status.OK -> handleOk(
-                                    kafkaproducerreceivedSykmelding,
-                                    sm2013AutomaticHandlingTopic,
-                                    receivedSykmelding,
-                                    session,
-                                    syfoserviceProducer,
-                                    receivedSykmelding.sykmelding.id,
-                                    healthInformation,
-                                    dokArkivClient,
-                                    journalpostId,
-                                    loggingMeta
+                                kafkaproducerreceivedSykmelding,
+                                sm2013AutomaticHandlingTopic,
+                                receivedSykmelding,
+                                session,
+                                syfoserviceProducer,
+                                receivedSykmelding.sykmelding.id,
+                                healthInformation,
+                                dokArkivClient,
+                                journalpostId,
+                                loggingMeta
                             )
                             Status.MANUAL_PROCESSING -> handleManuell(
-                                    kafkaManuelTaskProducer,
-                                    kafkaproducerreceivedSykmelding,
-                                    sm2013ManualHandlingTopic,
-                                    kafkaValidationResultProducer,
-                                    sm2013BehandlingsUtfallTopic,
-                                    syfoserviceProducer,
-                                    session,
-                                    receivedSykmelding,
-                                    validationResult,
-                                    healthInformation,
-                                    dokArkivClient,
-                                    journalpostId,
-                                    loggingMeta
+                                kafkaManuelTaskProducer,
+                                kafkaproducerreceivedSykmelding,
+                                sm2013ManualHandlingTopic,
+                                kafkaValidationResultProducer,
+                                sm2013BehandlingsUtfallTopic,
+                                syfoserviceProducer,
+                                session,
+                                receivedSykmelding,
+                                validationResult,
+                                healthInformation,
+                                dokArkivClient,
+                                journalpostId,
+                                loggingMeta
                             )
                             else -> throw IllegalStateException("Ukjent status: ${validationResult.status} , Papirsykmeldinger kan kun ha ein av to typer statuser enten OK eller MANUAL_PROCESSING")
                         }
                     }
+                    log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
+                    return
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
+                }
+            }
+            if (cluster == "dev-fss") {
+                log.info("Går til smregistrering fordi dette er dev")
+                val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
+                    journalpostId = journalpostId,
+                    fnr = fnr,
+                    aktorId = aktorId,
+                    dokumentInfoId = dokumentInfoId,
+                    datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toLocalDateTime(),
+                    sykmeldingId = sykmeldingId,
+                    sykmelder = sykmelder,
+                    ocrFil = ocrFil
+                )
 
-                    if (cluster == "dev-fss") {
-                        log.info("Går til smregistrering fordi dette er dev")
-                        val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
-                            journalpostId = journalpostId,
-                            fnr = fnr,
-                            aktorId = aktorId,
-                            dokumentInfoId = dokumentInfoId,
-                            datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toLocalDateTime(),
-                            sykmeldingId = sykmeldingId,
-                            sykmelder = sykmelder,
-                            ocrFil = ocrFil
-                        )
+                val duplikatOppgave = oppgaveService.duplikatOppgave(
+                    journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                        val duplikatOppgave = oppgaveService.duplikatOppgave(
-                            journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-
-                        if (!duplikatOppgave) {
-                            kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
-                            log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
-                        } else {
-                            log.info("duplikat oppgave {}", fields(loggingMeta))
-                        }
-                    } else {
-                        log.info("Oppretter oppgave")
-                        val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
-                        val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                            journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-                        if (!oppgave.duplikat) {
-                            log.info("Opprettet oppgave med {}, {} {}",
-                                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                                StructuredArguments.keyValue("sakid", sakId),
-                                fields(loggingMeta)
-                            )
-                            PAPIRSM_OPPGAVE.inc()
-                        } else {
-                            log.info("duplikat oppgave med {}, {} {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
-                        }
-                    }
+                if (!duplikatOppgave) {
+                    kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
+                    log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
+                } else {
+                    log.info("duplikat oppgave {}", fields(loggingMeta))
+                }
+            } else {
+                log.info("Oppretter oppgave")
+                val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+                val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                    journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+                if (!oppgave.duplikat) {
+                    log.info("Opprettet oppgave med {}, {} {}",
+                        StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                        StructuredArguments.keyValue("sakid", sakId),
+                        fields(loggingMeta)
+                    )
+                    PAPIRSM_OPPGAVE.inc()
+                } else {
+                    log.info("duplikat oppgave med {}, {} {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
                 }
             }
         }
@@ -251,13 +253,13 @@ class SykmeldingService(
         }
 
         return Sykmelder(
-                hprNummer = hprNummer,
-                fnr = behandlerFraHpr.fnr,
-                aktorId = aktorId,
-                fornavn = behandlerFraHpr.fornavn,
-                mellomnavn = behandlerFraHpr.mellomnavn,
-                etternavn = behandlerFraHpr.etternavn,
-                telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString()
+            hprNummer = hprNummer,
+            fnr = behandlerFraHpr.fnr,
+            aktorId = aktorId,
+            fornavn = behandlerFraHpr.fornavn,
+            mellomnavn = behandlerFraHpr.mellomnavn,
+            etternavn = behandlerFraHpr.etternavn,
+            telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString()
         )
     }
 }
