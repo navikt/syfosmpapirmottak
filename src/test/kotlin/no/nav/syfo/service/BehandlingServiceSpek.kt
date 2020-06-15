@@ -17,7 +17,6 @@ import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.SafJournalpostClient
-import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.domain.PapirSmRegistering
@@ -43,7 +42,6 @@ object BehandlingServiceSpek : Spek({
     val syfoserviceProducerMock = mockk<MessageProducer>()
     val sessionMock = mockk<Session>()
     val kafkaproducerreceivedSykmelding = mockk<KafkaProducer<String, ReceivedSykmelding>>()
-    val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaValidationResultProducerMock = mockk<KafkaProducer<String, ValidationResult>>()
     val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>()
@@ -73,10 +71,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "topic",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3"
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss"
                 )
             }
 
@@ -93,10 +91,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                     syfoserviceProducerMock, sessionMock, "topic",
-                    kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                    kafkaproducerreceivedSykmelding, dokArkivClientMock,
                     kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                     "topic1", "topic2",
-                    kafkaproducerPapirSmRegistering, "topic3"
+                    kafkaproducerPapirSmRegistering, "topic3", "prod-fss"
                 )
             }
 
@@ -119,10 +117,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -144,10 +142,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -169,10 +167,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -190,10 +188,10 @@ object BehandlingServiceSpek : Spek({
                 runBlocking {
                     behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                             syfoserviceProducerMock, sessionMock, "",
-                            kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                            kafkaproducerreceivedSykmelding, dokArkivClientMock,
                             kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                             "topic1", "topic2",
-                            kafkaproducerPapirSmRegistering, "topic3")
+                            kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
                 }
             }
 
@@ -213,10 +211,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
@@ -235,10 +233,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
@@ -252,10 +250,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), "fnr", null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
@@ -275,10 +273,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, "aktorId", null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
@@ -299,10 +297,10 @@ object BehandlingServiceSpek : Spek({
                 runBlocking {
                     behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                             syfoserviceProducerMock, sessionMock, "",
-                            kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                            kafkaproducerreceivedSykmelding, dokArkivClientMock,
                             kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                             "topic1", "topic2",
-                            kafkaproducerPapirSmRegistering, "topic3")
+                            kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
                 }
             }
 
@@ -321,10 +319,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -337,10 +335,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEventFeilTema, loggingMetadata,
                         sykmeldingId, syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { listOf(safJournalpostClientMock, aktoerIdClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
@@ -352,11 +350,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEventFeilKanal, loggingMetadata, sykmeldingId,
                         syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding,
-                        kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { listOf(safJournalpostClientMock, aktoerIdClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
@@ -368,10 +365,10 @@ object BehandlingServiceSpek : Spek({
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEventFeilType, loggingMetadata,
                         sykmeldingId, syfoserviceProducerMock, sessionMock, "",
-                        kafkaproducerreceivedSykmelding, kuhrSarClientMock, dokArkivClientMock,
+                        kafkaproducerreceivedSykmelding, dokArkivClientMock,
                         kafkaValidationResultProducerMock, kafkaManuelTaskProducerMock,
                         "topic1", "topic2",
-                        kafkaproducerPapirSmRegistering, "topic3")
+                        kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
             coVerify { listOf(safJournalpostClientMock, aktoerIdClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }

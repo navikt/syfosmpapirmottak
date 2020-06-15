@@ -1,6 +1,11 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import javax.jms.MessageProducer
+import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -20,6 +25,7 @@ import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
+import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
@@ -31,11 +37,6 @@ import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import javax.jms.MessageProducer
-import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -44,7 +45,8 @@ class SykmeldingService(
     private val safDokumentClient: SafDokumentClient,
     private val norskHelsenettClient: NorskHelsenettClient,
     private val aktoerIdClient: AktoerIdClient,
-    private val regelClient: RegelClient
+    private val regelClient: RegelClient,
+    private val kuhrSarClient: SarClient
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -58,14 +60,14 @@ class SykmeldingService(
         session: Session,
         sm2013AutomaticHandlingTopic: String,
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-        kuhrSarClient: SarClient,
         dokArkivClient: DokArkivClient,
         kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
         kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
         sm2013ManualHandlingTopic: String,
         sm2013BehandlingsUtfallTopic: String,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        sm2013SmregistreringTopic: String
+        sm2013SmregistreringTopic: String,
+        cluster: String
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -181,10 +183,9 @@ class SykmeldingService(
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
 
-                    // TODO: Dette må slås av for prod og på i dev
-                    // TODO: Støtte for pilotkontorer må legges til
-
-                    val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
+                    if (cluster == "dev-fss") {
+                        log.info("Går til smregistrering fordi dette er dev")
+                        val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
                             journalpostId = journalpostId,
                             fnr = fnr,
                             aktorId = aktorId,
@@ -193,16 +194,32 @@ class SykmeldingService(
                             sykmeldingId = sykmeldingId,
                             sykmelder = sykmelder,
                             ocrFil = ocrFil
-                    )
+                        )
 
-                    val duplikatOppgave = oppgaveService.duplikatOppgave(
+                        val duplikatOppgave = oppgaveService.duplikatOppgave(
                             journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                    if (!duplikatOppgave) {
-                        kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
-                        log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
+                        if (!duplikatOppgave) {
+                            kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
+                            log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
+                        } else {
+                            log.info("duplikat oppgave {}", fields(loggingMeta))
+                        }
                     } else {
-                        log.info("duplikat oppgave {}", fields(loggingMeta))
+                        log.info("Oppretter oppgave")
+                        val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+                        val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+                            journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+                        if (!oppgave.duplikat) {
+                            log.info("Opprettet oppgave med {}, {} {}",
+                                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                                StructuredArguments.keyValue("sakid", sakId),
+                                fields(loggingMeta)
+                            )
+                            PAPIRSM_OPPGAVE.inc()
+                        } else {
+                            log.info("duplikat oppgave med {}, {} {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
+                        }
                     }
                 }
             }
