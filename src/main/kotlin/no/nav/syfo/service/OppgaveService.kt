@@ -7,10 +7,10 @@ import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
 
-class OppgaveService @KtorExperimentalAPI constructor(
+@KtorExperimentalAPI
+class OppgaveService(
     private val oppgaveClient: OppgaveClient
 ) {
-    @KtorExperimentalAPI
     suspend fun opprettOppgave(
         aktoerIdPasient: String,
         sakId: String,
@@ -19,21 +19,26 @@ class OppgaveService @KtorExperimentalAPI constructor(
         trackingId: String,
         loggingMeta: LoggingMeta
     ): OppgaveResultat {
-
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
         return oppgaveClient.opprettOppgave(sakId, journalpostId,
                 aktoerIdPasient, gjelderUtland, trackingId, loggingMeta)
     }
 
-    @KtorExperimentalAPI
+    suspend fun duplikatOppgave(
+        journalpostId: String,
+        trackingId: String,
+        loggingMeta: LoggingMeta
+    ): Boolean {
+        return oppgaveClient.duplikatOppgave(journalpostId, trackingId, loggingMeta)
+    }
+
     suspend fun opprettFordelingsOppgave(
         journalpostId: String,
         gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
     ): OppgaveResultat {
-
         log.info("Oppretter fordelingsoppgave for {}", fields(loggingMeta))
 
         return oppgaveClient.opprettFordelingsOppgave(journalpostId, gjelderUtland, trackingId, loggingMeta)

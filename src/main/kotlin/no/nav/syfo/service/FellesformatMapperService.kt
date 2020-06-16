@@ -551,7 +551,6 @@ fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: S
             throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
         }
     }
-
 }
 
 fun containsDotAndLowerCaseLetters(originalDiagnosekode: String): String {
