@@ -1,7 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -106,7 +105,7 @@ object SykmeldingServiceSpek : Spek({
     }
 
     describe("SykmeldingService ende-til-ende (prod)") {
-        it("Happy-case journalpost med bruker") {
+        it("Happy-case journalpost med bruker, uten ocr") {
             runBlocking {
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
                         aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
@@ -122,10 +121,11 @@ object SykmeldingServiceSpek : Spek({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis fnr mangler") {
@@ -143,11 +143,12 @@ object SykmeldingServiceSpek : Spek({
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
+            coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
@@ -165,14 +166,15 @@ object SykmeldingServiceSpek : Spek({
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
+            coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        it("Går videre selv om henting av dokument feiler og oppretter oppgave") {
+        it("Oppretter oppgave hvis henting av dokument feiler") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws RuntimeException("Noe gikk galt")
 
             runBlocking {
@@ -192,8 +194,9 @@ object SykmeldingServiceSpek : Spek({
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Henter ikke dokument hvis dokumentInfoId mangler, oppretter oppgave") {
@@ -211,14 +214,15 @@ object SykmeldingServiceSpek : Spek({
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
+            coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        it("Henter ikke dokument hvis datoOpprettet mangler") {
+        it("Henter dokument selv om datoOpprettet mangler, uten ocr") {
             runBlocking {
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
                         aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = null,
@@ -233,11 +237,12 @@ object SykmeldingServiceSpek : Spek({
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
     }
 
@@ -280,13 +285,13 @@ object SykmeldingServiceSpek : Spek({
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
         }
 
-        it("Går videre og oppretter oppgave hvis mapping feiler i prod") {
+        it("Oppretter oppgave hvis mapping feiler i prod") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
                 sykemeldinger = SykemeldingerType().apply {
                     pasient = PasientType().apply { fnr = "feilFnr" }
@@ -312,15 +317,16 @@ object SykmeldingServiceSpek : Spek({
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
-            coVerify { regelClientMock.valider(any(), any()) wasNot Called }
+            coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
     }
 
     describe("SykmeldingService ende-til-ende (dev-fss)") {
-        it("Går videre selv om henting av dokument feiler, går til smregistrering hvis dev-fss") {
+        it("Går til smregistrering hvis henting av dokument feiler i dev-fss") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws RuntimeException("Noe gikk galt")
 
             runBlocking {
@@ -338,8 +344,9 @@ object SykmeldingServiceSpek : Spek({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
         }
 
@@ -381,9 +388,9 @@ object SykmeldingServiceSpek : Spek({
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
-            coVerify { kafkaproducerPapirSmRegistering.send(any()) wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
@@ -413,11 +420,11 @@ object SykmeldingServiceSpek : Spek({
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
-            coVerify { regelClientMock.valider(any(), any()) wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
-            coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) wasNot Called }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
     }
 

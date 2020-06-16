@@ -179,9 +179,9 @@ class SykmeldingService(
                             )
                             else -> throw IllegalStateException("Ukjent status: ${validationResult.status} , Papirsykmeldinger kan kun ha ein av to typer statuser enten OK eller MANUAL_PROCESSING")
                         }
+                        log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
+                        return
                     }
-                    log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
-                    return
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
