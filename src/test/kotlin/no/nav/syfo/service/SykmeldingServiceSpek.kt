@@ -63,12 +63,12 @@ object SykmeldingServiceSpek : Spek({
     val regelClientMock = mockk<RegelClient>()
     val syfoserviceProducerMock = mockk<MessageProducer>(relaxed = true)
     val sessionMock = mockk<Session>(relaxed = true)
-    val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>()
+    val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>(relaxed = true)
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
-    val kafkaValidationResultProducerMock = mockk<KafkaProducer<String, ValidationResult>>()
-    val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>()
-    val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>()
+    val kafkaValidationResultProducerMock = mockk<KafkaProducer<String, ValidationResult>>(relaxed = true)
+    val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>(relaxed = true)
+    val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
 
     val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock, kuhrSarClientMock)
 
@@ -98,10 +98,6 @@ object SykmeldingServiceSpek : Spek({
                 samh_praksis = listOf(),
                 samh_ident = listOf()
         ))
-        coEvery { kafkaproducerPapirSmRegistering.send(any()) } returns null
-        coEvery { kafkaproducerreceivedSykmeldingMock.send(any()) } returns null
-        coEvery { kafkaValidationResultProducerMock.send(any()) } returns null
-        coEvery { kafkaManuelTaskProducerMock.send(any()) } returns null
     }
 
     describe("SykmeldingService ende-til-ende (prod)") {
