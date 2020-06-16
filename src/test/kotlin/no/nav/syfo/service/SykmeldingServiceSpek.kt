@@ -1,7 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,6 +31,7 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.Samhandler
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
@@ -61,22 +61,25 @@ object SykmeldingServiceSpek : Spek({
     val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
     val aktoerIdClientMock = mockk<AktoerIdClient>()
     val regelClientMock = mockk<RegelClient>()
-    val syfoserviceProducerMock = mockk<MessageProducer>()
-    val sessionMock = mockk<Session>()
+    val syfoserviceProducerMock = mockk<MessageProducer>(relaxed = true)
+    val sessionMock = mockk<Session>(relaxed = true)
     val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>()
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaValidationResultProducerMock = mockk<KafkaProducer<String, ValidationResult>>()
     val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>()
+    val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>()
 
-    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock)
+    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock, kuhrSarClientMock)
 
     beforeEachTest {
         clearAllMocks()
 
         coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
+        coEvery { oppgaveserviceMock.duplikatOppgave(any(), any(), any()) } returns false
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
+        coEvery { dokArkivClientMock.oppdaterOgFerdigstillJournalpost(any(), any(), any(), any(), any()) } returns "1"
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
         coEvery { aktoerIdClientMock.finnAktorid(any(), any()) } returns aktorIdLege
@@ -95,26 +98,34 @@ object SykmeldingServiceSpek : Spek({
                 samh_praksis = listOf(),
                 samh_ident = listOf()
         ))
+        coEvery { kafkaproducerPapirSmRegistering.send(any()) } returns null
+        coEvery { kafkaproducerreceivedSykmeldingMock.send(any()) } returns null
+        coEvery { kafkaValidationResultProducerMock.send(any()) } returns null
+        coEvery { kafkaManuelTaskProducerMock.send(any()) } returns null
     }
 
-    describe("SykmeldingService ende-til-ende") {
-        it("Happy-case journalpost med bruker") {
+    describe("SykmeldingService ende-til-ende (prod)") {
+        it("Happy-case journalpost med bruker, uten ocr") {
             runBlocking {
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
                         aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis fnr mangler") {
@@ -124,16 +135,20 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
+            coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
@@ -143,19 +158,23 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(any(), any(), any(), any())!! wasNot Called }
+            coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        it("Går videre selv om henting av dokument feiler") {
+        it("Oppretter oppgave hvis henting av dokument feiler") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws RuntimeException("Noe gikk galt")
 
             runBlocking {
@@ -164,59 +183,71 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        it("Henter ikke dokument hvis dokumentInfoId mangler") {
+        it("Henter ikke dokument hvis dokumentInfoId mangler, oppretter oppgave") {
             runBlocking {
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
                         aktorId = aktorId, dokumentInfoId = null, datoOpprettet = datoOpprettet,
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        it("Henter ikke dokument hvis datoOpprettet mangler") {
+        it("Henter dokument selv om datoOpprettet mangler, uten ocr") {
             runBlocking {
                 sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
                         aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = null,
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
-            coVerify { safDokumentClientMock.hentDokument(journalpostId, any(), any(), any())!! wasNot Called }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
     }
 
-    describe("SykmeldingService med OCR-fil") {
-        it("Happy-case") {
+    describe("SykmeldingService med OCR-fil, prod") {
+        it("Happy-case, prod") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
                 sykemeldinger = SykemeldingerType().apply {
                     pasient = PasientType().apply { fnr = "fnr" }
@@ -242,21 +273,25 @@ object SykmeldingServiceSpek : Spek({
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
         }
 
-        it("Går videre og oppretter oppgave selv om mapping feiler") {
+        it("Oppretter oppgave hvis mapping feiler i prod") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
                 sykemeldinger = SykemeldingerType().apply {
                     pasient = PasientType().apply { fnr = "feilFnr" }
@@ -271,18 +306,125 @@ object SykmeldingServiceSpek : Spek({
                         sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
                         session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        kuhrSarClient = kuhrSarClientMock, dokArkivClient = dokArkivClientMock,
+                        dokArkivClient = dokArkivClientMock,
                         kafkaValidationResultProducer = kafkaValidationResultProducerMock,
                         kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2")
+                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
-            coVerify { regelClientMock.valider(any(), any()) wasNot Called }
+            coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
+        }
+    }
+
+    describe("SykmeldingService ende-til-ende (dev-fss)") {
+        it("Går til smregistrering hvis henting av dokument feiler i dev-fss") {
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws RuntimeException("Noe gikk galt")
+
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
+                    aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    dokArkivClient = dokArkivClientMock,
+                    kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                    kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                    sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
+            coVerify { kafkaproducerPapirSmRegistering.send(any()) }
+        }
+
+        it("Happy-case med OCR-fil, dev-fss") {
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply {
+                        hpr = BigInteger("123456")
+                        aktivitet = AktivitetType().apply {
+                            aktivitetIkkeMulig = AktivitetIkkeMuligType().apply {
+                                periodeFOMDato = LocalDate.now().minusDays(2)
+                                periodeTOMDato = LocalDate.now().plusDays(10)
+                            }
+                        }
+                        medisinskVurdering = MedisinskVurderingType().apply {
+                            hovedDiagnose.add(HovedDiagnoseType().apply {
+                                diagnosekode = "S52.5"
+                            })
+                        }
+                    }
+                }
+            }
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
+                    aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    dokArkivClient = dokArkivClientMock,
+                    kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                    kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                    sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify { regelClientMock.valider(any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
+        }
+
+        it("Går til smregistrering hvis mapping feiler i dev-fss") {
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "feilFnr" }
+                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                }
+            }
+
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
+                    aktorId = aktorId, dokumentInfoId = dokumentInfoId,
+                    datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
+                    sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
+                    session = sessionMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    dokArkivClient = dokArkivClientMock,
+                    kafkaValidationResultProducer = kafkaValidationResultProducerMock,
+                    kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
+                    sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
+                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
     }
 

@@ -79,6 +79,19 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
     }
 
+    suspend fun duplikatOppgave(
+        journalpostId: String,
+        sykmeldingId: String,
+        loggingMeta: LoggingMeta
+    ): Boolean {
+        val oppgaveResponse = hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
+        if (oppgaveResponse.antallTreffTotalt > 0) {
+            log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
+            return true
+        }
+        return false
+    }
+
     suspend fun opprettFordelingsOppgave(
         journalpostId: String,
         gjelderUtland: Boolean,

@@ -1,0 +1,195 @@
+<skanningmetadata>
+  <sykemeldinger>
+    <!--Optional:-->
+    <syketilfelleStartDato>2008-09-29</syketilfelleStartDato>
+    <!--Optional:-->
+    <pasient>
+      <!--Optional:-->
+      <fnr>12345678910</fnr>
+    </pasient>
+    <!--Optional:-->
+    <arbeidsgiver>
+      <!--Optional:-->
+      <harArbeidsgiver>Ja</harArbeidsgiver>
+      <!--Optional:-->
+      <navnArbeidsgiver>Sesam Stasjon</navnArbeidsgiver>
+      <!--Optional:-->
+      <yrkesbetegnelse>Stasjonsmester</yrkesbetegnelse>
+      <!--Optional:-->
+      <stillingsprosent>100</stillingsprosent>
+    </arbeidsgiver>
+    <!--Optional:-->
+    <medisinskVurdering>
+      <!--Zero or more repetitions:-->
+      <hovedDiagnose>
+        <!--Optional:-->
+        <diagnosekodeSystem>ICD10</diagnosekodeSystem>
+        <!--Optional:-->
+        <diagnosekode>J60</diagnosekode>
+        <!--Optional:-->
+        <diagnose>Pneumokoniose som skyldes kullstøv</diagnose>
+      </hovedDiagnose>
+      <!--Zero or more repetitions:-->
+      <bidiagnose>
+        <!--Optional:-->
+        <diagnosekodeSystem>ICD10</diagnosekodeSystem>
+        <!--Optional:-->
+        <diagnosekode>E232</diagnosekode>
+        <!--Optional:-->
+        <diagnose>Diabetes insipidus</diagnose>
+      </bidiagnose>
+      <!--Optional:-->
+      <annenFraversArsak>Overanstrengelse</annenFraversArsak>
+      <!--Optional:-->
+      <fraversBeskrivelse>Pasienten jobber hele tiden, har diabetes og kronisk lungesykdom som følge av kullstøv</fraversBeskrivelse>
+      <!--Optional:-->
+      <svangerskap>false</svangerskap>
+      <!--Optional:-->
+      <yrkesskade>true</yrkesskade>
+      <!--Optional:-->
+      <yrkesskadedato>2014-06-09+02:00</yrkesskadedato>
+      <!--Optional:-->
+      <skjermesForPasient>false</skjermesForPasient>
+    </medisinskVurdering>
+    <!--Optional:-->
+    <aktivitet>
+      <!--Optional:-->
+      <avventendeSykmelding>
+        <!--Optional:-->
+        <periodeFOMDato>2020-05-01</periodeFOMDato>
+        <!--Optional:-->
+        <periodeTOMDato>2020-05-30</periodeTOMDato>
+      </avventendeSykmelding>
+      <!--Optional:-->
+      <innspillTilArbeidsgiver>Dere burde vurdere å skifte fra kulldrevne lokomotiver til moderne elektriske lokomotiver uten utslipp.</innspillTilArbeidsgiver>
+      <!--Optional:-->
+      <gradertSykmelding>
+        <!--Optional:-->
+        <periodeFOMDato>2020-05-01</periodeFOMDato>
+        <!--Optional:-->
+        <periodeTOMDato>2020-05-30</periodeTOMDato>
+        <!--Optional:-->
+        <sykmeldingsgrad>50</sykmeldingsgrad>
+        <!--Optional:-->
+        <reisetilskudd>true</reisetilskudd>
+      </gradertSykmelding>
+      <!--Optional:-->
+      <aktivitetIkkeMulig>
+        <!--Optional:-->
+        <periodeFOMDato>2020-05-01</periodeFOMDato>
+        <!--Optional:-->
+        <periodeTOMDato>2020-05-30</periodeTOMDato>
+        <!--Optional:-->
+        <medisinskeArsaker>
+          <!--Optional:-->
+          <medArsakerHindrer>true</medArsakerHindrer>
+          <!--Optional:-->
+          <medArsakerBesk>Han kan ikke gå rundt og være stasjonsmester med en pågående lungesykdom, i et miljø med kullfyrte tog</medArsakerBesk>
+        </medisinskeArsaker>
+        <!--Optional:-->
+        <arbeidsplassen>
+          <!--Optional:-->
+          <arbeidsplassenHindrer>false</arbeidsplassenHindrer>
+          <!--Optional:-->
+          <arbeidsplassenBesk>Ordner seg!</arbeidsplassenBesk>
+        </arbeidsplassen>
+      </aktivitetIkkeMulig>
+      <!--Optional:-->
+      <behandlingsdager>
+        <!--Optional:-->
+        <periodeFOMDato>2020-05-01</periodeFOMDato>
+        <!--Optional:-->
+        <periodeTOMDato>2020-05-30</periodeTOMDato>
+        <!--Optional:-->
+        <antallBehandlingsdager>30</antallBehandlingsdager>
+      </behandlingsdager>
+      <!--Optional:-->
+      <reisetilskudd>
+        <!--Optional:-->
+        <periodeFOMDato>2020-05-01</periodeFOMDato>
+        <!--Optional:-->
+        <periodeTOMDato>2020-05-30</periodeTOMDato>
+      </reisetilskudd>
+    </aktivitet>
+    <!--Optional:-->
+    <prognose>
+      <!--Optional:-->
+      <friskmelding>
+        <!--Optional:-->
+        <arbeidsforEtterEndtPeriode>true</arbeidsforEtterEndtPeriode>
+        <!--Optional:-->
+        <beskrivHensynArbeidsplassen>Dette vet jeg ikke hva betyr engang.</beskrivHensynArbeidsplassen>
+      </friskmelding>
+      <!--Optional:-->
+      <medArbeidsgiver>
+        <!--Optional:-->
+        <tilbakeSammeArbeidsgiver>true</tilbakeSammeArbeidsgiver>
+        <!--Optional:-->
+        <tilbakeDato>2020-06-01</tilbakeDato>
+        <!--Optional:-->
+        <tilbakeAnnenArbeidsgiver>true</tilbakeAnnenArbeidsgiver>
+        <!--Optional:-->
+        <datoNyTilbakemelding>2020-06-01</datoNyTilbakemelding>
+      </medArbeidsgiver>
+      <utenArbeidsgiver>
+        <!--Optional:-->
+        <tilbakeArbeid>true</tilbakeArbeid>
+        <!--Optional:-->
+        <tilbakeDato>2020-06-01</tilbakeDato>
+        <!--Optional:-->
+        <datoNyTilbakemelding>2020-06-01</datoNyTilbakemelding>
+      </utenArbeidsgiver>
+      <!--Optional:-->
+    </prognose>
+    <!--Optional:-->
+    <utdypendeOpplysninger>
+      <!--Optional:-->
+      <sykehistorie>Han har aldri vært syk en dag i sitt liv!</sykehistorie>
+      <!--Optional:-->
+      <arbeidsevne>Ingenting å utsette på arbeidsevne.</arbeidsevne>
+      <!--Optional:-->
+      <behandlingsresultat>Vi får se.</behandlingsresultat>
+      <!--Optional:-->
+      <planlagtBehandling>Rolig ferie i kullfritt miljø</planlagtBehandling>
+    </utdypendeOpplysninger>
+    <!--Optional:-->
+    <tiltak>
+      <!--Optional:-->
+      <tiltakArbeidsplassen>Slutt med kulldrevne lokomotiver</tiltakArbeidsplassen>
+      <!--Optional:-->
+      <tiltakNAV>Stønad til ferie</tiltakNAV>
+      <!--Optional:-->
+      <andreTiltak>Helsebringende opphold på Luster sanatorium</andreTiltak>
+    </tiltak>
+    <!--Optional:-->
+    <meldingTilNAV>
+      <!--Optional:-->
+      <bistandNAVUmiddelbart>true</bistandNAVUmiddelbart>
+      <!--Optional:-->
+      <beskrivBistandNAV>Her må NAV få fingeren ut. Skandale!</beskrivBistandNAV>
+    </meldingTilNAV>
+    <!--Optional:-->
+    <meldingTilArbeidsgiver>Ja, dere bør slutte med kull da.</meldingTilArbeidsgiver>
+    <!--Optional:-->
+    <tilbakedatering>
+      <!--Optional:-->
+      <tilbakeDato>2000-08-10</tilbakeDato>
+      <!--Optional:-->
+      <tilbakebegrunnelse>Han var syk i 2000 også.</tilbakebegrunnelse>
+    </tilbakedatering>
+    <!--Optional:-->
+    <kontaktMedPasient>
+      <!--Optional:-->
+      <behandletDato>2020-05-02</behandletDato>
+    </kontaktMedPasient>
+    <!--Optional:-->
+    <behandler>
+      <!--Optional:-->
+      <HPR>100</HPR>
+      <!--Optional:-->
+      <telefon>103</telefon>
+      <!--Optional:-->
+      <adresse>Oslo</adresse>
+    </behandler>
+  </sykemeldinger>
+</skanningmetadata>

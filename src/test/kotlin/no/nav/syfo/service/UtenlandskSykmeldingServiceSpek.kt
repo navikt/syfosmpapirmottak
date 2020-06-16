@@ -1,7 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -40,7 +39,7 @@ object UtenlandskSykmeldingServiceSpek : Spek({
                 utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
-            coVerify { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, true, any(), any()) }
         }
@@ -51,8 +50,8 @@ object UtenlandskSykmeldingServiceSpek : Spek({
             }
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
@@ -61,8 +60,8 @@ object UtenlandskSykmeldingServiceSpek : Spek({
             }
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) wasNot Called }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) wasNot Called }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
         }
     }
 })
