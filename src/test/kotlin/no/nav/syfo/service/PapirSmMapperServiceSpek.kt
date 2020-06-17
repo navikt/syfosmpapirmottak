@@ -1,9 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import java.io.StringReader
-import java.time.LocalDate
-import java.time.LocalDateTime
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
@@ -15,6 +12,9 @@ import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.io.StringReader
+import java.time.LocalDate
+import java.time.OffsetDateTime
 
 @KtorExperimentalAPI
 object PapirSmMapperServiceSpek : Spek({
@@ -23,8 +23,7 @@ object PapirSmMapperServiceSpek : Spek({
     val dokumentInfoId = "123"
     val fnrPasient = "12345678910"
     val aktorId = "aktorId"
-    val datoOpprettet = LocalDateTime.now()
-    val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
+    val datoOpprettet = OffsetDateTime.now()
 
     describe("PapirSmMappingService") {
         it("Tests a complete OCR file, and should parse fine") {
