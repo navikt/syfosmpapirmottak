@@ -31,7 +31,6 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -188,7 +187,7 @@ class SykmeldingService(
                 }
             }
             if (cluster == "dev-fss") {
-                log.info("Går til smregistrering fordi dette er dev")
+                log.info("Går til smregistrering fordi dette er dev {}", fields(loggingMeta))
                 val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
                     journalpostId = journalpostId,
                     fnr = fnr,
@@ -204,8 +203,7 @@ class SykmeldingService(
                     journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
                 if (!duplikatOppgave) {
-                    kafkaproducerPapirSmRegistering.send(ProducerRecord(sm2013SmregistreringTopic, papirSmRegistering.sykmeldingId, papirSmRegistering))
-                    log.info("Message send to kafka {}, {}", sm2013SmregistreringTopic, fields(loggingMeta))
+                    sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
                 } else {
                     log.info("duplikat oppgave {}", fields(loggingMeta))
                 }

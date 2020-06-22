@@ -10,7 +10,6 @@ import no.nav.syfo.log
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.util.LoggingMeta
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 
 @KtorExperimentalAPI
 suspend fun handleOk(
@@ -27,8 +26,8 @@ suspend fun handleOk(
 ) {
 
     dokArkivClient.oppdaterOgFerdigstillJournalpost(journalpostId = journalpostid, fnr = receivedSykmelding.personNrPasient, sykmeldingId = sykmeldingId, behandler = receivedSykmelding.sykmelding.behandler, loggingMeta = loggingMeta)
-    kafkaproducerreceivedSykmelding.send(ProducerRecord(sm2013AutomaticHandlingTopic, receivedSykmelding.sykmelding.id, receivedSykmelding))
-    log.info("Message send to kafka {}, {}", sm2013AutomaticHandlingTopic, fields(loggingMeta))
+
+    sendReceivedSykmeldingToKafka(kafkaproducerreceivedSykmelding, sm2013AutomaticHandlingTopic, receivedSykmelding, loggingMeta)
 
     notifySyfoService(session = session, receiptProducer = syfoserviceProducer, ediLoggId = sykmeldingId,
             sykmeldingId = receivedSykmelding.sykmelding.id, msgId = sykmeldingId, healthInformation = healthInformation)
