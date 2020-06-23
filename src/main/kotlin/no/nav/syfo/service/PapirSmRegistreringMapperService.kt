@@ -1,7 +1,5 @@
 package no.nav.syfo.service
 
-import java.lang.NumberFormatException
-import java.time.LocalDateTime
 import no.nav.helse.sm2013.ArsakType
 import no.nav.helse.sm2013.CS
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
@@ -31,13 +29,14 @@ import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
+import java.time.OffsetDateTime
 
 fun mapOcrFilTilPapirSmRegistrering(
     journalpostId: String,
     fnr: String?,
     aktorId: String?,
     dokumentInfoId: String?,
-    datoOpprettet: LocalDateTime?,
+    datoOpprettet: OffsetDateTime?,
     sykmeldingId: String,
     sykmelder: Sykmelder?,
     ocrFil: Skanningmetadata?
