@@ -253,14 +253,14 @@ private fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
 
 private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgiver(
         navn = arbeidsgiver?.navnArbeidsgiver,
-        harArbeidsgiver = when (arbeidsgiver?.harArbeidsgiver) {
-
-            // Copied from FellesformatMapperService.kt
-            "Flere arbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
-            "Flerearbeidsgivere" -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
-            "En arbeidsgiver" -> HarArbeidsgiver.EN_ARBEIDSGIVER
-            "Ingen arbeidsgiver" -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
-            else -> HarArbeidsgiver.EN_ARBEIDSGIVER
+        harArbeidsgiver = with (arbeidsgiver?.harArbeidsgiver?.toLowerCase()) {
+            when {
+                this!!.contains("en") ->  HarArbeidsgiver.EN_ARBEIDSGIVER
+                this!!.contains("flere") ->  HarArbeidsgiver.FLERE_ARBEIDSGIVERE
+                this!!.contains("ingen") ->  HarArbeidsgiver.INGEN_ARBEIDSGIVER
+                arbeidsgiver?.navnArbeidsgiver?.isNotBlank()!! -> HarArbeidsgiver.EN_ARBEIDSGIVER
+                else -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
+            }
         },
         stillingsprosent = arbeidsgiver?.stillingsprosent?.toInt(),
         yrkesbetegnelse = arbeidsgiver?.yrkesbetegnelse
