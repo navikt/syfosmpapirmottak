@@ -169,7 +169,8 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
         return emptyList()
     }
 
-    return periodeListe.map(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode::toPeriode)
+    return periodeListe.filter { periode -> periode.periodeFOMDato != null && periode.periodeTOMDato != null  }
+            .map(HelseOpplysningerArbeidsuforhet.Aktivitet.Periode::toPeriode)
 }
 
 private fun toBehandler(sykmelder: Sykmelder?, behandler: BehandlerType?): Behandler = Behandler(
