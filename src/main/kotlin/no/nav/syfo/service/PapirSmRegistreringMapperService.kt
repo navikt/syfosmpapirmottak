@@ -255,10 +255,10 @@ private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arb
         navn = arbeidsgiver?.navnArbeidsgiver,
         harArbeidsgiver = with (arbeidsgiver?.harArbeidsgiver?.toLowerCase()) {
             when {
-                this!!.contains("en") ->  HarArbeidsgiver.EN_ARBEIDSGIVER
-                this!!.contains("flere") ->  HarArbeidsgiver.FLERE_ARBEIDSGIVERE
-                this!!.contains("ingen") ->  HarArbeidsgiver.INGEN_ARBEIDSGIVER
-                arbeidsgiver?.navnArbeidsgiver?.isNotBlank()!! -> HarArbeidsgiver.EN_ARBEIDSGIVER
+                this != null && this.contains("en") ->  HarArbeidsgiver.EN_ARBEIDSGIVER
+                this != null && this.contains("flere") ->  HarArbeidsgiver.FLERE_ARBEIDSGIVERE
+                this != null && this.contains("ingen") ->  HarArbeidsgiver.INGEN_ARBEIDSGIVER
+                this != null && this.isNotBlank()!! -> HarArbeidsgiver.EN_ARBEIDSGIVER
                 else -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
             }
         },
