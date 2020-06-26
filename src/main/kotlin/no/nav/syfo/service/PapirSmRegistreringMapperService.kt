@@ -253,12 +253,13 @@ private fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
 
 private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgiver(
         navn = arbeidsgiver?.navnArbeidsgiver,
-        harArbeidsgiver = with (arbeidsgiver?.harArbeidsgiver?.toLowerCase()) {
+        harArbeidsgiver = with(arbeidsgiver?.harArbeidsgiver?.toLowerCase()) {
             when {
-                this != null && this.contains("en") ->  HarArbeidsgiver.EN_ARBEIDSGIVER
-                this != null && this.contains("flere") ->  HarArbeidsgiver.FLERE_ARBEIDSGIVERE
-                this != null && this.contains("ingen") ->  HarArbeidsgiver.INGEN_ARBEIDSGIVER
-                this != null && this.isNotBlank()!! -> HarArbeidsgiver.EN_ARBEIDSGIVER
+                this == null -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
+                this.contains("ingen") -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
+                this.contains("flere") -> HarArbeidsgiver.FLERE_ARBEIDSGIVERE
+                this.contains("en") -> HarArbeidsgiver.EN_ARBEIDSGIVER
+                this.isNotBlank() -> HarArbeidsgiver.EN_ARBEIDSGIVER
                 else -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
             }
         },
