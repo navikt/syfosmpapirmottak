@@ -54,7 +54,7 @@ class BehandlingService(
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
-                log.info("Mottatt papirsykmelding, {}", fields(loggingMeta))
+                log.info("Mottatt papirsykmelding fra mottakskanal {}, {}", journalfoeringEvent.mottaksKanal, fields(loggingMeta))
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
                         ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
