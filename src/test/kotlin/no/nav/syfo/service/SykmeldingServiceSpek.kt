@@ -36,7 +36,6 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
-import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -66,8 +65,6 @@ object SykmeldingServiceSpek : Spek({
     val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>(relaxed = true)
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
-    val kafkaValidationResultProducerMock = mockk<KafkaProducer<String, ValidationResult>>(relaxed = true)
-    val kafkaManuelTaskProducerMock = mockk<KafkaProducer<String, ProduceTask>>(relaxed = true)
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
 
     val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock, kuhrSarClientMock)
@@ -109,9 +106,6 @@ object SykmeldingServiceSpek : Spek({
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -132,9 +126,6 @@ object SykmeldingServiceSpek : Spek({
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -155,9 +146,6 @@ object SykmeldingServiceSpek : Spek({
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -180,9 +168,6 @@ object SykmeldingServiceSpek : Spek({
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -203,9 +188,6 @@ object SykmeldingServiceSpek : Spek({
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -226,9 +208,6 @@ object SykmeldingServiceSpek : Spek({
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -270,9 +249,6 @@ object SykmeldingServiceSpek : Spek({
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -285,6 +261,47 @@ object SykmeldingServiceSpek : Spek({
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+        }
+        it("Oppretter oppgave hvis behandlingsutfall er MANUELL, prod") {
+            coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.MANUAL_PROCESSING, emptyList())
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply {
+                        hpr = BigInteger("123456")
+                        aktivitet = AktivitetType().apply {
+                            aktivitetIkkeMulig = AktivitetIkkeMuligType().apply {
+                                periodeFOMDato = LocalDate.now().minusDays(2)
+                                periodeTOMDato = LocalDate.now().plusDays(10)
+                            }
+                        }
+                        medisinskVurdering = MedisinskVurderingType().apply {
+                            hovedDiagnose.add(HovedDiagnoseType().apply {
+                                diagnosekode = "S52.5"
+                            })
+                        }
+                    }
+                }
+            }
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
+                    aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    dokArkivClient = dokArkivClientMock,
+                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                    sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify { regelClientMock.valider(any(), any()) }
+            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Oppretter oppgave hvis mapping feiler i prod") {
@@ -303,9 +320,6 @@ object SykmeldingServiceSpek : Spek({
                         session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
-                        kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                        kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                        sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
@@ -332,9 +346,6 @@ object SykmeldingServiceSpek : Spek({
                     syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
-                    kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                    kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                    sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
             }
@@ -373,9 +384,6 @@ object SykmeldingServiceSpek : Spek({
                     syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
-                    kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                    kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                    sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
             }
@@ -388,6 +396,48 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
+        }
+
+        it("Går til smregistrering hvis behandlingsutfall er MANUELL, dev-fss") {
+            coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.MANUAL_PROCESSING, emptyList())
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply {
+                        hpr = BigInteger("123456")
+                        aktivitet = AktivitetType().apply {
+                            aktivitetIkkeMulig = AktivitetIkkeMuligType().apply {
+                                periodeFOMDato = LocalDate.now().minusDays(2)
+                                periodeTOMDato = LocalDate.now().plusDays(10)
+                            }
+                        }
+                        medisinskVurdering = MedisinskVurderingType().apply {
+                            hovedDiagnose.add(HovedDiagnoseType().apply {
+                                diagnosekode = "S52.5"
+                            })
+                        }
+                    }
+                }
+            }
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = fnrPasient,
+                    aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    dokArkivClient = dokArkivClientMock,
+                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+            coVerify { aktoerIdClientMock.finnAktorid(fnrLege, any()) }
+            coVerify { regelClientMock.valider(any(), any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Går til smregistrering hvis mapping feiler i dev-fss") {
@@ -406,9 +456,6 @@ object SykmeldingServiceSpek : Spek({
                     session = sessionMock,
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
-                    kafkaValidationResultProducer = kafkaValidationResultProducerMock,
-                    kafkaManuelTaskProducer = kafkaManuelTaskProducerMock,
-                    sm2013BehandlingsUtfallTopic = "topic1", sm2013ManualHandlingTopic = "topic2",
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
             }
