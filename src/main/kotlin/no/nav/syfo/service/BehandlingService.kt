@@ -15,8 +15,6 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.ReceivedSykmelding
-import no.nav.syfo.model.ValidationResult
-import no.nav.syfo.sak.avro.ProduceTask
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -37,10 +35,6 @@ class BehandlingService(
         sm2013AutomaticHandlingTopic: String,
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
-        kafkaValidationResultProducer: KafkaProducer<String, ValidationResult>,
-        kafkaManuelTaskProducer: KafkaProducer<String, ProduceTask>,
-        sm2013ManualHandlingTopic: String,
-        sm2013BehandlingsUtfallTopic: String,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String,
         cluster: String
@@ -86,10 +80,6 @@ class BehandlingService(
                                 sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
                                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
                                 dokArkivClient = dokArkivClient,
-                                kafkaValidationResultProducer = kafkaValidationResultProducer,
-                                kafkaManuelTaskProducer = kafkaManuelTaskProducer,
-                                sm2013ManualHandlingTopic = sm2013ManualHandlingTopic,
-                                sm2013BehandlingsUtfallTopic = sm2013BehandlingsUtfallTopic,
                                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
                                 cluster = cluster
