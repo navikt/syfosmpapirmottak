@@ -282,15 +282,43 @@ object FellesformatMapperServiceSpek : Spek({
         }
 
         it("diagnoseFraDiagnosekode ICPC2") {
-            val diagnose = toMedisinskVurderingDiagnose("L72", originalSystem = "ICPC2", diagnose = "foo Bar", loggingMeta = loggingMetadata)
+            val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode = "L72", originalSystem = "ICPC2", diagnose = "foo Bar", loggingMeta = loggingMetadata)
 
             diagnose.s shouldEqual Diagnosekoder.ICPC2_CODE
             diagnose.v shouldEqual "L72"
         }
 
+        it("tilMedisinskVurderingDiagnose bruker ICPC2 hvis system ikke er satt men koden finnes der og ikke i ICD10") {
+            val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode = "L72", originalSystem = null, diagnose = "foo Bar", loggingMeta = loggingMetadata)
+
+            diagnose.s shouldEqual Diagnosekoder.ICPC2_CODE
+            diagnose.v shouldEqual "L72"
+        }
+
+        it("tilMedisinskVurderingDiagnose bruker ICD10 hvis system ikke er satt men koden finnes der og ikke i ICPC2") {
+            val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode = "S52.5", originalSystem = null, diagnose = "foo Bar", loggingMeta = loggingMetadata)
+
+            diagnose.s shouldEqual Diagnosekoder.ICD10_CODE
+            diagnose.v shouldEqual "S525"
+        }
+
+        it("tilMedisinskVurderingDiagnose feiler hvis system er ICD10 men koden finnes ikke der") {
+            val func = { toMedisinskVurderingDiagnose(originalDiagnosekode = "L72", originalSystem = "ICD-10", diagnose = "foo Bar", loggingMeta = loggingMetadata) }
+            func shouldThrow IllegalStateException::class
+        }
+
+        it("tilMedisinskVurderingDiagnose feiler hvis system er ICPC2 men koden finnes ikke der") {
+            val func = { toMedisinskVurderingDiagnose(originalDiagnosekode = "S52.5", originalSystem = "ICPC2", diagnose = "foo Bar", loggingMeta = loggingMetadata) }
+            func shouldThrow IllegalStateException::class
+        }
+        it("tilMedisinskVurderingDiagnose feiler hvis system er ICD10 men koden finnes kun i ICPC2") {
+            val func = { toMedisinskVurderingDiagnose(originalDiagnosekode = "L60", originalSystem = "ICD-10", diagnose = "foo Bar", loggingMeta = loggingMetadata) }
+            func shouldThrow IllegalStateException::class
+        }
+
         it("diagnoseFraDiagnosekode ICD10, ugyldig kode") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "foobar", system = "ICD-10", diagnose = "foo bar")
-            system shouldEqual ""
+            system shouldEqual Diagnosekoder.ICD10_CODE
         }
 
         it("diagnoseFraDiagnosekode ICD10, gyldig kode") {
@@ -313,9 +341,14 @@ object FellesformatMapperServiceSpek : Spek({
             system shouldEqual Diagnosekoder.ICPC2_CODE
         }
 
-        it("diagnoseFraDiagnosekode ICPC-2, ugyldig kode") {
+        it("Skal ikke endre system hvis det er satt korrekt, ICPC-2") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "foobar", system = "ICPC-2", diagnose = "foo bar")
-            system shouldEqual ""
+            system shouldEqual Diagnosekoder.ICPC2_CODE
+        }
+
+        it("Skal ikke endre system hvis det er satt korrekt, ICD-10") {
+            val system = identifiserDiagnoseKodeverk(diagnoseKode = "L60", system = "ICD-10", diagnose = "Inngrodd tånegl , bilateralt")
+            system shouldEqual Diagnosekoder.ICD10_CODE
         }
 
         it("tilArbeidsgiver en arbeidsgiver") {
@@ -566,12 +599,12 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2", "foo Bar", loggingmetea)
+            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
 
             houveddiagnose.v shouldEqual "T819"
         }
 
-        it("Ugyldig diagnosekode mapping") {
+        it("Ugyldig diagnosesystem-mapping") {
             val gyldigdiagnose = "t8221.9"
             val loggingmetea = LoggingMeta(
                     sykmeldingId = "1313",
@@ -579,7 +612,7 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val func = { toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2", "foo Bar", loggingmetea) }
+            val func = { toMedisinskVurderingDiagnose(gyldigdiagnose, "IC", "foo Bar", loggingmetea) }
             func shouldThrow IllegalStateException::class
         }
 
@@ -591,7 +624,7 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2", "foo Bar", loggingmetea)
+            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
 
             houveddiagnose.v shouldEqual "T819"
         }
@@ -604,7 +637,7 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, "ICPC2", "foo Bar", loggingmetea)
+            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
 
             houveddiagnose.v shouldEqual "T819"
         }

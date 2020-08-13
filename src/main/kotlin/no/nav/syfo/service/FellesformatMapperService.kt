@@ -493,15 +493,15 @@ fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?, diagnose:
     val sanitisertSystem = system?.replace(".", "")?.replace(" ", "")?.replace("-", "")?.toUpperCase()
     val sanitisertKode = diagnoseKode.replace(".", "").replace(" ", "").toUpperCase()
 
-    if (sanitisertSystem == "ICD10" && Diagnosekoder.icd10.containsKey(sanitisertKode)) {
-        return Diagnosekoder.ICD10_CODE
-    } else if (sanitisertSystem == "ICPC2" && Diagnosekoder.icpc2.containsKey(sanitisertKode)) {
-        return Diagnosekoder.ICPC2_CODE
+    return if (sanitisertSystem == "ICD10") {
+        Diagnosekoder.ICD10_CODE
+    } else if (sanitisertSystem == "ICPC2") {
+        Diagnosekoder.ICPC2_CODE
     } else if (Diagnosekoder.icd10.containsKey(sanitisertKode) && Diagnosekoder.icd10[sanitisertKode]?.text == diagnose) {
-        return Diagnosekoder.ICD10_CODE
+        Diagnosekoder.ICD10_CODE
     } else if (Diagnosekoder.icpc2.containsKey(sanitisertKode) && Diagnosekoder.icpc2[sanitisertKode]?.text == diagnose) {
-        return Diagnosekoder.ICPC2_CODE
-    } else return ""
+        Diagnosekoder.ICPC2_CODE
+    } else ""
 }
 
 fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: String?, diagnose: String?, loggingMeta: LoggingMeta): CV {
@@ -514,7 +514,7 @@ fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: S
     val identifisertKodeverk = identifiserDiagnoseKodeverk(originalDiagnosekode, originalSystem, diagnose)
 
     when {
-        identifisertKodeverk == Diagnosekoder.ICD10_CODE -> {
+        identifisertKodeverk == Diagnosekoder.ICD10_CODE && Diagnosekoder.icd10.containsKey(diagnosekode) -> {
             log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode og kodeverk/diagnosetekst", fields(loggingMeta))
             return CV().apply {
                 s = Diagnosekoder.ICD10_CODE
@@ -522,7 +522,7 @@ fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: S
                 dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
             }
         }
-        identifisertKodeverk == Diagnosekoder.ICPC2_CODE -> {
+        identifisertKodeverk == Diagnosekoder.ICPC2_CODE && Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
             log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode og kodeverk/diagnosetekst", fields(loggingMeta))
             return CV().apply {
                 s = Diagnosekoder.ICPC2_CODE
@@ -530,7 +530,7 @@ fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: S
                 dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: ""
             }
         }
-        Diagnosekoder.icd10.containsKey(diagnosekode) -> {
+        identifisertKodeverk.isEmpty() && Diagnosekoder.icd10.containsKey(diagnosekode) && !Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
             log.info("Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode (kodeverk ikke angitt)", fields(loggingMeta))
             return CV().apply {
                 s = Diagnosekoder.ICD10_CODE
@@ -538,7 +538,7 @@ fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: S
                 dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
             }
         }
-        Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
+        identifisertKodeverk.isEmpty() && Diagnosekoder.icpc2.containsKey(diagnosekode) && !Diagnosekoder.icd10.containsKey(diagnosekode) -> {
             log.info("Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode (kodeverk ikke angitt)", fields(loggingMeta))
             return CV().apply {
                 s = Diagnosekoder.ICPC2_CODE
@@ -551,13 +551,6 @@ fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: S
             throw IllegalStateException("Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk")
         }
     }
-}
-
-fun containsDotAndLowerCaseLetters(originalDiagnosekode: String): String {
-    val modificedDiagnosekod = originalDiagnosekode.replace(".", "")
-    modificedDiagnosekod.replace(Regex("[a-z]").find(modificedDiagnosekod)!!.value, Regex("[a-z]").find(modificedDiagnosekod)!!.value.toUpperCase())
-
-    return modificedDiagnosekod
 }
 
 fun velgRiktigKontaktOgSignaturDato(behandletDato: LocalDate?, periodeliste: List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>): LocalDateTime {
