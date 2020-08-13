@@ -599,9 +599,9 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
+            val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
 
-            houveddiagnose.v shouldEqual "T819"
+            hoveddiagnose.v shouldEqual "T819"
         }
 
         it("Ugyldig diagnosesystem-mapping") {
@@ -624,9 +624,9 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
+            val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
 
-            houveddiagnose.v shouldEqual "T819"
+            hoveddiagnose.v shouldEqual "T819"
         }
 
         it("Gyldig diagnosekode mapping med space") {
@@ -637,9 +637,9 @@ object FellesformatMapperServiceSpek : Spek({
                     hendelsesId = "2"
             )
 
-            val houveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
+            val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
 
-            houveddiagnose.v shouldEqual "T819"
+            hoveddiagnose.v shouldEqual "T819"
         }
     }
 })
