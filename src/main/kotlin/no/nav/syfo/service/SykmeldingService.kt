@@ -28,6 +28,8 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
+import no.nav.syfo.pdl.model.PdlPerson
+import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.fellesformatMarshaller
@@ -43,7 +45,8 @@ class SykmeldingService(
     private val norskHelsenettClient: NorskHelsenettClient,
     private val aktoerIdClient: AktoerIdClient,
     private val regelClient: RegelClient,
-    private val kuhrSarClient: SarClient
+    private val kuhrSarClient: SarClient,
+    private val pdlPersonService: PdlPersonService
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -67,8 +70,8 @@ class SykmeldingService(
 
         var ocrFil: Skanningmetadata? = null
         var sykmelder: Sykmelder? = null
-
-        if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
+        val person: PdlPerson? = fnr?.let { pdlPersonService.getPersonnavn(it, loggingMeta) }
+        if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty() || person == null) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
             log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
 
@@ -101,7 +104,7 @@ class SykmeldingService(
                             fnr = fnr,
                             sykmelder = sykmelder!!,
                             sykmeldingId = sykmeldingId,
-                            loggingMeta = loggingMeta)
+                            loggingMeta = loggingMeta, pdlPerson = person)
 
                         val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
                         val msgHead = fellesformat.get<XMLMsgHead>()

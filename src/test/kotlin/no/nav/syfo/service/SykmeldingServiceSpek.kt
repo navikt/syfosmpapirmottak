@@ -36,6 +36,7 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -66,8 +67,16 @@ object SykmeldingServiceSpek : Spek({
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
-
-    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock, kuhrSarClientMock)
+    val pdlService = mockk<PdlPersonService>(relaxed = true)
+    val sykmeldingService = SykmeldingService(
+            sakClientMock,
+            oppgaveserviceMock,
+            safDokumentClientMock,
+            norskHelsenettClientMock,
+            aktoerIdClientMock,
+            regelClientMock,
+            kuhrSarClientMock,
+            pdlService)
 
     beforeEachTest {
         clearAllMocks()

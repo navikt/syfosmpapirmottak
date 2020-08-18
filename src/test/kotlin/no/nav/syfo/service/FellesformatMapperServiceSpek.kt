@@ -40,6 +40,8 @@ import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.KontaktMedPasient
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.objectMapper
+import no.nav.syfo.pdl.model.Navn
+import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
@@ -68,13 +70,15 @@ object FellesformatMapperServiceSpek : Spek({
         it("Realistisk case ende-til-ende") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Etternavn", telefonnummer = null)
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"))
 
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
                     fnr = fnrPasient,
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
-                    loggingMeta = loggingMetadata)
+                    loggingMeta = loggingMetadata,
+                    pdlPerson = pdlPerson)
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
             val msgHead = fellesformat.get<XMLMsgHead>()
@@ -135,13 +139,14 @@ object FellesformatMapperServiceSpek : Spek({
         it("Minimal ocr-fil") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/minimal-ocr-sykmelding.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
-
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"))
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
                     fnr = fnrPasient,
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
-                    loggingMeta = loggingMetadata)
+                    loggingMeta = loggingMetadata,
+                    pdlPerson = pdlPerson)
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
             val msgHead = fellesformat.get<XMLMsgHead>()
@@ -211,6 +216,7 @@ object FellesformatMapperServiceSpek : Spek({
         it("Map with avventendeSykmelding uten innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-ugyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"))
 
             val func = {
                 mapOcrFilTilFellesformat(
@@ -218,7 +224,8 @@ object FellesformatMapperServiceSpek : Spek({
                         fnr = fnrPasient,
                         sykmelder = sykmelder,
                         sykmeldingId = sykmeldingId,
-                        loggingMeta = loggingMetadata)
+                        loggingMeta = loggingMetadata,
+                        pdlPerson = pdlPerson)
             }
 
             func shouldThrow IllegalStateException::class
@@ -227,6 +234,7 @@ object FellesformatMapperServiceSpek : Spek({
         it("map with avventendeSykmelding og innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-gyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"))
 
             val func = {
                 mapOcrFilTilFellesformat(
@@ -234,7 +242,8 @@ object FellesformatMapperServiceSpek : Spek({
                         fnr = fnrPasient,
                         sykmelder = sykmelder,
                         sykmeldingId = sykmeldingId,
-                        loggingMeta = loggingMetadata)
+                        loggingMeta = loggingMetadata,
+                        pdlPerson = pdlPerson)
             }
 
             func shouldNotThrow Exception::class

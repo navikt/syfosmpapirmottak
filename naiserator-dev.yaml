@@ -71,3 +71,5 @@ spec:
       value: QA.Q1_EIA_SYFO_OUTBOUND
     - name: DOK_ARKIV_URL
       value: https://dokarkiv-q1.nais.preprod.local/rest/journalpostapi/v1/journalpost
+    - name: PDL_GRAPHQL_PATH
+      value: https://pdl-api.nais.preprod.local/graphql
