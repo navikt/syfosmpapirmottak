@@ -14,7 +14,7 @@ class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClie
 
     suspend fun getPersonnavn(fnr: String, loggingMeta: LoggingMeta): PdlPerson? {
         val stsToken = stsOidcClient.oidcToken().access_token
-        val pdlResponse = pdlClient.getPerson(fnr, stsToken, stsToken)
+        val pdlResponse = pdlClient.getPerson(fnr, stsToken)
         if (pdlResponse.data.hentPerson == null) {
             log.error("Fant ikke person i PDL {}", StructuredArguments.fields(loggingMeta))
             return null
