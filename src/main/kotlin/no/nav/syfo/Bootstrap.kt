@@ -52,6 +52,7 @@ import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.mq.connectionFactory
 import no.nav.syfo.mq.producerForQueue
+import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
@@ -146,7 +147,8 @@ fun main() {
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClient, env.helsenettproxyId, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
-    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, aktoerIdClient, regelClient, kuhrsarClient)
+    val pdlPersonService = PdlFactory.getPdlService(env, oidcClient, httpClient)
+    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, aktoerIdClient, regelClient, kuhrsarClient, pdlPersonService)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sykmeldingService, utenlandskSykmeldingService)
 

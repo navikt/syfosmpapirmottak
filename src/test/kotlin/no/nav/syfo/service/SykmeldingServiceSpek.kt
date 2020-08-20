@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.mockkClass
 import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -36,6 +37,9 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.pdl.model.Navn
+import no.nav.syfo.pdl.model.PdlPerson
+import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -66,8 +70,17 @@ object SykmeldingServiceSpek : Spek({
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
+    val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
 
-    val sykmeldingService = SykmeldingService(sakClientMock, oppgaveserviceMock, safDokumentClientMock, norskHelsenettClientMock, aktoerIdClientMock, regelClientMock, kuhrSarClientMock)
+    val sykmeldingService = SykmeldingService(
+            sakClientMock,
+            oppgaveserviceMock,
+            safDokumentClientMock,
+            norskHelsenettClientMock,
+            aktoerIdClientMock,
+            regelClientMock,
+            kuhrSarClientMock,
+            pdlService)
 
     beforeEachTest {
         clearAllMocks()
@@ -95,6 +108,7 @@ object SykmeldingServiceSpek : Spek({
                 samh_praksis = listOf(),
                 samh_ident = listOf()
         ))
+        coEvery { pdlService.getPersonnavn(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"))
     }
 
     describe("SykmeldingService ende-til-ende (prod)") {
@@ -132,6 +146,26 @@ object SykmeldingServiceSpek : Spek({
 
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
+        }
+
+        it("Opprett fordelingsoppgave hvis pdl ikke har navn") {
+            coEvery { pdlService.getPersonnavn(any(), any()) } returns null
+            runBlocking {
+                    sykmeldingService.behandleSykmelding(journalpostId = journalpostId, fnr = null,
+                            aktorId = aktorId, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                            loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                            syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
+                            sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                            dokArkivClient = dokArkivClientMock,
+                            kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                            sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                }
+            coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
+            coVerify(exactly = 1) { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, false, any(), any()) }
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }

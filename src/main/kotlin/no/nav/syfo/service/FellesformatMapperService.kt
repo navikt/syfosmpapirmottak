@@ -34,6 +34,7 @@ import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
+import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 
@@ -42,7 +43,8 @@ fun mapOcrFilTilFellesformat(
     fnr: String,
     sykmelder: Sykmelder,
     sykmeldingId: String,
-    loggingMeta: LoggingMeta
+    loggingMeta: LoggingMeta,
+    pdlPerson: PdlPerson
 ): XMLEIFellesformat {
     if (skanningmetadata.sykemeldinger.pasient.fnr != fnr) {
         log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
@@ -132,9 +134,9 @@ fun mapOcrFilTilFellesformat(
                                     skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                             pasient = HelseOpplysningerArbeidsuforhet.Pasient().apply {
                                 navn = NavnType().apply {
-                                    fornavn = ""
-                                    mellomnavn = ""
-                                    etternavn = ""
+                                    fornavn = pdlPerson.navn.fornavn
+                                    mellomnavn = pdlPerson.navn.mellomnavn
+                                    etternavn = pdlPerson.navn.etternavn
                                 }
                                 fodselsnummer = Ident().apply {
                                     id = skanningmetadata.sykemeldinger.pasient.fnr

@@ -4,6 +4,8 @@ import java.io.StringReader
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.domain.Sykmelder
+import no.nav.syfo.pdl.model.Navn
+import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.skanningMetadataUnmarshaller
@@ -24,13 +26,15 @@ object NotifySyfoServiceSpek : Spek({
 
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Bodø", telefonnummer = null)
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"))
 
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,
                     fnr = fnrPasient,
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
-                    loggingMeta = loggingMetadata)
+                    loggingMeta = loggingMetadata,
+                    pdlPerson = pdlPerson)
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
 
