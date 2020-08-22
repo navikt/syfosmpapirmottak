@@ -9,6 +9,7 @@ import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
+import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
 
 @KtorExperimentalAPI
@@ -18,15 +19,14 @@ class UtenlandskSykmeldingService constructor(
 ) {
     suspend fun behandleUtenlandskSykmelding(
         journalpostId: String,
-        fnr: String?,
-        aktorId: String?,
+        pasient: PdlPerson,
         loggingMeta: LoggingMeta,
         sykmeldingId: String
     ) {
         log.info("Mottatt utenlandsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_UTLAND.inc()
 
-        if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty()) {
+        if (pasient.aktorId.isNullOrEmpty() || pasient.fnr.isNullOrEmpty()) {
             PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
             log.info("Utenlandsk papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
 
@@ -41,9 +41,9 @@ class UtenlandskSykmeldingService constructor(
                 )
             }
         } else {
-            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = pasient.aktorId, loggingMeta = loggingMeta)
 
-            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = pasient.aktorId, sakId = sakId,
                 journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
             if (!oppgave.duplikat) {

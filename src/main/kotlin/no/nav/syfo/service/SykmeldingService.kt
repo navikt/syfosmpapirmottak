@@ -10,7 +10,6 @@ import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
@@ -43,15 +42,13 @@ class SykmeldingService(
     private val oppgaveService: OppgaveService,
     private val safDokumentClient: SafDokumentClient,
     private val norskHelsenettClient: NorskHelsenettClient,
-    private val aktoerIdClient: AktoerIdClient,
     private val regelClient: RegelClient,
     private val kuhrSarClient: SarClient,
     private val pdlPersonService: PdlPersonService
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
-        fnr: String?,
-        aktorId: String?,
+        pasientId: String?,
         dokumentInfoId: String?,
         datoOpprettet: LocalDateTime?,
         loggingMeta: LoggingMeta,
@@ -68,29 +65,55 @@ class SykmeldingService(
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
 
-        var ocrFil: Skanningmetadata? = null
-        var sykmelder: Sykmelder? = null
-        val person: PdlPerson? = fnr?.let { pdlPersonService.getPersonnavn(it, loggingMeta) }
-        if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty() || person == null) {
-            PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
-            log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
 
-            val oppgave = oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-
-            if (!oppgave.duplikat) {
-                PAPIRSM_FORDELINGSOPPGAVE.inc()
-                log.info("Opprettet fordelingsoppgave med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                    StructuredArguments.keyValue("journalpostId", journalpostId),
-                    fields(loggingMeta)
-                )
-            }
+        if(pasientId == null) {
+            oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+            return
         } else {
+            try {
+                val ocr = dokumentInfoId?.let { safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta) }
+                val sykmelder = ocr?.let { hentSykmelder(ocr, sykmeldingId, loggingMeta) }?.fnr
+
+                val pasientLege = pdlPersonService.getPasientOgLege(pasientId, lege)
+
+                if(ocr != null) {
+                    val sykmelder =
+                }
+
+            } catch (ex: Exception) {
+
+            }
+            manuellBehandling(
+                    journalpostId = journalpostId,
+                    fnr = fnr,
+                    aktorId = aktorId,
+                    dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                    loggingMeta = loggingMeta,
+                    sykmeldingId = sykmeldingId,
+                    sykmelder = sykmelder,
+                    ocrFil = ocrFil,
+                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                    sm2013SmregistreringTopic = sm2013SmregistreringTopic,
+                    cluster = cluster
+            )
+        }
+
+        val ocrFil = dokumentInfoId?.let { safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta) }
+
+        val person: PdlPerson? = pasientId?.let { pdlPersonService.getPersonnavn(it, loggingMeta) }
+        val sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
+
+        if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty() || person == null) {
+
+        }
+
+        else {
             dokumentInfoId?.let {
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
 
                     ocrFil?.let { ocr ->
+
                         sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
                         val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
@@ -268,16 +291,9 @@ class SykmeldingService(
             throw IllegalStateException("Kunne ikke hente fnr for hpr $hprNummer")
         }
 
-        val aktorId = aktoerIdClient.finnAktorid(behandlerFraHpr.fnr, sykmeldingId)
-        if (aktorId.isNullOrEmpty()) {
-            log.warn("Kunne ikke hente aktørid for hpr {}, {}", hprNummer, fields(loggingMeta))
-            throw IllegalStateException("Kunne ikke hente aktørid for hpr $hprNummer")
-        }
-
         return Sykmelder(
             hprNummer = hprNummer,
             fnr = behandlerFraHpr.fnr,
-            aktorId = aktorId,
             fornavn = behandlerFraHpr.fornavn,
             mellomnavn = behandlerFraHpr.mellomnavn,
             etternavn = behandlerFraHpr.etternavn,

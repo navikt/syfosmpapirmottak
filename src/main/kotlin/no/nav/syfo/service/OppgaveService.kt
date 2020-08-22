@@ -1,10 +1,13 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
+import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
+import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.util.LoggingMeta
 
 @KtorExperimentalAPI
@@ -39,8 +42,18 @@ class OppgaveService(
         trackingId: String,
         loggingMeta: LoggingMeta
     ): OppgaveResultat {
-        log.info("Oppretter fordelingsoppgave for {}", fields(loggingMeta))
+        PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
+        log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
 
-        return oppgaveClient.opprettFordelingsOppgave(journalpostId, gjelderUtland, trackingId, loggingMeta)
+        val oppgave =  oppgaveClient.opprettFordelingsOppgave(journalpostId, gjelderUtland, trackingId, loggingMeta)
+
+        if (!oppgave.duplikat) {
+            PAPIRSM_FORDELINGSOPPGAVE.inc()
+            log.info("Opprettet fordelingsoppgave med {}, {} {}",
+                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                    StructuredArguments.keyValue("journalpostId", journalpostId),
+                    fields(loggingMeta)
+            )
+        }
     }
 }

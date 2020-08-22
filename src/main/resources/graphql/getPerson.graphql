@@ -6,4 +6,10 @@ query($ident: ID!){
   	  etternavn
     }
   }
+  hentIdenter(ident: $ident, historikk: false) {
+      identer {
+        ident,
+        gruppe
+      }
+    }
 }
