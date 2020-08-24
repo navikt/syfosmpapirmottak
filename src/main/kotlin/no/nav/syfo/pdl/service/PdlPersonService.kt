@@ -31,15 +31,15 @@ class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClie
             return null
         }
 
-        if (pdlResponse.data.hentIdenter.isNullOrEmpty()) {
+        if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isNullOrEmpty()) {
             log.error("Fant ikke identer i PDL {}", StructuredArguments.fields(loggingMeta))
             return null
         }
 
         return PdlPerson(
                 navn = getNavn(pdlResponse.data.hentPerson.navn[0]),
-                aktorId = pdlResponse.data.hentIdenter.first { it.gruppe == AKTORID }.ident,
-                fnr = pdlResponse.data.hentIdenter.first { it.gruppe == FOLKEREGISTERIDENT }.ident
+                aktorId = pdlResponse.data.hentIdenter.identer.first { it.gruppe == AKTORID }.ident,
+                fnr = pdlResponse.data.hentIdenter.identer.first { it.gruppe == FOLKEREGISTERIDENT }.ident
                 )
     }
 

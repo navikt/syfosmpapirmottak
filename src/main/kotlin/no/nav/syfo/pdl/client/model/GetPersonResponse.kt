@@ -14,7 +14,11 @@ data class ResponseError(
 
 data class ResponseData(
     val hentPerson: HentPerson?,
-    val hentIdenter: List<PdlIdent>?
+    val hentIdenter: HentIdenter?
+)
+
+data class HentIdenter(
+    val identer: List<PdlIdent>
 )
 
 data class PdlIdent(val gruppe: String, val ident: String)
