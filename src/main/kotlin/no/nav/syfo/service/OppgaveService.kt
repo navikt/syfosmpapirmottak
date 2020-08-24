@@ -4,10 +4,10 @@ import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.client.OppgaveClient
-import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
+import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.util.LoggingMeta
 
 @KtorExperimentalAPI
@@ -21,11 +21,22 @@ class OppgaveService(
         gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
-    ): OppgaveResultat {
+    ) {
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
-        return oppgaveClient.opprettOppgave(sakId, journalpostId,
+        val oppgave = oppgaveClient.opprettOppgave(sakId, journalpostId,
                 aktoerIdPasient, gjelderUtland, trackingId, loggingMeta)
+
+        if (!oppgave.duplikat) {
+            log.info("Opprettet oppgave for utenlandsk sykmelding med {}, {} {}",
+                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                    StructuredArguments.keyValue("sakid", sakId),
+                    fields(loggingMeta)
+            )
+            PAPIRSM_OPPGAVE.inc()
+        } else {
+            log.info("duplikat oppgave med {}, {} {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
+        }
     }
 
     suspend fun duplikatOppgave(
@@ -41,11 +52,11 @@ class OppgaveService(
         gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
-    ): OppgaveResultat {
+    ) {
         PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
         log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
 
-        val oppgave =  oppgaveClient.opprettFordelingsOppgave(journalpostId, gjelderUtland, trackingId, loggingMeta)
+        val oppgave = oppgaveClient.opprettFordelingsOppgave(journalpostId, gjelderUtland, trackingId, loggingMeta)
 
         if (!oppgave.duplikat) {
             PAPIRSM_FORDELINGSOPPGAVE.inc()

@@ -41,8 +41,6 @@ spec:
   env:
     - name: SECURITY_TOKEN_SERVICE_URL
       value: https://sts-q1.preprod.local/SecurityTokenServiceProvider/
-    - name: AKTORREGISTER_V1_URL
-      value: https://app-q1.adeo.no/aktoerregister/api/v1
     - name: SAFGRAPHQL_URL
       value: https://saf-q1.nais.preprod.local/graphql
     - name: DOK_JOURNALFOERING_V1_TOPIC

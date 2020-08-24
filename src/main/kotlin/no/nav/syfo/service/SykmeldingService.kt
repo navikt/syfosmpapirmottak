@@ -20,11 +20,8 @@ import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
-import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
-import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
-import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.pdl.model.PdlPerson
@@ -48,7 +45,7 @@ class SykmeldingService(
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
-        pasientId: String?,
+        pasient: PdlPerson?,
         dokumentInfoId: String?,
         datoOpprettet: LocalDateTime?,
         loggingMeta: LoggingMeta,
@@ -65,49 +62,13 @@ class SykmeldingService(
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
 
+        var sykmelder: Sykmelder? = null
+        var ocrFil: Skanningmetadata? = null
 
-        if(pasientId == null) {
+        if (pasient?.aktorId == null || pasient.fnr == null) {
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
             return
         } else {
-            try {
-                val ocr = dokumentInfoId?.let { safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta) }
-                val sykmelder = ocr?.let { hentSykmelder(ocr, sykmeldingId, loggingMeta) }?.fnr
-
-                val pasientLege = pdlPersonService.getPasientOgLege(pasientId, lege)
-
-                if(ocr != null) {
-                    val sykmelder =
-                }
-
-            } catch (ex: Exception) {
-
-            }
-            manuellBehandling(
-                    journalpostId = journalpostId,
-                    fnr = fnr,
-                    aktorId = aktorId,
-                    dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMeta,
-                    sykmeldingId = sykmeldingId,
-                    sykmelder = sykmelder,
-                    ocrFil = ocrFil,
-                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                    cluster = cluster
-            )
-        }
-
-        val ocrFil = dokumentInfoId?.let { safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta) }
-
-        val person: PdlPerson? = pasientId?.let { pdlPersonService.getPersonnavn(it, loggingMeta) }
-        val sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
-
-        if (aktorId.isNullOrEmpty() || fnr.isNullOrEmpty() || person == null) {
-
-        }
-
-        else {
             dokumentInfoId?.let {
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
@@ -124,17 +85,16 @@ class SykmeldingService(
 
                         val fellesformat = mapOcrFilTilFellesformat(
                             skanningmetadata = ocr,
-                            fnr = fnr,
                             sykmelder = sykmelder!!,
                             sykmeldingId = sykmeldingId,
-                            loggingMeta = loggingMeta, pdlPerson = person)
+                            loggingMeta = loggingMeta, pdlPerson = pasient)
 
                         val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
                         val msgHead = fellesformat.get<XMLMsgHead>()
 
                         val sykmelding = healthInformation.toSykmelding(
                             sykmeldingId = sykmeldingId,
-                            pasientAktoerId = aktorId,
+                            pasientAktoerId = pasient.aktorId,
                             legeAktoerId = sykmelder!!.aktorId,
                             msgId = sykmeldingId,
                             signaturDato = msgHead.msgInfo.genDate
@@ -142,7 +102,7 @@ class SykmeldingService(
 
                         val receivedSykmelding = ReceivedSykmelding(
                             sykmelding = sykmelding,
-                            personNrPasient = fnr,
+                            personNrPasient = pasient.fnr,
                             tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
                             personNrLege = sykmelder!!.fnr,
                             navLogId = sykmeldingId,
@@ -183,8 +143,8 @@ class SykmeldingService(
                             )
                             Status.MANUAL_PROCESSING -> manuellBehandling(
                                 journalpostId = journalpostId,
-                                fnr = fnr,
-                                aktorId = aktorId,
+                                fnr = pasient.fnr,
+                                aktorId = pasient.aktorId,
                                 dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                                 loggingMeta = loggingMeta,
                                 sykmeldingId = sykmeldingId,
@@ -206,8 +166,8 @@ class SykmeldingService(
             }
             manuellBehandling(
                 journalpostId = journalpostId,
-                fnr = fnr,
-                aktorId = aktorId,
+                fnr = pasient.fnr,
+                aktorId = pasient.aktorId,
                 dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                 loggingMeta = loggingMeta,
                 sykmeldingId = sykmeldingId,
@@ -256,20 +216,9 @@ class SykmeldingService(
                 log.info("duplikat oppgave {}", fields(loggingMeta))
             }
         } else {
-            log.info("Oppretter oppgave")
             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
-            val oppgave = oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
+            oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
                 journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-            if (!oppgave.duplikat) {
-                log.info("Opprettet oppgave med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                    StructuredArguments.keyValue("sakid", sakId),
-                    fields(loggingMeta)
-                )
-                PAPIRSM_OPPGAVE.inc()
-            } else {
-                log.info("duplikat oppgave med {}, {} {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
-            }
         }
     }
 
@@ -291,12 +240,19 @@ class SykmeldingService(
             throw IllegalStateException("Kunne ikke hente fnr for hpr $hprNummer")
         }
 
+        val behandler = pdlPersonService.getPersonnavn(behandlerFraHpr.fnr, loggingMeta)
+        if (behandler?.aktorId == null) {
+            log.warn("Fant ikke aktorId til behandler for HPR {} {}", hprNummer, fields(loggingMeta))
+            throw IllegalStateException("Kunne ikke hente aktorId for hpr $hprNummer")
+        }
+
         return Sykmelder(
             hprNummer = hprNummer,
             fnr = behandlerFraHpr.fnr,
-            fornavn = behandlerFraHpr.fornavn,
-            mellomnavn = behandlerFraHpr.mellomnavn,
-            etternavn = behandlerFraHpr.etternavn,
+            aktorId = behandler.aktorId,
+            fornavn = behandler.navn.fornavn,
+            mellomnavn = behandler.navn.mellomnavn,
+            etternavn = behandler.navn.etternavn,
             telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString()
         )
     }

@@ -6,7 +6,6 @@ import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.domain.JournalpostMetadata
@@ -15,6 +14,7 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -23,7 +23,8 @@ import org.apache.kafka.clients.producer.KafkaProducer
 class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
     private val sykmeldingService: SykmeldingService,
-    private val utenlandskSykmeldingService: UtenlandskSykmeldingService
+    private val utenlandskSykmeldingService: UtenlandskSykmeldingService,
+    private val pdlPersonService: PdlPersonService
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
@@ -54,19 +55,21 @@ class BehandlingService(
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
                 if (journalpostMetadata.jpErIkkeJournalfort) {
-
-                    if (journalpostMetadata.bruker.id.isNullOrEmpty() || journalpostMetadata.bruker.type.isNullOrEmpty()) {
-                        log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
+                    val pasient = journalpostMetadata.bruker.let {
+                        if (it.id.isNullOrEmpty() || it.type.isNullOrEmpty()) {
+                            log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
+                            null
+                        } else {
+                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let { pdlPersonService.getPersonnavn(it, loggingMeta) }
+                        }
                     }
-
-                    val pasientId = hentBrukerIdFraJournalpost(journalpostMetadata)
 
                     if (journalpostMetadata.gjelderUtland) {
                         utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
                         sykmeldingService.behandleSykmelding(
                                 journalpostId = journalpostId,
-                                pasientId = pasientId,
+                                pasient = pasient,
                                 datoOpprettet = journalpostMetadata.datoOpprettet,
                                 dokumentInfoId = journalpostMetadata.dokumentInfoId,
                                 loggingMeta = loggingMeta,

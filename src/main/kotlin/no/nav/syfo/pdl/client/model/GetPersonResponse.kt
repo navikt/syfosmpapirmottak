@@ -1,15 +1,5 @@
 package no.nav.syfo.pdl.client.model
 
-data class GetPasientOgLegeResponse(
-        val data: PasientOgBehandlerResponseData,
-        val errors: List<ResponseError>?
-)
-data class PasientOgBehandlerResponseData(
-        val pasient: HentPerson?,
-        val lege: HentPerson?,
-        val pasientIdenter: List<PdlIdent>?,
-        val legeIdenter: List<PdlIdent>?
-)
 data class GetPersonResponse(
     val data: ResponseData,
     val errors: List<ResponseError>?
