@@ -12,9 +12,9 @@ import no.nav.syfo.util.LoggingMeta
 @KtorExperimentalAPI
 class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClient: StsOidcClient) {
 
-    suspend fun getPersonnavn(fnr: String, loggingMeta: LoggingMeta): PdlPerson? {
+    suspend fun getPersonnavn(ident: String, loggingMeta: LoggingMeta): PdlPerson? {
         val stsToken = stsOidcClient.oidcToken().access_token
-        val pdlResponse = pdlClient.getPerson(fnr, stsToken)
+        val pdlResponse = pdlClient.getPerson(ident, stsToken)
 
         if (pdlResponse.errors != null) {
             pdlResponse.errors.forEach {
@@ -31,10 +31,24 @@ class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClie
             return null
         }
 
-        return PdlPerson(getNavn(pdlResponse.data.hentPerson.navn[0]))
+        if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isNullOrEmpty()) {
+            log.error("Fant ikke identer i PDL {}", StructuredArguments.fields(loggingMeta))
+            return null
+        }
+
+        return PdlPerson(
+                navn = getNavn(pdlResponse.data.hentPerson.navn[0]),
+                aktorId = pdlResponse.data.hentIdenter.identer.first { it.gruppe == AKTORID }.ident,
+                fnr = pdlResponse.data.hentIdenter.identer.first { it.gruppe == FOLKEREGISTERIDENT }.ident
+                )
     }
 
     private fun getNavn(navn: no.nav.syfo.pdl.client.model.Navn): Navn {
         return Navn(fornavn = navn.fornavn, mellomnavn = navn.mellomnavn, etternavn = navn.etternavn)
+    }
+
+    companion object {
+        private const val FOLKEREGISTERIDENT = "FOLKEREGISTERIDENT"
+        private const val AKTORID = "AKTORID"
     }
 }

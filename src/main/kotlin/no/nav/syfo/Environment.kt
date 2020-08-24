@@ -12,7 +12,6 @@ data class Environment(
     val dokJournalfoeringV1Topic: String = getEnvVar("DOK_JOURNALFOERING_V1_TOPIC"),
     val securityTokenServiceUrl: String = getEnvVar("SECURITY_TOKEN_SERVICE_URL"),
     val safV1Url: String = getEnvVar("SAFGRAPHQL_URL"),
-    val aktoerregisterV1Url: String = getEnvVar("AKTORREGISTER_V1_URL"),
     val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL", "http://oppgave/api/v1/oppgaver"),
     val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL", "http://sak/api/v1/saker"),
     val hentDokumentUrl: String = getEnvVar("HENT_DOKUMENT_URL"),

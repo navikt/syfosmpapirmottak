@@ -40,7 +40,6 @@ object KafkaITSpek : Spek({
             kafkaBootstrapServers = embeddedEnvironment.brokersURL,
             safV1Url = "saf/api",
             applicationName = "syfosmpapirmottak",
-            aktoerregisterV1Url = "aktorurl",
             dokJournalfoeringV1Topic = "aapen-dok-journalfoering-v1-q1",
             securityTokenServiceUrl = "securl",
             oppgavebehandlingUrl = "oppgave/api",

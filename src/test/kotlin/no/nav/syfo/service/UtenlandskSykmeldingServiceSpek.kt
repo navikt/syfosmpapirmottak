@@ -7,7 +7,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.syfo.client.SakClient
-import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.pdl.model.Navn
+import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -22,21 +23,21 @@ object UtenlandskSykmeldingServiceSpek : Spek({
 
     val oppgaveserviceMock = mockk<OppgaveService>()
     val sakClientMock = mockk<SakClient>()
-
+    val pasient = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnr, aktorId)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClientMock, oppgaveserviceMock)
 
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1000, false)
-        coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2000, false)
+        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns Unit
+        coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns Unit
         coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
     }
 
     describe("UtenlandskSykmeldingService ende-til-ende") {
         it("Happy-case journalpost med bruker") {
             runBlocking {
-                utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasient, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
@@ -45,8 +46,9 @@ object UtenlandskSykmeldingServiceSpek : Spek({
         }
 
         it("Oppretter fordelingsoppgave hvis fnr mangler") {
+            val pasientCopy = pasient.copy(fnr = null)
             runBlocking {
-                utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = null, aktorId = aktorId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasientCopy, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
@@ -55,8 +57,9 @@ object UtenlandskSykmeldingServiceSpek : Spek({
         }
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
+            val pasientCopy = pasient.copy(aktorId = null)
             runBlocking {
-                utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = null, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+                utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasientCopy, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
             }
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }

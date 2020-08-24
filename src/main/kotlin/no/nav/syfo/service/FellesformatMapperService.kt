@@ -40,13 +40,12 @@ import no.nav.syfo.util.LoggingMeta
 
 fun mapOcrFilTilFellesformat(
     skanningmetadata: Skanningmetadata,
-    fnr: String,
     sykmelder: Sykmelder,
     sykmeldingId: String,
     loggingMeta: LoggingMeta,
     pdlPerson: PdlPerson
 ): XMLEIFellesformat {
-    if (skanningmetadata.sykemeldinger.pasient.fnr != fnr) {
+    if (skanningmetadata.sykemeldinger.pasient.fnr != pdlPerson.fnr) {
         log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
         throw IllegalStateException("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen")
     }

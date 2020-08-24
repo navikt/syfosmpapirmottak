@@ -34,7 +34,6 @@ import no.nav.syfo.application.ApplicationServer
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.client.AccessTokenClient
-import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.OppgaveClient
@@ -135,7 +134,6 @@ fun main() {
     val apolloClient: ApolloClient = ApolloClient.builder()
             .serverUrl(env.safV1Url)
             .build()
-    val aktoerIdClient = AktoerIdClient(env.aktoerregisterV1Url, oidcClient, httpClient)
     val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
     val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
@@ -148,9 +146,9 @@ fun main() {
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClient, env.helsenettproxyId, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, oidcClient, httpClient)
-    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, aktoerIdClient, regelClient, kuhrsarClient, pdlPersonService)
+    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, regelClient, kuhrsarClient, pdlPersonService)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
-    val behandlingService = BehandlingService(safJournalpostClient, aktoerIdClient, sykmeldingService, utenlandskSykmeldingService)
+    val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
 
     launchListeners(
             env,

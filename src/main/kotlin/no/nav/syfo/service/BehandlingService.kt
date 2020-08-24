@@ -6,7 +6,6 @@ import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.client.AktoerIdClient
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.domain.JournalpostMetadata
@@ -15,6 +14,7 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -22,9 +22,9 @@ import org.apache.kafka.clients.producer.KafkaProducer
 @KtorExperimentalAPI
 class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
-    private val aktoerIdClient: AktoerIdClient,
     private val sykmeldingService: SykmeldingService,
-    private val utenlandskSykmeldingService: UtenlandskSykmeldingService
+    private val utenlandskSykmeldingService: UtenlandskSykmeldingService,
+    private val pdlPersonService: PdlPersonService
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
@@ -55,22 +55,21 @@ class BehandlingService(
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
                 if (journalpostMetadata.jpErIkkeJournalfort) {
-                    var aktorId: String? = null
-                    var fnr: String? = null
-                    if (journalpostMetadata.bruker.id.isNullOrEmpty() || journalpostMetadata.bruker.type.isNullOrEmpty()) {
-                        log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
-                    } else {
-                        aktorId = hentAktoridFraJournalpost(journalpostMetadata, sykmeldingId)
-                        fnr = hentFnrFraJournalpost(journalpostMetadata, sykmeldingId)
+                    val pasient = journalpostMetadata.bruker.let {
+                        if (it.id.isNullOrEmpty() || it.type.isNullOrEmpty()) {
+                            log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
+                            null
+                        } else {
+                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let { pdlPersonService.getPersonnavn(it, loggingMeta) }
+                        }
                     }
 
                     if (journalpostMetadata.gjelderUtland) {
-                        utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, fnr = fnr, aktorId = aktorId, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
+                        utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
                         sykmeldingService.behandleSykmelding(
                                 journalpostId = journalpostId,
-                                fnr = fnr,
-                                aktorId = aktorId,
+                                pasient = pasient,
                                 datoOpprettet = journalpostMetadata.datoOpprettet,
                                 dokumentInfoId = journalpostMetadata.dokumentInfoId,
                                 loggingMeta = loggingMeta,
@@ -91,35 +90,18 @@ class BehandlingService(
                 val currentRequestLatency = requestLatency.observeDuration()
 
                 log.info("Finished processing took {}s, {}", StructuredArguments.keyValue("latency", currentRequestLatency), fields(loggingMeta))
-            } else {
-                log.info("Mottatt jp som ikke treffer filter, tema = ${journalfoeringEvent.temaNytt}, mottakskanal = ${journalfoeringEvent.mottaksKanal}, hendelsestype = ${journalfoeringEvent.hendelsesType}, journalpostid = $journalpostId")
             }
         }
     }
 
-    suspend fun hentAktoridFraJournalpost(
-        journalpost: JournalpostMetadata,
-        sykmeldingId: String
+    fun hentBrukerIdFraJournalpost(
+        journalpost: JournalpostMetadata
     ): String? {
         val bruker = journalpost.bruker
         val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid, skal ikke kunne skje")
-        return if (bruker.type == "AKTOERID") {
+        return if (bruker.type == "AKTOERID" || bruker.type == "FNR") {
             brukerId
-        } else {
-            aktoerIdClient.finnAktorid(brukerId, sykmeldingId)
-        }
-    }
-
-    suspend fun hentFnrFraJournalpost(
-        journalpost: JournalpostMetadata,
-        sykmeldingId: String
-    ): String? {
-        val bruker = journalpost.bruker
-        val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid, skal ikke kunne skje")
-        return if (bruker.type == "FNR") {
-            brukerId
-        } else {
-            aktoerIdClient.finnFnr(brukerId, sykmeldingId)
-        }
+        } else
+            return null
     }
 }
