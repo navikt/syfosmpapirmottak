@@ -80,6 +80,7 @@ class SykmeldingService(
         } else {
             val geografiskTIlknytningResposnse = personV3.hentGeografiskTilknytning(HentGeografiskTilknytningRequest().withAktoer(AktoerId().withAktoerId(pasient.aktorId)))
             geografiskTilknytning = geografiskTIlknytningResposnse.geografiskTilknytning.geografiskTilknytning
+            log.info("Fikk geografisk tilknytning $geografiskTilknytning", fields(loggingMeta))
             dokumentInfoId?.let {
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
