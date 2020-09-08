@@ -42,6 +42,7 @@ val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.9.3"
 val smCommonDiagnosisCodesVersion = "1.68817ee"
 
+
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
@@ -149,8 +150,9 @@ dependencies {
     implementation("com.sun.xml.ws:jaxws-tools:$jaxwsToolsVersion") {
         exclude(group = "com.sun.xml.ws", module = "policy")
     }
-    implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
 
+    implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
+    implementation("no.nav.tjenestespesifikasjoner:person-v3-tjenestespesifikasjon:$navPersonv3Version")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation ("org.eclipse.jetty:jetty-servlet:$jettyVersion")

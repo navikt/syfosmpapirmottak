@@ -32,7 +32,8 @@ data class Environment(
     val sm2013ManualHandlingTopic: String = getEnvVar("KAFKA_SM2013_MANUAL_TOPIC", "privat-syfo-sm2013-manuellBehandling"),
     val sm2013AutomaticHandlingTopic: String = getEnvVar("KAFKA_SM2013_AUTOMATIC_TOPIC", "privat-syfo-sm2013-automatiskBehandling"),
     val sm2013SmregistreringTopic: String = getEnvVar("KAFKA_PAPIR_SM_REGISTERING_TOPIC", "privat-syfo-papir-sm-registering"),
-    val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH")
+    val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
+    val personV3EndpointURL: String = getEnvVar("PERSON_V3_ENDPOINT_URL")
 ) : KafkaConfig, MqConfig
 
 data class VaultCredentials(

@@ -39,6 +39,7 @@ import no.nav.syfo.pdl.model.Navn
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
+import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
@@ -68,7 +69,7 @@ object SykmeldingServiceSpek : Spek({
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
-
+    val personV3 = mockkClass(type = PersonV3::class, relaxed = true)
     val sykmeldingService = SykmeldingService(
             sakClientMock,
             oppgaveserviceMock,
@@ -116,7 +117,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -136,7 +137,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
@@ -156,7 +157,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
@@ -177,7 +178,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -196,7 +197,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
@@ -215,7 +216,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -256,7 +257,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -295,7 +296,7 @@ object SykmeldingServiceSpek : Spek({
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                    sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -324,7 +325,7 @@ object SykmeldingServiceSpek : Spek({
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                         dokArkivClient = dokArkivClientMock,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -349,7 +350,7 @@ object SykmeldingServiceSpek : Spek({
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -386,7 +387,7 @@ object SykmeldingServiceSpek : Spek({
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -427,7 +428,7 @@ object SykmeldingServiceSpek : Spek({
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -456,7 +457,7 @@ object SykmeldingServiceSpek : Spek({
                     sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+                    sm2013SmregistreringTopic = "topic3", cluster = "dev-fss", personV3 = personV3)
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }

@@ -1,11 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import javax.jms.MessageProducer
-import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -31,7 +26,15 @@ import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
+import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.AktoerId
+import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
 import org.apache.kafka.clients.producer.KafkaProducer
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import javax.jms.MessageProducer
+import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -43,6 +46,11 @@ class SykmeldingService(
     private val kuhrSarClient: SarClient,
     private val pdlPersonService: PdlPersonService
 ) {
+
+    val pilotkontor = listOf("0415", "0412", "0403", "0417", "1101", "1108", "1102", "1129", "1106",
+            "1111", "1112", "1119", "1120", "1122", "1124", "1127", "1130", "1133", "1134",
+            "1135", "1146", "1149", "1151", "1160", "1161", "1162", "1164", "1165", "1169", "1167", "1168")
+
     suspend fun behandleSykmelding(
         journalpostId: String,
         pasient: PdlPerson?,
@@ -57,18 +65,21 @@ class SykmeldingService(
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String,
-        cluster: String
+        cluster: String,
+        personV3: PersonV3
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
 
         var sykmelder: Sykmelder? = null
         var ocrFil: Skanningmetadata? = null
-
+        var geografiskTilknytning: String? = null
         if (pasient?.aktorId == null || pasient.fnr == null) {
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
             return
         } else {
+            val geografiskTIlknytningResposnse = personV3.hentGeografiskTilknytning(HentGeografiskTilknytningRequest().withAktoer(AktoerId().withAktoerId(pasient.aktorId)))
+            geografiskTilknytning = geografiskTIlknytningResposnse.geografiskTilknytning.geografiskTilknytning
             dokumentInfoId?.let {
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
@@ -152,7 +163,8 @@ class SykmeldingService(
                                 ocrFil = ocrFil,
                                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                                cluster = cluster
+                                cluster = cluster,
+                                geografiskTilknytning = geografiskTilknytning
                             )
                             else -> throw IllegalStateException("Ukjent status: ${validationResult.status} , Papirsykmeldinger kan kun ha ein av to typer statuser enten OK eller MANUAL_PROCESSING")
                         }
@@ -175,7 +187,8 @@ class SykmeldingService(
                 ocrFil = ocrFil,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                cluster = cluster
+                cluster = cluster,
+                geografiskTilknytning = geografiskTilknytning
             )
         }
     }
@@ -192,9 +205,11 @@ class SykmeldingService(
         ocrFil: Skanningmetadata?,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String,
-        cluster: String
+        cluster: String,
+        geografiskTilknytning: String?
     ) {
-        if (cluster == "dev-fss") {
+        // TODO remove dev-fss and comment in shouldSendToSmregistrering
+        if (cluster == "dev-fss" /*&& shouldSendToSmregistrering(geografiskTilknytning) */) {
             log.info("Går til smregistrering fordi dette er dev {}", fields(loggingMeta))
             val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
                 journalpostId = journalpostId,
@@ -220,6 +235,10 @@ class SykmeldingService(
             oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
                 journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
         }
+    }
+
+    private fun shouldSendToSmregistrering(geografiskTilknytning: String?): Boolean {
+        return geografiskTilknytning?.let { pilotkontor.contains(it) } ?: false
     }
 
     suspend fun hentSykmelder(ocrFil: Skanningmetadata, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelder {

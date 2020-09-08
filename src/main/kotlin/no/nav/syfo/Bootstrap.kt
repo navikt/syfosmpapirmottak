@@ -60,6 +60,8 @@ import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
+import no.nav.syfo.ws.createPort
+import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -128,6 +130,11 @@ fun main() {
             }
         }
     }
+
+    val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
+
     val httpClientWithProxy = HttpClient(Apache, proxyConfig)
     val httpClient = HttpClient(Apache, config)
 
@@ -158,7 +165,8 @@ fun main() {
             credentials,
             kafkaProducerReceivedSykmelding,
             dokArkivClient,
-            kafkaProducerPapirSmRegistering
+            kafkaProducerPapirSmRegistering,
+            personV3
     )
 }
 
@@ -182,7 +190,8 @@ fun launchListeners(
     credentials: VaultCredentials,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
-    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>
+    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
+    personV3: PersonV3
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -206,7 +215,8 @@ fun launchListeners(
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 sm2013SmregistreringTopic = env.sm2013SmregistreringTopic,
-                cluster = env.cluster
+                cluster = env.cluster,
+                personV3 = personV3
             )
         }
     }
@@ -224,7 +234,8 @@ suspend fun blockingApplicationLogic(
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
     sm2013SmregistreringTopic: String,
-    cluster: String
+    cluster: String,
+    personV3: PersonV3
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -247,7 +258,8 @@ suspend fun blockingApplicationLogic(
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                cluster = cluster
+                cluster = cluster,
+                personV3 = personV3
             )
         }
         delay(100)

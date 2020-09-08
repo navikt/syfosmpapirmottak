@@ -71,3 +71,5 @@ spec:
       value: http://dokarkiv/rest/journalpostapi/v1/journalpost
     - name: PDL_GRAPHQL_PATH
       value: https://pdl-api.nais.adeo.no/graphql
+    - name: PERSON_V3_ENDPOINT_URL
+      value: https://wasapp.adeo.no/tpsws/ws/Person/v3
