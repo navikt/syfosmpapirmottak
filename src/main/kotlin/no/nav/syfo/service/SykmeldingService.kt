@@ -76,7 +76,9 @@ class SykmeldingService(
             return
         } else {
             behandlendeEnhetId = behandlendeEnhetService.getBehanldendeEnhet(pasient, loggingMeta)
-            log.info("Fikk enhetId $behandlendeEnhetId", fields(loggingMeta))
+            if(behandlendeEnhetId == null) {
+                log.info("Fant ikke behandlendeEnhet for papirsykmelding {}", fields(loggingMeta))
+            }
             dokumentInfoId?.let {
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
