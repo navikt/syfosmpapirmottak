@@ -28,6 +28,9 @@ import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import no.nav.tjeneste.virksomhet.person.v3.informasjon.AktoerId
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.NorskIdent
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.PersonIdent
+import no.nav.tjeneste.virksomhet.person.v3.informasjon.Personidenter
 import no.nav.tjeneste.virksomhet.person.v3.meldinger.HentGeografiskTilknytningRequest
 import org.apache.kafka.clients.producer.KafkaProducer
 import java.time.LocalDateTime
@@ -78,7 +81,15 @@ class SykmeldingService(
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
             return
         } else {
-            val geografiskTIlknytningResposnse = personV3.hentGeografiskTilknytning(HentGeografiskTilknytningRequest().withAktoer(AktoerId().withAktoerId(pasient.aktorId)))
+            val geografiskTIlknytningResposnse = personV3.hentGeografiskTilknytning(
+                    HentGeografiskTilknytningRequest()
+                            .withAktoer(
+                                    PersonIdent()
+                                            .withIdent(
+                                                    NorskIdent()
+                                                            .withIdent(pasient.fnr)
+                                                            .withType(Personidenter().withValue("FNR")))))
+
             geografiskTilknytning = geografiskTIlknytningResposnse.geografiskTilknytning.geografiskTilknytning
             log.info("Fikk geografisk tilknytning $geografiskTilknytning", fields(loggingMeta))
             dokumentInfoId?.let {
