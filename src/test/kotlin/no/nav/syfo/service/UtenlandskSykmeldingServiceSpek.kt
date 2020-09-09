@@ -23,7 +23,7 @@ object UtenlandskSykmeldingServiceSpek : Spek({
 
     val oppgaveserviceMock = mockk<OppgaveService>()
     val sakClientMock = mockk<SakClient>()
-    val pasient = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnr, aktorId)
+    val pasient = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnr, aktorId, null)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClientMock, oppgaveserviceMock)
 
     beforeEachTest {

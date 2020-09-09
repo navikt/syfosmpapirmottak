@@ -56,7 +56,9 @@ object KafkaITSpek : Spek({
             dokArkivUrl = "dokapi/",
             cluster = "dev",
             pdlGraphqlPath = "TEST",
-            personV3EndpointURL = ""
+            personV3EndpointURL = "",
+            arbeidsfordelingAPIUrl = "",
+            egenAnsattURL = ""
     )
 
     fun Properties.overrideForTest(): Properties = apply {

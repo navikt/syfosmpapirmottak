@@ -34,7 +34,12 @@ data class ErrorExtension(
 )
 
 data class HentPerson(
-    val navn: List<Navn>?
+    val navn: List<Navn>?,
+    val adressebeskyttelse: List<Adressebeskyttelse>?
+)
+
+data class Adressebeskyttelse(
+    val gradering: String
 )
 
 data class Navn(

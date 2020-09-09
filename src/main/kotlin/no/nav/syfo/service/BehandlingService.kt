@@ -17,7 +17,6 @@ import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
-import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.apache.kafka.clients.producer.KafkaProducer
 
 @KtorExperimentalAPI
@@ -38,8 +37,7 @@ class BehandlingService(
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String,
-        cluster: String,
-        personV3: PersonV3
+        cluster: String
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -83,8 +81,7 @@ class BehandlingService(
                                 dokArkivClient = dokArkivClient,
                                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                                cluster = cluster,
-                                personV3 = personV3
+                                cluster = cluster
                         )
                     }
                 } else {

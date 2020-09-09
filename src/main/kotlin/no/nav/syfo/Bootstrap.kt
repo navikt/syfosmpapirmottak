@@ -34,6 +34,7 @@ import no.nav.syfo.application.ApplicationServer
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.client.AccessTokenClient
+import no.nav.syfo.client.ArbeidsFordelingClient
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.OppgaveClient
@@ -52,6 +53,7 @@ import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.mq.connectionFactory
 import no.nav.syfo.mq.producerForQueue
 import no.nav.syfo.pdl.PdlFactory
+import no.nav.syfo.service.BehandlendeEnhetService
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
@@ -61,6 +63,7 @@ import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
 import no.nav.syfo.ws.createPort
+import no.nav.tjeneste.pip.egen.ansatt.v1.EgenAnsattV1
 import no.nav.tjeneste.virksomhet.person.v3.binding.PersonV3
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -134,7 +137,9 @@ fun main() {
     val personV3 = createPort<PersonV3>(env.personV3EndpointURL) {
         port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
     }
-
+    val egenansattV1 = createPort<EgenAnsattV1>(env.egenAnsattURL) {
+        port { withSTS(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl) }
+    }
     val httpClientWithProxy = HttpClient(Apache, proxyConfig)
     val httpClient = HttpClient(Apache, config)
 
@@ -147,13 +152,18 @@ fun main() {
     val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
     val kuhrsarClient = SarClient(env.kuhrSarApiUrl, httpClient)
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, oidcClient, httpClient)
+    val arbeidsFordelingClient = ArbeidsFordelingClient(env.arbeidsfordelingAPIUrl, oidcClient, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClient, env.helsenettproxyId, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, oidcClient, httpClient)
-    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, regelClient, kuhrsarClient, pdlPersonService)
+    val behandlendeEnhetService = BehandlendeEnhetService(
+            personV3 = personV3,
+            egenAnsattV1 = egenansattV1,
+            arbeidsfordelingClient = arbeidsFordelingClient)
+    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, regelClient, kuhrsarClient, pdlPersonService, behandlendeEnhetService)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
 
@@ -165,8 +175,7 @@ fun main() {
             credentials,
             kafkaProducerReceivedSykmelding,
             dokArkivClient,
-            kafkaProducerPapirSmRegistering,
-            personV3
+            kafkaProducerPapirSmRegistering
     )
 }
 
@@ -190,8 +199,7 @@ fun launchListeners(
     credentials: VaultCredentials,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
-    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-    personV3: PersonV3
+    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>
 ) {
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
@@ -215,8 +223,7 @@ fun launchListeners(
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 sm2013SmregistreringTopic = env.sm2013SmregistreringTopic,
-                cluster = env.cluster,
-                personV3 = personV3
+                cluster = env.cluster
             )
         }
     }
@@ -234,8 +241,7 @@ suspend fun blockingApplicationLogic(
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
     sm2013SmregistreringTopic: String,
-    cluster: String,
-    personV3: PersonV3
+    cluster: String
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
@@ -258,8 +264,7 @@ suspend fun blockingApplicationLogic(
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                cluster = cluster,
-                personV3 = personV3
+                cluster = cluster
             )
         }
         delay(100)

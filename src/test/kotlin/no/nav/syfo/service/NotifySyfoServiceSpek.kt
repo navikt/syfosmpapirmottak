@@ -26,7 +26,7 @@ object NotifySyfoServiceSpek : Spek({
 
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Bodø", telefonnummer = null)
-            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid")
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val fellesformat = mapOcrFilTilFellesformat(
                     skanningmetadata = skanningMetadata,

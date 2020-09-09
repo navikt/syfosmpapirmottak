@@ -73,3 +73,7 @@ spec:
       value: https://pdl-api.nais.preprod.local/graphql
     - name: PERSON_V3_ENDPOINT_URL
       value: https://wasapp-q1.adeo.no/tpsws/ws/Person/v3
+    - name: EGEN_ANSATT_URL
+      value: https://wasapp-q1.adeo.no/tpsws/EgenAnsatt_v1
+    - name: ARBEIDSFORDELING_API
+      value: https://app-q1.adeo.no/norg2/api/v1/arbeidsfordeling
