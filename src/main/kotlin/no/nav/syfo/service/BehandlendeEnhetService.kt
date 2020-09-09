@@ -20,7 +20,9 @@ class BehandlendeEnhetService(val personV3: PersonV3, val egenAnsattV1: EgenAnsa
 
     suspend fun getBehanldendeEnhet(pasient: PdlPerson, loggingMeta: LoggingMeta): String? {
         val geografiskTilknytning = getGeografiskTilknytning(pasient, loggingMeta)
+        log.info("Got geografiskTilknytning $geografiskTilknytning")
         val egenAnsatt = isEgenAnsatt(pasient)
+        log.info("Got egenAnsatt $egenAnsatt")
         return getBehandlendeId(pasient, geografiskTilknytning, egenAnsatt, loggingMeta)
     }
 

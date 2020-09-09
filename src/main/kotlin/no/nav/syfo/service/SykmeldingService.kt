@@ -76,7 +76,7 @@ class SykmeldingService(
             return
         } else {
             behandlendeEnhetId = behandlendeEnhetService.getBehanldendeEnhet(pasient, loggingMeta)
-            log.info("Fikk geografisk tilknytning $behandlendeEnhetId", fields(loggingMeta))
+            log.info("Fikk enhetId $behandlendeEnhetId", fields(loggingMeta))
             dokumentInfoId?.let {
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
