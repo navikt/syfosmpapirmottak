@@ -6,6 +6,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkClass
+import java.math.BigInteger
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.Calendar
+import javax.jms.MessageProducer
+import javax.jms.Session
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
@@ -36,13 +43,6 @@ import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.math.BigInteger
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.Calendar
-import javax.jms.MessageProducer
-import javax.jms.Session
-import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
 object SykmeldingServiceSpek : Spek({
