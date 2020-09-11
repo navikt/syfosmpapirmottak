@@ -12,7 +12,7 @@ import no.nav.syfo.util.LoggingMeta
 @KtorExperimentalAPI
 class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClient: StsOidcClient) {
 
-    suspend fun getPersonnavn(ident: String, loggingMeta: LoggingMeta): PdlPerson? {
+    suspend fun getPdlPerson(ident: String, loggingMeta: LoggingMeta): PdlPerson? {
         val stsToken = stsOidcClient.oidcToken().access_token
         val pdlResponse = pdlClient.getPerson(ident, stsToken)
 
@@ -24,22 +24,22 @@ class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClie
 
         if (pdlResponse.data.hentPerson == null) {
             log.error("Fant ikke person i PDL {}", StructuredArguments.fields(loggingMeta))
-            return null
+            throw RuntimeException("Fant ikke person i PDL")
         }
         if (pdlResponse.data.hentPerson.navn.isNullOrEmpty()) {
             log.error("Fant ikke navn på person i PDL {}", StructuredArguments.fields(loggingMeta))
-            return null
+            throw RuntimeException("Fant ikke navn på person i PDL")
         }
 
         if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isNullOrEmpty()) {
             log.error("Fant ikke identer i PDL {}", StructuredArguments.fields(loggingMeta))
-            return null
+            throw java.lang.RuntimeException("Fant ikke identer i PDL")
         }
 
         return PdlPerson(
                 navn = getNavn(pdlResponse.data.hentPerson.navn[0]),
-                aktorId = pdlResponse.data.hentIdenter.identer.first { it.gruppe == AKTORID }.ident,
-                fnr = pdlResponse.data.hentIdenter.identer.first { it.gruppe == FOLKEREGISTERIDENT }.ident
+                aktorId = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == AKTORID }?.ident,
+                fnr = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == FOLKEREGISTERIDENT }?.ident
                 )
     }
 
