@@ -24,23 +24,22 @@ class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClie
 
         if (pdlResponse.data.hentPerson == null) {
             log.error("Fant ikke person i PDL {}", StructuredArguments.fields(loggingMeta))
-            throw RuntimeException("Fant ikke person i PDL")
+            return null
         }
         if (pdlResponse.data.hentPerson.navn.isNullOrEmpty()) {
             log.error("Fant ikke navn på person i PDL {}", StructuredArguments.fields(loggingMeta))
-            throw RuntimeException("Fant ikke navn på person i PDL")
-        }
+            return null        }
 
         if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isNullOrEmpty()) {
             log.error("Fant ikke identer i PDL {}", StructuredArguments.fields(loggingMeta))
-            throw java.lang.RuntimeException("Fant ikke identer i PDL")
+            return null
         }
 
         return PdlPerson(
                 navn = getNavn(pdlResponse.data.hentPerson.navn[0]),
                 aktorId = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == AKTORID }?.ident,
                 fnr = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == FOLKEREGISTERIDENT }?.ident
-                )
+        )
     }
 
     private fun getNavn(navn: no.nav.syfo.pdl.client.model.Navn): Navn {

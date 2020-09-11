@@ -16,10 +16,10 @@ import no.nav.syfo.pdl.client.model.PdlIdent
 import no.nav.syfo.pdl.client.model.ResponseData
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
 object PdlServiceTest : Spek({
@@ -52,12 +52,10 @@ object PdlServiceTest : Spek({
             coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(ResponseData(null, null), errors = null)
 
-            val exception = assertFailsWith<Exception> {
-                runBlocking {
-                    pdlService.getPdlPerson("123", loggingMeta)
-                }
+            runBlocking {
+                val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
+                pdlPerson shouldBe null
             }
-            exception.message shouldEqual "Fant ikke person i PDL"
         }
 
         it("Skal feile når navn er tom liste") {
@@ -67,12 +65,11 @@ object PdlServiceTest : Spek({
             ),
                     hentIdenter = HentIdenter(emptyList())
             ), errors = null)
-            val exception = assertFailsWith<Exception> {
-                runBlocking {
-                    pdlService.getPdlPerson("123", loggingMeta)
-                }
+
+            runBlocking {
+                val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
+                pdlPerson shouldBe null
             }
-            exception.message shouldEqual "Fant ikke navn på person i PDL"
         }
 
         it("Skal feile når navn ikke finnes") {
@@ -82,12 +79,11 @@ object PdlServiceTest : Spek({
             ),
                     hentIdenter = HentIdenter(listOf(PdlIdent(ident = "987654321", gruppe = "foo")))
             ), errors = null)
-            val exception = assertFailsWith<Exception> {
-                runBlocking {
-                    pdlService.getPdlPerson("123", loggingMeta)
-                }
+
+            runBlocking {
+                val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
+                pdlPerson shouldBe null
             }
-            exception.message shouldEqual "Fant ikke navn på person i PDL"
         }
 
         it("Skal feile når identer ikke finnes") {
@@ -97,12 +93,11 @@ object PdlServiceTest : Spek({
             ),
                     hentIdenter = HentIdenter(emptyList())
             ), errors = null)
-            val exception = assertFailsWith<Exception> {
-                runBlocking {
-                    pdlService.getPdlPerson("123", loggingMeta)
-                }
+
+            runBlocking {
+                val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
+                pdlPerson shouldBe null
             }
-            exception.message shouldEqual "Fant ikke identer i PDL"
         }
     }
 })
