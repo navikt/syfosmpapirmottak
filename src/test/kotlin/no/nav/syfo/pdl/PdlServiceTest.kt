@@ -90,7 +90,7 @@ object PdlServiceTest : Spek({
             exception.message shouldEqual "Fant ikke navn på person i PDL"
         }
 
-        it("Skal feile når aktørid ikke finnes") {
+        it("Skal feile når identer ikke finnes") {
             coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(ResponseData(hentPerson = HentPerson(
                     navn = listOf(Navn("fornavn", "mellomnavn", "etternavn"))
