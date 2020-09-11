@@ -54,7 +54,7 @@ class BehandlendeEnhetService(val personV3: PersonV3, val egenAnsattV1: EgenAnsa
                 behandlingstype = "ANY",
                 diskresjonskode = getDiskresjonskode(pasient.adressebeskyttelse),
                 geografiskOmraade = geografiskTilknytning,
-                oppgavetype = "BEH_EL_SYM",
+                oppgavetype = "JFR",
                 skjermet = egenAnsatt
         )
     }
