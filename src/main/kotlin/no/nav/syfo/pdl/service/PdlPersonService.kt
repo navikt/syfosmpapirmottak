@@ -12,7 +12,7 @@ import no.nav.syfo.util.LoggingMeta
 @KtorExperimentalAPI
 class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClient: StsOidcClient) {
 
-    suspend fun getPersonnavn(ident: String, loggingMeta: LoggingMeta): PdlPerson? {
+    suspend fun getPdlPerson(ident: String, loggingMeta: LoggingMeta): PdlPerson? {
         val stsToken = stsOidcClient.oidcToken().access_token
         val pdlResponse = pdlClient.getPerson(ident, stsToken)
 
@@ -38,10 +38,10 @@ class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClie
 
         return PdlPerson(
                 navn = getNavn(pdlResponse.data.hentPerson.navn[0]),
-                aktorId = pdlResponse.data.hentIdenter.identer.first { it.gruppe == AKTORID }.ident,
-                fnr = pdlResponse.data.hentIdenter.identer.first { it.gruppe == FOLKEREGISTERIDENT }.ident,
+                aktorId = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == AKTORID }?.ident,
+                fnr = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == FOLKEREGISTERIDENT }?.ident,
                 adressebeskyttelse = pdlResponse.data.hentPerson.adressebeskyttelse?.first()?.gradering
-                )
+        )
     }
 
     private fun getNavn(navn: no.nav.syfo.pdl.client.model.Navn): Navn {

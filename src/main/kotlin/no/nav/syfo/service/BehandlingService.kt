@@ -60,7 +60,7 @@ class BehandlingService(
                             log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
                             null
                         } else {
-                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let { pdlPersonService.getPersonnavn(it, loggingMeta) }
+                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let { pdlPersonService.getPdlPerson(it, loggingMeta) }
                         }
                     }
 

@@ -1,6 +1,11 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import javax.jms.MessageProducer
+import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -27,11 +32,6 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import javax.jms.MessageProducer
-import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -76,7 +76,7 @@ class SykmeldingService(
             return
         } else {
             behandlendeEnhetId = behandlendeEnhetService.getBehanldendeEnhet(pasient, loggingMeta)
-            if(behandlendeEnhetId == null) {
+            if (behandlendeEnhetId == null) {
                 log.info("Fant ikke behandlendeEnhet for papirsykmelding {}", fields(loggingMeta))
             }
             dokumentInfoId?.let {
@@ -258,7 +258,7 @@ class SykmeldingService(
             throw IllegalStateException("Kunne ikke hente fnr for hpr $hprNummer")
         }
 
-        val behandler = pdlPersonService.getPersonnavn(behandlerFraHpr.fnr, loggingMeta)
+        val behandler = pdlPersonService.getPdlPerson(behandlerFraHpr.fnr, loggingMeta)
         if (behandler?.aktorId == null) {
             log.warn("Fant ikke aktorId til behandler for HPR {} {}", hprNummer, fields(loggingMeta))
             throw IllegalStateException("Kunne ikke hente aktorId for hpr $hprNummer")

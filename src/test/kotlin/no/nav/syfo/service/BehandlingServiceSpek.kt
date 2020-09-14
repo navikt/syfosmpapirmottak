@@ -49,7 +49,7 @@ object BehandlingServiceSpek : Spek({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { pdlService.getPersonnavn(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorid", null)
+        coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorid", null)
         coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("fnr", "FNR"),
                 dokumentInfoId = null,
@@ -73,7 +73,7 @@ object BehandlingServiceSpek : Spek({
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
-            coVerify { pdlService.getPersonnavn(eq("fnr"), any()) }
+            coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
@@ -90,7 +90,7 @@ object BehandlingServiceSpek : Spek({
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
-            coVerify { pdlService.getPersonnavn(eq("fnr"), any()) }
+            coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
@@ -112,7 +112,7 @@ object BehandlingServiceSpek : Spek({
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
-            coVerify { pdlService.getPersonnavn("aktorId", any()) }
+            coVerify { pdlService.getPdlPerson("aktorId", any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
@@ -134,7 +134,7 @@ object BehandlingServiceSpek : Spek({
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
-            coVerify { pdlService.getPersonnavn(eq("fnr"), any()) }
+            coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
         }
@@ -156,7 +156,7 @@ object BehandlingServiceSpek : Spek({
             }
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
-            coVerify { pdlService.getPersonnavn(eq("aktorId"), any()) }
+            coVerify { pdlService.getPdlPerson(eq("aktorId"), any()) }
             coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
         }
@@ -220,7 +220,7 @@ object BehandlingServiceSpek : Spek({
 
         it("Sender aktørid==null hvis ikke kan hente aktørid fra aktørregister") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-            coEvery { pdlService.getPersonnavn(any(), any()) } returns null
+            coEvery { pdlService.getPdlPerson(any(), any()) } returns null
 
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
@@ -241,8 +241,8 @@ object BehandlingServiceSpek : Spek({
                     jpErIkkeJournalfort = true,
                     gjelderUtland = false,
                     datoOpprettet = datoOpprettet)
-            val pasient = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), null, "aktorId", null)
-            coEvery { pdlService.getPersonnavn(any(), any()) } returns pasient
+            val pasient = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), null, "aktorId", adressebeskyttelse = null)
+            coEvery { pdlService.getPdlPerson(any(), any()) } returns pasient
 
             runBlocking {
                 behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
@@ -263,7 +263,7 @@ object BehandlingServiceSpek : Spek({
                     jpErIkkeJournalfort = true,
                     gjelderUtland = false,
                     datoOpprettet = datoOpprettet)
-            coEvery { pdlService.getPersonnavn(any(), any()) } throws IllegalStateException("feilmelding")
+            coEvery { pdlService.getPdlPerson(any(), any()) } throws IllegalStateException("feilmelding")
 
             assertFailsWith<TrackableException> {
                 runBlocking {
