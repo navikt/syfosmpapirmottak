@@ -29,7 +29,6 @@ import no.nav.syfo.util.TrackableException
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-
 @KtorExperimentalAPI
 object BehandlingServiceSpek : Spek({
     val sykmeldingId = "1234"
@@ -50,7 +49,7 @@ object BehandlingServiceSpek : Spek({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorid")
+        coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorid", null)
         coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("fnr", "FNR"),
                 dokumentInfoId = null,
@@ -242,7 +241,7 @@ object BehandlingServiceSpek : Spek({
                     jpErIkkeJournalfort = true,
                     gjelderUtland = false,
                     datoOpprettet = datoOpprettet)
-            val pasient = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), null, "aktorId")
+            val pasient = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), null, "aktorId", adressebeskyttelse = null)
             coEvery { pdlService.getPdlPerson(any(), any()) } returns pasient
 
             runBlocking {

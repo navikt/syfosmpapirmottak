@@ -41,8 +41,14 @@ class SykmeldingService(
     private val norskHelsenettClient: NorskHelsenettClient,
     private val regelClient: RegelClient,
     private val kuhrSarClient: SarClient,
-    private val pdlPersonService: PdlPersonService
+    private val pdlPersonService: PdlPersonService,
+    private val behandlendeEnhetService: BehandlendeEnhetService
 ) {
+
+    val pilotkontor = listOf("0415", "0412", "0403", "0417", "1101", "1108", "1102", "1129", "1106",
+            "1111", "1112", "1119", "1120", "1122", "1124", "1127", "1130", "1133", "1134",
+            "1135", "1146", "1149", "1151", "1160", "1161", "1162", "1164", "1165", "1169", "1167", "1168")
+
     suspend fun behandleSykmelding(
         journalpostId: String,
         pasient: PdlPerson?,
@@ -64,11 +70,15 @@ class SykmeldingService(
 
         var sykmelder: Sykmelder? = null
         var ocrFil: Skanningmetadata? = null
-
+        var behandlendeEnhetId: String? = null
         if (pasient?.aktorId == null || pasient.fnr == null) {
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
             return
         } else {
+            behandlendeEnhetId = behandlendeEnhetService.getBehanldendeEnhet(pasient, loggingMeta)
+            if (behandlendeEnhetId == null) {
+                log.info("Fant ikke behandlendeEnhet for papirsykmelding {}", fields(loggingMeta))
+            }
             dokumentInfoId?.let {
                 try {
                     ocrFil = safDokumentClient.hentDokument(journalpostId = journalpostId, dokumentInfoId = it, msgId = sykmeldingId, loggingMeta = loggingMeta)
@@ -152,7 +162,8 @@ class SykmeldingService(
                                 ocrFil = ocrFil,
                                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                                cluster = cluster
+                                cluster = cluster,
+                                enhetId = behandlendeEnhetId
                             )
                             else -> throw IllegalStateException("Ukjent status: ${validationResult.status} , Papirsykmeldinger kan kun ha ein av to typer statuser enten OK eller MANUAL_PROCESSING")
                         }
@@ -175,7 +186,8 @@ class SykmeldingService(
                 ocrFil = ocrFil,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                cluster = cluster
+                cluster = cluster,
+                enhetId = behandlendeEnhetId
             )
         }
     }
@@ -192,9 +204,11 @@ class SykmeldingService(
         ocrFil: Skanningmetadata?,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String,
-        cluster: String
+        cluster: String,
+        enhetId: String?
     ) {
-        if (cluster == "dev-fss") {
+        // TODO remove dev-fss and comment in shouldSendToSmregistrering
+        if (cluster == "dev-fss" /*&& shouldSendToSmregistrering(enhetId) */) {
             log.info("Går til smregistrering fordi dette er dev {}", fields(loggingMeta))
             val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
                 journalpostId = journalpostId,
@@ -220,6 +234,10 @@ class SykmeldingService(
             oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
                 journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
         }
+    }
+
+    private fun shouldSendToSmregistrering(enhetId: String?): Boolean {
+        return enhetId?.let { pilotkontor.contains(it) } ?: false
     }
 
     suspend fun hentSykmelder(ocrFil: Skanningmetadata, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelder {

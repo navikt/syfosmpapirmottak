@@ -41,6 +41,8 @@ val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.9.3"
 val smCommonDiagnosisCodesVersion = "1.68817ee"
+val navEgenAnsattVersion = "1.2019.09.25-00.21-49b69f0625e0"
+
 
 plugins {
     java
@@ -149,8 +151,10 @@ dependencies {
     implementation("com.sun.xml.ws:jaxws-tools:$jaxwsToolsVersion") {
         exclude(group = "com.sun.xml.ws", module = "policy")
     }
-    implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
 
+    implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
+    implementation("no.nav.tjenestespesifikasjoner:person-v3-tjenestespesifikasjon:$navPersonv3Version")
+    implementation("no.nav.tjenestespesifikasjoner:egenansatt-v1-tjenestespesifikasjon:$navEgenAnsattVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation ("org.eclipse.jetty:jetty-servlet:$jettyVersion")

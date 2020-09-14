@@ -55,7 +55,7 @@ object SykmeldingServiceSpek : Spek({
     val dokumentInfoId = "dokumentInfoId"
     val datoOpprettet = LocalDateTime.now()
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
-    val pdlPerson = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorId")
+    val pdlPerson = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorId", null)
     val oppgaveserviceMock = mockk<OppgaveService>()
     val sakClientMock = mockk<SakClient>()
     val safDokumentClientMock = mockk<SafDokumentClient>()
@@ -68,7 +68,7 @@ object SykmeldingServiceSpek : Spek({
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
-
+    val behandlendeEnhetService = mockk<BehandlendeEnhetService>(relaxed = true)
     val sykmeldingService = SykmeldingService(
             sakClientMock,
             oppgaveserviceMock,
@@ -76,7 +76,8 @@ object SykmeldingServiceSpek : Spek({
             norskHelsenettClientMock,
             regelClientMock,
             kuhrSarClientMock,
-            pdlService)
+            pdlService,
+            behandlendeEnhetService)
 
     beforeEachTest {
         clearAllMocks()
@@ -103,22 +104,14 @@ object SykmeldingServiceSpek : Spek({
                 samh_praksis = listOf(),
                 samh_ident = listOf()
         ))
-        coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId)
-        coEvery { pdlService.getPdlPerson(fnrLege, any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrLege, aktorIdLege)
+
+        coEvery { behandlendeEnhetService.getBehanldendeEnhet(any(), any()) } returns "0393"
+        coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId, null)
+        coEvery { pdlService.getPdlPerson(fnrLege, any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrLege, aktorIdLege, null)
     }
 
     describe("SykmeldingService ende-til-ende (prod)") {
-        it("Happy-case journalpost med bruker, uten ocr") {
-            runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                        loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
-                        syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
-                        sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                        dokArkivClient = dokArkivClientMock,
-                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
-            }
-
+        it("Happy-case journalpost med bruker, uten ocr") { runBlocking { sykmeldingService.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock, session = sessionMock, sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock, dokArkivClient = dokArkivClientMock, kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic = "topic3", cluster = "prod-fss") }
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }

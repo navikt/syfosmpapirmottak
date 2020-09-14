@@ -5,6 +5,9 @@ query($ident: ID!){
   	  mellomnavn
   	  etternavn
     }
+    adressebeskyttelse {
+      gradering
+    }
   }
   hentIdenter(ident: $ident, historikk: false) {
       identer {
