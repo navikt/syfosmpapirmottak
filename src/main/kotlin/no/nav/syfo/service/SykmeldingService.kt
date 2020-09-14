@@ -240,7 +240,7 @@ class SykmeldingService(
             throw IllegalStateException("Kunne ikke hente fnr for hpr $hprNummer")
         }
 
-        val behandler = pdlPersonService.getPersonnavn(behandlerFraHpr.fnr, loggingMeta)
+        val behandler = pdlPersonService.getPdlPerson(behandlerFraHpr.fnr, loggingMeta)
         if (behandler?.aktorId == null) {
             log.warn("Fant ikke aktorId til behandler for HPR {} {}", hprNummer, fields(loggingMeta))
             throw IllegalStateException("Kunne ikke hente aktorId for hpr $hprNummer")

@@ -103,8 +103,8 @@ object SykmeldingServiceSpek : Spek({
                 samh_praksis = listOf(),
                 samh_ident = listOf()
         ))
-        coEvery { pdlService.getPersonnavn(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId)
-        coEvery { pdlService.getPersonnavn(fnrLege, any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrLege, aktorIdLege)
+        coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId)
+        coEvery { pdlService.getPdlPerson(fnrLege, any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrLege, aktorIdLege)
     }
 
     describe("SykmeldingService ende-til-ende (prod)") {
@@ -300,7 +300,7 @@ object SykmeldingServiceSpek : Spek({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
-            coVerify { pdlService.getPersonnavn(fnrLege, any()) }
+            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
@@ -329,7 +329,7 @@ object SykmeldingServiceSpek : Spek({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
-            coVerify { pdlService.getPersonnavn(fnrLege, any()) }
+            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
@@ -391,7 +391,7 @@ object SykmeldingServiceSpek : Spek({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
-            coVerify { pdlService.getPersonnavn(fnrLege, any()) }
+            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
             coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
@@ -432,7 +432,7 @@ object SykmeldingServiceSpek : Spek({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
-            coVerify { pdlService.getPersonnavn(fnrLege, any()) }
+            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
@@ -461,7 +461,7 @@ object SykmeldingServiceSpek : Spek({
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
-            coVerify { pdlService.getPersonnavn(fnrLege, any()) }
+            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
@@ -508,7 +508,7 @@ object SykmeldingServiceSpek : Spek({
         }
 
         it("Feiler hvis man ikke finner aktørid for behandler") {
-            coEvery { pdlService.getPersonnavn(any(), any()) } returns null
+            coEvery { pdlService.getPdlPerson(any(), any()) } returns null
             val ocrFil = Skanningmetadata().apply {
                 sykemeldinger = SykemeldingerType().apply {
                     pasient = PasientType().apply { fnr = "fnr" }
