@@ -40,7 +40,7 @@ class PdlPersonService(private val pdlClient: PdlClient, private val stsOidcClie
                 navn = getNavn(pdlResponse.data.hentPerson.navn[0]),
                 aktorId = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == AKTORID }?.ident,
                 fnr = pdlResponse.data.hentIdenter.identer.firstOrNull { it.gruppe == FOLKEREGISTERIDENT }?.ident,
-                adressebeskyttelse = pdlResponse.data.hentPerson.adressebeskyttelse?.first()?.gradering
+                adressebeskyttelse = pdlResponse.data.hentPerson.adressebeskyttelse?.firstOrNull()?.gradering
         )
     }
 
