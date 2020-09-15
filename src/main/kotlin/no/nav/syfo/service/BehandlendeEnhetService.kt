@@ -39,7 +39,7 @@ class BehandlendeEnhetService(val personV3: PersonV3, val egenAnsattV1: EgenAnsa
 
     private fun getGeografiskTilknytning(pasient: PdlPerson, loggingMeta: LoggingMeta): String? {
         return try {
-            personV3.hentGeografiskTilknytning(getGeografiskTilknytningRequest(pasient)).geografiskTilknytning.geografiskTilknytning
+            personV3.hentGeografiskTilknytning(getGeografiskTilknytningRequest(pasient))?.geografiskTilknytning?.geografiskTilknytning
         } catch (ex: HentGeografiskTilknytningSikkerhetsbegrensing) {
             handleException(loggingMeta)
         } catch (ex: HentGeografiskTilknytningPersonIkkeFunnet) {
