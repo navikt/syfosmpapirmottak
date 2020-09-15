@@ -38,6 +38,50 @@ internal class BehandlendeEnhetServiceTest : Spek({
     }
 
     describe("Test BehandlendeEnhetService") {
+
+        it("Should return 0393 when geografiskTilknytning response is null") {
+            every { personV3.hentGeografiskTilknytning(any()) } returns null
+            every { egenAnsattV1.hentErEgenAnsattEllerIFamilieMedEgenAnsatt(any()) } returns WSHentErEgenAnsattEllerIFamilieMedEgenAnsattResponse().withEgenAnsatt(false)
+            coEvery { arbeidsfordelingClient.finnBehandlendeEnhet(any()) } returns getArbeidsfordelingResponse()
+            runBlocking {
+                val enhetId = service.getBehanldendeEnhet(PdlPerson(
+                        navn = Navn("fornavn", "mellomnavn", "Etternavn"),
+                        fnr = "01234567891",
+                        aktorId = "12345678912345",
+                        adressebeskyttelse = "STRENGT_FORTROLIG"
+                ), loggingMeta)
+                enhetId shouldEqual "0393"
+            }
+        }
+        it("Should return 0393 when geografiskTilknytning is null") {
+            every { personV3.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse()
+            every { egenAnsattV1.hentErEgenAnsattEllerIFamilieMedEgenAnsatt(any()) } returns WSHentErEgenAnsattEllerIFamilieMedEgenAnsattResponse().withEgenAnsatt(false)
+            coEvery { arbeidsfordelingClient.finnBehandlendeEnhet(any()) } returns getArbeidsfordelingResponse()
+            runBlocking {
+                val enhetId = service.getBehanldendeEnhet(PdlPerson(
+                        navn = Navn("fornavn", "mellomnavn", "Etternavn"),
+                        fnr = "01234567891",
+                        aktorId = "12345678912345",
+                        adressebeskyttelse = "STRENGT_FORTROLIG"
+                ), loggingMeta)
+                enhetId shouldEqual "0393"
+            }
+        }
+        it("Should return 0393 when geografiskTilknytning is null 2") {
+            every { personV3.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse().withGeografiskTilknytning(Kommune())
+            every { egenAnsattV1.hentErEgenAnsattEllerIFamilieMedEgenAnsatt(any()) } returns WSHentErEgenAnsattEllerIFamilieMedEgenAnsattResponse().withEgenAnsatt(false)
+            coEvery { arbeidsfordelingClient.finnBehandlendeEnhet(any()) } returns getArbeidsfordelingResponse()
+            runBlocking {
+                val enhetId = service.getBehanldendeEnhet(PdlPerson(
+                        navn = Navn("fornavn", "mellomnavn", "Etternavn"),
+                        fnr = "01234567891",
+                        aktorId = "12345678912345",
+                        adressebeskyttelse = "STRENGT_FORTROLIG"
+                ), loggingMeta)
+                enhetId shouldEqual "0393"
+            }
+        }
+
         it("Should get null value if not found") {
             every { personV3.hentGeografiskTilknytning(any()) } returns HentGeografiskTilknytningResponse().withGeografiskTilknytning(Kommune().withGeografiskTilknytning("1234"))
             every { egenAnsattV1.hentErEgenAnsattEllerIFamilieMedEgenAnsatt(any()) } returns WSHentErEgenAnsattEllerIFamilieMedEgenAnsattResponse().withEgenAnsatt(false)
