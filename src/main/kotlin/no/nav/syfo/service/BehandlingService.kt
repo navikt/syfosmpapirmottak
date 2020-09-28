@@ -24,7 +24,8 @@ class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
     private val sykmeldingService: SykmeldingService,
     private val utenlandskSykmeldingService: UtenlandskSykmeldingService,
-    private val pdlPersonService: PdlPersonService
+    private val pdlPersonService: PdlPersonService,
+    private val oppgaveService: OppgaveService
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
@@ -44,7 +45,7 @@ class BehandlingService(
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
                     (journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" || journalfoeringEvent.mottaksKanal.toString() == "SKAN_IM") &&
-                    journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført"
+                    journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" || journalfoeringEvent.hendelsesType.toString() == "TemaEndret"
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
@@ -67,7 +68,8 @@ class BehandlingService(
                     if (journalpostMetadata.gjelderUtland) {
                         utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
-                        sykmeldingService.behandleSykmelding(
+                        if (skalBehandleJournalpost(hendelsesType = journalfoeringEvent.hendelsesType.toString(), journalpostId = journalpostId, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)) {
+                            sykmeldingService.behandleSykmelding(
                                 journalpostId = journalpostId,
                                 pasient = pasient,
                                 datoOpprettet = journalpostMetadata.datoOpprettet,
@@ -82,7 +84,8 @@ class BehandlingService(
                                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
                                 cluster = cluster
-                        )
+                            )
+                        }
                     }
                 } else {
                     log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))
@@ -103,5 +106,26 @@ class BehandlingService(
             brukerId
         } else
             return null
+    }
+
+    suspend fun skalBehandleJournalpost(
+        hendelsesType: String,
+        journalpostId: String,
+        sykmeldingId: String,
+        loggingMeta: LoggingMeta
+    ): Boolean {
+        if (hendelsesType == "MidlertidigJournalført") {
+            return true
+        }
+        val duplikatOppgave = oppgaveService.duplikatOppgave(
+            journalpostId = journalpostId,
+            trackingId = sykmeldingId,
+            loggingMeta = loggingMeta
+        )
+        if (duplikatOppgave) {
+            log.info("Oppgave for endret journalpost finnes fra før, ignorerer melding {}", fields(loggingMeta))
+            return false
+        }
+        return true
     }
 }
