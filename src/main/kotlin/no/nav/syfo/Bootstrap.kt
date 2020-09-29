@@ -165,7 +165,7 @@ fun main() {
             arbeidsfordelingClient = arbeidsFordelingClient)
     val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, regelClient, kuhrsarClient, pdlPersonService, behandlendeEnhetService)
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
-    val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
+    val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService, oppgaveService)
 
     launchListeners(
             env,

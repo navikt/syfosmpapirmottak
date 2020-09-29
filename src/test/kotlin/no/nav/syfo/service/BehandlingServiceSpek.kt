@@ -26,9 +26,11 @@ import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
+import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+
 @KtorExperimentalAPI
 object BehandlingServiceSpek : Spek({
     val sykmeldingId = "1234"
@@ -44,7 +46,8 @@ object BehandlingServiceSpek : Spek({
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>()
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
-    val behandlingService = BehandlingService(safJournalpostClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock, pdlService)
+    val oppgaveService = mockk<OppgaveService>()
+    val behandlingService = BehandlingService(safJournalpostClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock, pdlService, oppgaveService)
 
     beforeEachTest {
         clearAllMocks()
@@ -58,6 +61,7 @@ object BehandlingServiceSpek : Spek({
                 datoOpprettet = datoOpprettet)
         coEvery { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } just Runs
         coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) } just Runs
+        coEvery { oppgaveService.duplikatOppgave(any(), any(), any()) } returns false
     }
 
     describe("BehandlingService ende-til-ende") {
@@ -75,6 +79,25 @@ object BehandlingServiceSpek : Spek({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveService.duplikatOppgave(any(), any(), any()) }
+        }
+
+        it("Ende-til-ende journalpost med fnr og endret-tema") {
+            val journalfoeringEvent = lagJournalfoeringEvent("TemaEndret", "SYM", "SKAN_IM")
+
+            runBlocking {
+                behandlingService.handleJournalpost(journalfoeringEvent, loggingMetadata, sykmeldingId,
+                    syfoserviceProducerMock, sessionMock, "topic",
+                    kafkaproducerreceivedSykmelding, dokArkivClientMock,
+                    kafkaproducerPapirSmRegistering, "topic3", "prod-fss"
+                )
+            }
+
+            coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+            coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { oppgaveService.duplikatOppgave(eq("123"), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
 
@@ -334,6 +357,31 @@ object BehandlingServiceSpek : Spek({
             }
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
+        }
+    }
+
+    describe("Test av skalBehandleJournalpost") {
+        it("Skal behandle hvis type er MidlertidigJournalført") {
+            runBlocking {
+                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("MidlertidigJournalført", "123", sykmeldingId, loggingMetadata)
+
+                skalBehandleJournalpost shouldEqual true
+            }
+        }
+        it("Skal behandle hvis type er TemaEndret og oppgave ikke finnes fra før") {
+            runBlocking {
+                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret", "123", sykmeldingId, loggingMetadata)
+
+                skalBehandleJournalpost shouldEqual true
+            }
+        }
+        it("Skal ikke behandle hvis type er TemaEndret og oppgave finnes fra før") {
+            coEvery { oppgaveService.duplikatOppgave(any(), any(), any()) } returns true
+            runBlocking {
+                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret", "123", sykmeldingId, loggingMetadata)
+
+                skalBehandleJournalpost shouldEqual false
+            }
         }
     }
 })

@@ -61,7 +61,9 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
     }
 
     private fun erIkkeJournalfort(journalstatus: type.Journalstatus?): Boolean {
-        return journalstatus?.name?.equals("MOTTATT", true) ?: false
+        return journalstatus?.name?.let {
+            it.equals("MOTTATT", true) || it.equals("FEILREGISTRERT", true)
+        } ?: false
     }
 }
 
