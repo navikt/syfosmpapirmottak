@@ -11,6 +11,7 @@ import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.log
+import no.nav.syfo.metrics.ENDRET_PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.ReceivedSykmelding
@@ -50,6 +51,10 @@ class BehandlingService(
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
                 log.info("Mottatt papirsykmelding fra mottakskanal {}, {}", journalfoeringEvent.mottaksKanal, fields(loggingMeta))
+                if (journalfoeringEvent.hendelsesType.toString() == "TemaEndret") {
+                    ENDRET_PAPIRSM_MOTTATT.inc()
+                    log.info("Mottatt endret journalpost {}", fields(loggingMeta))
+                }
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
                         ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
