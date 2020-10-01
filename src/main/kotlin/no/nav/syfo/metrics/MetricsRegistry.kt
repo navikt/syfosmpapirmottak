@@ -64,3 +64,17 @@ val PAPIRSM_MAPPET: Counter = Counter.build()
     .labelNames("status")
     .help("Antall sykmeldinger som mappes")
     .register()
+
+val SAMHANDLERPRAKSIS_NOT_FOUND_COUNTER: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("samhandlerpraksis_not_found_counter")
+        .help("Counts the number of cases where samhandler is not found")
+        .register()
+
+val SAMHANDLERPRAKSIS_FOUND_COUNTER: Counter = Counter.build()
+        .labelNames("samhandlertypekode")
+        .namespace(NAMESPACE)
+        .name("samhandlerpraksis_found_counter")
+        .help("Counts the number of cases where samhandler is found")
+        .register()
+
