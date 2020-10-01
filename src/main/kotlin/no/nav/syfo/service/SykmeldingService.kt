@@ -209,9 +209,10 @@ class SykmeldingService(
         cluster: String,
         enhetId: String?
     ) {
-        // TODO remove dev-fss and comment in shouldSendToSmregistrering
-        if (cluster == "dev-fss" /*&& shouldSendToSmregistrering(enhetId) */) {
-            log.info("Går til smregistrering fordi dette er dev {}", fields(loggingMeta))
+        val dev = cluster == "dev-fss"
+        val pilotkontor = shouldSendToSmregistrering(enhetId)
+        if (dev || pilotkontor) {
+            log.info("Går til smregistrering fordi dette er ${when (dev) { true -> "dev" else -> "et pilotkontor"}} {}", fields(loggingMeta))
             val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
                 journalpostId = journalpostId,
                 fnr = fnr,
