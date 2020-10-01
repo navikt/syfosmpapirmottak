@@ -1,11 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import javax.jms.MessageProducer
-import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -32,6 +27,11 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import javax.jms.MessageProducer
+import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -88,10 +88,12 @@ class SykmeldingService(
                         sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
                         val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
-                        val samhandlerPraksisMatch = findBestSamhandlerPraksis(
-                            samhandlerInfo,
-                            loggingMeta)
-                        val samhandlerPraksis = samhandlerPraksisMatch?.samhandlerPraksis
+                        val samhandlerPraksis = findBestSamhandlerPraksis(
+                            samhandlerInfo)
+
+                        if (samhandlerPraksis == null) {
+                            log.warn("Klarte ikke hente samhandler for hpr {},  {}", sykmelder!!.hprNummer, fields(loggingMeta))
+                        }
 
                         val fellesformat = mapOcrFilTilFellesformat(
                             skanningmetadata = ocr,
