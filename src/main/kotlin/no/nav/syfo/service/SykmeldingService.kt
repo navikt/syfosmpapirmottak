@@ -91,9 +91,7 @@ class SykmeldingService(
                         val samhandlerPraksis = findBestSamhandlerPraksis(
                             samhandlerInfo)
 
-                        if (samhandlerPraksis == null) {
-                            log.warn("Klarte ikke hente samhandler for hpr {},  {}", sykmelder!!.hprNummer, fields(loggingMeta))
-                        }
+                        log.info("Fant ${when (samhandlerPraksis) { null -> "ikke " else -> "" }}samhandlerpraksis for hpr ${sykmelder!!.hprNummer}")
 
                         val fellesformat = mapOcrFilTilFellesformat(
                             skanningmetadata = ocr,
