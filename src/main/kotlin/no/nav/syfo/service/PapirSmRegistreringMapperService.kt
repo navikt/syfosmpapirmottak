@@ -1,5 +1,6 @@
 package no.nav.syfo.service
 
+import java.time.OffsetDateTime
 import no.nav.helse.sm2013.ArsakType
 import no.nav.helse.sm2013.CS
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
@@ -29,7 +30,6 @@ import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
-import java.time.OffsetDateTime
 
 fun mapOcrFilTilPapirSmRegistrering(
     journalpostId: String,
@@ -149,7 +149,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
             avventendeSykmelding = null
             gradertSykmelding = null
             behandlingsdager = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.Behandlingsdager().apply {
-                antallBehandlingsdagerUke = aktivitetType.behandlingsdager.antallBehandlingsdager.toInt()
+                antallBehandlingsdagerUke = aktivitetType.behandlingsdager?.antallBehandlingsdager?.toInt() ?: 1
             }
             isReisetilskudd = false
         })

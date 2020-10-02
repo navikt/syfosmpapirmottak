@@ -400,7 +400,7 @@ fun tilPeriodeListe(aktivitetType: AktivitetType): List<HelseOpplysningerArbeids
             avventendeSykmelding = null
             gradertSykmelding = null
             behandlingsdager = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.Behandlingsdager().apply {
-                antallBehandlingsdagerUke = aktivitetType.behandlingsdager.antallBehandlingsdager.toInt()
+                antallBehandlingsdagerUke = aktivitetType.behandlingsdager?.antallBehandlingsdager?.toInt() ?: 1
             }
             isReisetilskudd = false
         })
