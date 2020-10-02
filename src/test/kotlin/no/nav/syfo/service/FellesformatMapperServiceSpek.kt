@@ -189,7 +189,7 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.medisinskVurdering.yrkesskadeDato shouldEqual null
             receivedSykmelding.sykmelding.medisinskVurdering.annenFraversArsak shouldEqual null
             receivedSykmelding.sykmelding.skjermesForPasient shouldEqual false
-            receivedSykmelding.sykmelding.arbeidsgiver shouldEqual Arbeidsgiver(HarArbeidsgiver.EN_ARBEIDSGIVER, null, null, null)
+            receivedSykmelding.sykmelding.arbeidsgiver shouldEqual Arbeidsgiver(HarArbeidsgiver.INGEN_ARBEIDSGIVER, null, null, null)
             receivedSykmelding.sykmelding.perioder.size shouldEqual 1
             receivedSykmelding.sykmelding.perioder[0].aktivitetIkkeMulig shouldEqual AktivitetIkkeMulig(null, null)
             receivedSykmelding.sykmelding.perioder[0].fom shouldEqual LocalDate.of(2019, Month.AUGUST, 15)

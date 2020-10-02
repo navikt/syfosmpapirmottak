@@ -77,4 +77,3 @@ val SAMHANDLERPRAKSIS_FOUND_COUNTER: Counter = Counter.build()
         .name("samhandlerpraksis_found_counter")
         .help("Counts the number of cases where samhandler is found")
         .register()
-
