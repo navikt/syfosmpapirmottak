@@ -28,7 +28,7 @@ object PapirSmMapperServiceSpek : Spek({
 
     describe("PapirSmMappingService") {
 
-        it("test OCR file with empty perioder") {
+        it("test OCR file with empty behandlngsdager") {
             val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett-uten-behandlingsdager.xml"))) as Skanningmetadata
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
