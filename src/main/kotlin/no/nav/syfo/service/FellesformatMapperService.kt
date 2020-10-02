@@ -425,32 +425,37 @@ fun tilPeriodeListe(aktivitetType: AktivitetType): List<HelseOpplysningerArbeids
 
 fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?, loggingMeta: LoggingMeta): HelseOpplysningerArbeidsuforhet.Arbeidsgiver =
         HelseOpplysningerArbeidsuforhet.Arbeidsgiver().apply {
-            harArbeidsgiver =
-                    when {
-                        arbeidsgiverType?.harArbeidsgiver == "Flere arbeidsgivere" -> CS().apply {
-                            dn = "Flere arbeidsgivere"
-                            v = "2"
-                        }
-                        arbeidsgiverType?.harArbeidsgiver == "Flerearbeidsgivere" -> CS().apply {
-                            dn = "Flere arbeidsgivere"
-                            v = "2"
-                        }
-                        arbeidsgiverType?.harArbeidsgiver == "En arbeidsgiver" -> CS().apply {
-                            dn = "Én arbeidsgiver"
-                            v = "1"
-                        }
-                        arbeidsgiverType?.harArbeidsgiver == "Ingen arbeidsgiver" -> CS().apply {
+            harArbeidsgiver = with(arbeidsgiverType?.harArbeidsgiver?.toLowerCase()) {
+                when {
+                    this == null -> CS().apply {
+                        dn = "Ingen arbeidsgiver"
+                        v = "3"
+                    }
+                    this.contains("ingen") -> CS().apply {
+                        dn = "Ingen arbeidsgiver"
+                        v = "3"
+                    }
+                    this.contains("flere") -> CS().apply {
+                        dn = "Flere arbeidsgivere"
+                        v = "2"
+                    }
+                    this.contains("en") -> CS().apply {
+                        dn = "Én arbeidsgiver"
+                        v = "1"
+                    }
+                    this.isNotBlank() -> CS().apply {
+                        dn = "Én arbeidsgiver"
+                        v = "1"
+                    }
+                    else -> {
+                        log.warn("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}", arbeidsgiverType?.harArbeidsgiver, loggingMeta)
+                        CS().apply {
                             dn = "Ingen arbeidsgiver"
                             v = "3"
                         }
-                        else -> {
-                            log.warn("Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}", arbeidsgiverType?.harArbeidsgiver, loggingMeta)
-                            CS().apply {
-                                dn = "Én arbeidsgiver"
-                                v = "1"
-                            }
-                        }
                     }
+                }
+            }
             navnArbeidsgiver = arbeidsgiverType?.navnArbeidsgiver
             yrkesbetegnelse = arbeidsgiverType?.yrkesbetegnelse
             stillingsprosent = arbeidsgiverType?.stillingsprosent?.toInt()
