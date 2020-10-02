@@ -1,10 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import java.io.StringReader
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
@@ -15,6 +11,10 @@ import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.io.StringReader
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 @KtorExperimentalAPI
 object PapirSmMapperServiceSpek : Spek({
@@ -26,6 +26,24 @@ object PapirSmMapperServiceSpek : Spek({
     val datoOpprettet = OffsetDateTime.now(ZoneOffset.UTC)
 
     describe("PapirSmMappingService") {
+
+        it("Test ocr file with empty hoveddiagnoselist") {
+            val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett-uten-hoveddiagnose.xml"))) as Skanningmetadata
+
+            val papirSm = mapOcrFilTilPapirSmRegistrering(
+                    journalpostId = journalpostId,
+                    fnr = fnrPasient,
+                    aktorId = aktorId,
+                    dokumentInfoId = dokumentInfoId,
+                    datoOpprettet = datoOpprettet,
+                    sykmeldingId = sykmeldingId,
+                    sykmelder = null,
+                    ocrFil = ocrFil
+            )
+
+            papirSm.medisinskVurdering?.hovedDiagnose shouldBe null
+        }
+
         it("Tests a complete OCR file, and should parse fine") {
             val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett.xml"))) as Skanningmetadata
 

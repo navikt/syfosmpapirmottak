@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import java.time.OffsetDateTime
 import no.nav.helse.sm2013.ArsakType
 import no.nav.helse.sm2013.CS
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
@@ -30,6 +29,7 @@ import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
+import java.time.OffsetDateTime
 
 fun mapOcrFilTilPapirSmRegistrering(
     journalpostId: String,
@@ -271,7 +271,7 @@ private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arb
 private fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?): MedisinskVurdering {
 
     return MedisinskVurdering(
-            hovedDiagnose = toMedisinskVurderingDiagnose(medisinskVurderingType?.hovedDiagnose?.first()),
+            hovedDiagnose = medisinskVurderingType?.hovedDiagnose?.firstOrNull()?.let { toMedisinskVurderingDiagnose(it) },
             biDiagnoser = medisinskVurderingType?.bidiagnose?.map {
                 toMedisinskVurderingDiagnose(it)!!
             } ?: ArrayList(),
