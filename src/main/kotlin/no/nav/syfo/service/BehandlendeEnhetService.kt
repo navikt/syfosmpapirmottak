@@ -62,7 +62,7 @@ class BehandlendeEnhetService(val personV3: PersonV3, val egenAnsattV1: EgenAnsa
     private fun getDiskresjonskode(adressebeskyttelse: String?): String? {
         return when (adressebeskyttelse) {
             "STRENGT_FORTROLIG" -> "SPSF"
-            "FORTROLIG" -> "SPSO"
+            "FORTROLIG" -> "SPFO"
             else -> null
         }
     }
