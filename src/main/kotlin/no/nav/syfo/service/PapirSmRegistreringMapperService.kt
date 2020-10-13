@@ -9,10 +9,12 @@ import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
 import no.nav.helse.sykSkanningMeta.BehandlerType
 import no.nav.helse.sykSkanningMeta.BidiagnoseType
 import no.nav.helse.sykSkanningMeta.HovedDiagnoseType
+import no.nav.helse.sykSkanningMeta.MedArbeidsgiverType
 import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
 import no.nav.helse.sykSkanningMeta.PrognoseType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
+import no.nav.helse.sykSkanningMeta.UtenArbeidsgiverType
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.Adresse
@@ -236,21 +238,37 @@ private fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
         arbeidsforEtterPeriode = prognose?.friskmelding?.isArbeidsforEtterEndtPeriode ?: true,
         hensynArbeidsplassen = prognose?.friskmelding?.beskrivHensynArbeidsplassen,
         erIArbeid = if (prognose != null && prognose.medArbeidsgiver != null) {
-            ErIArbeid(
-                    annetArbeidPaSikt = prognose.medArbeidsgiver.isTilbakeAnnenArbeidsgiver,
-                    egetArbeidPaSikt = prognose.medArbeidsgiver.isTilbakeSammeArbeidsgiver,
-                    arbeidFOM = prognose.medArbeidsgiver.tilbakeDato,
-                    vurderingsdato = prognose.medArbeidsgiver.datoNyTilbakemelding
-            )
+            toErIArbeid(prognose.medArbeidsgiver)
         } else null,
         erIkkeIArbeid = if (prognose != null && prognose.utenArbeidsgiver != null) {
-            ErIkkeIArbeid(
-                    arbeidsforPaSikt = prognose.utenArbeidsgiver.isTilbakeArbeid,
-                    arbeidsforFOM = prognose.utenArbeidsgiver.tilbakeDato,
-                    vurderingsdato = prognose.utenArbeidsgiver.datoNyTilbakemelding
-            )
+            toErIkkeIArbeid(prognose.utenArbeidsgiver)
         } else null
 )
+
+private fun toErIArbeid(medArbeidsgiver: MedArbeidsgiverType): ErIArbeid? {
+    if (medArbeidsgiver.isTilbakeAnnenArbeidsgiver == null && medArbeidsgiver.isTilbakeSammeArbeidsgiver == null &&
+        medArbeidsgiver.tilbakeDato == null && medArbeidsgiver.datoNyTilbakemelding == null) {
+        return null
+    }
+    return ErIArbeid(
+        annetArbeidPaSikt = medArbeidsgiver.isTilbakeAnnenArbeidsgiver ?: false,
+        egetArbeidPaSikt = medArbeidsgiver.isTilbakeSammeArbeidsgiver ?: false,
+        arbeidFOM = medArbeidsgiver.tilbakeDato,
+        vurderingsdato = medArbeidsgiver.datoNyTilbakemelding
+    )
+}
+
+private fun toErIkkeIArbeid(utenArbeidsgiver: UtenArbeidsgiverType): ErIkkeIArbeid? {
+    if (utenArbeidsgiver.isTilbakeArbeid == null && utenArbeidsgiver.tilbakeDato == null &&
+        utenArbeidsgiver.datoNyTilbakemelding == null) {
+        return null
+    }
+    return ErIkkeIArbeid(
+        arbeidsforPaSikt = utenArbeidsgiver.isTilbakeArbeid ?: false,
+        arbeidsforFOM = utenArbeidsgiver.tilbakeDato,
+        vurderingsdato = utenArbeidsgiver.datoNyTilbakemelding
+    )
+}
 
 private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgiver(
         navn = arbeidsgiver?.navnArbeidsgiver,
