@@ -233,7 +233,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
 }
 
 private fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
-        arbeidsforEtterPeriode = prognose?.friskmelding?.isArbeidsforEtterEndtPeriode ?: true,
+        arbeidsforEtterPeriode = prognose?.friskmelding?.isArbeidsforEtterEndtPeriode ?: false,
         hensynArbeidsplassen = prognose?.friskmelding?.beskrivHensynArbeidsplassen,
         erIArbeid = if (prognose != null && prognose.medArbeidsgiver != null) {
             ErIArbeid(
