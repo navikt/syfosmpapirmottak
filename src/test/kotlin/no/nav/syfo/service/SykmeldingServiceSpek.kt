@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkClass
+import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
 import no.nav.helse.sykSkanningMeta.AktivitetType
@@ -112,15 +113,16 @@ object SykmeldingServiceSpek : Spek({
 
     describe("SykmeldingService ende-til-ende (prod)") {
         it("Happy-case journalpost med bruker, uten ocr") {
-            runBlocking { sykmeldingService.behandleSykmelding(
-                    journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
-                    datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
-                    sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
-                    session = sessionMock, sm2013AutomaticHandlingTopic = "",
-                    kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
-                    dokArkivClient = dokArkivClientMock,
-                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
+            runBlocking {
+                sykmeldingService.behandleSykmelding(
+                        journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
+                        datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
+                        sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
+                        session = sessionMock, sm2013AutomaticHandlingTopic = "",
+                        kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                        dokArkivClient = dokArkivClientMock,
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
@@ -192,8 +194,11 @@ object SykmeldingServiceSpek : Spek({
         }
 
         it("Henter ikke dokument hvis dokumentInfoId mangler, oppretter oppgave") {
+
+            val sykmeldingServiceSpy = spyk(sykmeldingService)
+
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = null, datoOpprettet = datoOpprettet,
+                sykmeldingServiceSpy.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = null, datoOpprettet = datoOpprettet,
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
@@ -201,13 +206,14 @@ object SykmeldingServiceSpek : Spek({
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3", cluster = "prod-fss")
             }
-            coVerify(exactly = 0) { sykmeldingService.shouldSendToSmregistrering(any()) }
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
+            coVerify(exactly = 0) { sykmeldingServiceSpy.manuellBehandling(any(), any(), any(), any(), any(), any(),
+                    any(), any(), any(), any(), any(), any(), any()) }
         }
 
         it("Henter dokument selv om datoOpprettet mangler, uten ocr") {

@@ -198,8 +198,6 @@ class SykmeldingService(
                         enhetId = behandlendeEnhetId
                 )
             }
-
-
         }
     }
 
