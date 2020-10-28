@@ -257,8 +257,11 @@ object SykmeldingServiceSpek : Spek({
                     }
                 }
             }
+
+            val sykmeldingServiceSpy = spyk(sykmeldingService)
+
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId,
+                sykmeldingServiceSpy.behandleSykmelding(journalpostId = journalpostId,
                         pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
@@ -275,6 +278,8 @@ object SykmeldingServiceSpek : Spek({
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { sykmeldingServiceSpy.manuellBehandling(any(), any(), any(), any(), any(), any(),
+                    any(), any(), any(), any(), any(), any(), any()) }
         }
         it("Oppretter oppgave hvis behandlingsutfall er MANUELL, prod") {
             coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.MANUAL_PROCESSING, emptyList())
@@ -297,8 +302,11 @@ object SykmeldingServiceSpek : Spek({
                     }
                 }
             }
+
+            val sykmeldingServiceSpy = spyk(sykmeldingService)
+
             runBlocking {
-                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                sykmeldingServiceSpy.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                         loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                         syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
                         sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
@@ -315,7 +323,8 @@ object SykmeldingServiceSpek : Spek({
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, false, any(), any()) }
             coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
-        }
+            coVerify(exactly = 1) { sykmeldingServiceSpy.manuellBehandling(any(), any(), any(), any(), any(), any(),
+                    any(), any(), any(), any(), any(), any(), any()) }        }
 
         it("Oppretter oppgave hvis mapping feiler i prod") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
