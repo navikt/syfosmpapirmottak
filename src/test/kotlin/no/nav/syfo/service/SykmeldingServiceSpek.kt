@@ -324,7 +324,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
             coVerify(exactly = 1) { sykmeldingServiceSpy.manuellBehandling(any(), any(), any(), any(), any(), any(),
-                    any(), any(), any(), any(), any(), any(), any()) }        }
+                    any(), any(), any(), any(), any(), any(), any()) } }
 
         it("Oppretter oppgave hvis mapping feiler i prod") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
@@ -428,6 +428,47 @@ object SykmeldingServiceSpek : Spek({
                             aktivitetIkkeMulig = AktivitetIkkeMuligType().apply {
                                 periodeFOMDato = LocalDate.now().minusDays(2)
                                 periodeTOMDato = LocalDate.now().plusDays(10)
+                            }
+                        }
+                        medisinskVurdering = MedisinskVurderingType().apply {
+                            hovedDiagnose.add(HovedDiagnoseType().apply {
+                                diagnosekode = "S52.5"
+                            })
+                        }
+                    }
+                }
+            }
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                        loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                        syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
+                        sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                        dokArkivClient = dokArkivClientMock,
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3", cluster = "dev-fss")
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
+            coVerify { regelClientMock.valider(any(), any()) }
+            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
+        }
+
+        it("Går til smregistrering hvis requireManuellBehandling == true, dev-fss") {
+            coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.MANUAL_PROCESSING, emptyList())
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
+                sykemeldinger = SykemeldingerType().apply {
+                    pasient = PasientType().apply { fnr = "fnr" }
+                    behandler = BehandlerType().apply {
+                        hpr = BigInteger("123456")
+                        aktivitet = AktivitetType().apply {
+                            aktivitetIkkeMulig = AktivitetIkkeMuligType().apply {
+                                periodeFOMDato = LocalDate.now().minusDays(180)
+                                periodeTOMDato = LocalDate.now()
                             }
                         }
                         medisinskVurdering = MedisinskVurderingType().apply {

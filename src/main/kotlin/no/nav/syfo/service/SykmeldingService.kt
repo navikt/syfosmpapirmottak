@@ -17,6 +17,7 @@ import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
+import no.nav.syfo.model.Periode
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.pdl.model.PdlPerson
@@ -27,9 +28,11 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import javax.jms.MessageProducer
 import javax.jms.Session
 
@@ -143,20 +146,10 @@ class SykmeldingService(
                                 StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
                                 fields(loggingMeta)
                         )
-                        when (validationResult.status) {
-                            Status.OK -> handleOk(
-                                    kafkaproducerreceivedSykmelding,
-                                    sm2013AutomaticHandlingTopic,
-                                    receivedSykmelding,
-                                    session,
-                                    syfoserviceProducer,
-                                    receivedSykmelding.sykmelding.id,
-                                    healthInformation,
-                                    dokArkivClient,
-                                    journalpostId,
-                                    loggingMeta
-                            )
-                            Status.MANUAL_PROCESSING -> manuellBehandling(
+
+                        if (validationResult.status == Status.MANUAL_PROCESSING
+                                || requireManuellBehandling(receivedSykmelding)) {
+                            manuellBehandling(
                                     journalpostId = journalpostId,
                                     fnr = pasient.fnr,
                                     aktorId = pasient.aktorId,
@@ -170,10 +163,24 @@ class SykmeldingService(
                                     cluster = cluster,
                                     enhetId = behandlendeEnhetId
                             )
-                            else -> throw IllegalStateException("Ukjent status: ${validationResult.status} , Papirsykmeldinger kan kun ha ein av to typer statuser enten OK eller MANUAL_PROCESSING")
+                        } else if (validationResult.status == Status.OK) {
+                            handleOk(
+                                    kafkaproducerreceivedSykmelding,
+                                    sm2013AutomaticHandlingTopic,
+                                    receivedSykmelding,
+                                    session,
+                                    syfoserviceProducer,
+                                    receivedSykmelding.sykmelding.id,
+                                    healthInformation,
+                                    dokArkivClient,
+                                    journalpostId,
+                                    loggingMeta
+                            )
+                        } else {
+                            throw IllegalStateException("Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING")
                         }
-                        log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
 
+                        log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
                         return
                     }
                 } catch (e: Exception) {
@@ -252,6 +259,20 @@ class SykmeldingService(
 
     fun shouldSendToSmregistrering(enhetId: String?): Boolean {
         return enhetId?.let { pilotkontor.contains(it) } ?: false
+    }
+
+    private fun requireManuellBehandling(receivedSykmelding: ReceivedSykmelding) : Boolean {
+        val minFom = receivedSykmelding.sykmelding.perioder.minBy { periode -> periode.fom }?.fom
+        val maxTom = receivedSykmelding.sykmelding.perioder.maxBy { periode: Periode -> periode.tom }?.tom
+        val today = LocalDate.now()
+
+        if (ChronoUnit.DAYS.between(minFom, maxTom) > 180) {
+            return true
+        } else if (ChronoUnit.DAYS.between(minFom, today) > 180) {
+            return true
+        }
+
+        return false
     }
 
     suspend fun hentSykmelder(ocrFil: Skanningmetadata, sykmeldingId: String, loggingMeta: LoggingMeta): Sykmelder {
