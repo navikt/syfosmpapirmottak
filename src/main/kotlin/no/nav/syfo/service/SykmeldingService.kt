@@ -266,9 +266,11 @@ class SykmeldingService(
         val maxTom = receivedSykmelding.sykmelding.perioder.maxBy { periode: Periode -> periode.tom }?.tom
         val today = LocalDate.now()
 
-        if (ChronoUnit.DAYS.between(minFom, maxTom) > 180) {
+        val limit = 120
+
+        if (ChronoUnit.DAYS.between(minFom, maxTom) > limit) {
             return true
-        } else if (ChronoUnit.DAYS.between(minFom, today) > 180) {
+        } else if (ChronoUnit.DAYS.between(minFom, today) > limit) {
             return true
         }
 
