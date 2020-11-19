@@ -266,7 +266,7 @@ class SykmeldingService(
         val maxTom = receivedSykmelding.sykmelding.perioder.maxBy { periode: Periode -> periode.tom }?.tom
         val today = LocalDate.now()
 
-        val limit = 120
+        val limit = 90
 
         if (ChronoUnit.DAYS.between(minFom, maxTom) > limit) {
             log.info("Sender oppgave til manuell kontroll fordi avstanden mellom fom og tom er større enn $limit")
