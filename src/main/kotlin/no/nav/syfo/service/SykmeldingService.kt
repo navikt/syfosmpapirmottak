@@ -269,8 +269,10 @@ class SykmeldingService(
         val limit = 120
 
         if (ChronoUnit.DAYS.between(minFom, maxTom) > limit) {
+            log.info("Sender oppgave til manuell kontroll fordi avstanden mellom fom og tom er større enn $limit")
             return true
         } else if (ChronoUnit.DAYS.between(minFom, today) > limit) {
+            log.info("Sender oppgave til manuell kontroll fordi avstanden mellom fom og dagens dato er større enn $limit")
             return true
         }
 
