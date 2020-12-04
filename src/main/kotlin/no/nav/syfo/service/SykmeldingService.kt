@@ -1,6 +1,13 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import javax.jms.MessageProducer
+import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -28,13 +35,6 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
-import javax.jms.MessageProducer
-import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -147,8 +147,8 @@ class SykmeldingService(
                                 fields(loggingMeta)
                         )
 
-                        if (validationResult.status == Status.MANUAL_PROCESSING
-                                || requireManuellBehandling(receivedSykmelding)) {
+                        if (validationResult.status == Status.MANUAL_PROCESSING ||
+                                requireManuellBehandling(receivedSykmelding)) {
                             manuellBehandling(
                                     journalpostId = journalpostId,
                                     fnr = pasient.fnr,
@@ -261,7 +261,7 @@ class SykmeldingService(
         return enhetId?.let { pilotkontor.contains(it) } ?: false
     }
 
-    private fun requireManuellBehandling(receivedSykmelding: ReceivedSykmelding) : Boolean {
+    private fun requireManuellBehandling(receivedSykmelding: ReceivedSykmelding): Boolean {
         val minFom = receivedSykmelding.sykmelding.perioder.minBy { periode -> periode.fom }?.fom
         val maxTom = receivedSykmelding.sykmelding.perioder.maxBy { periode: Periode -> periode.tom }?.tom
         val today = LocalDate.now()
