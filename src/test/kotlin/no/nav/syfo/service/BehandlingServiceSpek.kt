@@ -59,7 +59,7 @@ object BehandlingServiceSpek : Spek({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet)
-        coEvery { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } just Runs
+        coEvery { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } just Runs
         coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) } just Runs
         coEvery { oppgaveService.duplikatOppgave(any(), any(), any()) } returns false
     }
@@ -78,7 +78,7 @@ object BehandlingServiceSpek : Spek({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveService.duplikatOppgave(any(), any(), any()) }
         }
@@ -96,7 +96,7 @@ object BehandlingServiceSpek : Spek({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { oppgaveService.duplikatOppgave(eq("123"), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
@@ -114,7 +114,7 @@ object BehandlingServiceSpek : Spek({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
 
@@ -136,7 +136,7 @@ object BehandlingServiceSpek : Spek({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson("aktorId", any()) }
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
 
@@ -158,7 +158,7 @@ object BehandlingServiceSpek : Spek({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
-            coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
         }
 
@@ -180,7 +180,7 @@ object BehandlingServiceSpek : Spek({
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("aktorId"), any()) }
-            coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
         }
 
@@ -217,7 +217,7 @@ object BehandlingServiceSpek : Spek({
                         kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { listOf(pdlService, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
@@ -237,7 +237,7 @@ object BehandlingServiceSpek : Spek({
                         kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { listOf(pdlService, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
@@ -252,7 +252,7 @@ object BehandlingServiceSpek : Spek({
                         kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock wasNot Called }
         }
 
@@ -274,7 +274,7 @@ object BehandlingServiceSpek : Spek({
                         kafkaproducerPapirSmRegistering, "topic3", "prod-fss")
             }
 
-            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), pasient, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+            coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), pasient, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock wasNot Called }
         }
 
