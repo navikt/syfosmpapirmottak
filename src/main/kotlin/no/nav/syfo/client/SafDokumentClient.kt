@@ -10,9 +10,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.util.KtorExperimentalAPI
-import java.io.IOException
-import java.io.StringReader
-import javax.xml.bind.JAXBException
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.helpers.retry
@@ -20,6 +17,9 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.skanningMetadataUnmarshaller
+import java.io.IOException
+import java.io.StringReader
+import javax.xml.bind.JAXBException
 
 @KtorExperimentalAPI
 class SafDokumentClient constructor(
@@ -40,10 +40,10 @@ class SafDokumentClient constructor(
             log.error("Saf svarte med feilmelding ved henting av dokument for msgId {}, {}", msgId, fields(loggingMeta))
             throw IOException("Saf svarte med feilmelding ved henting av dokument for msgId $msgId")
         }
-        when (NotFound) {
-            httpResponse.status -> {
-                log.error("Dokumentet finnes ikke for msgId {}, {}", msgId, fields(loggingMeta))
-                null
+        when (httpResponse.status) {
+             NotFound -> {
+                 log.error("Dokumentet finnes ikke for msgId {}, {}", msgId, fields(loggingMeta))
+                 throw SafNotFoundException("Fant ikke dokumentet for msgId $msgId i SAF")
             }
             else -> {
                 log.info("Hentet OCR-dokument for msgId {}, {}", msgId, fields(loggingMeta))
@@ -65,3 +65,5 @@ class SafDokumentClient constructor(
         }
     }
 }
+
+class SafNotFoundException(s: String) : Exception()

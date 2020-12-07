@@ -28,6 +28,7 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
+import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.Samhandler
 import no.nav.syfo.client.SarClient
@@ -161,6 +162,31 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
             coVerify(exactly = 0) { sykmeldingServiceSpy.manuellBehandling(any(), any(), any(), any(), any(), any(),
                     any(), any(), any(), any(), any()) }
+        }
+
+        it("Oppretter journalføringsoppgave hvis henting av dokument fra SAF feiler") {
+
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws SafNotFoundException("Fant ikke dokumentet for msgId 1234 i SAF")
+
+            runBlocking {
+                sykmeldingService.behandleSykmelding(journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
+                        datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
+                        sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
+                        session = sessionMock,
+                        sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                        dokArkivClient = dokArkivClientMock,
+                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                        sm2013SmregistreringTopic = "topic3")
+            }
+
+            coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
+//            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
+//            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
+            coVerify(exactly = 1) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
+            coVerify(exactly = 1) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
+            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
         it("Skanningmetadata mappes riktig til receivedSykmelding") {

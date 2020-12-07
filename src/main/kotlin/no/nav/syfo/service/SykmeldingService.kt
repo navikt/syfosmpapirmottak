@@ -16,6 +16,7 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
+import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
@@ -175,6 +176,9 @@ class SykmeldingService(
                         log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
                         return
                     }
+                } catch (e: SafNotFoundException) {
+                    log.warn("Noe gikk galt ved uthenting av dokument: ${e.message}")
+                    return opprettJournalfoeringsoppgave(journalpostId = journalpostId, sykmeldingsId = sykmeldingId, aktorId = pasient.aktorId, loggingMeta = loggingMeta)
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
