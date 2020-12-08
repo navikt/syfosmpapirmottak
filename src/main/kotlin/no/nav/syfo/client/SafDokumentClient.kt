@@ -36,11 +36,12 @@ class SafDokumentClient constructor(
             header("Nav-Callid", msgId)
             header("Nav-Consumer-Id", "syfosmpapirmottak")
         }.execute()
-        if (httpResponse.status == InternalServerError) {
-            log.error("Saf svarte med feilmelding ved henting av dokument for msgId {}, {}", msgId, fields(loggingMeta))
-            throw IOException("Saf svarte med feilmelding ved henting av dokument for msgId $msgId")
-        }
+
         when (httpResponse.status) {
+            InternalServerError -> {
+                log.error("Saf svarte med feilmelding ved henting av dokument for msgId {}, {}", msgId, fields(loggingMeta))
+                throw IOException("Saf svarte med feilmelding ved henting av dokument for msgId $msgId")
+            }
              NotFound -> {
                  log.error("Dokumentet finnes ikke for msgId {}, {}", msgId, fields(loggingMeta))
                  throw SafNotFoundException("Fant ikke dokumentet for msgId $msgId i SAF")

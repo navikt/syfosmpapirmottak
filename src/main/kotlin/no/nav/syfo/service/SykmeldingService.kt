@@ -215,7 +215,7 @@ class SykmeldingService(
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String
     ) {
-        log.info("Ruter oppgaven til smregistrering")
+        log.info("Ruter oppgaven til smregistrering", fields(loggingMeta))
         val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
             journalpostId = journalpostId,
             fnr = fnr,

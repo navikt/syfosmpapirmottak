@@ -45,6 +45,8 @@ import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.io.IOException
+import kotlin.test.assertFails
 
 @KtorExperimentalAPI
 object SykmeldingServiceSpek : Spek({
@@ -113,8 +115,9 @@ object SykmeldingServiceSpek : Spek({
     }
 
     describe("SykmeldingService ende-til-ende") {
-        it("Send til smregistrering hvis henting av dokument (OCR) feiler") {
+        it("Send til smregistrering hvis SAF svarer 500 ved henting av skanningMetadata") {
             val sykmeldingServiceSpy = spyk(sykmeldingService)
+            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws IOException()
 
             runBlocking {
                 sykmeldingServiceSpy.behandleSykmelding(
@@ -132,7 +135,7 @@ object SykmeldingServiceSpek : Spek({
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                         sm2013SmregistreringTopic = "topic3")
             }
-
+            coEvery { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify(exactly = 1) { sykmeldingServiceSpy.manuellBehandling(any(), any(), any(), any(), any(), any(),
                     any(), any(), any(), any(), any()) }
             coVerify(exactly = 1) { kafkaproducerPapirSmRegistering.send(any()) }
@@ -158,13 +161,14 @@ object SykmeldingServiceSpek : Spek({
             coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
+            coVerify(exactly = 1) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
             coVerify(exactly = 0) { sykmeldingServiceSpy.manuellBehandling(any(), any(), any(), any(), any(), any(),
                     any(), any(), any(), any(), any()) }
         }
 
-        it("Oppretter journalføringsoppgave hvis henting av dokument fra SAF feiler") {
+        it("Oppretter journalføringsoppgave hvis SAF returnerer 404 ved henting av skanningMetadata") {
 
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws SafNotFoundException("Fant ikke dokumentet for msgId 1234 i SAF")
 
@@ -180,8 +184,6 @@ object SykmeldingServiceSpek : Spek({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-//            coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
-//            coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify(exactly = 1) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 1) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
@@ -189,7 +191,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        it("Skanningmetadata mappes riktig til receivedSykmelding") {
+        it("Skanningmetadata mappes riktig til receivedSykmelding (Happy case, ordinær flyt uten feil)") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
                 sykemeldinger = SykemeldingerType().apply {
                     pasient = PasientType().apply { fnr = "fnr" }
