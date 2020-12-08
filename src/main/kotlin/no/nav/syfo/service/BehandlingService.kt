@@ -87,8 +87,7 @@ class BehandlingService(
                                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
                                 dokArkivClient = dokArkivClient,
                                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                                sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                                cluster = cluster
+                                sm2013SmregistreringTopic = sm2013SmregistreringTopic
                             )
                         }
                     }

@@ -21,6 +21,13 @@ import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.runBlocking
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldNotEqual
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.math.BigInteger
 import java.net.ServerSocket
 import java.nio.charset.StandardCharsets
@@ -29,13 +36,7 @@ import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.Month
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.syfo.util.LoggingMeta
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldNotEqual
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
+import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
 object SafDokumentClientSpek : Spek({
@@ -110,12 +111,13 @@ object SafDokumentClientSpek : Spek({
             skanningmetadata shouldEqual null
         }
 
-        it("Returnerer null hvis dokumentet ikke finnes") {
+        it("Kaster SafNotFoundException hvis dokumentet ikke finnes") {
             var skanningmetadata: Skanningmetadata? = null
-            runBlocking {
-                skanningmetadata = safDokumentClient.hentDokument("journalpostId", "dokumentInfoIdFinnesIkke", "sykmeldingId", loggingMetadata)
+            assertFailsWith<SafNotFoundException> {
+                runBlocking {
+                    skanningmetadata = safDokumentClient.hentDokument("journalpostId", "dokumentInfoIdFinnesIkke", "sykmeldingId", loggingMetadata)
+                }
             }
-
             skanningmetadata shouldEqual null
         }
     }

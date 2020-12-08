@@ -16,6 +16,7 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
+import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
@@ -47,11 +48,6 @@ class SykmeldingService(
     private val pdlPersonService: PdlPersonService,
     private val behandlendeEnhetService: BehandlendeEnhetService
 ) {
-
-    val pilotkontor = listOf("0415", "0412", "0403", "0417", "1101", "1108", "1102", "1129", "1106",
-            "1111", "1112", "1119", "1120", "1122", "1124", "1127", "1130", "1133", "1134",
-            "1135", "1146", "1149", "1151", "1160", "1161", "1162", "1164", "1165", "1169", "1167", "1168")
-
     suspend fun behandleSykmelding(
         journalpostId: String,
         pasient: PdlPerson?,
@@ -65,8 +61,7 @@ class SykmeldingService(
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        sm2013SmregistreringTopic: String,
-        cluster: String
+        sm2013SmregistreringTopic: String
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -159,9 +154,7 @@ class SykmeldingService(
                                     sykmelder = sykmelder,
                                     ocrFil = ocrFil,
                                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                                    sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                                    cluster = cluster,
-                                    enhetId = behandlendeEnhetId
+                                    sm2013SmregistreringTopic = sm2013SmregistreringTopic
                             )
                         } else if (validationResult.status == Status.OK) {
                             handleOk(
@@ -183,6 +176,9 @@ class SykmeldingService(
                         log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
                         return
                     }
+                } catch (e: SafNotFoundException) {
+                    log.warn("Noe gikk galt ved uthenting av dokument: ${e.message}")
+                    return opprettJournalfoeringsoppgave(journalpostId = journalpostId, sykmeldingsId = sykmeldingId, aktorId = pasient.aktorId, loggingMeta = loggingMeta)
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
@@ -200,9 +196,7 @@ class SykmeldingService(
                         sykmelder = sykmelder,
                         ocrFil = ocrFil,
                         kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                        cluster = cluster,
-                        enhetId = behandlendeEnhetId
+                        sm2013SmregistreringTopic = sm2013SmregistreringTopic
                 )
             }
         }
@@ -219,35 +213,27 @@ class SykmeldingService(
         sykmelder: Sykmelder?,
         ocrFil: Skanningmetadata?,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        sm2013SmregistreringTopic: String,
-        cluster: String,
-        enhetId: String?
+        sm2013SmregistreringTopic: String
     ) {
-        val dev = cluster == "dev-fss"
-        val pilotkontor = shouldSendToSmregistrering(enhetId)
-        if (dev || pilotkontor) {
-            log.info("Går til smregistrering fordi dette er ${when (dev) { true -> "dev" else -> "et pilotkontor"}} {}", fields(loggingMeta))
-            val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
-                journalpostId = journalpostId,
-                fnr = fnr,
-                aktorId = aktorId,
-                dokumentInfoId = dokumentInfoId,
-                datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
-                sykmeldingId = sykmeldingId,
-                sykmelder = sykmelder,
-                ocrFil = ocrFil
-            )
+        log.info("Ruter oppgaven til smregistrering", fields(loggingMeta))
+        val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
+            journalpostId = journalpostId,
+            fnr = fnr,
+            aktorId = aktorId,
+            dokumentInfoId = dokumentInfoId,
+            datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
+            sykmeldingId = sykmeldingId,
+            sykmelder = sykmelder,
+            ocrFil = ocrFil
+        )
 
-            val duplikatOppgave = oppgaveService.duplikatOppgave(
-                journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+        val duplikatOppgave = oppgaveService.duplikatOppgave(
+            journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
 
-            if (!duplikatOppgave) {
-                sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
-            } else {
-                log.info("duplikat oppgave {}", fields(loggingMeta))
-            }
+        if (!duplikatOppgave) {
+            sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
         } else {
-            opprettJournalfoeringsoppgave(journalpostId = journalpostId, sykmeldingsId = sykmeldingId, aktorId = aktorId, loggingMeta = loggingMeta)
+            log.info("duplikat oppgave {}", fields(loggingMeta))
         }
     }
 
@@ -255,10 +241,6 @@ class SykmeldingService(
         val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingsId, aktorId = aktorId, loggingMeta = loggingMeta)
         oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
                 journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingsId, loggingMeta = loggingMeta)
-    }
-
-    fun shouldSendToSmregistrering(enhetId: String?): Boolean {
-        return enhetId?.let { pilotkontor.contains(it) } ?: false
     }
 
     private fun requireManuellBehandling(receivedSykmelding: ReceivedSykmelding): Boolean {
