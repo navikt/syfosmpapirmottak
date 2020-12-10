@@ -71,11 +71,5 @@ spec:
       value: http://dokarkiv/rest/journalpostapi/v1/journalpost
     - name: PDL_GRAPHQL_PATH
       value: https://pdl-api.nais.adeo.no/graphql
-    - name: PERSON_V3_ENDPOINT_URL
-      value: https://wasapp.adeo.no/tpsws/ws/Person/v3
-    - name: EGEN_ANSATT_URL
-      value: https://wasapp.adeo.no/tpsws/EgenAnsatt_v1
-    - name: ARBEIDSFORDELING_API
-      value: https://app.adeo.no/norg2/api/v1/arbeidsfordeling
     - name: OPPGAVEBEHANDLING_URL
       value: https://oppgave.nais.adeo.no/api/v1/oppgaver
