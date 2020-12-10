@@ -21,13 +21,6 @@ import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.syfo.util.LoggingMeta
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldNotEqual
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.math.BigInteger
 import java.net.ServerSocket
 import java.nio.charset.StandardCharsets
@@ -37,6 +30,13 @@ import java.time.LocalDate
 import java.time.Month
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.runBlocking
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldNotEqual
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 @KtorExperimentalAPI
 object SafDokumentClientSpek : Spek({

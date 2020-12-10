@@ -45,8 +45,7 @@ class SykmeldingService(
     private val norskHelsenettClient: NorskHelsenettClient,
     private val regelClient: RegelClient,
     private val kuhrSarClient: SarClient,
-    private val pdlPersonService: PdlPersonService,
-    private val behandlendeEnhetService: BehandlendeEnhetService
+    private val pdlPersonService: PdlPersonService
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -68,16 +67,10 @@ class SykmeldingService(
 
         var sykmelder: Sykmelder? = null
         var ocrFil: Skanningmetadata? = null
-        var behandlendeEnhetId: String? = null
         if (pasient?.aktorId == null || pasient.fnr == null) {
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingId, loggingMeta = loggingMeta)
             return
         } else {
-            behandlendeEnhetId = behandlendeEnhetService.getBehanldendeEnhet(pasient, loggingMeta)
-            if (behandlendeEnhetId == null) {
-                log.info("Fant ikke behandlendeEnhet for papirsykmelding {}", fields(loggingMeta))
-            }
-
             if (dokumentInfoId.isNullOrEmpty()) {
                 // Opprett vanlig journalføringsoppgave
                 opprettJournalfoeringsoppgave(journalpostId = journalpostId, sykmeldingsId = sykmeldingId, aktorId = pasient.aktorId, loggingMeta = loggingMeta)

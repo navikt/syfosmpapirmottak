@@ -55,10 +55,7 @@ object KafkaITSpek : Spek({
             syfoserviceQueueName = "syfoservicekø",
             dokArkivUrl = "dokapi/",
             cluster = "dev",
-            pdlGraphqlPath = "TEST",
-            personV3EndpointURL = "",
-            arbeidsfordelingAPIUrl = "",
-            egenAnsattURL = ""
+            pdlGraphqlPath = "TEST"
     )
 
     fun Properties.overrideForTest(): Properties = apply {

@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkClass
 import io.mockk.spyk
+import java.io.IOException
 import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -45,8 +46,6 @@ import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.io.IOException
-import kotlin.test.assertFails
 
 @KtorExperimentalAPI
 object SykmeldingServiceSpek : Spek({
@@ -72,7 +71,6 @@ object SykmeldingServiceSpek : Spek({
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
-    val behandlendeEnhetService = mockk<BehandlendeEnhetService>(relaxed = true)
     val sykmeldingService = SykmeldingService(
             sakClientMock,
             oppgaveserviceMock,
@@ -80,8 +78,7 @@ object SykmeldingServiceSpek : Spek({
             norskHelsenettClientMock,
             regelClientMock,
             kuhrSarClientMock,
-            pdlService,
-            behandlendeEnhetService)
+            pdlService)
 
     beforeEachTest {
         clearAllMocks()
@@ -109,7 +106,6 @@ object SykmeldingServiceSpek : Spek({
                 samh_ident = listOf()
         ))
 
-        coEvery { behandlendeEnhetService.getBehanldendeEnhet(any(), any()) } returns "0393"
         coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId, null)
         coEvery { pdlService.getPdlPerson(fnrLege, any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrLege, aktorIdLege, null)
     }

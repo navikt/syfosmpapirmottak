@@ -27,9 +27,6 @@ val confluentVersion = "5.0.2"
 val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
-val navPersonv3Version = "1.2019.07.11-06.47-b55f47790a9d"
-val diskresjonskodeV1Version = "1.2019.07.11-06.47-b55f47790a9d"
-val navArbeidsfordelingv1Version = "1.2019.07.11-06.47-b55f47790a9d"
 val commonsTextVersion = "1.4"
 val cxfVersion = "3.2.7"
 val jaxwsApiVersion = "2.3.1"
@@ -41,7 +38,6 @@ val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.9.3"
 val smCommonDiagnosisCodesVersion = "1.68817ee"
-val navEgenAnsattVersion = "1.2019.09.25-00.21-49b69f0625e0"
 
 
 plugins {
@@ -153,8 +149,6 @@ dependencies {
     }
 
     implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
-    implementation("no.nav.tjenestespesifikasjoner:person-v3-tjenestespesifikasjon:$navPersonv3Version")
-    implementation("no.nav.tjenestespesifikasjoner:egenansatt-v1-tjenestespesifikasjon:$navEgenAnsattVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation ("org.eclipse.jetty:jetty-servlet:$jettyVersion")
