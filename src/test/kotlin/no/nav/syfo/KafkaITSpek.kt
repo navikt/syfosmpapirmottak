@@ -55,7 +55,9 @@ object KafkaITSpek : Spek({
             syfoserviceQueueName = "syfoservicekø",
             dokArkivUrl = "dokapi/",
             cluster = "dev",
-            pdlGraphqlPath = "TEST"
+            pdlGraphqlPath = "TEST",
+            truststore = "truststore",
+            truststorePassword = "pwd"
     )
 
     fun Properties.overrideForTest(): Properties = apply {

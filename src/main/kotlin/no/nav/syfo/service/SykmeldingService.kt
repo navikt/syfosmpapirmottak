@@ -121,7 +121,8 @@ class SykmeldingService(
                                         ?: msgHead.msgInfo.genDate).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
                                 rulesetVersion = healthInformation.regelSettVersjon,
                                 fellesformat = fellesformatMarshaller.toString(fellesformat),
-                                tssid = samhandlerPraksis?.tss_ident ?: ""
+                                tssid = samhandlerPraksis?.tss_ident ?: "",
+                                merknader = null
                         )
 
                         log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
