@@ -6,24 +6,24 @@ group = "no.nav.syfo"
 version = "1.0.0"
 
 val apolloVersion = "1.2.2"
-val coroutinesVersion = "1.3.4"
+val coroutinesVersion = "1.3.9"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
-val kafkaVersion = "2.3.0"
+val kafkaVersion = "2.4.0"
 val kafkaEmbeddedVersion = "2.4.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.39"
-val ktorVersion = "1.3.2"
+val ktorVersion = "1.4.1"
 val logbackVersion = "1.2.3"
-val logstashLogbackEncoderVersion = "5.2"
-val prometheusVersion = "0.5.0"
+val logstashLogbackEncoderVersion = "6.1"
+val prometheusVersion = "0.6.0"
 val spekVersion = "2.0.9"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
-val jacksonVersion = "2.9.6"
+val jacksonVersion = "2.10.2"
 val joarkHendelseVersion = "67a9be4476b63b7247cfacfaf821ab656bd2a952"
-val confluentVersion = "5.0.2"
+val confluentVersion = "5.3.1"
 val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
@@ -33,18 +33,17 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "1.125b076"
+val smCommonVersion = "1.f409e4d"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.9.3"
-val smCommonDiagnosisCodesVersion = "1.68817ee"
 
 
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
-    kotlin("jvm") version "1.3.71"
-    id("com.diffplug.gradle.spotless") version "3.18.0"
+    kotlin("jvm") version "1.3.72"
+    id("com.diffplug.gradle.spotless") version "3.24.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("com.apollographql.android") version "1.2.2"
     id("org.jmailen.kotlinter") version "2.2.0"
@@ -126,7 +125,7 @@ dependencies {
     implementation ("no.nav.helse:syfosm-common-rest-sts:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-ws:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
-    implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonDiagnosisCodesVersion")
+    implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-mq:$smCommonVersion")
 
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
