@@ -132,14 +132,3 @@ https://confluence.adeo.no/display/KES/SyfoSmMottak.
 3. Do the changes you want, and the save it as a drawio, back to /src/flowchart/flyttdiagram.drawio
 4. Click on File -> Export as SVG... save the file to here: file here: /src/svg/flytdiagram.svg
 5. Commit and push the changes so its up to date
-
-## Contact us
-### Code/project related questions can be sent to
-* Andreas Nilsen, `andreas.nilsen@nav.no`
-* Sebastian Knudsen, `sebastian.knudsen@nav.no`
-* Tia Firing, `tia.firing@nav.no`
-* Jonas Henie, `jonas.henie@nav.no`
-* Mathias Hellevang, `mathias.hellevang@nav.no`
-
-### For NAV employees
-We are available at the Slack channel #team-sykmelding
