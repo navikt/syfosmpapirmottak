@@ -229,7 +229,7 @@ suspend fun blockingApplicationLogic(
     cluster: String
 ) {
     while (applicationState.ready) {
-        consumer.poll(Duration.ofMillis(0)).forEach { consumerRecord ->
+        consumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
             val sykmeldingId = UUID.randomUUID().toString()
             val loggingMeta = LoggingMeta(
@@ -252,6 +252,5 @@ suspend fun blockingApplicationLogic(
                 cluster = cluster
             )
         }
-        delay(100)
     }
 }
