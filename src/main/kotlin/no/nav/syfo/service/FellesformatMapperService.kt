@@ -175,7 +175,7 @@ fun mapOcrFilTilFellesformat(
                             behandler = tilBehandler(sykmelder)
                             avsenderSystem = HelseOpplysningerArbeidsuforhet.AvsenderSystem().apply {
                                 systemNavn = "Papirsykmelding"
-                                systemVersjon = journalpostId
+                                systemVersjon = journalpostId // Dette er nødvendig for at vi skal slippe å opprette generert PDF for papirsykmeldinger i syfosmsak
                             }
                             strekkode = "123456789qwerty"
                         })
