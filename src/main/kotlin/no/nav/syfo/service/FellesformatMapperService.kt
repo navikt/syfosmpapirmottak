@@ -43,7 +43,8 @@ fun mapOcrFilTilFellesformat(
     sykmelder: Sykmelder,
     sykmeldingId: String,
     loggingMeta: LoggingMeta,
-    pdlPerson: PdlPerson
+    pdlPerson: PdlPerson,
+    journalpostId: String
 ): XMLEIFellesformat {
     if (skanningmetadata.sykemeldinger.pasient.fnr != pdlPerson.fnr) {
         log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
@@ -174,7 +175,7 @@ fun mapOcrFilTilFellesformat(
                             behandler = tilBehandler(sykmelder)
                             avsenderSystem = HelseOpplysningerArbeidsuforhet.AvsenderSystem().apply {
                                 systemNavn = "Papirsykmelding"
-                                systemVersjon = "1"
+                                systemVersjon = journalpostId // Dette er nødvendig for at vi skal slippe å opprette generert PDF for papirsykmeldinger i syfosmsak
                             }
                             strekkode = "123456789qwerty"
                         })

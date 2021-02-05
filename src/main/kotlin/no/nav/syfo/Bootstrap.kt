@@ -26,7 +26,6 @@ import javax.jms.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.logstash.logback.argument.StructuredArguments
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
