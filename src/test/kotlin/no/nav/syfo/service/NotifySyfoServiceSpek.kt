@@ -18,7 +18,6 @@ object NotifySyfoServiceSpek : Spek({
         it("Sykmeldingen Base64-encodes på UTF-8 format") {
             val sykmeldingId = "1234"
             val journalpostId = "123"
-            val fnrPasient = "12345678910"
             val fnrLege = "fnrLege"
             val aktorIdLege = "aktorIdLege"
             val hprNummer = "10052512"
@@ -33,7 +32,9 @@ object NotifySyfoServiceSpek : Spek({
                     sykmelder = sykmelder,
                     sykmeldingId = sykmeldingId,
                     loggingMeta = loggingMetadata,
-                    pdlPerson = pdlPerson)
+                    pdlPerson = pdlPerson,
+                    journalpostId = journalpostId
+            )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
 

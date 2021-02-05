@@ -73,39 +73,41 @@ object FellesformatMapperServiceSpek : Spek({
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val fellesformat = mapOcrFilTilFellesformat(
-                    skanningmetadata = skanningMetadata,
-                    sykmelder = sykmelder,
-                    sykmeldingId = sykmeldingId,
-                    loggingMeta = loggingMetadata,
-                    pdlPerson = pdlPerson)
+                skanningmetadata = skanningMetadata,
+                sykmelder = sykmelder,
+                sykmeldingId = sykmeldingId,
+                loggingMeta = loggingMetadata,
+                pdlPerson = pdlPerson,
+                journalpostId = journalpostId
+            )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
             val msgHead = fellesformat.get<XMLMsgHead>()
 
             val sykmelding = healthInformation.toSykmelding(
-                    sykmeldingId = UUID.randomUUID().toString(),
-                    pasientAktoerId = aktorId,
-                    legeAktoerId = sykmelder.aktorId,
-                    msgId = sykmeldingId,
-                    signaturDato = msgHead.msgInfo.genDate
+                sykmeldingId = UUID.randomUUID().toString(),
+                pasientAktoerId = aktorId,
+                legeAktoerId = sykmelder.aktorId,
+                msgId = sykmeldingId,
+                signaturDato = msgHead.msgInfo.genDate
             )
 
             val receivedSykmelding = ReceivedSykmelding(
-                    sykmelding = sykmelding,
-                    personNrPasient = fnrPasient,
-                    tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
-                    personNrLege = sykmelder.fnr,
-                    navLogId = sykmeldingId,
-                    msgId = sykmeldingId,
-                    legekontorOrgNr = null,
-                    legekontorOrgName = "",
-                    legekontorHerId = null,
-                    legekontorReshId = null,
-                    mottattDato = datoOpprettet,
-                    rulesetVersion = healthInformation.regelSettVersjon,
-                    fellesformat = objectMapper.writeValueAsString(fellesformat),
-                    tssid = null,
-                    merknader = null
+                sykmelding = sykmelding,
+                personNrPasient = fnrPasient,
+                tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                personNrLege = sykmelder.fnr,
+                navLogId = sykmeldingId,
+                msgId = sykmeldingId,
+                legekontorOrgNr = null,
+                legekontorOrgName = "",
+                legekontorHerId = null,
+                legekontorReshId = null,
+                mottattDato = datoOpprettet,
+                rulesetVersion = healthInformation.regelSettVersjon,
+                fellesformat = objectMapper.writeValueAsString(fellesformat),
+                tssid = null,
+                merknader = null
             )
 
             receivedSykmelding.personNrPasient shouldEqual fnrPasient
@@ -130,7 +132,7 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.kontaktMedPasient shouldEqual KontaktMedPasient(null, null)
             receivedSykmelding.sykmelding.behandletTidspunkt shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.behandler shouldNotEqual null
-            receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", "1")
+            receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", journalpostId)
             receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual LocalDate.of(2019, Month.AUGUST, 15)
             receivedSykmelding.sykmelding.signaturDato shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.navnFastlege shouldEqual null
@@ -141,39 +143,41 @@ object FellesformatMapperServiceSpek : Spek({
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
             val fellesformat = mapOcrFilTilFellesformat(
-                    skanningmetadata = skanningMetadata,
-                    sykmelder = sykmelder,
-                    sykmeldingId = sykmeldingId,
-                    loggingMeta = loggingMetadata,
-                    pdlPerson = pdlPerson)
+                skanningmetadata = skanningMetadata,
+                sykmelder = sykmelder,
+                sykmeldingId = sykmeldingId,
+                loggingMeta = loggingMetadata,
+                pdlPerson = pdlPerson,
+                journalpostId = journalpostId
+            )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
             val msgHead = fellesformat.get<XMLMsgHead>()
 
             val sykmelding = healthInformation.toSykmelding(
-                    sykmeldingId = UUID.randomUUID().toString(),
-                    pasientAktoerId = aktorId,
-                    legeAktoerId = sykmelder.aktorId,
-                    msgId = sykmeldingId,
-                    signaturDato = msgHead.msgInfo.genDate
+                sykmeldingId = UUID.randomUUID().toString(),
+                pasientAktoerId = aktorId,
+                legeAktoerId = sykmelder.aktorId,
+                msgId = sykmeldingId,
+                signaturDato = msgHead.msgInfo.genDate
             )
 
             val receivedSykmelding = ReceivedSykmelding(
-                    sykmelding = sykmelding,
-                    personNrPasient = fnrPasient,
-                    tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
-                    personNrLege = sykmelder.fnr,
-                    navLogId = sykmeldingId,
-                    msgId = sykmeldingId,
-                    legekontorOrgNr = null,
-                    legekontorOrgName = "",
-                    legekontorHerId = null,
-                    legekontorReshId = null,
-                    mottattDato = datoOpprettet,
-                    rulesetVersion = healthInformation.regelSettVersjon,
-                    fellesformat = objectMapper.writeValueAsString(fellesformat),
-                    tssid = null,
-                    merknader = null
+                sykmelding = sykmelding,
+                personNrPasient = fnrPasient,
+                tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                personNrLege = sykmelder.fnr,
+                navLogId = sykmeldingId,
+                msgId = sykmeldingId,
+                legekontorOrgNr = null,
+                legekontorOrgName = "",
+                legekontorHerId = null,
+                legekontorReshId = null,
+                mottattDato = datoOpprettet,
+                rulesetVersion = healthInformation.regelSettVersjon,
+                fellesformat = objectMapper.writeValueAsString(fellesformat),
+                tssid = null,
+                merknader = null
             )
 
             receivedSykmelding.personNrPasient shouldEqual fnrPasient
@@ -206,8 +210,8 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.kontaktMedPasient shouldEqual KontaktMedPasient(null, null)
             receivedSykmelding.sykmelding.behandletTidspunkt shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.behandler shouldEqual Behandler(
-                    fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null)
-            receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", "1")
+                fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null)
+            receivedSykmelding.sykmelding.avsenderSystem shouldEqual AvsenderSystem("Papirsykmelding", journalpostId)
             receivedSykmelding.sykmelding.syketilfelleStartDato shouldEqual LocalDate.of(2019, Month.AUGUST, 15)
             receivedSykmelding.sykmelding.signaturDato shouldEqual LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.navnFastlege shouldEqual null
@@ -220,11 +224,13 @@ object FellesformatMapperServiceSpek : Spek({
 
             val func = {
                 mapOcrFilTilFellesformat(
-                        skanningmetadata = skanningMetadata,
-                        sykmelder = sykmelder,
-                        sykmeldingId = sykmeldingId,
-                        loggingMeta = loggingMetadata,
-                        pdlPerson = pdlPerson)
+                    skanningmetadata = skanningMetadata,
+                    sykmelder = sykmelder,
+                    sykmeldingId = sykmeldingId,
+                    loggingMeta = loggingMetadata,
+                    pdlPerson = pdlPerson,
+                    journalpostId = journalpostId
+                )
             }
 
             func shouldThrow IllegalStateException::class
@@ -237,11 +243,13 @@ object FellesformatMapperServiceSpek : Spek({
 
             val func = {
                 mapOcrFilTilFellesformat(
-                        skanningmetadata = skanningMetadata,
-                        sykmelder = sykmelder,
-                        sykmeldingId = sykmeldingId,
-                        loggingMeta = loggingMetadata,
-                        pdlPerson = pdlPerson)
+                    skanningmetadata = skanningMetadata,
+                    sykmelder = sykmelder,
+                    sykmeldingId = sykmeldingId,
+                    loggingMeta = loggingMetadata,
+                    pdlPerson = pdlPerson,
+                    journalpostId = journalpostId
+                )
             }
 
             func shouldNotThrow Exception::class
@@ -601,9 +609,9 @@ object FellesformatMapperServiceSpek : Spek({
         it("diagnosekodemapping små bokstaver") {
             val gyldigdiagnose = "t81.9"
             val loggingmetea = LoggingMeta(
-                    sykmeldingId = "1313",
-                    journalpostId = "5",
-                    hendelsesId = "2"
+                sykmeldingId = "1313",
+                journalpostId = "5",
+                hendelsesId = "2"
             )
 
             val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
@@ -614,9 +622,9 @@ object FellesformatMapperServiceSpek : Spek({
         it("Ugyldig diagnosesystem-mapping") {
             val gyldigdiagnose = "t8221.9"
             val loggingmetea = LoggingMeta(
-                    sykmeldingId = "1313",
-                    journalpostId = "5",
-                    hendelsesId = "2"
+                sykmeldingId = "1313",
+                journalpostId = "5",
+                hendelsesId = "2"
             )
 
             val func = { toMedisinskVurderingDiagnose(gyldigdiagnose, "IC", "foo Bar", loggingmetea) }
@@ -626,9 +634,9 @@ object FellesformatMapperServiceSpek : Spek({
         it("Gyldig diagnosekode mapping") {
             val gyldigdiagnose = "T81.9"
             val loggingmetea = LoggingMeta(
-                    sykmeldingId = "1313",
-                    journalpostId = "5",
-                    hendelsesId = "2"
+                sykmeldingId = "1313",
+                journalpostId = "5",
+                hendelsesId = "2"
             )
 
             val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
@@ -639,9 +647,9 @@ object FellesformatMapperServiceSpek : Spek({
         it("Gyldig diagnosekode mapping med space") {
             val gyldigdiagnose = "t 81.9"
             val loggingmetea = LoggingMeta(
-                    sykmeldingId = "1313",
-                    journalpostId = "5",
-                    hendelsesId = "2"
+                sykmeldingId = "1313",
+                journalpostId = "5",
+                hendelsesId = "2"
             )
 
             val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)

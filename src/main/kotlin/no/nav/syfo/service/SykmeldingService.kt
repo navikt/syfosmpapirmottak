@@ -93,7 +93,10 @@ class SykmeldingService(
                                 skanningmetadata = ocr,
                                 sykmelder = sykmelder!!,
                                 sykmeldingId = sykmeldingId,
-                                loggingMeta = loggingMeta, pdlPerson = pasient)
+                                loggingMeta = loggingMeta,
+                                pdlPerson = pasient,
+                                journalpostId = journalpostId
+                        )
 
                         val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
                         val msgHead = fellesformat.get<XMLMsgHead>()
