@@ -1,7 +1,5 @@
 package no.nav.syfo.domain
 
-import java.time.LocalDate
-import java.time.OffsetDateTime
 import no.nav.syfo.model.Arbeidsgiver
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.model.KontaktMedPasient
@@ -10,6 +8,8 @@ import no.nav.syfo.model.MeldingTilNAV
 import no.nav.syfo.model.Periode
 import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
+import java.time.LocalDate
+import java.time.OffsetDateTime
 
 data class PapirSmRegistering(
     val journalpostId: String,

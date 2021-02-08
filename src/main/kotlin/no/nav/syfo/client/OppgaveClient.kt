@@ -8,13 +8,13 @@ import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
-import java.time.DayOfWeek
-import java.time.LocalDate
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 @KtorExperimentalAPI
 class OppgaveClient constructor(private val url: String, private val oidcClient: StsOidcClient, private val httpClient: HttpClient) {
@@ -62,18 +62,18 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             behandlingstype = "ae0106"
         }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
-                aktoerId = aktoerId,
-                opprettetAvEnhetsnr = "9999",
-                journalpostId = journalpostId,
-                behandlesAvApplikasjon = "FS22",
-                saksreferanse = sakId,
-                beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
-                tema = "SYM",
-                oppgavetype = "JFR",
-                behandlingstype = behandlingstype,
-                aktivDato = LocalDate.now(),
-                fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
-                prioritet = "NORM"
+            aktoerId = aktoerId,
+            opprettetAvEnhetsnr = "9999",
+            journalpostId = journalpostId,
+            behandlesAvApplikasjon = "FS22",
+            saksreferanse = sakId,
+            beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
+            tema = "SYM",
+            oppgavetype = "JFR",
+            behandlingstype = behandlingstype,
+            aktivDato = LocalDate.now(),
+            fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
+            prioritet = "NORM"
         )
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)

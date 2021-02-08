@@ -16,13 +16,6 @@ import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.util.KtorExperimentalAPI
 import io.prometheus.client.hotspot.DefaultExports
-import java.net.ProxySelector
-import java.nio.file.Paths
-import java.time.Duration
-import java.util.Properties
-import java.util.UUID
-import javax.jms.MessageProducer
-import javax.jms.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -64,6 +57,13 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.net.ProxySelector
+import java.nio.file.Paths
+import java.time.Duration
+import java.util.Properties
+import java.util.UUID
+import javax.jms.MessageProducer
+import javax.jms.Session
 
 val log: Logger = LoggerFactory.getLogger("nav.syfo.papirmottak")
 
@@ -77,12 +77,13 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 fun main() {
     val env = Environment()
     val credentials =
-            objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
+        objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
 
     val applicationState = ApplicationState()
     val applicationEngine = createApplicationEngine(
-            env,
-            applicationState)
+        env,
+        applicationState
+    )
 
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     applicationServer.start()
@@ -97,8 +98,8 @@ fun main() {
     kafkaBaseConfig["auto.offset.reset"] = "none"
 
     val consumerProperties = kafkaBaseConfig.toConsumerConfig(
-            "${env.applicationName}-consumer-v2",
-            valueDeserializer = KafkaAvroDeserializer::class
+        "${env.applicationName}-consumer-v2",
+        valueDeserializer = KafkaAvroDeserializer::class
     )
 
     val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
@@ -117,7 +118,6 @@ fun main() {
                 configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             }
         }
-        expectSuccess = false
     }
     val proxyConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         config()
@@ -132,8 +132,8 @@ fun main() {
     val httpClient = HttpClient(Apache, config)
 
     val apolloClient: ApolloClient = ApolloClient.builder()
-            .serverUrl(env.safV1Url)
-            .build()
+        .serverUrl(env.safV1Url)
+        .build()
     val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
     val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
@@ -152,27 +152,27 @@ fun main() {
     val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService, oppgaveService)
 
     launchListeners(
-            env,
-            applicationState,
-            consumerProperties,
-            behandlingService,
-            credentials,
-            kafkaProducerReceivedSykmelding,
-            dokArkivClient,
-            kafkaProducerPapirSmRegistering
+        env,
+        applicationState,
+        consumerProperties,
+        behandlingService,
+        credentials,
+        kafkaProducerReceivedSykmelding,
+        dokArkivClient,
+        kafkaProducerPapirSmRegistering
     )
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
-        GlobalScope.launch {
-            try {
-                action()
-            } catch (e: TrackableException) {
-                log.error("En uhåndtert feil oppstod, applikasjonen restarter {}", StructuredArguments.fields(e.loggingMeta), e.cause)
-            } finally {
-                applicationState.alive = false
-            }
+    GlobalScope.launch {
+        try {
+            action()
+        } catch (e: TrackableException) {
+            log.error("En uhåndtert feil oppstod, applikasjonen restarter {}", StructuredArguments.fields(e.loggingMeta), e.cause)
+        } finally {
+            applicationState.alive = false
         }
+    }
 
 @KtorExperimentalAPI
 fun launchListeners(
@@ -232,9 +232,9 @@ suspend fun blockingApplicationLogic(
             val journalfoeringHendelseRecord = consumerRecord.value()
             val sykmeldingId = UUID.randomUUID().toString()
             val loggingMeta = LoggingMeta(
-                    sykmeldingId = sykmeldingId,
-                    journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
-                    hendelsesId = journalfoeringHendelseRecord.hendelsesId
+                sykmeldingId = sykmeldingId,
+                journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
+                hendelsesId = journalfoeringHendelseRecord.hendelsesId
             )
 
             behandlingService.handleJournalpost(

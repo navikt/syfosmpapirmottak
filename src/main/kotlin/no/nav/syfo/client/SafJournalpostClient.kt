@@ -7,15 +7,15 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
 import io.ktor.util.KtorExperimentalAPI
-import java.time.LocalDateTime
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
+import java.time.LocalDateTime
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { cont ->
     enqueue(object : ApolloCall.Callback<T>() {
@@ -35,13 +35,17 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
         journalpostId: String,
         loggingMeta: LoggingMeta
     ): JournalpostMetadata? {
-        val journalpost = apolloClient.query(FindJournalpostQuery.builder()
-            .id(journalpostId)
-            .build())
-            .requestHeaders(RequestHeaders.builder()
-                .addHeader("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
-                .addHeader("X-Correlation-ID", journalpostId)
-                .build())
+        val journalpost = apolloClient.query(
+            FindJournalpostQuery.builder()
+                .id(journalpostId)
+                .build()
+        )
+            .requestHeaders(
+                RequestHeaders.builder()
+                    .addHeader("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
+                    .addHeader("X-Correlation-ID", journalpostId)
+                    .build()
+            )
             .execute()
             .data()
             ?.journalpost()
