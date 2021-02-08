@@ -221,7 +221,7 @@ object FellesformatMapperServiceSpek : Spek({
         it("Map with avventendeSykmelding uten innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-ugyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
-            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "fnr", "aktorid", null)
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val func = {
                 mapOcrFilTilFellesformat(
@@ -240,7 +240,7 @@ object FellesformatMapperServiceSpek : Spek({
         it("map with avventendeSykmelding og innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-gyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
-            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "fnr", "aktorid", null)
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val func = {
                 mapOcrFilTilFellesformat(
