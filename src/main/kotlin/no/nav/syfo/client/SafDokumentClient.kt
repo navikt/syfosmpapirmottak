@@ -10,9 +10,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.util.KtorExperimentalAPI
-import java.io.IOException
-import java.io.StringReader
-import javax.xml.bind.JAXBException
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.helpers.retry
@@ -20,6 +17,9 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.skanningMetadataUnmarshaller
+import java.io.IOException
+import java.io.StringReader
+import javax.xml.bind.JAXBException
 
 @KtorExperimentalAPI
 class SafDokumentClient constructor(

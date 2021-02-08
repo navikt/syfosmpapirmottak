@@ -11,12 +11,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
-import java.io.IOException
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.util.LoggingMeta
+import java.io.IOException
 
 @KtorExperimentalAPI
 class DokArkivClient(

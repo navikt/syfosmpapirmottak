@@ -8,11 +8,11 @@ import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
-import java.time.ZonedDateTime
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
+import java.time.ZonedDateTime
 
 @KtorExperimentalAPI
 class SakClient constructor(private val url: String, private val oidcClient: StsOidcClient, private val httpClient: HttpClient) {
@@ -25,11 +25,11 @@ class SakClient constructor(private val url: String, private val oidcClient: Sts
             header("X-Correlation-ID", msgId)
             header("Authorization", "Bearer ${oidcClient.oidcToken().access_token}")
             body = OpprettSakRequest(
-                    tema = "SYM",
-                    applikasjon = "FS22",
-                    aktoerId = pasientAktoerId,
-                    orgnr = null,
-                    fagsakNr = null
+                tema = "SYM",
+                applikasjon = "FS22",
+                aktoerId = pasientAktoerId,
+                orgnr = null,
+                fagsakNr = null
             )
         }
     }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.mockk.every
 import io.mockk.mockk
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
 class KuhrSarClientTest {
@@ -21,16 +21,18 @@ class KuhrSarClientTest {
     fun findSamhandlerKiropraktorActive() {
         every { samhandlerPraksis.tss_ident } returns "123456789101112"
         every { samhandlerPraksis.samh_praksis_status_kode } returns "aktiv"
-        val samhandlere = listOf(Samhandler(
+        val samhandlere = listOf(
+            Samhandler(
                 "1",
                 "samhandlernavn",
                 "KI",
                 "",
                 "",
                 "", "", "", "", null, emptyList(), listOf(samhandlerPraksis)
-        ))
+            )
+        )
         val samhandlerPraksis = findBestSamhandlerPraksis(samhandlere)
-        samhandlerPraksis?.tss_ident shouldEqual "123456789101112"
+        samhandlerPraksis?.tss_ident shouldBeEqualTo "123456789101112"
     }
 
     @Test
@@ -42,17 +44,19 @@ class KuhrSarClientTest {
         every { samhandlerPraksis.samh_praksis_status_kode } returns "aktiv"
         val samhandlere = getSamhandler("KI", samhandlerPraksis2, samhandlerPraksis)
         val samhandlerPraksis = findBestSamhandlerPraksis(samhandlere)
-        samhandlerPraksis?.tss_ident shouldEqual "123456789101112"
+        samhandlerPraksis?.tss_ident shouldBeEqualTo "123456789101112"
     }
 
     private fun getSamhandler(type: String, vararg samhandlerPraksis: SamhandlerPraksis): MutableList<Samhandler> {
-        val samhandlere = mutableListOf(Samhandler(
+        val samhandlere = mutableListOf(
+            Samhandler(
                 "1",
                 "samhandlernavn",
                 type,
                 "",
                 "",
-                "", "", "", "", null, emptyList(), samhandlerPraksis.toList())
+                "", "", "", "", null, emptyList(), samhandlerPraksis.toList()
+            )
         )
         return samhandlere
     }
@@ -64,7 +68,7 @@ class KuhrSarClientTest {
         every { samhandlerPraksis2.samh_praksis_status_kode } returns "aktiv"
         val samhandlere = getSamhandler("LE", samhandlerPraksis2)
         val samhandlerPraksis = findBestSamhandlerPraksis(samhandlere)
-        samhandlerPraksis?.tss_ident shouldEqual "2"
+        samhandlerPraksis?.tss_ident shouldBeEqualTo "2"
     }
 
     @Test
@@ -73,6 +77,6 @@ class KuhrSarClientTest {
         every { samhandlerPraksis.samh_praksis_status_kode } returns "inaktiv"
         val samhandlere = getSamhandler("ANY", samhandlerPraksis)
         val samhandlerPraksis = findBestSamhandlerPraksis(samhandlere)
-        samhandlerPraksis?.tss_ident shouldEqual "1"
+        samhandlerPraksis?.tss_ident shouldBeEqualTo "1"
     }
 }

@@ -1,8 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import javax.jms.MessageProducer
-import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
@@ -19,6 +17,8 @@ import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import org.apache.kafka.clients.producer.KafkaProducer
+import javax.jms.MessageProducer
+import javax.jms.Session
 
 @KtorExperimentalAPI
 class BehandlingService(
@@ -45,7 +45,7 @@ class BehandlingService(
             val journalpostId = journalfoeringEvent.journalpostId.toString()
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
-                    (journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" || journalfoeringEvent.mottaksKanal.toString() == "SKAN_IM") &&
+                (journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" || journalfoeringEvent.mottaksKanal.toString() == "SKAN_IM") &&
                 (journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" || journalfoeringEvent.hendelsesType.toString() == "TemaEndret")
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
@@ -56,7 +56,7 @@ class BehandlingService(
                     log.info("Mottatt endret journalpost {}", fields(loggingMeta))
                 }
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
-                        ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
+                    ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 

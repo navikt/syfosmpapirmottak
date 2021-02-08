@@ -24,14 +24,17 @@ class OppgaveService(
     ) {
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
-        val oppgave = oppgaveClient.opprettOppgave(sakId, journalpostId,
-                aktoerIdPasient, gjelderUtland, trackingId, loggingMeta)
+        val oppgave = oppgaveClient.opprettOppgave(
+            sakId, journalpostId,
+            aktoerIdPasient, gjelderUtland, trackingId, loggingMeta
+        )
 
         if (!oppgave.duplikat) {
-            log.info("Opprettet oppgave for utenlandsk sykmelding med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                    StructuredArguments.keyValue("sakid", sakId),
-                    fields(loggingMeta)
+            log.info(
+                "Opprettet oppgave for utenlandsk sykmelding med {}, {} {}",
+                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                StructuredArguments.keyValue("sakid", sakId),
+                fields(loggingMeta)
             )
             PAPIRSM_OPPGAVE.inc()
         } else {
@@ -60,10 +63,11 @@ class OppgaveService(
 
         if (!oppgave.duplikat) {
             PAPIRSM_FORDELINGSOPPGAVE.inc()
-            log.info("Opprettet fordelingsoppgave med {}, {} {}",
-                    StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                    StructuredArguments.keyValue("journalpostId", journalpostId),
-                    fields(loggingMeta)
+            log.info(
+                "Opprettet fordelingsoppgave med {}, {} {}",
+                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                StructuredArguments.keyValue("journalpostId", journalpostId),
+                fields(loggingMeta)
             )
         }
     }

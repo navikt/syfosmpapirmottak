@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import java.io.StringReader
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.domain.Sykmelder
@@ -9,9 +8,10 @@ import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.skanningMetadataUnmarshaller
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.io.StringReader
 
 object NotifySyfoServiceSpek : Spek({
     describe("Legger sykmelding på kø til syfoservice") {
@@ -28,12 +28,12 @@ object NotifySyfoServiceSpek : Spek({
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val fellesformat = mapOcrFilTilFellesformat(
-                    skanningmetadata = skanningMetadata,
-                    sykmelder = sykmelder,
-                    sykmeldingId = sykmeldingId,
-                    loggingMeta = loggingMetadata,
-                    pdlPerson = pdlPerson,
-                    journalpostId = journalpostId
+                skanningmetadata = skanningMetadata,
+                sykmelder = sykmelder,
+                sykmeldingId = sykmeldingId,
+                loggingMeta = loggingMetadata,
+                pdlPerson = pdlPerson,
+                journalpostId = journalpostId
             )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -41,7 +41,7 @@ object NotifySyfoServiceSpek : Spek({
             val sykemeldingsBytes = convertSykemeldingToBase64(healthInformation)
 
             val sykmelding = String(sykemeldingsBytes, Charsets.UTF_8)
-            sykmelding.contains("Bodø") shouldEqual true
+            sykmelding.contains("Bodø") shouldBeEqualTo true
         }
     }
 })

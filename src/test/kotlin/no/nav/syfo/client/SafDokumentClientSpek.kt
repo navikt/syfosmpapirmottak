@@ -21,6 +21,13 @@ import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.runBlocking
+import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldNotBeEqualTo
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.math.BigInteger
 import java.net.ServerSocket
 import java.nio.charset.StandardCharsets
@@ -30,13 +37,6 @@ import java.time.LocalDate
 import java.time.Month
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.runBlocking
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.syfo.util.LoggingMeta
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldNotEqual
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 @KtorExperimentalAPI
 object SafDokumentClientSpek : Spek({
@@ -89,17 +89,17 @@ object SafDokumentClientSpek : Spek({
                 skanningmetadata = safDokumentClient.hentDokument("journalpostId", "dokumentInfoId", "sykmeldingId", loggingMetadata)
             }
 
-            skanningmetadata shouldNotEqual null
-            skanningmetadata?.sykemeldinger?.pasient?.fnr shouldEqual "12345678910"
-            skanningmetadata?.sykemeldinger?.medisinskVurdering?.hovedDiagnose?.first()?.diagnosekode shouldEqual "900.3"
-            skanningmetadata?.sykemeldinger?.medisinskVurdering?.hovedDiagnose?.first()?.diagnose shouldEqual "Skikkelig syk"
-            skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.periodeFOMDato shouldEqual LocalDate.of(2019, Month.JANUARY, 10)
-            skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.periodeTOMDato shouldEqual LocalDate.of(2019, Month.JANUARY, 14)
-            skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.medisinskeArsaker?.isMedArsakerHindrer shouldEqual true
-            skanningmetadata?.sykemeldinger?.tilbakedatering?.tilbakebegrunnelse shouldEqual "Legevakten\n" +
-                    "                Sentrum"
-            skanningmetadata?.sykemeldinger?.kontaktMedPasient?.behandletDato shouldEqual LocalDate.of(2019, Month.JANUARY, 11)
-            skanningmetadata?.sykemeldinger?.behandler?.hpr shouldEqual BigInteger("12345678")
+            skanningmetadata shouldNotBeEqualTo null
+            skanningmetadata?.sykemeldinger?.pasient?.fnr shouldBeEqualTo "12345678910"
+            skanningmetadata?.sykemeldinger?.medisinskVurdering?.hovedDiagnose?.first()?.diagnosekode shouldBeEqualTo "900.3"
+            skanningmetadata?.sykemeldinger?.medisinskVurdering?.hovedDiagnose?.first()?.diagnose shouldBeEqualTo "Skikkelig syk"
+            skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.periodeFOMDato shouldBeEqualTo LocalDate.of(2019, Month.JANUARY, 10)
+            skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.periodeTOMDato shouldBeEqualTo LocalDate.of(2019, Month.JANUARY, 14)
+            skanningmetadata?.sykemeldinger?.aktivitet?.aktivitetIkkeMulig?.medisinskeArsaker?.isMedArsakerHindrer shouldBeEqualTo true
+            skanningmetadata?.sykemeldinger?.tilbakedatering?.tilbakebegrunnelse shouldBeEqualTo "Legevakten\n" +
+                "                Sentrum"
+            skanningmetadata?.sykemeldinger?.kontaktMedPasient?.behandletDato shouldBeEqualTo LocalDate.of(2019, Month.JANUARY, 11)
+            skanningmetadata?.sykemeldinger?.behandler?.hpr shouldBeEqualTo BigInteger("12345678")
         }
 
         it("Returnerer null hvis dokumentet ikke er i henhold til skjema (det skal ikke kastes feil)") {
@@ -108,7 +108,7 @@ object SafDokumentClientSpek : Spek({
                 skanningmetadata = safDokumentClient.hentDokument("journalpostId", "dokumentInfoIdUgyldigDok", "sykmeldingId", loggingMetadata)
             }
 
-            skanningmetadata shouldEqual null
+            skanningmetadata shouldBeEqualTo null
         }
 
         it("Kaster SafNotFoundException hvis dokumentet ikke finnes") {
@@ -118,7 +118,7 @@ object SafDokumentClientSpek : Spek({
                     skanningmetadata = safDokumentClient.hentDokument("journalpostId", "dokumentInfoIdFinnesIkke", "sykmeldingId", loggingMetadata)
                 }
             }
-            skanningmetadata shouldEqual null
+            skanningmetadata shouldBeEqualTo null
         }
     }
 })

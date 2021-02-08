@@ -27,8 +27,10 @@ class UtenlandskSykmeldingService constructor(
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
         } else {
             val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = pasient.aktorId, loggingMeta = loggingMeta)
-            oppgaveService.opprettOppgave(aktoerIdPasient = pasient.aktorId, sakId = sakId,
-                journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+            oppgaveService.opprettOppgave(
+                aktoerIdPasient = pasient.aktorId, sakId = sakId,
+                journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
+            )
         }
     }
 }

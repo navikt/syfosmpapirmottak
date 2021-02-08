@@ -1,13 +1,6 @@
 package no.nav.syfo.service
 
 import io.ktor.util.KtorExperimentalAPI
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
-import javax.jms.MessageProducer
-import javax.jms.Session
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -36,6 +29,13 @@ import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import javax.jms.MessageProducer
+import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -85,47 +85,50 @@ class SykmeldingService(
 
                         val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
                         val samhandlerPraksis = findBestSamhandlerPraksis(
-                                samhandlerInfo)
+                            samhandlerInfo
+                        )
 
                         log.info("Fant ${when (samhandlerPraksis) { null -> "ikke " else -> "" }}samhandlerpraksis for hpr ${sykmelder!!.hprNummer}")
 
                         val fellesformat = mapOcrFilTilFellesformat(
-                                skanningmetadata = ocr,
-                                sykmelder = sykmelder!!,
-                                sykmeldingId = sykmeldingId,
-                                loggingMeta = loggingMeta,
-                                pdlPerson = pasient,
-                                journalpostId = journalpostId
+                            skanningmetadata = ocr,
+                            sykmelder = sykmelder!!,
+                            sykmeldingId = sykmeldingId,
+                            loggingMeta = loggingMeta,
+                            pdlPerson = pasient,
+                            journalpostId = journalpostId
                         )
 
                         val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
                         val msgHead = fellesformat.get<XMLMsgHead>()
 
                         val sykmelding = healthInformation.toSykmelding(
-                                sykmeldingId = sykmeldingId,
-                                pasientAktoerId = pasient.aktorId,
-                                legeAktoerId = sykmelder!!.aktorId,
-                                msgId = sykmeldingId,
-                                signaturDato = msgHead.msgInfo.genDate
+                            sykmeldingId = sykmeldingId,
+                            pasientAktoerId = pasient.aktorId,
+                            legeAktoerId = sykmelder!!.aktorId,
+                            msgId = sykmeldingId,
+                            signaturDato = msgHead.msgInfo.genDate
                         )
 
                         val receivedSykmelding = ReceivedSykmelding(
-                                sykmelding = sykmelding,
-                                personNrPasient = pasient.fnr,
-                                tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
-                                personNrLege = sykmelder!!.fnr,
-                                navLogId = sykmeldingId,
-                                msgId = sykmeldingId,
-                                legekontorOrgNr = null,
-                                legekontorOrgName = "",
-                                legekontorHerId = null,
-                                legekontorReshId = null,
-                                mottattDato = (datoOpprettet
-                                        ?: msgHead.msgInfo.genDate).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
-                                rulesetVersion = healthInformation.regelSettVersjon,
-                                fellesformat = fellesformatMarshaller.toString(fellesformat),
-                                tssid = samhandlerPraksis?.tss_ident ?: "",
-                                merknader = null
+                            sykmelding = sykmelding,
+                            personNrPasient = pasient.fnr,
+                            tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                            personNrLege = sykmelder!!.fnr,
+                            navLogId = sykmeldingId,
+                            msgId = sykmeldingId,
+                            legekontorOrgNr = null,
+                            legekontorOrgName = "",
+                            legekontorHerId = null,
+                            legekontorReshId = null,
+                            mottattDato = (
+                                datoOpprettet
+                                    ?: msgHead.msgInfo.genDate
+                                ).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
+                            rulesetVersion = healthInformation.regelSettVersjon,
+                            fellesformat = fellesformatMarshaller.toString(fellesformat),
+                            tssid = samhandlerPraksis?.tss_ident ?: "",
+                            merknader = null
                         )
 
                         log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
@@ -133,38 +136,40 @@ class SykmeldingService(
 
                         log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
                         val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
-                        log.info("Resultat: {}, {}, {}",
-                                StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
-                                StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
-                                fields(loggingMeta)
+                        log.info(
+                            "Resultat: {}, {}, {}",
+                            StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
+                            StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
+                            fields(loggingMeta)
                         )
 
                         if (validationResult.status == Status.MANUAL_PROCESSING ||
-                                requireManuellBehandling(receivedSykmelding)) {
+                            requireManuellBehandling(receivedSykmelding)
+                        ) {
                             manuellBehandling(
-                                    journalpostId = journalpostId,
-                                    fnr = pasient.fnr,
-                                    aktorId = pasient.aktorId,
-                                    dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                                    loggingMeta = loggingMeta,
-                                    sykmeldingId = sykmeldingId,
-                                    sykmelder = sykmelder,
-                                    ocrFil = ocrFil,
-                                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                                    sm2013SmregistreringTopic = sm2013SmregistreringTopic
+                                journalpostId = journalpostId,
+                                fnr = pasient.fnr,
+                                aktorId = pasient.aktorId,
+                                dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                                loggingMeta = loggingMeta,
+                                sykmeldingId = sykmeldingId,
+                                sykmelder = sykmelder,
+                                ocrFil = ocrFil,
+                                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                                sm2013SmregistreringTopic = sm2013SmregistreringTopic
                             )
                         } else if (validationResult.status == Status.OK) {
                             handleOk(
-                                    kafkaproducerreceivedSykmelding,
-                                    sm2013AutomaticHandlingTopic,
-                                    receivedSykmelding,
-                                    session,
-                                    syfoserviceProducer,
-                                    receivedSykmelding.sykmelding.id,
-                                    healthInformation,
-                                    dokArkivClient,
-                                    journalpostId,
-                                    loggingMeta
+                                kafkaproducerreceivedSykmelding,
+                                sm2013AutomaticHandlingTopic,
+                                receivedSykmelding,
+                                session,
+                                syfoserviceProducer,
+                                receivedSykmelding.sykmelding.id,
+                                healthInformation,
+                                dokArkivClient,
+                                journalpostId,
+                                loggingMeta
                             )
                         } else {
                             throw IllegalStateException("Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING")
@@ -183,17 +188,17 @@ class SykmeldingService(
 
                 // Fallback hvis OCR er null ELLER parsing av OCR til sykmeldingformat mislykkes
                 manuellBehandling(
-                        journalpostId = journalpostId,
-                        fnr = pasient.fnr,
-                        aktorId = pasient.aktorId,
-                        dokumentInfoId = dokumentInfoId,
-                        datoOpprettet = datoOpprettet,
-                        loggingMeta = loggingMeta,
-                        sykmeldingId = sykmeldingId,
-                        sykmelder = sykmelder,
-                        ocrFil = ocrFil,
-                        kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                        sm2013SmregistreringTopic = sm2013SmregistreringTopic
+                    journalpostId = journalpostId,
+                    fnr = pasient.fnr,
+                    aktorId = pasient.aktorId,
+                    dokumentInfoId = dokumentInfoId,
+                    datoOpprettet = datoOpprettet,
+                    loggingMeta = loggingMeta,
+                    sykmeldingId = sykmeldingId,
+                    sykmelder = sykmelder,
+                    ocrFil = ocrFil,
+                    kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                    sm2013SmregistreringTopic = sm2013SmregistreringTopic
                 )
             }
         }
@@ -225,7 +230,8 @@ class SykmeldingService(
         )
 
         val duplikatOppgave = oppgaveService.duplikatOppgave(
-            journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta)
+            journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta
+        )
 
         if (!duplikatOppgave) {
             sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
@@ -236,8 +242,10 @@ class SykmeldingService(
 
     private suspend fun opprettJournalfoeringsoppgave(journalpostId: String, sykmeldingsId: String, aktorId: String, loggingMeta: LoggingMeta) {
         val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingsId, aktorId = aktorId, loggingMeta = loggingMeta)
-        oppgaveService.opprettOppgave(aktoerIdPasient = aktorId, sakId = sakId,
-                journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingsId, loggingMeta = loggingMeta)
+        oppgaveService.opprettOppgave(
+            aktoerIdPasient = aktorId, sakId = sakId,
+            journalpostId = journalpostId, gjelderUtland = false, trackingId = sykmeldingsId, loggingMeta = loggingMeta
+        )
     }
 
     private fun requireManuellBehandling(receivedSykmelding: ReceivedSykmelding): Boolean {

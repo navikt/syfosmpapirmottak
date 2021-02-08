@@ -21,13 +21,13 @@ import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
-import java.net.ServerSocket
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBe
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.net.ServerSocket
+import java.util.concurrent.TimeUnit
 
 @KtorExperimentalAPI
 object NorskHelsenettClientSpek : Spek({
@@ -52,12 +52,14 @@ object NorskHelsenettClientSpek : Spek({
         routing {
             get("/syfohelsenettproxy/api/behandlerMedHprNummer") {
                 when {
-                    call.request.headers["hprNummer"] == "1234" -> call.respond(Behandler(
-                        godkjenninger = listOf(Godkjenning(helsepersonellkategori = Kode(true, 1, "verdi"), autorisasjon = Kode(true, 2, "annenVerdi"))),
-                        fnr = "12345678910",
-                        fornavn = "Fornavn",
-                        mellomnavn = null,
-                        etternavn = "Etternavn")
+                    call.request.headers["hprNummer"] == "1234" -> call.respond(
+                        Behandler(
+                            godkjenninger = listOf(Godkjenning(helsepersonellkategori = Kode(true, 1, "verdi"), autorisasjon = Kode(true, 2, "annenVerdi"))),
+                            fnr = "12345678910",
+                            fornavn = "Fornavn",
+                            mellomnavn = null,
+                            etternavn = "Etternavn"
+                        )
                     )
                     call.request.headers["hprNummer"] == "0" -> call.respond(HttpStatusCode.NotFound, "Behandler finnes ikke")
                     else -> call.respond(HttpStatusCode.InternalServerError, "Noe gikk galt")
@@ -84,11 +86,11 @@ object NorskHelsenettClientSpek : Spek({
             }
 
             behandler shouldNotBe null
-            behandler?.godkjenninger?.size shouldEqual 1
-            behandler?.fornavn shouldEqual "Fornavn"
-            behandler?.mellomnavn shouldEqual null
-            behandler?.etternavn shouldEqual "Etternavn"
-            behandler?.fnr shouldEqual "12345678910"
+            behandler?.godkjenninger?.size shouldBeEqualTo 1
+            behandler?.fornavn shouldBeEqualTo "Fornavn"
+            behandler?.mellomnavn shouldBeEqualTo null
+            behandler?.etternavn shouldBeEqualTo "Etternavn"
+            behandler?.fnr shouldBeEqualTo "12345678910"
         }
         it("Returnerer null for behandler som ikke finnes") {
             var behandler: Behandler? = null
@@ -96,7 +98,7 @@ object NorskHelsenettClientSpek : Spek({
                 behandler = norskHelsenettClient.finnBehandler("0", "sykmeldingsId")
             }
 
-            behandler shouldEqual null
+            behandler shouldBeEqualTo null
         }
     }
 })

@@ -17,7 +17,7 @@ import no.nav.syfo.pdl.client.model.ResponseData
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -41,10 +41,10 @@ object PdlServiceTest : Spek({
 
             runBlocking {
                 val person = pdlService.getPdlPerson("01245678901", loggingMeta)
-                person?.navn?.fornavn shouldEqual "fornavn"
-                person?.navn?.mellomnavn shouldEqual null
-                person?.navn?.etternavn shouldEqual "etternavn"
-                person?.aktorId shouldEqual "987654321"
+                person?.navn?.fornavn shouldBeEqualTo "fornavn"
+                person?.navn?.mellomnavn shouldBeEqualTo null
+                person?.navn?.etternavn shouldBeEqualTo "etternavn"
+                person?.aktorId shouldBeEqualTo "987654321"
             }
         }
 
@@ -60,11 +60,15 @@ object PdlServiceTest : Spek({
 
         it("Skal feile når navn er tom liste") {
             coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
-            coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(ResponseData(hentPerson = HentPerson(
-                    navn = emptyList(), adressebeskyttelse = null
-            ),
+            coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
+                ResponseData(
+                    hentPerson = HentPerson(
+                        navn = emptyList(), adressebeskyttelse = null
+                    ),
                     hentIdenter = HentIdenter(emptyList())
-            ), errors = null)
+                ),
+                errors = null
+            )
 
             runBlocking {
                 val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
@@ -74,11 +78,15 @@ object PdlServiceTest : Spek({
 
         it("Skal feile når navn ikke finnes") {
             coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
-            coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(ResponseData(hentPerson = HentPerson(
-                    navn = null, adressebeskyttelse = null
-            ),
+            coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
+                ResponseData(
+                    hentPerson = HentPerson(
+                        navn = null, adressebeskyttelse = null
+                    ),
                     hentIdenter = HentIdenter(listOf(PdlIdent(ident = "987654321", gruppe = "foo")))
-            ), errors = null)
+                ),
+                errors = null
+            )
 
             runBlocking {
                 val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
@@ -88,12 +96,16 @@ object PdlServiceTest : Spek({
 
         it("Skal feile når identer ikke finnes") {
             coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
-            coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(ResponseData(hentPerson = HentPerson(
-                    navn = listOf(Navn("fornavn", "mellomnavn", "etternavn")),
-                    adressebeskyttelse = null
-            ),
+            coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
+                ResponseData(
+                    hentPerson = HentPerson(
+                        navn = listOf(Navn("fornavn", "mellomnavn", "etternavn")),
+                        adressebeskyttelse = null
+                    ),
                     hentIdenter = HentIdenter(emptyList())
-            ), errors = null)
+                ),
+                errors = null
+            )
 
             runBlocking {
                 val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)

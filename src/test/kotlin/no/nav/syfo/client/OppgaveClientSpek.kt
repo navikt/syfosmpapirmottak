@@ -22,16 +22,16 @@ import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.runBlocking
+import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.shouldBeEqualTo
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking
-import no.nav.syfo.domain.OppgaveResultat
-import no.nav.syfo.util.LoggingMeta
-import org.amshove.kluent.shouldEqual
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 @KtorExperimentalAPI
 object OppgaveClientSpek : Spek({
@@ -57,14 +57,30 @@ object OppgaveClientSpek : Spek({
         routing {
             get("/oppgave") {
                 when {
-                    call.request.queryParameters["oppgavetype"] == "JFR" && call.request.queryParameters["journalpostId"] == "123" -> call.respond(OppgaveResponse(1,
-                            listOf(Oppgave(1, "9999",
+                    call.request.queryParameters["oppgavetype"] == "JFR" && call.request.queryParameters["journalpostId"] == "123" -> call.respond(
+                        OppgaveResponse(
+                            1,
+                            listOf(
+                                Oppgave(
+                                    1, "9999",
                                     "123456789", "123", "2",
-                                    "SYM", "JFR"))))
-                    call.request.queryParameters["oppgavetype"] == "FDR" && call.request.queryParameters["journalpostId"] == "123" -> call.respond(OppgaveResponse(1,
-                            listOf(Oppgave(1, "9999",
+                                    "SYM", "JFR"
+                                )
+                            )
+                        )
+                    )
+                    call.request.queryParameters["oppgavetype"] == "FDR" && call.request.queryParameters["journalpostId"] == "123" -> call.respond(
+                        OppgaveResponse(
+                            1,
+                            listOf(
+                                Oppgave(
+                                    1, "9999",
                                     null, "123", "2",
-                                    "SYM", "FDR"))))
+                                    "SYM", "FDR"
+                                )
+                            )
+                        )
+                    )
                     call.request.queryParameters["oppgavetype"] == "JFR" && call.request.queryParameters["journalpostId"] == "987" -> call.respond(OppgaveResponse(0, emptyList()))
                     call.request.queryParameters["oppgavetype"] == "FDR" && call.request.queryParameters["journalpostId"] == "987" -> call.respond(OppgaveResponse(0, emptyList()))
                     else -> call.respond(HttpStatusCode.InternalServerError)
@@ -93,8 +109,8 @@ object OppgaveClientSpek : Spek({
                 oppgave = oppgaveClient.opprettOppgave("sakId", "123", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgave?.oppgaveId shouldEqual 1
-            oppgave?.duplikat shouldEqual true
+            oppgave?.oppgaveId shouldBeEqualTo 1
+            oppgave?.duplikat shouldBeEqualTo true
         }
         it("Oppretter ikke FDR-oppgave hvis finnes fra før") {
             var oppgave: OppgaveResultat? = null
@@ -102,8 +118,8 @@ object OppgaveClientSpek : Spek({
                 oppgave = oppgaveClient.opprettFordelingsOppgave("123", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgave?.oppgaveId shouldEqual 1
-            oppgave?.duplikat shouldEqual true
+            oppgave?.oppgaveId shouldBeEqualTo 1
+            oppgave?.duplikat shouldBeEqualTo true
         }
         it("Oppretter JFR-oppgave hvis det ikke finnes fra før") {
             var oppgave: OppgaveResultat? = null
@@ -111,8 +127,8 @@ object OppgaveClientSpek : Spek({
                 oppgave = oppgaveClient.opprettOppgave("sakId", "987", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgave?.oppgaveId shouldEqual 42
-            oppgave?.duplikat shouldEqual false
+            oppgave?.oppgaveId shouldBeEqualTo 42
+            oppgave?.duplikat shouldBeEqualTo false
         }
         it("Oppretter FDR-oppgave hvis det ikke finnes fra før") {
             var oppgave: OppgaveResultat? = null
@@ -120,30 +136,30 @@ object OppgaveClientSpek : Spek({
                 oppgave = oppgaveClient.opprettFordelingsOppgave("987", false, "sykmeldingId", loggingMetadata)
             }
 
-            oppgave?.oppgaveId shouldEqual 42
-            oppgave?.duplikat shouldEqual false
+            oppgave?.oppgaveId shouldBeEqualTo 42
+            oppgave?.duplikat shouldBeEqualTo false
         }
     }
 
     describe("OppgaveClient setter fristFerdigstillelse til forvenetet journalføringsfrist") {
         it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på søndag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 12, 1))
-            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.MONDAY
+            fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.MONDAY
         }
 
         it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på lørdag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 11, 30))
-            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.MONDAY
+            fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.MONDAY
         }
 
         it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på fredag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 11, 29))
-            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.MONDAY
+            fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.MONDAY
         }
 
         it("Setter fristFerdigstillelse til tirsdag, viss oppgaven kom inn på mandag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 12, 2))
-            fristFerdigstillelse.dayOfWeek shouldEqual DayOfWeek.TUESDAY
+            fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.TUESDAY
         }
     }
 })
