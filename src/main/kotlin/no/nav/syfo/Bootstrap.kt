@@ -118,7 +118,6 @@ fun main() {
                 configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             }
         }
-        expectSuccess = false
     }
     val proxyConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         config()

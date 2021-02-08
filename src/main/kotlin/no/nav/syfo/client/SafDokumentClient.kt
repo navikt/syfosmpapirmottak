@@ -1,13 +1,11 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.receive
+import io.ktor.client.features.ClientRequestException
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.client.statement.HttpStatement
 import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments.fields
@@ -28,27 +26,22 @@ class SafDokumentClient constructor(
     private val httpClient: HttpClient
 ) {
 
-    private suspend fun hentDokumentFraSaf(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): String? = retry("hent_dokument") {
-        val httpResponse = httpClient.get<HttpStatement>("$url/rest/hentdokument/$journalpostId/$dokumentInfoId/ORIGINAL") {
-            accept(ContentType.Application.Xml)
-            val oidcToken = oidcClient.oidcToken()
-            header("Authorization", "Bearer ${oidcToken.access_token}")
-            header("Nav-Callid", msgId)
-            header("Nav-Consumer-Id", "syfosmpapirmottak")
-        }.execute()
-
-        when (httpResponse.status) {
-            InternalServerError -> {
-                log.error("Saf svarte med feilmelding ved henting av dokument for msgId {}, {}", msgId, fields(loggingMeta))
-                throw IOException("Saf svarte med feilmelding ved henting av dokument for msgId $msgId")
-            }
-            NotFound -> {
+    private suspend fun hentDokumentFraSaf(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): String = retry("hent_dokument") {
+        try {
+            return@retry httpClient.get<String>("$url/rest/hentdokument/$journalpostId/$dokumentInfoId/ORIGINAL") {
+                accept(ContentType.Application.Xml)
+                val oidcToken = oidcClient.oidcToken()
+                header("Authorization", "Bearer ${oidcToken.access_token}")
+                header("Nav-Callid", msgId)
+                header("Nav-Consumer-Id", "syfosmpapirmottak")
+            }.also { log.info("Hentet OCR-dokument for msgId {}, {}", msgId, fields(loggingMeta)) }
+        } catch (e: Exception) {
+            if (e is ClientRequestException && e.response.status == NotFound) {
                 log.error("Dokumentet finnes ikke for msgId {}, {}", msgId, fields(loggingMeta))
                 throw SafNotFoundException("Fant ikke dokumentet for msgId $msgId i SAF")
-            }
-            else -> {
-                log.info("Hentet OCR-dokument for msgId {}, {}", msgId, fields(loggingMeta))
-                httpResponse.call.response.receive<String>()
+            } else {
+                log.error("Saf svarte med feilmelding ved henting av dokument for msgId {}, {}", msgId, fields(loggingMeta))
+                throw IOException("Saf svarte med feilmelding ved henting av dokument for msgId $msgId")
             }
         }
     }
@@ -56,9 +49,7 @@ class SafDokumentClient constructor(
     suspend fun hentDokument(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): Skanningmetadata? {
         return try {
             val dokument = hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId, loggingMeta)
-            dokument?.let {
-                skanningMetadataUnmarshaller.unmarshal(StringReader(dokument)) as Skanningmetadata
-            }
+            skanningMetadataUnmarshaller.unmarshal(StringReader(dokument)) as Skanningmetadata
         } catch (ex: JAXBException) {
             log.warn("Klarte ikke å tolke OCR-dokument, {}: ${ex.message}", fields(loggingMeta))
             PAPIRSM_HENTDOK_FEIL.inc()
