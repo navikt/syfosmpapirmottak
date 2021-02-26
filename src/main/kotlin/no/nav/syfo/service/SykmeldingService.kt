@@ -249,8 +249,8 @@ class SykmeldingService(
     }
 
     private fun requireManuellBehandling(receivedSykmelding: ReceivedSykmelding): Boolean {
-        val minFom = receivedSykmelding.sykmelding.perioder.minBy { periode -> periode.fom }?.fom
-        val maxTom = receivedSykmelding.sykmelding.perioder.maxBy { periode: Periode -> periode.tom }?.tom
+        val minFom = receivedSykmelding.sykmelding.perioder.minByOrNull { periode -> periode.fom }?.fom
+        val maxTom = receivedSykmelding.sykmelding.perioder.maxByOrNull { periode: Periode -> periode.tom }?.tom
         val today = LocalDate.now()
 
         val limit = 90
