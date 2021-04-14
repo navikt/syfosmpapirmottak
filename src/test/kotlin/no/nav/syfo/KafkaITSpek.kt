@@ -52,7 +52,6 @@ object KafkaITSpek : Spek({
         mqGatewayName = "mqGateway",
         mqHostname = "mqcl01",
         mqPort = 1413,
-        syfoserviceQueueName = "syfoservicekø",
         dokArkivUrl = "dokapi/",
         cluster = "dev",
         pdlGraphqlPath = "TEST",

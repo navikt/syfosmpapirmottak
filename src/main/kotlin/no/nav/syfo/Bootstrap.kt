@@ -36,13 +36,13 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.domain.PapirSmRegistering
+import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.mq.connectionFactory
-import no.nav.syfo.mq.producerForQueue
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
@@ -62,8 +62,6 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.util.Properties
 import java.util.UUID
-import javax.jms.MessageProducer
-import javax.jms.Session
 
 val log: Logger = LoggerFactory.getLogger("nav.syfo.papirmottak")
 
@@ -106,6 +104,7 @@ fun main() {
 
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerProperties)
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerProperties)
+    val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerProperties)
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
 
@@ -147,7 +146,17 @@ fun main() {
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, oidcClient, httpClient)
 
-    val sykmeldingService = SykmeldingService(sakClient, oppgaveService, safDokumentClient, norskHelsenettClient, regelClient, kuhrsarClient, pdlPersonService)
+    val sykmeldingService = SykmeldingService(
+        sakClient = sakClient,
+        oppgaveService = oppgaveService,
+        safDokumentClient = safDokumentClient,
+        norskHelsenettClient = norskHelsenettClient,
+        regelClient = regelClient,
+        kuhrSarClient = kuhrsarClient,
+        pdlPersonService = pdlPersonService,
+        kafkaSyfoserviceProducer = kafkaSyfoserviceProducer,
+        syfoserviceTopic = env.syfoserviceMqTopic
+    )
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService, oppgaveService)
 
@@ -193,21 +202,16 @@ fun launchListeners(
     createListener(applicationState) {
         connectionFactory(env).createConnection(credentials.mqUsername, credentials.mqPassword).use { connection ->
             connection.start()
-            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
 
-            val syfoserviceProducer = session.producerForQueue(env.syfoserviceQueueName)
             blockingApplicationLogic(
                 applicationState = applicationState,
                 consumer = kafkaconsumerJournalfoeringHendelse,
                 behandlingService = behandlingService,
-                syfoserviceProducer = syfoserviceProducer,
-                session = session,
                 sm2013AutomaticHandlingTopic = env.sm2013AutomaticHandlingTopic,
                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                sm2013SmregistreringTopic = env.sm2013SmregistreringTopic,
-                cluster = env.cluster
+                sm2013SmregistreringTopic = env.sm2013SmregistreringTopic
             )
         }
     }
@@ -218,14 +222,11 @@ suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService,
-    syfoserviceProducer: MessageProducer,
-    session: Session,
     sm2013AutomaticHandlingTopic: String,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-    sm2013SmregistreringTopic: String,
-    cluster: String
+    sm2013SmregistreringTopic: String
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
@@ -241,14 +242,11 @@ suspend fun blockingApplicationLogic(
                 journalfoeringEvent = journalfoeringHendelseRecord,
                 loggingMeta = loggingMeta,
                 sykmeldingId = sykmeldingId,
-                syfoserviceProducer = syfoserviceProducer,
-                session = session,
                 sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 sm2013SmregistreringTopic = sm2013SmregistreringTopic,
-                cluster = cluster
             )
         }
     }

@@ -26,6 +26,7 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.Samhandler
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.PapirSmRegistering
+import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
@@ -43,7 +44,6 @@ import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Calendar
-import javax.jms.MessageProducer
 import javax.jms.Session
 import kotlin.test.assertFailsWith
 
@@ -64,12 +64,12 @@ object SykmeldingServiceSpek : Spek({
     val safDokumentClientMock = mockk<SafDokumentClient>()
     val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
     val regelClientMock = mockk<RegelClient>()
-    val syfoserviceProducerMock = mockk<MessageProducer>(relaxed = true)
     val sessionMock = mockk<Session>(relaxed = true)
     val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>(relaxed = true)
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
+    val kafkaProducerSyfoservice = mockk<KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>>(relaxed = true)
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
     val sykmeldingService = SykmeldingService(
         sakClientMock,
@@ -78,7 +78,9 @@ object SykmeldingServiceSpek : Spek({
         norskHelsenettClientMock,
         regelClientMock,
         kuhrSarClientMock,
-        pdlService
+        pdlService,
+        kafkaProducerSyfoservice,
+        "topic"
     )
 
     beforeEachTest {
@@ -126,10 +128,8 @@ object SykmeldingServiceSpek : Spek({
                     datoOpprettet = datoOpprettet,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    syfoserviceProducer = syfoserviceProducerMock,
-                    session = sessionMock,
                     sm2013AutomaticHandlingTopic = "",
-                    kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3"
@@ -156,8 +156,7 @@ object SykmeldingServiceSpek : Spek({
                 sykmeldingServiceSpy.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = null, datoOpprettet = datoOpprettet,
                     loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
-                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
-                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3"
@@ -186,9 +185,8 @@ object SykmeldingServiceSpek : Spek({
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
                     datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
-                    sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
-                    session = sessionMock,
-                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    sykmeldingId = sykmeldingId,
+                    sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3"
@@ -229,8 +227,7 @@ object SykmeldingServiceSpek : Spek({
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                     loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
-                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
-                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3"
@@ -274,8 +271,7 @@ object SykmeldingServiceSpek : Spek({
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                     loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
-                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
-                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3"
@@ -319,8 +315,7 @@ object SykmeldingServiceSpek : Spek({
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                     loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
-                    syfoserviceProducer = syfoserviceProducerMock, session = sessionMock,
-                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3"
@@ -349,9 +344,8 @@ object SykmeldingServiceSpek : Spek({
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
                     datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
-                    sykmeldingId = sykmeldingId, syfoserviceProducer = syfoserviceProducerMock,
-                    session = sessionMock,
-                    sm2013AutomaticHandlingTopic = "", kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmeldingMock,
+                    sykmeldingId = sykmeldingId,
+                    sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                     sm2013SmregistreringTopic = "topic3"

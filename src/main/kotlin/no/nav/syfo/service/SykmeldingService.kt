@@ -14,6 +14,7 @@ import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.domain.PapirSmRegistering
+import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
@@ -34,8 +35,6 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
-import javax.jms.MessageProducer
-import javax.jms.Session
 
 @KtorExperimentalAPI
 class SykmeldingService(
@@ -45,7 +44,9 @@ class SykmeldingService(
     private val norskHelsenettClient: NorskHelsenettClient,
     private val regelClient: RegelClient,
     private val kuhrSarClient: SarClient,
-    private val pdlPersonService: PdlPersonService
+    private val pdlPersonService: PdlPersonService,
+    private val kafkaSyfoserviceProducer: KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>,
+    private val syfoserviceTopic: String,
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -54,10 +55,8 @@ class SykmeldingService(
         datoOpprettet: LocalDateTime?,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
-        syfoserviceProducer: MessageProducer,
-        session: Session,
         sm2013AutomaticHandlingTopic: String,
-        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+        kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String
@@ -160,16 +159,16 @@ class SykmeldingService(
                             )
                         } else if (validationResult.status == Status.OK) {
                             handleOk(
-                                kafkaproducerreceivedSykmelding,
-                                sm2013AutomaticHandlingTopic,
-                                receivedSykmelding,
-                                session,
-                                syfoserviceProducer,
-                                receivedSykmelding.sykmelding.id,
-                                healthInformation,
-                                dokArkivClient,
-                                journalpostId,
-                                loggingMeta
+                                kafkaReceivedSykmeldingProducer = kafkaReceivedSykmeldingProducer,
+                                sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                                receivedSykmelding = receivedSykmelding,
+                                sykmeldingId = receivedSykmelding.sykmelding.id,
+                                healthInformation = healthInformation,
+                                dokArkivClient = dokArkivClient,
+                                syfoserviceProducer = kafkaSyfoserviceProducer,
+                                syfoserviceTopic = syfoserviceTopic,
+                                journalpostid = journalpostId,
+                                loggingMeta = loggingMeta
                             )
                         } else {
                             throw IllegalStateException("Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING")

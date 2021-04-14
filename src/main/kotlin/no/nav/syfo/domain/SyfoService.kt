@@ -1,12 +1,12 @@
 package no.nav.syfo.domain
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
+import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import java.time.LocalDateTime
 
-@JacksonXmlRootElement(localName = "syfo")
-data class Syfo(
-    val tilleggsdata: Tilleggsdata,
-    val sykmelding: String
+data class SyfoserviceSykmeldingKafkaMessage(
+    val metadata: KafkaMessageMetadata,
+    val helseopplysninger: HelseOpplysningerArbeidsuforhet,
+    val tilleggsdata: Tilleggsdata
 )
 
 data class Tilleggsdata(
@@ -14,4 +14,9 @@ data class Tilleggsdata(
     val sykmeldingId: String,
     val msgId: String,
     val syketilfelleStartDato: LocalDateTime
+)
+
+data class KafkaMessageMetadata(
+    val sykmeldingId: String,
+    val source: String
 )
