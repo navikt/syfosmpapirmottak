@@ -42,7 +42,6 @@ import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.model.ReceivedSykmelding
-import no.nav.syfo.mq.connectionFactory
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
@@ -200,20 +199,17 @@ fun launchListeners(
     applicationState.ready = true
 
     createListener(applicationState) {
-        connectionFactory(env).createConnection(credentials.mqUsername, credentials.mqPassword).use { connection ->
-            connection.start()
 
-            blockingApplicationLogic(
-                applicationState = applicationState,
-                consumer = kafkaconsumerJournalfoeringHendelse,
-                behandlingService = behandlingService,
-                sm2013AutomaticHandlingTopic = env.sm2013AutomaticHandlingTopic,
-                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
-                dokArkivClient = dokArkivClient,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                sm2013SmregistreringTopic = env.sm2013SmregistreringTopic
-            )
-        }
+        blockingApplicationLogic(
+            applicationState = applicationState,
+            consumer = kafkaconsumerJournalfoeringHendelse,
+            behandlingService = behandlingService,
+            sm2013AutomaticHandlingTopic = env.sm2013AutomaticHandlingTopic,
+            kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
+            dokArkivClient = dokArkivClient,
+            kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+            sm2013SmregistreringTopic = env.sm2013SmregistreringTopic
+        )
     }
 }
 
