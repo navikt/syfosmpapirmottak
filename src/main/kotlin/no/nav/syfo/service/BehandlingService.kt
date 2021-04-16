@@ -17,8 +17,6 @@ import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import org.apache.kafka.clients.producer.KafkaProducer
-import javax.jms.MessageProducer
-import javax.jms.Session
 
 @KtorExperimentalAPI
 class BehandlingService(
@@ -32,14 +30,11 @@ class BehandlingService(
         journalfoeringEvent: JournalfoeringHendelseRecord,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
-        syfoserviceProducer: MessageProducer,
-        session: Session,
         sm2013AutomaticHandlingTopic: String,
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         sm2013SmregistreringTopic: String,
-        cluster: String
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -81,10 +76,8 @@ class BehandlingService(
                                 dokumentInfoId = journalpostMetadata.dokumentInfoId,
                                 loggingMeta = loggingMeta,
                                 sykmeldingId = sykmeldingId,
-                                syfoserviceProducer = syfoserviceProducer,
-                                session = session,
                                 sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
-                                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
+                                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmelding,
                                 dokArkivClient = dokArkivClient,
                                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                                 sm2013SmregistreringTopic = sm2013SmregistreringTopic
