@@ -1,7 +1,7 @@
 [![Build status](https://github.com/navikt/syfosmpapirmottak/workflows/Deploy%20to%20dev%20and%20prod/badge.svg)](https://github.com/navikt/syfosmpapirmottak/workflows/Deploy%20to%20dev%20and%20prod/badge.svg)
 
 # SYFOsmpapirmottak
-This project contains just the receiving a paper sykmelding2013 message
+This project contains the receiving a paper sykmelding2013 message
 
 <img src="./src/svg/flyttdiagram.svg" alt="Image of the flow of the paper sykmelding application">
 
