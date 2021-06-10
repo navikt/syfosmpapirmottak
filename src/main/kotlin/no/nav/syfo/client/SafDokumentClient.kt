@@ -14,8 +14,8 @@ import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.skanningMetadataUnmarshaller
+import org.xml.sax.InputSource
 import java.io.IOException
-import java.io.StringReader
 import javax.xml.bind.JAXBException
 
 @KtorExperimentalAPI
@@ -48,7 +48,7 @@ class SafDokumentClient constructor(
     suspend fun hentDokument(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): Skanningmetadata? {
         return try {
             val dokument = hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId, loggingMeta)
-            skanningMetadataUnmarshaller.unmarshal(StringReader(dokument)) as Skanningmetadata
+            skanningMetadataUnmarshaller.unmarshal(InputSource(dokument.byteInputStream(Charsets.UTF_8))) as Skanningmetadata
         } catch (ex: JAXBException) {
             log.warn("Klarte ikke å tolke OCR-dokument, ${fields(loggingMeta)}", ex)
             throw ex
