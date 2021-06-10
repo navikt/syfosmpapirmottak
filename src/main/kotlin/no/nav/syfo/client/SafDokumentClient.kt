@@ -12,7 +12,6 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
-import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.skanningMetadataUnmarshaller
 import java.io.IOException
@@ -51,9 +50,10 @@ class SafDokumentClient constructor(
             val dokument = hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId, loggingMeta)
             skanningMetadataUnmarshaller.unmarshal(StringReader(dokument)) as Skanningmetadata
         } catch (ex: JAXBException) {
-            log.warn("Klarte ikke å tolke OCR-dokument, {}: ${ex.message}", fields(loggingMeta))
-            PAPIRSM_HENTDOK_FEIL.inc()
-            null
+            log.warn("Klarte ikke å tolke OCR-dokument, ${fields(loggingMeta)}", ex)
+            throw ex
+//            PAPIRSM_HENTDOK_FEIL.inc()
+//            null
         }
     }
 }
