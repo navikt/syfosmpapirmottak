@@ -102,14 +102,14 @@ object SafDokumentClientSpek : Spek({
             skanningmetadata?.sykemeldinger?.behandler?.hpr shouldBeEqualTo BigInteger("12345678")
         }
 
-        /*it("Returnerer null hvis dokumentet ikke er i henhold til skjema (det skal ikke kastes feil)") {
+        it("Returnerer null hvis dokumentet ikke er i henhold til skjema (det skal ikke kastes feil)") {
             var skanningmetadata: Skanningmetadata? = null
             runBlocking {
                 skanningmetadata = safDokumentClient.hentDokument("journalpostId", "dokumentInfoIdUgyldigDok", "sykmeldingId", loggingMetadata)
             }
 
             skanningmetadata shouldBeEqualTo null
-        }*/
+        }
 
         it("Kaster SafNotFoundException hvis dokumentet ikke finnes") {
             var skanningmetadata: Skanningmetadata? = null

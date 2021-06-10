@@ -52,13 +52,8 @@ class SafDokumentClient constructor(
             skanningMetadataUnmarshaller.unmarshal(InputSource(dokument.byteInputStream(Charsets.UTF_8))) as Skanningmetadata
         } catch (ex: JAXBException) {
             log.warn("Klarte ikke å tolke OCR-dokument, ${fields(loggingMeta)}", ex)
-            if (journalpostId == "508990677") {
-                PAPIRSM_HENTDOK_FEIL.inc()
-                return null
-            }
-            throw ex
-//            PAPIRSM_HENTDOK_FEIL.inc()
-//            null
+            PAPIRSM_HENTDOK_FEIL.inc()
+            null
         }
     }
 }

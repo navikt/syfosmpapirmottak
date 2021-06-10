@@ -39,6 +39,7 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.io.IOException
 import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -115,7 +116,7 @@ object SykmeldingServiceSpek : Spek({
     }
 
     describe("SykmeldingService ende-til-ende") {
-        /*it("Send til smregistrering hvis SAF svarer 500 ved henting av skanningMetadata") {
+        it("Send til smregistrering hvis SAF svarer 500 ved henting av skanningMetadata") {
             val sykmeldingServiceSpy = spyk(sykmeldingService)
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws IOException()
 
@@ -145,7 +146,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
-        }*/
+        }
 
         it("Oppretter journalføringsoppgave hvis dokumentInfoId mangler") {
 
@@ -331,7 +332,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        /*it("Går til smregistrering hvis mapping feiler") {
+        it("Går til smregistrering hvis mapping feiler") {
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns Skanningmetadata().apply {
                 sykemeldinger = SykemeldingerType().apply {
                     pasient = PasientType().apply { fnr = "feilFnr" }
@@ -359,7 +360,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
-        }*/
+        }
     }
 
     describe("HentSykmelder") {

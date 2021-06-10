@@ -183,9 +183,6 @@ class SykmeldingService(
                 } catch (e: Exception) {
                     PAPIRSM_MAPPET.labels("feil").inc()
                     log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
-                    if (journalpostId != "508990677") {
-                        throw e
-                    }
                 }
 
                 // Fallback hvis OCR er null ELLER parsing av OCR til sykmeldingformat mislykkes
