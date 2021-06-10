@@ -12,6 +12,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
+import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.skanningMetadataUnmarshaller
 import org.xml.sax.InputSource
@@ -51,6 +52,10 @@ class SafDokumentClient constructor(
             skanningMetadataUnmarshaller.unmarshal(InputSource(dokument.byteInputStream(Charsets.UTF_8))) as Skanningmetadata
         } catch (ex: JAXBException) {
             log.warn("Klarte ikke å tolke OCR-dokument, ${fields(loggingMeta)}", ex)
+            if (journalpostId == "508990677") {
+                PAPIRSM_HENTDOK_FEIL.inc()
+                return null
+            }
             throw ex
 //            PAPIRSM_HENTDOK_FEIL.inc()
 //            null
