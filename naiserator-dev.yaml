@@ -63,3 +63,7 @@ spec:
       value: https://pdl-api.nais.preprod.local/graphql
     - name: OPPGAVEBEHANDLING_URL
       value: https://oppgave-q1.nais.preprod.local/api/v1/oppgaver
+    - name: HELSENETT_ENDPOINT_URL
+      value: https://syfohelsenettproxy.nais.preprod.local
+    - name: PAPIRREGEL_ENDPOINT_URL
+      value: https://syfosmpapirregler.nais.preprod.local

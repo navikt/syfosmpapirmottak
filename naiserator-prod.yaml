@@ -63,3 +63,7 @@ spec:
       value: https://pdl-api.nais.adeo.no/graphql
     - name: OPPGAVEBEHANDLING_URL
       value: https://oppgave.nais.adeo.no/api/v1/oppgaver
+    - name: HELSENETT_ENDPOINT_URL
+      value: https://syfohelsenettproxy.nais.adeo.no
+    - name: PAPIRREGEL_ENDPOINT_URL
+      value: https://syfosmpapirregler.nais.adeo.no
