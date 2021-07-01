@@ -50,7 +50,9 @@ object KafkaITSpek : Spek({
         cluster = "dev",
         pdlGraphqlPath = "TEST",
         truststore = "truststore",
-        truststorePassword = "pwd"
+        truststorePassword = "pwd",
+        norskHelsenettEndpointURL = "url",
+        regelEndpointURL = "regelurl"
     )
 
     fun Properties.overrideForTest(): Properties = apply {
