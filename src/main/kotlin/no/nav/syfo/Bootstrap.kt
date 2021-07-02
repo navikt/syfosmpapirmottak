@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.ktor.client.HttpClient
@@ -57,7 +56,6 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.ProxySelector
-import java.nio.file.Paths
 import java.time.Duration
 import java.util.Properties
 import java.util.UUID
@@ -73,8 +71,11 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 @KtorExperimentalAPI
 fun main() {
     val env = Environment()
-    val credentials =
-        objectMapper.readValue<VaultCredentials>(Paths.get("/var/run/secrets/nais.io/vault/credentials.json").toFile())
+    val credentials = VaultCredentials(
+        serviceuserPassword = getFileAsString("/secrets/serviceuser/password"),
+        serviceuserUsername = getFileAsString("/secrets/serviceuser/username"),
+        clientsecret = getFileAsString("/secrets/default/client_secret")
+    )
 
     val applicationState = ApplicationState()
     val applicationEngine = createApplicationEngine(
@@ -105,7 +106,7 @@ fun main() {
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerProperties)
     val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerProperties)
 
-    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword)
+    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl)
 
     val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         install(JsonFeature) {

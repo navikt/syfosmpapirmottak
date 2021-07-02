@@ -2,6 +2,9 @@ package no.nav.syfo
 
 import no.nav.syfo.kafka.KafkaConfig
 import no.nav.syfo.kafka.KafkaCredentials
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Paths
 
 data class Environment(
     val applicationPort: Int = getEnvVar("APPLICATION_PORT", "8080").toInt(),
@@ -9,10 +12,10 @@ data class Environment(
     override val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
     override val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL"),
     val dokJournalfoeringV1Topic: String = getEnvVar("DOK_JOURNALFOERING_V1_TOPIC"),
-    val securityTokenServiceUrl: String = getEnvVar("SECURITY_TOKEN_SERVICE_URL"),
+    val securityTokenServiceUrl: String = getEnvVar("SECURITY_TOKEN_SERVICE_URL", "http://security-token-service.default/rest/v1/sts/token"),
     val safV1Url: String = getEnvVar("SAFGRAPHQL_URL"),
     val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL"),
-    val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL", "http://sak/api/v1/saker"),
+    val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL", "http://sak.default/api/v1/saker"),
     val hentDokumentUrl: String = getEnvVar("HENT_DOKUMENT_URL"),
     val clientId: String = getEnvVar("CLIENT_ID"),
     val helsenettproxyId: String = getEnvVar("HELSENETTPROXY_ID"),
@@ -43,3 +46,5 @@ data class VaultCredentials(
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
     System.getenv(varName) ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")
+
+fun getFileAsString(filePath: String) = String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8)
