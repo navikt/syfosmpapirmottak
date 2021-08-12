@@ -55,6 +55,8 @@ class BehandlingService(
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
+                logGosysPdfUrl(journalpostId, journalpostMetadata)
+
                 if (journalpostMetadata.jpErIkkeJournalfort) {
                     val pasient = journalpostMetadata.bruker.let {
                         if (it.id.isNullOrEmpty() || it.type.isNullOrEmpty()) {
@@ -91,6 +93,15 @@ class BehandlingService(
 
                 log.info("Finished processing took {}s, {}", StructuredArguments.keyValue("latency", currentRequestLatency), fields(loggingMeta))
             }
+        }
+    }
+
+    private fun logGosysPdfUrl(journalpostId: String, journalpostMetadata: JournalpostMetadata) {
+        // Midlertidig logging for å lettere kunne grave i sykmeldinger som ikke blir OCR-tolket riktig
+        val gosysPdfUrl = "https://gosys-nais.nais.adeo.no/gosys/dokument/pdf/$journalpostId/${journalpostMetadata.dokumentInfoId}/ARKIV/SykmeldingA_${journalpostMetadata.dokumentInfoId}.jsf"
+        when (journalpostMetadata.gjelderUtland) {
+            true -> log.info("Papirsykmelding gjelder utland, url: $gosysPdfUrl")
+            false -> log.info("Papirsykmelding gjelder innland, url: $gosysPdfUrl")
         }
     }
 
