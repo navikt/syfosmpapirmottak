@@ -1,5 +1,6 @@
 package no.nav.syfo
 
+import AccessTokenClientV2
 import com.apollographql.apollo.ApolloClient
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -142,9 +143,10 @@ fun main() {
 
     val oppgaveService = OppgaveService(oppgaveClient)
     val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
+    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClient, env.helsenettproxyId, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
-    val pdlPersonService = PdlFactory.getPdlService(env, oidcClient, httpClient)
+    val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
         sakClient = sakClient,

@@ -33,6 +33,10 @@ spec:
     requests:
       cpu: 100m
       memory: 128Mi
+  azure:
+    application:
+      enabled: true
+      tenant: trygdeetaten.no
   vault:
     enabled: true
     paths:
@@ -70,3 +74,5 @@ spec:
       value: https://syfohelsenettproxy.nais.preprod.local
     - name: PAPIRREGEL_ENDPOINT_URL
       value: https://syfosmpapirregler.nais.preprod.local
+    - name: PDL_SCOPE
+      value: api://dev-fss.pdl.pdl-api/.default
