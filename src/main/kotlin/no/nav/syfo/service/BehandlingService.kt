@@ -55,7 +55,7 @@ class BehandlingService(
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                logGosysPdfUrl(journalpostId, journalpostMetadata)
+                ocrDebugLog(journalpostId, journalpostMetadata)
 
                 if (journalpostMetadata.jpErIkkeJournalfort) {
                     val pasient = journalpostMetadata.bruker.let {
@@ -96,13 +96,17 @@ class BehandlingService(
         }
     }
 
-    private fun logGosysPdfUrl(journalpostId: String, journalpostMetadata: JournalpostMetadata) {
+    private fun ocrDebugLog(journalpostId: String, journalpostMetadata: JournalpostMetadata) {
         // Midlertidig logging for å lettere kunne grave i sykmeldinger som ikke blir OCR-tolket riktig
-        val gosysPdfUrl = "https://gosys-nais.nais.adeo.no/gosys/dokument/pdf/$journalpostId/${journalpostMetadata.dokumentInfoId}/ARKIV/SykmeldingA_${journalpostMetadata.dokumentInfoId}.jsf"
-        when (journalpostMetadata.gjelderUtland) {
-            true -> log.info("Papirsykmelding gjelder utland, url: $gosysPdfUrl")
-            false -> log.info("Papirsykmelding gjelder innland, url: $gosysPdfUrl")
+        val harOcr = when (journalpostMetadata.dokumentInfoId != null) {
+            true -> "har OCR"
+            false -> "har ikke OCR"
         }
+        val innlandUtland = when (journalpostMetadata.gjelderUtland) {
+            true -> "utland"
+            false -> "innland"
+        }
+        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, journalpostId: $journalpostId")
     }
 
     fun hentBrukerIdFraJournalpost(
