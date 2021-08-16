@@ -31,6 +31,10 @@ data class Environment(
     val sm2013SmregistreringTopic: String = getEnvVar("KAFKA_PAPIR_SM_REGISTERING_TOPIC", "privat-syfo-papir-sm-registering"),
     val syfoserviceMqTopic: String = "privat-syfo-syfoservice-mq",
     val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
+    val aadAccessTokenV2Url: String = getEnvVar("AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"),
+    val clientIdV2: String = getEnvVar("AZURE_APP_CLIENT_ID"),
+    val clientSecretV2: String = getEnvVar("AZURE_APP_CLIENT_SECRET"),
+    val pdlScope: String = getEnvVar("PDL_SCOPE"),
     override val truststore: String? = getEnvVar("NAV_TRUSTSTORE_PATH"),
     override val truststorePassword: String? = getEnvVar("NAV_TRUSTSTORE_PASSWORD")
 ) : KafkaConfig

@@ -1,5 +1,6 @@
 package no.nav.syfo.pdl
 
+import AccessTokenClientV2
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -26,12 +27,14 @@ object PdlServiceTest : Spek({
 
     val pdlClient = mockkClass(PdlClient::class)
     val stsOidcClient = mockkClass(StsOidcClient::class)
-    val pdlService = PdlPersonService(pdlClient, stsOidcClient)
+    val accessTokenClientV2 = mockkClass(AccessTokenClientV2::class)
+    val pdlService = PdlPersonService(pdlClient, accessTokenClientV2, "littaScope")
 
     val loggingMeta = LoggingMeta("sykmeldingId", "journalpostId", "hendelsesId")
 
     beforeEachTest {
         clearAllMocks()
+        coEvery { accessTokenClientV2.getAccessTokenV2(any()) } returns "token"
     }
 
     describe("Tests PDL Service") {

@@ -74,3 +74,5 @@ spec:
       value: https://syfohelsenettproxy.nais.preprod.local
     - name: PAPIRREGEL_ENDPOINT_URL
       value: https://syfosmpapirregler.nais.preprod.local
+    - name: PDL_SCOPE
+      value: api://dev-fss.pdl.pdl-api/.default
