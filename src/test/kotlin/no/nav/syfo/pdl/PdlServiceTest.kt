@@ -6,8 +6,6 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.mockkClass
 import kotlinx.coroutines.runBlocking
-import no.nav.syfo.client.OidcToken
-import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.pdl.client.PdlClient
 import no.nav.syfo.pdl.client.model.GetPersonResponse
 import no.nav.syfo.pdl.client.model.HentIdenter
@@ -26,7 +24,6 @@ import org.spekframework.spek2.style.specification.describe
 object PdlServiceTest : Spek({
 
     val pdlClient = mockkClass(PdlClient::class)
-    val stsOidcClient = mockkClass(StsOidcClient::class)
     val accessTokenClientV2 = mockkClass(AccessTokenClientV2::class)
     val pdlService = PdlPersonService(pdlClient, accessTokenClientV2, "littaScope")
 
@@ -39,7 +36,6 @@ object PdlServiceTest : Spek({
 
     describe("Tests PDL Service") {
         it("Hent person fra pdl uten fortrolig adresse") {
-            coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
             coEvery { pdlClient.getPerson(any(), any()) } returns getPdlResponse()
 
             runBlocking {
@@ -52,7 +48,6 @@ object PdlServiceTest : Spek({
         }
 
         it("Skal feile når person ikke finnes") {
-            coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(ResponseData(null, null), errors = null)
 
             runBlocking {
@@ -62,7 +57,6 @@ object PdlServiceTest : Spek({
         }
 
         it("Skal feile når navn er tom liste") {
-            coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
                 ResponseData(
                     hentPerson = HentPerson(
@@ -80,7 +74,6 @@ object PdlServiceTest : Spek({
         }
 
         it("Skal feile når navn ikke finnes") {
-            coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
                 ResponseData(
                     hentPerson = HentPerson(
@@ -98,7 +91,6 @@ object PdlServiceTest : Spek({
         }
 
         it("Skal feile når identer ikke finnes") {
-            coEvery { stsOidcClient.oidcToken() } returns OidcToken("Token", "JWT", 1L)
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
                 ResponseData(
                     hentPerson = HentPerson(
