@@ -120,6 +120,7 @@ object SykmeldingServiceSpek : Spek({
                     pasient = pdlPerson,
                     dokumentInfoId = dokumentInfoId,
                     datoOpprettet = datoOpprettet,
+                    dokumentInfoIdPdf = dokumentInfoId,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "",
@@ -148,7 +149,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingServiceSpy.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = null, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -162,7 +163,7 @@ object SykmeldingServiceSpek : Spek({
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
             coVerify(exactly = 1) {
                 sykmeldingServiceSpy.manuellBehandling(
-                    any(), any(), any(), any(), any(), any(),
+                    any(), any(), any(), eq(dokumentInfoId), any(), any(),
                     any(), any(), any(), any(), any()
                 )
             }
@@ -175,7 +176,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
-                    datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
+                    datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
@@ -216,7 +217,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -259,7 +260,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -302,7 +303,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -330,7 +331,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
-                    datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
+                    datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,

@@ -75,6 +75,7 @@ class BehandlingService(
                                 journalpostId = journalpostId,
                                 pasient = pasient,
                                 datoOpprettet = journalpostMetadata.datoOpprettet,
+                                dokumentInfoIdPdf = journalpostMetadata.dokumentInfoIdPdf,
                                 dokumentInfoId = journalpostMetadata.dokumentInfoId,
                                 loggingMeta = loggingMeta,
                                 sykmeldingId = sykmeldingId,
