@@ -7,7 +7,8 @@ data class JournalpostMetadata(
     val dokumentInfoId: String?,
     val jpErIkkeJournalfort: Boolean,
     val gjelderUtland: Boolean,
-    val datoOpprettet: LocalDateTime?
+    val datoOpprettet: LocalDateTime?,
+    val dokumentInfoIdPdf: String
 )
 
 data class Bruker(

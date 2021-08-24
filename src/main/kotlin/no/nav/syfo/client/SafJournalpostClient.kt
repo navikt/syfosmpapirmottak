@@ -52,14 +52,15 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
         val dokumentId: String? = finnDokumentIdForOcr(journalpost?.dokumenter(), loggingMeta)
         return journalpost?.let {
             JournalpostMetadata(
-                Bruker(
+                bruker = Bruker(
                     it.bruker()?.id(),
                     it.bruker()?.type()?.name
                 ),
-                dokumentId,
-                erIkkeJournalfort(it.journalstatus()),
-                sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta),
-                dateTimeStringTilLocalDateTime(it.datoOpprettet(), loggingMeta)
+                dokumentInfoId = dokumentId,
+                jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus()),
+                gjelderUtland = sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta),
+                datoOpprettet = dateTimeStringTilLocalDateTime(it.datoOpprettet(), loggingMeta),
+                dokumentInfoIdPdf = finnDokumentIdForPdf(journalpost.dokumenter(), loggingMeta)
             )
         }
     }
@@ -95,6 +96,18 @@ fun finnDokumentIdForOcr(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, 
     }
     log.warn("Fant ikke OCR-dokument {}", fields(loggingMeta))
     return null
+}
+
+fun finnDokumentIdForPdf(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, loggingMeta: LoggingMeta): String {
+    dokumentListe?.forEach { dokument ->
+        dokument.dokumentvarianter().forEach {
+            if (it.variantformat().name == "ARKIV") {
+                return dokument.dokumentInfoId()
+            }
+        }
+    }
+    log.error("Fant ikke PDF-dokument {}", fields(loggingMeta))
+    throw RuntimeException("Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}")
 }
 
 const val BREVKODE_UTLAND: String = "900023"

@@ -22,7 +22,6 @@ import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
-import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.Samhandler
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.PapirSmRegistering
@@ -44,7 +43,6 @@ import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Calendar
-import javax.jms.Session
 import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
@@ -60,11 +58,9 @@ object SykmeldingServiceSpek : Spek({
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
     val pdlPerson = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorId", null)
     val oppgaveserviceMock = mockk<OppgaveService>()
-    val sakClientMock = mockk<SakClient>()
     val safDokumentClientMock = mockk<SafDokumentClient>()
     val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
     val regelClientMock = mockk<RegelClient>()
-    val sessionMock = mockk<Session>(relaxed = true)
     val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>(relaxed = true)
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
@@ -72,7 +68,6 @@ object SykmeldingServiceSpek : Spek({
     val kafkaProducerSyfoservice = mockk<KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>>(relaxed = true)
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
     val sykmeldingService = SykmeldingService(
-        sakClientMock,
         oppgaveserviceMock,
         safDokumentClientMock,
         norskHelsenettClientMock,
@@ -89,7 +84,6 @@ object SykmeldingServiceSpek : Spek({
         coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns Unit
         coEvery { oppgaveserviceMock.duplikatOppgave(any(), any(), any()) } returns false
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns Unit
-        coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
         coEvery { dokArkivClientMock.oppdaterOgFerdigstillJournalpost(any(), any(), any(), any(), any()) } returns "1"
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
@@ -126,6 +120,7 @@ object SykmeldingServiceSpek : Spek({
                     pasient = pdlPerson,
                     dokumentInfoId = dokumentInfoId,
                     datoOpprettet = datoOpprettet,
+                    dokumentInfoIdPdf = dokumentInfoId,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "",
@@ -143,19 +138,18 @@ object SykmeldingServiceSpek : Spek({
                 )
             }
             coVerify(exactly = 1) { kafkaproducerPapirSmRegistering.send(any()) }
-            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
-        it("Oppretter journalføringsoppgave hvis dokumentInfoId mangler") {
+        it("Send til smregistrering hvis dokumentInfoId/OCR-referanse mangler") {
 
             val sykmeldingServiceSpy = spyk(sykmeldingService)
 
             runBlocking {
                 sykmeldingServiceSpy.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = null, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -163,28 +157,26 @@ object SykmeldingServiceSpek : Spek({
                 )
             }
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
-            coVerify(exactly = 1) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
-            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 1) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
-            coVerify(exactly = 0) {
+            coVerify(exactly = 1) {
                 sykmeldingServiceSpy.manuellBehandling(
-                    any(), any(), any(), any(), any(), any(),
+                    any(), any(), any(), eq(dokumentInfoId), any(), any(),
                     any(), any(), any(), any(), any()
                 )
             }
         }
 
-        it("Oppretter journalføringsoppgave hvis SAF returnerer 404 ved henting av skanningMetadata") {
+        it("Send til smregistrering hvis SAF returnerer 404 ved henting av skanningMetadata") {
 
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws SafNotFoundException("Fant ikke dokumentet for msgId 1234 i SAF")
 
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
-                    datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
+                    datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
@@ -194,10 +186,9 @@ object SykmeldingServiceSpek : Spek({
             }
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
-            coVerify(exactly = 1) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
-            coVerify(exactly = 1) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
-            coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
+            coVerify(exactly = 1) { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
 
@@ -226,7 +217,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -239,7 +230,6 @@ object SykmeldingServiceSpek : Spek({
             coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
             coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
-            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
         }
@@ -270,7 +260,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -282,7 +272,6 @@ object SykmeldingServiceSpek : Spek({
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
-            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
@@ -314,7 +303,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                    loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
+                    dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -326,7 +315,6 @@ object SykmeldingServiceSpek : Spek({
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify { regelClientMock.valider(any(), any()) }
-            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
@@ -343,7 +331,7 @@ object SykmeldingServiceSpek : Spek({
             runBlocking {
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
-                    datoOpprettet = datoOpprettet, loggingMeta = loggingMetadata,
+                    datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
                     sm2013AutomaticHandlingTopic = "", kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
@@ -356,7 +344,6 @@ object SykmeldingServiceSpek : Spek({
             coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
             coVerify { pdlService.getPdlPerson(fnrLege, any()) }
             coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
-            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
             coVerify { kafkaproducerPapirSmRegistering.send(any()) }
             coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }

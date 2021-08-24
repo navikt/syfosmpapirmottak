@@ -149,7 +149,6 @@ fun main() {
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
-        sakClient = sakClient,
         oppgaveService = oppgaveService,
         safDokumentClient = safDokumentClient,
         norskHelsenettClient = norskHelsenettClient,

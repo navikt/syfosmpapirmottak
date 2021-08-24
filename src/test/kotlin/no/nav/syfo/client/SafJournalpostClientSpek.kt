@@ -8,6 +8,7 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import type.Variantformat
 import java.time.Month
+import kotlin.test.assertFailsWith
 
 @KtorExperimentalAPI
 object SafJournalpostClientSpek : Spek({
@@ -44,6 +45,34 @@ object SafJournalpostClientSpek : Spek({
             val dokumentId = finnDokumentIdForOcr(null, loggingMetadata)
 
             dokumentId shouldBeEqualTo null
+        }
+    }
+
+    describe("finnDokumentIdForPdf fungerer som den skal") {
+        it("Henter riktig dokumentId for happy-case") {
+            val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
+                FindJournalpostQuery.Dokumenter(
+                    "dokumentinfo", "dokumentInfoIdArkiv", "brevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                ),
+                FindJournalpostQuery.Dokumenter(
+                    "dokumentinfo", "dokumentInfoIdOriginal", "brevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))
+                ),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoId", "brevkode", emptyList())
+            )
+
+            val dokumentId = finnDokumentIdForPdf(dokumentListe, loggingMetadata)
+
+            dokumentId shouldBeEqualTo "dokumentInfoIdArkiv"
+        }
+
+        it("Kaster feil hvis dokumentListe er tom") {
+            val dokumentListe: List<FindJournalpostQuery.Dokumenter> = emptyList()
+
+            assertFailsWith<RuntimeException> {
+                finnDokumentIdForPdf(dokumentListe, loggingMetadata)
+            }
         }
     }
 
