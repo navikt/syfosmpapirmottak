@@ -1,8 +1,8 @@
 package no.nav.syfo.pdl
 
-import AccessTokenClientV2
 import io.ktor.client.HttpClient
 import no.nav.syfo.Environment
+import no.nav.syfo.client.AccessTokenClientV2
 import no.nav.syfo.pdl.client.PdlClient
 import no.nav.syfo.pdl.service.PdlPersonService
 

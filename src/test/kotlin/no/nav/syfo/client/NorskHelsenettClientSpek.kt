@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 
 @KtorExperimentalAPI
 object NorskHelsenettClientSpek : Spek({
-    val accessTokenClientMock = mockk<AccessTokenClient>()
+    val accessTokenClientMock = mockk<AccessTokenClientV2>()
     val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer {
@@ -50,7 +50,7 @@ object NorskHelsenettClientSpek : Spek({
             jackson {}
         }
         routing {
-            get("/syfohelsenettproxy/api/behandlerMedHprNummer") {
+            get("/syfohelsenettproxy/api/v2/behandlerMedHprNummer") {
                 when {
                     call.request.headers["hprNummer"] == "1234" -> call.respond(
                         Behandler(
@@ -71,16 +71,16 @@ object NorskHelsenettClientSpek : Spek({
     val norskHelsenettClient = NorskHelsenettClient("$mockHttpServerUrl/syfohelsenettproxy", accessTokenClientMock, "resourceId", httpClient)
 
     afterGroup {
-        mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
+        mockServer.stop(TimeUnit.SECONDS.toMillis(1), TimeUnit.SECONDS.toMillis(1))
     }
 
     beforeGroup {
-        coEvery { accessTokenClientMock.hentAccessToken(any()) } returns "token"
+        coEvery { accessTokenClientMock.getAccessTokenV2(any()) } returns "token"
     }
 
     describe("Håndtering av respons fra syfohelsenettproxy") {
         it("Får hente behandler som finnes") {
-            var behandler: Behandler? = null
+            var behandler: Behandler?
             runBlocking {
                 behandler = norskHelsenettClient.finnBehandler("1234", "sykmeldingsId")
             }
@@ -93,7 +93,7 @@ object NorskHelsenettClientSpek : Spek({
             behandler?.fnr shouldBeEqualTo "12345678910"
         }
         it("Returnerer null for behandler som ikke finnes") {
-            var behandler: Behandler? = null
+            var behandler: Behandler?
             runBlocking {
                 behandler = norskHelsenettClient.finnBehandler("0", "sykmeldingsId")
             }

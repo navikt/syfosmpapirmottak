@@ -13,16 +13,16 @@ import no.nav.syfo.model.ValidationResult
 
 class RegelClient(
     private val endpointUrl: String,
-    private val accessTokenClient: AccessTokenClient,
+    private val accessTokenClient: AccessTokenClientV2,
     private val resourceId: String,
     private val client: HttpClient
 ) {
     @KtorExperimentalAPI
     suspend fun valider(sykmelding: ReceivedSykmelding, msgId: String): ValidationResult = retry("valider_regler") {
-        client.post<ValidationResult>("$endpointUrl/api/v1/rules/validate") {
+        client.post<ValidationResult>("$endpointUrl/api/v2/rules/validate") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
-            val accessToken = accessTokenClient.hentAccessToken(resourceId)
+            val accessToken = accessTokenClient.getAccessTokenV2(resourceId)
             headers {
                 append("Authorization", "Bearer $accessToken")
                 append("Nav-CallId", msgId)

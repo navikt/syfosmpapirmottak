@@ -17,12 +17,10 @@ data class Environment(
     val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL"),
     val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL", "http://sak.default/api/v1/saker"),
     val hentDokumentUrl: String = getEnvVar("HENT_DOKUMENT_URL"),
-    val clientId: String = getEnvVar("CLIENT_ID"),
-    val helsenettproxyId: String = getEnvVar("HELSENETTPROXY_ID"),
-    val aadAccessTokenUrl: String = getEnvVar("AADACCESSTOKEN_URL"),
+    val helsenettproxyScope: String = getEnvVar("HELSENETT_SCOPE"),
     val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL"),
     val regelEndpointURL: String = getEnvVar("PAPIRREGEL_ENDPOINT_URL"),
-    val papirregelId: String = getEnvVar("PAPIRREGEL_ID"),
+    val syfosmpapirregelScope: String = getEnvVar("SYFOSMPAPIRREGLER_SCOPE"),
     val kuhrSarApiUrl: String = getEnvVar("KUHR_SAR_API_URL", "http://kuhr-sar-api.teamkuhr.svc.nais.local"),
     val dokArkivUrl: String = getEnvVar("DOK_ARKIV_URL"),
     val sm2013BehandlingsUtfallTopic: String = getEnvVar("KAFKA_SM2013_BEHANDLING_TOPIC", "privat-syfo-sm2013-behandlingsUtfall"),
@@ -41,8 +39,7 @@ data class Environment(
 
 data class VaultCredentials(
     val serviceuserUsername: String,
-    val serviceuserPassword: String,
-    val clientsecret: String
+    val serviceuserPassword: String
 ) : KafkaCredentials {
     override val kafkaUsername: String = serviceuserUsername
     override val kafkaPassword: String = serviceuserPassword

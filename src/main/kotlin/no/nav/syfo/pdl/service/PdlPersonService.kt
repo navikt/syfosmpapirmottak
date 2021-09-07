@@ -1,8 +1,8 @@
 package no.nav.syfo.pdl.service
 
-import AccessTokenClientV2
 import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments
+import no.nav.syfo.client.AccessTokenClientV2
 import no.nav.syfo.log
 import no.nav.syfo.pdl.client.PdlClient
 import no.nav.syfo.pdl.model.Navn
