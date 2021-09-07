@@ -40,8 +40,6 @@ spec:
   vault:
     enabled: true
     paths:
-      - kvPath: /kv/prod/fss/syfosmpapirmottak/teamsykmelding
-        mountPath: /secrets/default
       - kvPath: serviceuser/data/prod/srvsyfosmpapirmottak
         mountPath: /secrets/serviceuser
   ingresses:
@@ -54,14 +52,10 @@ spec:
       value: aapen-dok-journalfoering-v1-p
     - name: HENT_DOKUMENT_URL
       value: https://saf.nais.adeo.no/
-    - name: AADACCESSTOKEN_URL
-      value: https://login.microsoftonline.com/navno.onmicrosoft.com/oauth2/token
-    - name: CLIENT_ID
-      value: 9d4d6e11-1717-44f7-b76c-1a671847bb32
     - name: HELSENETT_SCOPE
       value: api://prod-fss.teamsykmelding.syfohelsenettproxy/.default
-    - name: PAPIRREGEL_ID
-      value: 77a0df77-18de-4bab-887a-ed65f5c44927
+    - name: SYFOSMPAPIRREGLER_SCOPE
+      value: api://prod-fss.teamsykmelding.syfosmpapirregler/.default
     - name: KAFKA_BOOTSTRAP_SERVERS_URL
       value: SASL_SSL://a01apvl00145.adeo.no:8443,SASL_SSL://a01apvl00146.adeo.no:8443,SASL_SSL://a01apvl00147.adeo.no:8443,SASL_SSL://a01apvl00149.adeo.no:8443
     - name: DOK_ARKIV_URL

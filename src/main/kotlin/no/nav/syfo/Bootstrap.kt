@@ -24,7 +24,6 @@ import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.application.ApplicationServer
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
-import no.nav.syfo.client.AccessTokenClient
 import no.nav.syfo.client.AccessTokenClientV2
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
@@ -74,8 +73,7 @@ fun main() {
     val env = Environment()
     val credentials = VaultCredentials(
         serviceuserPassword = getFileAsString("/secrets/serviceuser/password"),
-        serviceuserUsername = getFileAsString("/secrets/serviceuser/username"),
-        clientsecret = getFileAsString("/secrets/default/client_secret")
+        serviceuserUsername = getFileAsString("/secrets/serviceuser/username")
     )
 
     val applicationState = ApplicationState()
@@ -142,10 +140,9 @@ fun main() {
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, oidcClient, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
-    val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, credentials.clientsecret, httpClientWithProxy)
     val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClientV2, env.helsenettproxyScope, httpClient)
-    val regelClient = RegelClient(env.regelEndpointURL, accessTokenClient, env.papirregelId, httpClient)
+    val regelClient = RegelClient(env.regelEndpointURL, accessTokenClientV2, env.syfosmpapirregelScope, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
@@ -166,7 +163,6 @@ fun main() {
         applicationState,
         consumerProperties,
         behandlingService,
-        credentials,
         kafkaProducerReceivedSykmelding,
         dokArkivClient,
         kafkaProducerPapirSmRegistering
@@ -190,7 +186,6 @@ fun launchListeners(
     applicationState: ApplicationState,
     consumerProperties: Properties,
     behandlingService: BehandlingService,
-    credentials: VaultCredentials,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>

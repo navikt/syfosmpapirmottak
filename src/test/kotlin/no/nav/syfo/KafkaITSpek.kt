@@ -24,8 +24,7 @@ object KafkaITSpek : Spek({
 
     val credentials = VaultCredentials(
         serviceuserUsername = " ",
-        serviceuserPassword = "",
-        clientsecret = "secret"
+        serviceuserPassword = ""
     )
 
     val embeddedEnvironment = KafkaEnvironment(
@@ -42,10 +41,8 @@ object KafkaITSpek : Spek({
         securityTokenServiceUrl = "securl",
         oppgavebehandlingUrl = "oppgave/api",
         hentDokumentUrl = "saf",
-        clientId = "clientId",
         helsenettproxyScope = "helsenettproxyScope",
-        aadAccessTokenUrl = "azuread/token",
-        papirregelId = "papirregelId",
+        syfosmpapirregelScope = "papirregelScope",
         dokArkivUrl = "dokapi/",
         cluster = "dev",
         pdlGraphqlPath = "TEST",
