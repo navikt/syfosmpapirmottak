@@ -1,3 +1,5 @@
+package no.nav.syfo.client
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept

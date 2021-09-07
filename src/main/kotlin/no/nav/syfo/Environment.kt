@@ -18,7 +18,7 @@ data class Environment(
     val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL", "http://sak.default/api/v1/saker"),
     val hentDokumentUrl: String = getEnvVar("HENT_DOKUMENT_URL"),
     val clientId: String = getEnvVar("CLIENT_ID"),
-    val helsenettproxyId: String = getEnvVar("HELSENETTPROXY_ID"),
+    val helsenettproxyScope: String = getEnvVar("HELSENETT_SCOPE"),
     val aadAccessTokenUrl: String = getEnvVar("AADACCESSTOKEN_URL"),
     val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL"),
     val regelEndpointURL: String = getEnvVar("PAPIRREGEL_ENDPOINT_URL"),

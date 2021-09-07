@@ -58,8 +58,8 @@ spec:
       value: https://login.microsoftonline.com/navno.onmicrosoft.com/oauth2/token
     - name: CLIENT_ID
       value: 9d4d6e11-1717-44f7-b76c-1a671847bb32
-    - name: HELSENETTPROXY_ID
-      value: b813133d-82b8-46ef-be96-3b903ea6c048
+    - name: HELSENETT_SCOPE
+      value: api://prod-fss.teamsykmelding.syfohelsenettproxy/.default
     - name: PAPIRREGEL_ID
       value: 77a0df77-18de-4bab-887a-ed65f5c44927
     - name: KAFKA_BOOTSTRAP_SERVERS_URL

@@ -14,7 +14,7 @@ import java.io.IOException
 
 class NorskHelsenettClient(
     private val endpointUrl: String,
-    private val accessTokenClient: AccessTokenClient,
+    private val accessTokenClient: AccessTokenClientV2,
     private val resourceId: String,
     private val httpClient: HttpClient
 ) {
@@ -26,9 +26,9 @@ class NorskHelsenettClient(
     ) {
         log.info("Henter behandler fra syfohelsenettproxy for sykmeldingId {}", sykmeldingId)
         try {
-            return@retry httpClient.get<Behandler>("$endpointUrl/api/behandlerMedHprNummer") {
+            return@retry httpClient.get<Behandler>("$endpointUrl/api/v2/behandlerMedHprNummer") {
                 accept(ContentType.Application.Json)
-                val accessToken = accessTokenClient.hentAccessToken(resourceId)
+                val accessToken = accessTokenClient.getAccessTokenV2(resourceId)
                 headers {
                     append("Authorization", "Bearer $accessToken")
                     append("Nav-CallId", sykmeldingId)

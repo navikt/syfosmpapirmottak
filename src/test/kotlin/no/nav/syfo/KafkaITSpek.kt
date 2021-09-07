@@ -43,7 +43,7 @@ object KafkaITSpek : Spek({
         oppgavebehandlingUrl = "oppgave/api",
         hentDokumentUrl = "saf",
         clientId = "clientId",
-        helsenettproxyId = "helsenettproxyId",
+        helsenettproxyScope = "helsenettproxyScope",
         aadAccessTokenUrl = "azuread/token",
         papirregelId = "papirregelId",
         dokArkivUrl = "dokapi/",
