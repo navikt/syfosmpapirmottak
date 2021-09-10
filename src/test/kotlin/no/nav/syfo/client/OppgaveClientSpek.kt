@@ -78,7 +78,7 @@ object OppgaveClientSpek : Spek({
                                     1, "9999",
                                     null, "123", "2",
                                     "SYM", "FDR",
-                                ""
+                                    ""
                                 )
                             )
                         )

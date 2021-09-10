@@ -44,18 +44,10 @@ class OppgaveService(
     }
 
     suspend fun hentOppgave(
-            journalpostId: String,
-            sykmeldingId: String
+        journalpostId: String,
+        sykmeldingId: String
     ): OppgaveResponse {
         return oppgaveClient.hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
-    }
-
-    suspend fun duplikatOppgave(
-        journalpostId: String,
-        trackingId: String,
-        loggingMeta: LoggingMeta
-    ): Boolean {
-        return oppgaveClient.duplikatOppgave(journalpostId, trackingId, loggingMeta)
     }
 
     suspend fun opprettFordelingsOppgave(

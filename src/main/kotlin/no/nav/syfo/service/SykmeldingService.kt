@@ -47,19 +47,19 @@ class SykmeldingService(
     private val syfoserviceTopic: String,
 ) {
     suspend fun behandleSykmelding(
-            journalpostId: String,
-            pasient: PdlPerson?,
-            dokumentInfoId: String?,
-            datoOpprettet: LocalDateTime?,
-            dokumentInfoIdPdf: String,
-            temaEndret: Boolean,
-            loggingMeta: LoggingMeta,
-            sykmeldingId: String,
-            sm2013AutomaticHandlingTopic: String,
-            kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
-            dokArkivClient: DokArkivClient,
-            kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-            sm2013SmregistreringTopic: String
+        journalpostId: String,
+        pasient: PdlPerson?,
+        dokumentInfoId: String?,
+        datoOpprettet: LocalDateTime?,
+        dokumentInfoIdPdf: String,
+        temaEndret: Boolean,
+        loggingMeta: LoggingMeta,
+        sykmeldingId: String,
+        sm2013AutomaticHandlingTopic: String,
+        kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
+        dokArkivClient: DokArkivClient,
+        kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
+        sm2013SmregistreringTopic: String
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -235,8 +235,7 @@ class SykmeldingService(
 
         if (oppgave.antallTreffTotalt == 0 || oppgave.antallTreffTotalt > 0 && temaEndret) {
             sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
-        }
-        else {
+        } else {
             log.info("duplikat oppgave {}", fields(loggingMeta))
         }
     }

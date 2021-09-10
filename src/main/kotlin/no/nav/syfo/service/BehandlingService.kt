@@ -70,7 +70,7 @@ class BehandlingService(
                     if (journalpostMetadata.gjelderUtland) {
                         utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
-                        if (skalBehandleJournalpost(hendelsesType = journalfoeringEvent.hendelsesType.toString(), journalpostId = journalpostId, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)) {
+                        if (skalBehandleJournalpost(hendelsesType = journalfoeringEvent.hendelsesType.toString())) {
                             sykmeldingService.behandleSykmelding(
                                 journalpostId = journalpostId,
                                 pasient = pasient,
@@ -122,24 +122,12 @@ class BehandlingService(
             return null
     }
 
-    suspend fun skalBehandleJournalpost(
-        hendelsesType: String,
-        journalpostId: String,
-        sykmeldingId: String,
-        loggingMeta: LoggingMeta
+    fun skalBehandleJournalpost(
+        hendelsesType: String
     ): Boolean {
         if (hendelsesType == "MidlertidigJournalført" || hendelsesType == "TemaEndret") {
             return true
         }
-        val duplikatOppgave = oppgaveService.duplikatOppgave(
-            journalpostId = journalpostId,
-            trackingId = sykmeldingId,
-            loggingMeta = loggingMeta
-        )
-        if (duplikatOppgave) {
-            log.info("Oppgave for endret journalpost finnes fra før, ignorerer melding {}", fields(loggingMeta))
-            return false
-        }
-        return true
+        return false
     }
 }

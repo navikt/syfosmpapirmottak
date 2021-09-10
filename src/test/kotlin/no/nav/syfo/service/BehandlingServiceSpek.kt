@@ -59,7 +59,6 @@ object BehandlingServiceSpek : Spek({
         )
         coEvery { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } just Runs
         coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) } just Runs
-        coEvery { oppgaveService.duplikatOppgave(any(), any(), any()) } returns false
     }
 
     describe("BehandlingService ende-til-ende") {
@@ -78,7 +77,6 @@ object BehandlingServiceSpek : Spek({
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
-            coVerify(exactly = 0) { oppgaveService.duplikatOppgave(any(), any(), any()) }
         }
 
         it("Ende-til-ende journalpost med fnr og endret-tema") {
@@ -389,22 +387,19 @@ object BehandlingServiceSpek : Spek({
     describe("Test av skalBehandleJournalpost") {
         it("Skal behandle hvis type er MidlertidigJournalført") {
             runBlocking {
-                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("MidlertidigJournalført", "123", sykmeldingId, loggingMetadata)
-
+                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret")
                 skalBehandleJournalpost shouldBeEqualTo true
             }
         }
         it("Skal behandle hvis type er TemaEndret og oppgave ikke finnes fra før") {
             runBlocking {
-                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret", "123", sykmeldingId, loggingMetadata)
-
+                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret")
                 skalBehandleJournalpost shouldBeEqualTo true
             }
         }
         it("Skal behandle hvis type er TemaEndret og oppgave finnes fra før") {
-            coEvery { oppgaveService.duplikatOppgave(any(), any(), any()) } returns true
             runBlocking {
-                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret", "123", sykmeldingId, loggingMetadata)
+                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret")
 
                 skalBehandleJournalpost shouldBeEqualTo true
             }
