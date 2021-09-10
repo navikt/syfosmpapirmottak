@@ -22,7 +22,6 @@ import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
-import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -381,28 +380,6 @@ object BehandlingServiceSpek : Spek({
             }
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
-        }
-    }
-
-    describe("Test av skalBehandleJournalpost") {
-        it("Skal behandle hvis type er MidlertidigJournalført") {
-            runBlocking {
-                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret")
-                skalBehandleJournalpost shouldBeEqualTo true
-            }
-        }
-        it("Skal behandle hvis type er TemaEndret og oppgave ikke finnes fra før") {
-            runBlocking {
-                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret")
-                skalBehandleJournalpost shouldBeEqualTo true
-            }
-        }
-        it("Skal behandle hvis type er TemaEndret og oppgave finnes fra før") {
-            runBlocking {
-                val skalBehandleJournalpost = behandlingService.skalBehandleJournalpost("TemaEndret")
-
-                skalBehandleJournalpost shouldBeEqualTo true
-            }
         }
     }
 })

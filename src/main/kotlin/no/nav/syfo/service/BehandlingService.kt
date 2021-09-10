@@ -70,23 +70,21 @@ class BehandlingService(
                     if (journalpostMetadata.gjelderUtland) {
                         utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
-                        if (skalBehandleJournalpost(hendelsesType = journalfoeringEvent.hendelsesType.toString())) {
-                            sykmeldingService.behandleSykmelding(
-                                journalpostId = journalpostId,
-                                pasient = pasient,
-                                datoOpprettet = journalpostMetadata.datoOpprettet,
-                                dokumentInfoIdPdf = journalpostMetadata.dokumentInfoIdPdf,
-                                dokumentInfoId = journalpostMetadata.dokumentInfoId,
-                                temaEndret = journalfoeringEvent.hendelsesType == "TemaEndret",
-                                loggingMeta = loggingMeta,
-                                sykmeldingId = sykmeldingId,
-                                sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
-                                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmelding,
-                                dokArkivClient = dokArkivClient,
-                                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                                sm2013SmregistreringTopic = sm2013SmregistreringTopic
-                            )
-                        }
+                        sykmeldingService.behandleSykmelding(
+                            journalpostId = journalpostId,
+                            pasient = pasient,
+                            datoOpprettet = journalpostMetadata.datoOpprettet,
+                            dokumentInfoIdPdf = journalpostMetadata.dokumentInfoIdPdf,
+                            dokumentInfoId = journalpostMetadata.dokumentInfoId,
+                            temaEndret = journalfoeringEvent.hendelsesType == "TemaEndret",
+                            loggingMeta = loggingMeta,
+                            sykmeldingId = sykmeldingId,
+                            sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                            kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmelding,
+                            dokArkivClient = dokArkivClient,
+                            kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                            sm2013SmregistreringTopic = sm2013SmregistreringTopic
+                        )
                     }
                 } else {
                     log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))
@@ -120,14 +118,5 @@ class BehandlingService(
             brukerId
         } else
             return null
-    }
-
-    fun skalBehandleJournalpost(
-        hendelsesType: String
-    ): Boolean {
-        if (hendelsesType == "MidlertidigJournalført" || hendelsesType == "TemaEndret") {
-            return true
-        }
-        return false
     }
 }
