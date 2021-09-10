@@ -77,6 +77,7 @@ class BehandlingService(
                                 datoOpprettet = journalpostMetadata.datoOpprettet,
                                 dokumentInfoIdPdf = journalpostMetadata.dokumentInfoIdPdf,
                                 dokumentInfoId = journalpostMetadata.dokumentInfoId,
+                                temaEndret = journalfoeringEvent.hendelsesType == "TemaEndret",
                                 loggingMeta = loggingMeta,
                                 sykmeldingId = sykmeldingId,
                                 sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
@@ -127,7 +128,7 @@ class BehandlingService(
         sykmeldingId: String,
         loggingMeta: LoggingMeta
     ): Boolean {
-        if (hendelsesType == "MidlertidigJournalført") {
+        if (hendelsesType == "MidlertidigJournalført" || hendelsesType == "TemaEndret") {
             return true
         }
         val duplikatOppgave = oppgaveService.duplikatOppgave(

@@ -28,7 +28,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         }
     }
 
-    private suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse = retry("hent_oppgave") {
+    suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse = retry("hent_oppgave") {
         httpClient.get<OppgaveResponse>(url) {
             val oidcToken = oidcClient.oidcToken()
             this.header("Authorization", "Bearer ${oidcToken.access_token}")
@@ -158,7 +158,8 @@ data class Oppgave(
     val journalpostId: String?,
     val saksreferanse: String?,
     val tema: String?,
-    val oppgavetype: String?
+    val oppgavetype: String?,
+    val behandlesAvApplikasjon: String?
 )
 
 fun finnFristForFerdigstillingAvOppgave(today: LocalDate): LocalDate {
