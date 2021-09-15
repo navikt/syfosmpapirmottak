@@ -13,6 +13,7 @@ import java.time.OffsetDateTime
 
 data class PapirSmRegistering(
     val journalpostId: String,
+    val oppgaveId: String?,
     val fnr: String?,
     val aktorId: String?,
     val dokumentInfoId: String?,

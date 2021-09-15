@@ -220,20 +220,20 @@ class SykmeldingService(
         sm2013SmregistreringTopic: String
     ) {
         log.info("Ruter oppgaven til smregistrering", fields(loggingMeta))
-        val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
-            journalpostId = journalpostId,
-            fnr = fnr,
-            aktorId = aktorId,
-            dokumentInfoId = dokumentInfoId,
-            datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
-            sykmeldingId = sykmeldingId,
-            sykmelder = sykmelder,
-            ocrFil = ocrFil
-        )
-
         val oppgave = oppgaveService.hentOppgave(journalpostId, sykmeldingId)
 
         if (oppgave.antallTreffTotalt == 0 || oppgave.antallTreffTotalt > 0 && temaEndret) {
+            val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
+                    journalpostId = journalpostId,
+                    oppgaveId = oppgave.oppgaver.firstOrNull()?.id.toString(),
+                    fnr = fnr,
+                    aktorId = aktorId,
+                    dokumentInfoId = dokumentInfoId,
+                    datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
+                    sykmeldingId = sykmeldingId,
+                    sykmelder = sykmelder,
+                    ocrFil = ocrFil
+            )
             sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
         } else {
             log.info("duplikat oppgave {}", fields(loggingMeta))

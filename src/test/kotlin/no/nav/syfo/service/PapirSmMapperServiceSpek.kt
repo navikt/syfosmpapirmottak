@@ -21,6 +21,7 @@ import java.time.ZoneOffset
 object PapirSmMapperServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"
+    val oppgaveId = "123"
     val dokumentInfoId = "123"
     val fnrPasient = "12345678910"
     val aktorId = "aktorId"
@@ -33,6 +34,7 @@ object PapirSmMapperServiceSpek : Spek({
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
                 journalpostId = journalpostId,
+                oppgaveId = oppgaveId,
                 fnr = fnrPasient,
                 aktorId = aktorId,
                 dokumentInfoId = dokumentInfoId,
@@ -50,6 +52,7 @@ object PapirSmMapperServiceSpek : Spek({
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
                 journalpostId = journalpostId,
+                oppgaveId = oppgaveId,
                 fnr = fnrPasient,
                 aktorId = aktorId,
                 dokumentInfoId = dokumentInfoId,
@@ -67,6 +70,7 @@ object PapirSmMapperServiceSpek : Spek({
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
                 journalpostId = journalpostId,
+                oppgaveId = oppgaveId,
                 fnr = fnrPasient,
                 aktorId = aktorId,
                 dokumentInfoId = dokumentInfoId,
