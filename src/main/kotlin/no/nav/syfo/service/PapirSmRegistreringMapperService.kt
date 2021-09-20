@@ -35,6 +35,7 @@ import java.time.OffsetDateTime
 
 fun mapOcrFilTilPapirSmRegistrering(
     journalpostId: String,
+    oppgaveId: String?,
     fnr: String?,
     aktorId: String?,
     dokumentInfoId: String?,
@@ -48,6 +49,7 @@ fun mapOcrFilTilPapirSmRegistrering(
 
     return PapirSmRegistering(
         journalpostId,
+        oppgaveId,
         fnr,
         aktorId,
         dokumentInfoId,

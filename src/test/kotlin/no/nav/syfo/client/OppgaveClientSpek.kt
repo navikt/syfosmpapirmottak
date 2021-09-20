@@ -64,7 +64,8 @@ object OppgaveClientSpek : Spek({
                                 Oppgave(
                                     1, "9999",
                                     "123456789", "123", "2",
-                                    "SYM", "JFR"
+                                    "SYM", "JFR",
+                                    ""
                                 )
                             )
                         )
@@ -76,7 +77,8 @@ object OppgaveClientSpek : Spek({
                                 Oppgave(
                                     1, "9999",
                                     null, "123", "2",
-                                    "SYM", "FDR"
+                                    "SYM", "FDR",
+                                    ""
                                 )
                             )
                         )

@@ -28,7 +28,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         }
     }
 
-    private suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse = retry("hent_oppgave") {
+    suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse = retry("hent_oppgave") {
         httpClient.get<OppgaveResponse>(url) {
             val oidcToken = oidcClient.oidcToken()
             this.header("Authorization", "Bearer ${oidcToken.access_token}")
@@ -77,19 +77,6 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
         )
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
-    }
-
-    suspend fun duplikatOppgave(
-        journalpostId: String,
-        sykmeldingId: String,
-        loggingMeta: LoggingMeta
-    ): Boolean {
-        val oppgaveResponse = hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
-        if (oppgaveResponse.antallTreffTotalt > 0) {
-            log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
-            return true
-        }
-        return false
     }
 
     suspend fun opprettFordelingsOppgave(
@@ -158,7 +145,8 @@ data class Oppgave(
     val journalpostId: String?,
     val saksreferanse: String?,
     val tema: String?,
-    val oppgavetype: String?
+    val oppgavetype: String?,
+    val behandlesAvApplikasjon: String?
 )
 
 fun finnFristForFerdigstillingAvOppgave(today: LocalDate): LocalDate {

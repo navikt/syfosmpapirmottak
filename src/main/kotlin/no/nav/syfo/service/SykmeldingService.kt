@@ -52,6 +52,7 @@ class SykmeldingService(
         dokumentInfoId: String?,
         datoOpprettet: LocalDateTime?,
         dokumentInfoIdPdf: String,
+        temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
         sm2013AutomaticHandlingTopic: String,
@@ -151,6 +152,7 @@ class SykmeldingService(
                             fnr = pasient.fnr,
                             aktorId = pasient.aktorId,
                             dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
+                            temaEndret = temaEndret,
                             loggingMeta = loggingMeta,
                             sykmeldingId = sykmeldingId,
                             sykmelder = sykmelder,
@@ -191,6 +193,7 @@ class SykmeldingService(
                 fnr = pasient.fnr,
                 aktorId = pasient.aktorId,
                 dokumentInfoId = dokumentInfoId ?: dokumentInfoIdPdf,
+                temaEndret = temaEndret,
                 datoOpprettet = datoOpprettet,
                 loggingMeta = loggingMeta,
                 sykmeldingId = sykmeldingId,
@@ -208,6 +211,7 @@ class SykmeldingService(
         aktorId: String,
         dokumentInfoId: String?,
         datoOpprettet: LocalDateTime?,
+        temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
         sykmelder: Sykmelder?,
@@ -216,22 +220,20 @@ class SykmeldingService(
         sm2013SmregistreringTopic: String
     ) {
         log.info("Ruter oppgaven til smregistrering", fields(loggingMeta))
-        val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
-            journalpostId = journalpostId,
-            fnr = fnr,
-            aktorId = aktorId,
-            dokumentInfoId = dokumentInfoId,
-            datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
-            sykmeldingId = sykmeldingId,
-            sykmelder = sykmelder,
-            ocrFil = ocrFil
-        )
+        val oppgave = oppgaveService.hentOppgave(journalpostId, sykmeldingId)
 
-        val duplikatOppgave = oppgaveService.duplikatOppgave(
-            journalpostId = journalpostId, trackingId = sykmeldingId, loggingMeta = loggingMeta
-        )
-
-        if (!duplikatOppgave) {
+        if (oppgave.antallTreffTotalt == 0 || oppgave.antallTreffTotalt > 0 && temaEndret) {
+            val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
+                    journalpostId = journalpostId,
+                    oppgaveId = oppgave.oppgaver.firstOrNull()?.id.toString(),
+                    fnr = fnr,
+                    aktorId = aktorId,
+                    dokumentInfoId = dokumentInfoId,
+                    datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
+                    sykmeldingId = sykmeldingId,
+                    sykmelder = sykmelder,
+                    ocrFil = ocrFil
+            )
             sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
         } else {
             log.info("duplikat oppgave {}", fields(loggingMeta))
