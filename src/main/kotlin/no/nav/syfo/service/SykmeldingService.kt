@@ -225,7 +225,7 @@ class SykmeldingService(
         if (oppgave.antallTreffTotalt == 0 || oppgave.antallTreffTotalt > 0 && temaEndret) {
             val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
                     journalpostId = journalpostId,
-                    oppgaveId = oppgave.oppgaver.firstOrNull()?.id.toString(),
+                    oppgaveId = oppgave.oppgaver.firstOrNull()?.id?.toString(),
                     fnr = fnr,
                     aktorId = aktorId,
                     dokumentInfoId = dokumentInfoId,
