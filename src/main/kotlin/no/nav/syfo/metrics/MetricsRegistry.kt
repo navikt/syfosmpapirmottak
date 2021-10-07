@@ -40,6 +40,18 @@ val PAPIRSM_MOTTATT_UTEN_BRUKER: Counter = Counter.build()
     .help("Antall mottatte papirsykmeldinger der bruker mangler")
     .register()
 
+val PAPIRSM_MOTTATT_UTEN_OCR: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("mottatt_papirsm_uten_ocr_count")
+        .help("Antall mottatte papirsykmeldinger der OCR-fil mangler")
+        .register()
+
+val PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD: Counter = Counter.build()
+        .namespace(NAMESPACE)
+        .name("mottatt_papirsm_med_tom_ocr_count")
+        .help("Antall mottatte papirsykmeldinger der OCR-fil er til stede, men bare FNR er utfylt")
+        .register()
+
 val PAPIRSM_OPPGAVE: Counter = Counter.build()
     .namespace(NAMESPACE)
     .name("oppgave_papirsykmelding_count")
