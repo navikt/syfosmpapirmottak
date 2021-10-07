@@ -55,7 +55,7 @@ class BehandlingService(
 
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                ocrDebugLog(journalpostId, journalpostMetadata)
+                ocrDebugLog(journalpostId, journalpostMetadata, journalfoeringEvent)
 
                 if (journalpostMetadata.jpErIkkeJournalfort) {
                     val pasient = journalpostMetadata.bruker.let {
@@ -96,7 +96,7 @@ class BehandlingService(
         }
     }
 
-    private fun ocrDebugLog(journalpostId: String, journalpostMetadata: JournalpostMetadata) {
+    private fun ocrDebugLog(journalpostId: String, journalpostMetadata: JournalpostMetadata, journalfoeringEvent: JournalfoeringHendelseRecord) {
         // Midlertidig logging for å lettere kunne grave i sykmeldinger som ikke blir OCR-tolket riktig
         val harOcr = when (journalpostMetadata.dokumentInfoId != null) {
             true -> "har OCR"
@@ -106,7 +106,8 @@ class BehandlingService(
             true -> "utland"
             false -> "innland"
         }
-        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, journalpostId: $journalpostId")
+
+        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, journalpostId: $journalpostId {} {}", journalpostMetadata, journalfoeringEvent)
     }
 
     fun hentBrukerIdFraJournalpost(
