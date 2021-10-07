@@ -107,7 +107,7 @@ class BehandlingService(
             false -> "innland"
         }
 
-        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, journalpostId: $journalpostId {} {}", journalpostMetadata, journalfoeringEvent)
+        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId")
     }
 
     fun hentBrukerIdFraJournalpost(
