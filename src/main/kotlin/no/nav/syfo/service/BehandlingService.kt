@@ -23,8 +23,7 @@ class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
     private val sykmeldingService: SykmeldingService,
     private val utenlandskSykmeldingService: UtenlandskSykmeldingService,
-    private val pdlPersonService: PdlPersonService,
-    private val oppgaveService: OppgaveService
+    private val pdlPersonService: PdlPersonService
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
