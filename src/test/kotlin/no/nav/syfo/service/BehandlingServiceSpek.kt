@@ -41,8 +41,7 @@ object BehandlingServiceSpek : Spek({
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>()
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
-    val oppgaveService = mockk<OppgaveService>()
-    val behandlingService = BehandlingService(safJournalpostClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock, pdlService, oppgaveService)
+    val behandlingService = BehandlingService(safJournalpostClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock, pdlService)
 
     beforeEachTest {
         clearAllMocks()

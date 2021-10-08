@@ -11,6 +11,7 @@ import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.log
 import no.nav.syfo.metrics.ENDRET_PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
+import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_OCR
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.pdl.service.PdlPersonService
@@ -23,8 +24,7 @@ class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
     private val sykmeldingService: SykmeldingService,
     private val utenlandskSykmeldingService: UtenlandskSykmeldingService,
-    private val pdlPersonService: PdlPersonService,
-    private val oppgaveService: OppgaveService
+    private val pdlPersonService: PdlPersonService
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
@@ -46,16 +46,22 @@ class BehandlingService(
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
                 log.info("Mottatt papirsykmelding fra mottakskanal {}, {}", journalfoeringEvent.mottaksKanal, fields(loggingMeta))
+
                 if (journalfoeringEvent.hendelsesType.toString() == "TemaEndret") {
                     ENDRET_PAPIRSM_MOTTATT.inc()
                     log.info("Mottatt endret journalpost {}", fields(loggingMeta))
                 }
+
                 val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
                     ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
+                if (journalpostMetadata.dokumentInfoId == null) {
+                    PAPIRSM_MOTTATT_UTEN_OCR.inc()
+                }
+
                 log.debug("Response from saf graphql, {}", fields(loggingMeta))
 
-                ocrDebugLog(journalpostId, journalpostMetadata)
+                ocrDebugLog(journalpostId, journalpostMetadata, journalfoeringEvent)
 
                 if (journalpostMetadata.jpErIkkeJournalfort) {
                     val pasient = journalpostMetadata.bruker.let {
@@ -96,7 +102,7 @@ class BehandlingService(
         }
     }
 
-    private fun ocrDebugLog(journalpostId: String, journalpostMetadata: JournalpostMetadata) {
+    private fun ocrDebugLog(journalpostId: String, journalpostMetadata: JournalpostMetadata, journalfoeringEvent: JournalfoeringHendelseRecord) {
         // Midlertidig logging for å lettere kunne grave i sykmeldinger som ikke blir OCR-tolket riktig
         val harOcr = when (journalpostMetadata.dokumentInfoId != null) {
             true -> "har OCR"
@@ -106,7 +112,8 @@ class BehandlingService(
             true -> "utland"
             false -> "innland"
         }
-        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, journalpostId: $journalpostId")
+
+        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId")
     }
 
     fun hentBrukerIdFraJournalpost(

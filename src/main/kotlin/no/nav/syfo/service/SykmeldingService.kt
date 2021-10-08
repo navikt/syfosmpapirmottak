@@ -17,6 +17,7 @@ import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
+import no.nav.syfo.metrics.PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.model.Periode
 import no.nav.syfo.model.ReceivedSykmelding
@@ -81,6 +82,8 @@ class SykmeldingService(
                 } else null
 
                 ocrFil?.let { ocr ->
+
+                    sjekkOcrInnhold(ocr, loggingMeta)
 
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
@@ -224,15 +227,15 @@ class SykmeldingService(
 
         if (oppgave.antallTreffTotalt == 0 || oppgave.antallTreffTotalt > 0 && temaEndret) {
             val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
-                    journalpostId = journalpostId,
-                    oppgaveId = oppgave.oppgaver.firstOrNull()?.id?.toString(),
-                    fnr = fnr,
-                    aktorId = aktorId,
-                    dokumentInfoId = dokumentInfoId,
-                    datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
-                    sykmeldingId = sykmeldingId,
-                    sykmelder = sykmelder,
-                    ocrFil = ocrFil
+                journalpostId = journalpostId,
+                oppgaveId = oppgave.oppgaver.firstOrNull()?.id?.toString(),
+                fnr = fnr,
+                aktorId = aktorId,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
+                sykmeldingId = sykmeldingId,
+                sykmelder = sykmelder,
+                ocrFil = ocrFil
             )
             sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
         } else {
@@ -291,5 +294,16 @@ class SykmeldingService(
             etternavn = behandler.navn.etternavn,
             telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString()
         )
+    }
+
+    private fun sjekkOcrInnhold(ocr: Skanningmetadata, loggingMeta: LoggingMeta) {
+        if (ocr.sykemeldinger.behandler.hpr == null &&
+            ocr.sykemeldinger.medisinskVurdering.hovedDiagnose.isEmpty() &&
+            ocr.sykemeldinger.medisinskVurdering.bidiagnose.isEmpty() &&
+            ocr.sykemeldinger.medisinskVurdering.annenFraversArsak.isNullOrEmpty()
+        ) {
+            log.info("Papirsykmelding inneholder ikke HPR, hovedDiagnose, biDiagnose eller annenFraversArsak", fields(loggingMeta))
+            PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
+        }
     }
 }

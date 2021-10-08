@@ -156,7 +156,7 @@ fun main() {
         syfoserviceTopic = env.syfoserviceMqTopic
     )
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
-    val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService, oppgaveService)
+    val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
 
     launchListeners(
         env,
