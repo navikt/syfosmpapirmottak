@@ -227,15 +227,15 @@ class SykmeldingService(
 
         if (oppgave.antallTreffTotalt == 0 || oppgave.antallTreffTotalt > 0 && temaEndret) {
             val papirSmRegistering = mapOcrFilTilPapirSmRegistrering(
-                    journalpostId = journalpostId,
-                    oppgaveId = oppgave.oppgaver.firstOrNull()?.id?.toString(),
-                    fnr = fnr,
-                    aktorId = aktorId,
-                    dokumentInfoId = dokumentInfoId,
-                    datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
-                    sykmeldingId = sykmeldingId,
-                    sykmelder = sykmelder,
-                    ocrFil = ocrFil
+                journalpostId = journalpostId,
+                oppgaveId = oppgave.oppgaver.firstOrNull()?.id?.toString(),
+                fnr = fnr,
+                aktorId = aktorId,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
+                sykmeldingId = sykmeldingId,
+                sykmelder = sykmelder,
+                ocrFil = ocrFil
             )
             sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
         } else {
@@ -297,10 +297,10 @@ class SykmeldingService(
     }
 
     private fun sjekkOcrInnhold(ocr: Skanningmetadata) {
-        if (ocr.sykemeldinger.behandler.hpr == null
-                && ocr.sykemeldinger.medisinskVurdering.hovedDiagnose.isEmpty()
-                && ocr.sykemeldinger.medisinskVurdering.bidiagnose.isEmpty()
-                && ocr.sykemeldinger.medisinskVurdering.annenFraversArsak.isNullOrEmpty()
+        if (ocr.sykemeldinger.behandler.hpr == null &&
+            ocr.sykemeldinger.medisinskVurdering.hovedDiagnose.isEmpty() &&
+            ocr.sykemeldinger.medisinskVurdering.bidiagnose.isEmpty() &&
+            ocr.sykemeldinger.medisinskVurdering.annenFraversArsak.isNullOrEmpty()
         ) {
             PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
         }
