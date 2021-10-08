@@ -83,7 +83,7 @@ class SykmeldingService(
 
                 ocrFil?.let { ocr ->
 
-                    sjekkOcrInnhold(ocr)
+                    sjekkOcrInnhold(ocr, loggingMeta)
 
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
@@ -296,12 +296,13 @@ class SykmeldingService(
         )
     }
 
-    private fun sjekkOcrInnhold(ocr: Skanningmetadata) {
+    private fun sjekkOcrInnhold(ocr: Skanningmetadata, loggingMeta: LoggingMeta) {
         if (ocr.sykemeldinger.behandler.hpr == null &&
             ocr.sykemeldinger.medisinskVurdering.hovedDiagnose.isEmpty() &&
             ocr.sykemeldinger.medisinskVurdering.bidiagnose.isEmpty() &&
             ocr.sykemeldinger.medisinskVurdering.annenFraversArsak.isNullOrEmpty()
         ) {
+            log.info("Papirsykmelding inneholder ikke HPR, hovedDiagnose, biDiagnose eller annenFraversArsak", fields(loggingMeta))
             PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
         }
     }
