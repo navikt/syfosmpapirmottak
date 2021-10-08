@@ -17,6 +17,7 @@ import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
+import no.nav.syfo.metrics.PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.model.Periode
 import no.nav.syfo.model.ReceivedSykmelding
@@ -81,6 +82,8 @@ class SykmeldingService(
                 } else null
 
                 ocrFil?.let { ocr ->
+
+                    sjekkOcrInnhold(ocr)
 
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
@@ -291,5 +294,15 @@ class SykmeldingService(
             etternavn = behandler.navn.etternavn,
             telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString()
         )
+    }
+
+    private fun sjekkOcrInnhold(ocr: Skanningmetadata) {
+        if (ocr.sykemeldinger.behandler.hpr == null
+                && ocr.sykemeldinger.medisinskVurdering.hovedDiagnose.isEmpty()
+                && ocr.sykemeldinger.medisinskVurdering.bidiagnose.isEmpty()
+                && ocr.sykemeldinger.medisinskVurdering.annenFraversArsak.isNullOrEmpty()
+        ) {
+            PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
+        }
     }
 }
