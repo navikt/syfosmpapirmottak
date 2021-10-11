@@ -83,8 +83,6 @@ class SykmeldingService(
 
                 ocrFil?.let { ocr ->
 
-                    sjekkOcrInnhold(ocr, loggingMeta)
-
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
                     val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
@@ -93,6 +91,8 @@ class SykmeldingService(
                     )
 
                     log.info("Fant ${when (samhandlerPraksis) { null -> "ikke " else -> "" }}samhandlerpraksis for hpr ${sykmelder!!.hprNummer}")
+
+                    tellOcrInnhold(ocr, loggingMeta)
 
                     val fellesformat = mapOcrFilTilFellesformat(
                         skanningmetadata = ocr,
@@ -296,7 +296,7 @@ class SykmeldingService(
         )
     }
 
-    private fun sjekkOcrInnhold(ocr: Skanningmetadata, loggingMeta: LoggingMeta) {
+    private fun tellOcrInnhold(ocr: Skanningmetadata, loggingMeta: LoggingMeta) {
         if (ocr.sykemeldinger.medisinskVurdering.hovedDiagnose.isEmpty() &&
             ocr.sykemeldinger.medisinskVurdering.bidiagnose.isEmpty() &&
             ocr.sykemeldinger.medisinskVurdering.annenFraversArsak.isNullOrEmpty()
