@@ -6,6 +6,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.DokArkivClient
+import no.nav.syfo.client.Godkjenning
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
@@ -119,6 +120,8 @@ class SykmeldingService(
                         personNrPasient = pasient.fnr,
                         tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
                         personNrLege = sykmelder!!.fnr,
+                        legeHprNr = sykmelder!!.hprNummer,
+                        legeHelsepersonellkategori = sykmelder?.godkjenninger?.getHelsepersonellKategori(),
                         navLogId = sykmeldingId,
                         msgId = sykmeldingId,
                         legekontorOrgNr = null,
@@ -132,7 +135,8 @@ class SykmeldingService(
                         rulesetVersion = healthInformation.regelSettVersjon,
                         fellesformat = fellesformatMarshaller.toString(fellesformat),
                         tssid = samhandlerPraksis?.tss_ident ?: "",
-                        merknader = null
+                        merknader = null,
+                        partnerreferanse = null // TODO: Sjekk om dette er riktig verdi
                     )
 
                     log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
@@ -292,7 +296,8 @@ class SykmeldingService(
             fornavn = behandler.navn.fornavn,
             mellomnavn = behandler.navn.mellomnavn,
             etternavn = behandler.navn.etternavn,
-            telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString()
+            telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString(),
+            godkjenninger = behandlerFraHpr.godkjenninger
         )
     }
 
@@ -304,5 +309,18 @@ class SykmeldingService(
             log.info("Papirsykmelding inneholder ikke hovedDiagnose, biDiagnose eller annenFraversArsak", fields(loggingMeta))
             PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
         }
+    }
+}
+
+fun List<Godkjenning>.getHelsepersonellKategori(): String? = when {
+    find { it.helsepersonellkategori?.verdi == "LE" } != null -> "LE"
+    find { it.helsepersonellkategori?.verdi == "TL" } != null -> "TL"
+    find { it.helsepersonellkategori?.verdi == "MT" } != null -> "MT"
+    find { it.helsepersonellkategori?.verdi == "FT" } != null -> "FT"
+    find { it.helsepersonellkategori?.verdi == "KI" } != null -> "KI"
+    else -> {
+        val verdi = firstOrNull()?.helsepersonellkategori?.verdi
+        log.warn("Signerende behandler har ikke en helsepersonellkategori($verdi) vi kjenner igjen")
+        verdi
     }
 }

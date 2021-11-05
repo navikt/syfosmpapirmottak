@@ -21,6 +21,8 @@ import no.nav.helse.sykSkanningMeta.ReisetilskuddType
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
 import no.nav.helse.sykSkanningMeta.UtenArbeidsgiverType
+import no.nav.syfo.client.Godkjenning
+import no.nav.syfo.client.Kode
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.model.Adresse
@@ -65,11 +67,15 @@ object FellesformatMapperServiceSpek : Spek({
     val hprNummer = "10052512"
     val datoOpprettet = LocalDateTime.now()
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
+    val godkjenninger = listOf(Godkjenning(helsepersonellkategori = Kode(true, 1, "LE")))
 
     describe("MappingService ende-til-ende") {
         it("Realistisk case ende-til-ende") {
-            val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = null, etternavn = "Etternavn", telefonnummer = null)
+            val skanningMetadata = skanningMetadataUnmarshaller
+                .unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml")))
+                    as Skanningmetadata
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn",
+                mellomnavn = null, etternavn = "Etternavn", telefonnummer = null, godkjenninger = listOf())
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val fellesformat = mapOcrFilTilFellesformat(
@@ -107,7 +113,10 @@ object FellesformatMapperServiceSpek : Spek({
                 rulesetVersion = healthInformation.regelSettVersjon,
                 fellesformat = objectMapper.writeValueAsString(fellesformat),
                 tssid = null,
-                merknader = null
+                merknader = null,
+                legeHelsepersonellkategori = godkjenninger.getHelsepersonellKategori(),
+                legeHprNr = hprNummer,
+                partnerreferanse = null
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
@@ -136,11 +145,12 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.syketilfelleStartDato shouldBeEqualTo LocalDate.of(2019, Month.AUGUST, 15)
             receivedSykmelding.sykmelding.signaturDato shouldBeEqualTo LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.navnFastlege shouldBeEqualTo null
+            receivedSykmelding.legeHelsepersonellkategori shouldBeEqualTo "LE"
         }
 
         it("Minimal ocr-fil") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/minimal-ocr-sykmelding.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, godkjenninger = listOf())
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
             val fellesformat = mapOcrFilTilFellesformat(
                 skanningmetadata = skanningMetadata,
@@ -177,7 +187,10 @@ object FellesformatMapperServiceSpek : Spek({
                 rulesetVersion = healthInformation.regelSettVersjon,
                 fellesformat = objectMapper.writeValueAsString(fellesformat),
                 tssid = null,
-                merknader = null
+                merknader = null,
+                legeHelsepersonellkategori = "LE",
+                legeHprNr = hprNummer,
+                partnerreferanse = null
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
@@ -220,7 +233,7 @@ object FellesformatMapperServiceSpek : Spek({
 
         it("Map with avventendeSykmelding uten innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-ugyldig.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, listOf())
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val func = {
@@ -239,7 +252,7 @@ object FellesformatMapperServiceSpek : Spek({
 
         it("map with avventendeSykmelding og innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-gyldig.xml"))) as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null)
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, listOf())
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val func = {
@@ -583,7 +596,7 @@ object FellesformatMapperServiceSpek : Spek({
         }
 
         it("tilBehandler") {
-            val sykmelder = Sykmelder(hprNummer = "654321", fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = "Mellomnavn", etternavn = "Etternavn", telefonnummer = "12345678")
+            val sykmelder = Sykmelder(hprNummer = "654321", fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = "Mellomnavn", etternavn = "Etternavn", telefonnummer = "12345678", godkjenninger = listOf())
 
             val behandler = tilBehandler(sykmelder)
 
