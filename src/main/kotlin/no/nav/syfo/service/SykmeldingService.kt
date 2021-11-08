@@ -136,7 +136,7 @@ class SykmeldingService(
                         fellesformat = fellesformatMarshaller.toString(fellesformat),
                         tssid = samhandlerPraksis?.tss_ident ?: "",
                         merknader = null,
-                        partnerreferanse = null // TODO: Sjekk om dette er riktig verdi
+                        partnerreferanse = null
                     )
 
                     log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
