@@ -53,7 +53,8 @@ object KafkaITSpek : Spek({
         aadAccessTokenV2Url = "aadAccessTokenV2Url",
         clientIdV2 = "clientIdV2",
         clientSecretV2 = "clientSecretV2",
-        pdlScope = "pdlScope"
+        pdlScope = "pdlScope",
+        opprettSakUrl = "sak"
     )
 
     fun Properties.overrideForTest(): Properties = apply {
