@@ -73,9 +73,11 @@ object FellesformatMapperServiceSpek : Spek({
         it("Realistisk case ende-til-ende") {
             val skanningMetadata = skanningMetadataUnmarshaller
                 .unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml")))
-                    as Skanningmetadata
-            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn",
-                mellomnavn = null, etternavn = "Etternavn", telefonnummer = null, godkjenninger = listOf())
+                as Skanningmetadata
+            val sykmelder = Sykmelder(
+                hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn",
+                mellomnavn = null, etternavn = "Etternavn", telefonnummer = null, godkjenninger = listOf()
+            )
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
             val fellesformat = mapOcrFilTilFellesformat(
