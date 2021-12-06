@@ -233,6 +233,40 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.navnFastlege shouldBeEqualTo null
         }
 
+        it("Tilbakedatering settes riktig") {
+            val skanningMetadata = skanningMetadataUnmarshaller
+                .unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett.xml")))
+                as Skanningmetadata
+            val sykmelder = Sykmelder(
+                hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn",
+                mellomnavn = null, etternavn = "Etternavn", telefonnummer = null, godkjenninger = listOf()
+            )
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
+
+            val fellesformat = mapOcrFilTilFellesformat(
+                skanningmetadata = skanningMetadata,
+                sykmelder = sykmelder,
+                sykmeldingId = sykmeldingId,
+                loggingMeta = loggingMetadata,
+                pdlPerson = pdlPerson,
+                journalpostId = journalpostId
+            )
+
+            val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
+            val msgHead = fellesformat.get<XMLMsgHead>()
+
+            val sykmelding = healthInformation.toSykmelding(
+                sykmeldingId = UUID.randomUUID().toString(),
+                pasientAktoerId = aktorId,
+                legeAktoerId = sykmelder.aktorId,
+                msgId = sykmeldingId,
+                signaturDato = msgHead.msgInfo.genDate
+            )
+
+            sykmelding.kontaktMedPasient shouldBeEqualTo KontaktMedPasient(LocalDate.of(2000, 8, 10), "Han var syk i 2000 også.")
+            sykmelding.behandletTidspunkt shouldBeEqualTo LocalDateTime.of(LocalDate.of(2020, Month.MAY, 2), LocalTime.NOON)
+        }
+
         it("Map with avventendeSykmelding uten innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-ugyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, listOf())
