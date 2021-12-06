@@ -179,8 +179,8 @@ fun mapOcrFilTilFellesformat(
                                         }
                                         meldingTilArbeidsgiver = skanningmetadata.sykemeldinger.meldingTilArbeidsgiver
                                         kontaktMedPasient = HelseOpplysningerArbeidsuforhet.KontaktMedPasient().apply {
-                                            kontaktDato = skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato
-                                            begrunnIkkeKontakt = null
+                                            kontaktDato = skanningmetadata.sykemeldinger.tilbakedatering?.tilbakeDato
+                                            begrunnIkkeKontakt = skanningmetadata.sykemeldinger.tilbakedatering?.tilbakebegrunnelse
                                             behandletDato = velgRiktigKontaktOgSignaturDato(skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato, tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet))
                                         }
                                         behandler = tilBehandler(sykmelder)

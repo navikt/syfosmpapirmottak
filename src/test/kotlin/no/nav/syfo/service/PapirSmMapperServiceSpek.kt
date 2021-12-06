@@ -135,7 +135,8 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.meldingTilNAV?.bistandUmiddelbart shouldBeEqualTo true
             papirSm.meldingTilNAV?.beskrivBistand shouldBeEqualTo "Her må NAV få fingeren ut. Skandale!"
             papirSm.meldingTilArbeidsgiver shouldBeEqualTo "Ja, dere bør slutte med kull da."
-            papirSm.kontaktMedPasient?.kontaktDato shouldBeEqualTo LocalDate.of(2020, 5, 2)
+            papirSm.kontaktMedPasient?.kontaktDato shouldBeEqualTo LocalDate.of(2000, 8, 10)
+            papirSm.kontaktMedPasient?.begrunnelseIkkeKontakt shouldBeEqualTo "Han var syk i 2000 også."
             papirSm.behandletTidspunkt shouldBeEqualTo LocalDate.of(2020, 5, 2)
 
             papirSm.behandler?.hpr shouldBeEqualTo "100"

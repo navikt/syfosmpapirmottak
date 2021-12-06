@@ -72,10 +72,10 @@ fun mapOcrFilTilPapirSmRegistrering(
             )
         },
         meldingTilArbeidsgiver = sykmelding?.meldingTilArbeidsgiver,
-        kontaktMedPasient = sykmelding?.kontaktMedPasient?.behandletDato.let {
+        kontaktMedPasient = sykmelding?.tilbakedatering?.let {
             KontaktMedPasient(
-                kontaktDato = sykmelding?.kontaktMedPasient?.behandletDato,
-                begrunnelseIkkeKontakt = null
+                kontaktDato = it.tilbakeDato,
+                begrunnelseIkkeKontakt = it.tilbakebegrunnelse
             )
         },
         behandletTidspunkt = sykmelding?.kontaktMedPasient?.behandletDato,
