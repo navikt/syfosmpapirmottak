@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val apolloVersion = "1.2.2"
+val apolloVersion = "2.5.11"
 val coroutinesVersion = "1.4.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "2.4.0"
@@ -45,7 +45,7 @@ plugins {
     kotlin("jvm") version "1.4.21"
     id("com.diffplug.spotless") version "5.8.2"
     id("com.github.johnrengelman.shadow") version "6.1.0"
-    id("com.apollographql.android") version "1.2.2"
+    id("com.apollographql.apollo") version "2.5.11"
     id("org.jmailen.kotlinter") version "3.3.0"
 }
 
@@ -63,7 +63,7 @@ buildscript {
         classpath("com.sun.xml.ws:jaxws-tools:2.3.1") {
             exclude(group = "com.sun.xml.ws", module = "policy")
         }
-        classpath("com.apollographql.apollo:apollo-gradle-plugin:1.2.2")
+        classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.11")
     }
 }
 

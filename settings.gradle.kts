@@ -9,7 +9,7 @@ pluginManagement {
     }
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.id == "com.apollographql.android") {
+            if (requested.id.id == "com.apollographql.apollo") {
                 useModule("com.apollographql.apollo:apollo-gradle-plugin:${requested.version}")
             }
         }
