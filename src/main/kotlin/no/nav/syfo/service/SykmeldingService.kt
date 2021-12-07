@@ -17,6 +17,7 @@ import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
+import no.nav.syfo.metrics.FEILARSAK
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
@@ -154,6 +155,7 @@ class SykmeldingService(
                     if (validationResult.status == Status.MANUAL_PROCESSING ||
                         requireManuellBehandling(receivedSykmelding)
                     ) {
+                        FEILARSAK.labels("manuell_behandling").inc()
                         manuellBehandling(
                             journalpostId = journalpostId,
                             fnr = pasient.fnr,
@@ -190,6 +192,7 @@ class SykmeldingService(
             } catch (e: SafNotFoundException) {
                 log.warn("Noe gikk galt ved uthenting av dokument: ${e.message}")
             } catch (e: Exception) {
+                tellFeilArsak(e.message)
                 PAPIRSM_MAPPET.labels("feil").inc()
                 log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
             }
@@ -309,6 +312,33 @@ class SykmeldingService(
             log.info("Papirsykmelding inneholder ikke hovedDiagnose, biDiagnose eller annenFraversArsak", fields(loggingMeta))
             PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
         }
+    }
+
+    private fun tellFeilArsak(feilmelding: String?) {
+        val label = feilmelding?.let {
+            if (it.startsWith("Kunne ikke hente fnr for hpr")) {
+                "fant_ikke_behandler_hpr"
+            } else if (it.startsWith("Mangler informasjon om behandler")) {
+                "ocr_mangler_behandler"
+            } else if (it.startsWith("HPR-nummer mangler")) {
+                "ocr_mangler_hpr"
+            } else if (it.startsWith("skanningmetadata.sykemeldinger.pasient must not be null")) {
+                "ocr_mangler_pasient"
+            } else if (it.startsWith("ocr.sykemeldinger.medisinskVurdering must not be null")) {
+                "ocr_mangler_medisinskvurdering"
+            } else if (it.contains("diagnosekode must not be null")) {
+                "diagnosekode_mangler"
+            } else if (it.contains("tilhører ingen kjente kodeverk")) {
+                "ukjent_diagnosekode"
+            } else if (it.startsWith("periodeTOMDato must not be null")) {
+                "mangler_tom"
+            } else if (it.startsWith("periodeFOMDato must not be null")) {
+                "mangler_fom"
+            } else {
+                "annet"
+            }
+        } ?: "null"
+        FEILARSAK.labels(label).inc()
     }
 }
 
