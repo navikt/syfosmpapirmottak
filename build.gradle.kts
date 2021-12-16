@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val apolloVersion = "1.2.2"
+val apolloVersion = "1.4.5"
 val coroutinesVersion = "1.4.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "2.4.0"
@@ -24,7 +24,7 @@ val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a
 val jacksonVersion = "2.13.0"
 val joarkHendelseVersion = "67a9be4476b63b7247cfacfaf821ab656bd2a952"
 val confluentVersion = "7.0.1"
-val jettyVersion = "9.4.11.v20180605"
+val jettyVersion = "9.4.44.v20210927"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
 val commonsTextVersion = "1.4"
