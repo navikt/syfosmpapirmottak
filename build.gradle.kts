@@ -12,18 +12,18 @@ val kafkaVersion = "2.4.0"
 val kafkaEmbeddedVersion = "2.4.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.61"
-val ktorVersion = "1.5.1"
-val logbackVersion = "1.2.3"
-val logstashLogbackEncoderVersion = "6.5"
+val ktorVersion = "1.6.6"
+val logbackVersion = "1.2.7"
+val logstashLogbackEncoderVersion = "7.0.1"
 val prometheusVersion = "0.9.0"
 val spekVersion = "2.0.9"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
-val jacksonVersion = "2.12.0"
+val jacksonVersion = "2.13.0"
 val joarkHendelseVersion = "67a9be4476b63b7247cfacfaf821ab656bd2a952"
-val confluentVersion = "5.3.1"
+val confluentVersion = "7.0.1"
 val jettyVersion = "9.4.11.v20180605"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
@@ -33,16 +33,16 @@ val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val jaxwsToolsVersion = "2.3.1"
-val smCommonVersion = "1.e6f10d8"
+val smCommonVersion = "1.a92720c"
 val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
-val ioMockVersion = "1.10.3"
+val ioMockVersion = "1.12.1"
 
 
 plugins {
     java
     id("no.nils.wsdl2java") version "0.10"
-    kotlin("jvm") version "1.4.21"
+    kotlin("jvm") version "1.6.0"
     id("com.diffplug.spotless") version "5.8.2"
     id("com.github.johnrengelman.shadow") version "6.1.0"
     id("com.apollographql.android") version "1.2.2"
@@ -181,7 +181,7 @@ tasks {
         }
     }
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "12"
+        kotlinOptions.jvmTarget = "17"
     }
 
     withType<ShadowJar> {
