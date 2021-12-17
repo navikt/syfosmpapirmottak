@@ -45,7 +45,7 @@ plugins {
     kotlin("jvm") version "1.6.0"
     id("com.diffplug.spotless") version "5.8.2"
     id("com.github.johnrengelman.shadow") version "6.1.0"
-    id("com.apollographql.android") version "1.2.2"
+    id("com.apollographql.apollo") version "1.4.5"
     id("org.jmailen.kotlinter") version "3.3.0"
 }
 
@@ -63,7 +63,7 @@ buildscript {
         classpath("com.sun.xml.ws:jaxws-tools:2.3.1") {
             exclude(group = "com.sun.xml.ws", module = "policy")
         }
-        classpath("com.apollographql.apollo:apollo-gradle-plugin:1.2.2")
+        classpath("com.apollographql.apollo:apollo-gradle-plugin:1.4.5")
     }
 }
 
