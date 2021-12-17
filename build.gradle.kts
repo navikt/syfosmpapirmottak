@@ -73,9 +73,6 @@ val githubPassword: String by project
 repositories {
     mavenCentral()
     jcenter()
-    maven (url= "https://kotlin.bintray.com/kotlinx")
-    maven (url= "https://dl.bintray.com/kotlin/ktor")
-    maven (url= "https://dl.bintray.com/spekframework/spek-dev")
     maven (url= "https://packages.confluent.io/maven/")
     maven {
         url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
