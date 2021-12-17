@@ -6,13 +6,13 @@ group = "no.nav.syfo"
 version = "1.0.0"
 
 val apolloVersion = "1.4.5"
-val coroutinesVersion = "1.4.2"
+val coroutinesVersion = "1.5.2"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
-val kafkaVersion = "2.4.0"
-val kafkaEmbeddedVersion = "2.8.0"
+val kafkaVersion = "2.8.0"
+//val kafkaEmbeddedVersion = "2.8.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.68"
-val ktorVersion = "1.6.6"
+val ktorVersion = "1.6.7"
 val logbackVersion = "1.2.7"
 val logstashLogbackEncoderVersion = "7.0.1"
 val prometheusVersion = "0.12.0"
@@ -23,12 +23,12 @@ val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
 val jacksonVersion = "2.13.0"
 val joarkHendelseVersion = "67a9be4476b63b7247cfacfaf821ab656bd2a952"
-val confluentVersion = "7.0.1"
+val confluentVersion = "6.2.2"
 val jettyVersion = "9.4.44.v20210927"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
 val commonsTextVersion = "1.4"
-val cxfVersion = "3.2.7"
+val cxfVersion = "3.4.5"
 val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
@@ -41,17 +41,16 @@ val ioMockVersion = "1.12.1"
 
 plugins {
     java
-    id("no.nils.wsdl2java") version "0.10"
     kotlin("jvm") version "1.6.0"
-    id("com.diffplug.spotless") version "5.8.2"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("no.nils.wsdl2java") version "0.10"
+    id("com.diffplug.spotless") version "5.16.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
     id("com.apollographql.apollo") version "1.4.5"
-    id("org.jmailen.kotlinter") version "3.3.0"
+    id("org.jmailen.kotlinter") version "3.6.0"
 }
 
 buildscript {
     repositories {
-        jcenter()
         gradlePluginPortal()
         mavenCentral()
         google()
@@ -71,9 +70,6 @@ val githubUser: String by project
 val githubPassword: String by project
 
 repositories {
-    mavenCentral()
-    jcenter()
-    maven (url= "https://packages.confluent.io/maven/")
     maven {
         url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
         credentials {
@@ -81,6 +77,8 @@ repositories {
             password = githubPassword
         }
     }
+    mavenCentral()
+    maven (url= "https://packages.confluent.io/maven/")
 }
 
 
@@ -155,7 +153,7 @@ dependencies {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
     }
     testImplementation ("io.ktor:ktor-jackson:$ktorVersion")
-    testImplementation ("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
+//    testImplementation ("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
 
     testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")

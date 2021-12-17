@@ -2,7 +2,6 @@ rootProject.name = "syfosmpapirmottak"
 
 pluginManagement {
     repositories {
-        jcenter()
         gradlePluginPortal()
         mavenCentral()
         google()
