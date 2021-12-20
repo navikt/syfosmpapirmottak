@@ -23,7 +23,7 @@ val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a
 val jacksonVersion = "2.13.0"
 val joarkHendelseVersion = "67a9be4476b63b7247cfacfaf821ab656bd2a952"
 val confluentVersion = "6.2.2"
-val jettyVersion = "9.4.44.v20210927"
+val jettyVersion = "11.0.6"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
 val commonsTextVersion = "1.9"
@@ -141,8 +141,9 @@ dependencies {
     implementation("com.sun.xml.ws:jaxws-tools:$jaxwsToolsVersion") {
         exclude(group = "com.sun.xml.ws", module = "policy")
     }
-
     implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation ("org.eclipse.jetty:jetty-servlet:$jettyVersion")
