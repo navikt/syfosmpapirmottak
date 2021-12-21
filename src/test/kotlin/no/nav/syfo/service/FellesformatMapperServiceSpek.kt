@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
@@ -56,7 +55,6 @@ import java.time.LocalTime
 import java.time.Month
 import java.util.UUID
 
-@KtorExperimentalAPI
 object FellesformatMapperServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"

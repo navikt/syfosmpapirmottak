@@ -19,7 +19,6 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -33,7 +32,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-@KtorExperimentalAPI
 object OppgaveClientSpek : Spek({
     val stsOidcClientMock = mockk<StsOidcClient>()
     val httpClient = HttpClient(Apache) {

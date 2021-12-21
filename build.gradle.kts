@@ -28,19 +28,15 @@ val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464
 val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
 val commonsTextVersion = "1.9"
 val cxfVersion = "3.4.5"
-val jaxwsApiVersion = "2.3.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
-val jaxwsToolsVersion = "2.3.1"
 val smCommonVersion = "1.a92720c"
-val javaxJaxwsApiVersion = "2.2.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.12.1"
 val kotlinVersion = "1.6.0"
 
 plugins {
     java
-    id("no.nils.wsdl2java") version "0.10"
     kotlin("jvm") version "1.6.0"
     id("com.diffplug.spotless") version "5.16.0"
     id("com.github.johnrengelman.shadow") version "7.0.0"
@@ -58,9 +54,6 @@ buildscript {
         classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
         classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
         classpath("com.sun.activation:javax.activation:1.2.0")
-        classpath("com.sun.xml.ws:jaxws-tools:2.3.1") {
-            exclude(group = "com.sun.xml.ws", module = "policy")
-        }
         classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.11")
     }
 }
@@ -117,33 +110,21 @@ dependencies {
     implementation ("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-networking:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-rest-sts:$smCommonVersion")
-    implementation ("no.nav.helse:syfosm-common-ws:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonVersion")
-    implementation ("no.nav.helse:syfosm-common-mq:$smCommonVersion") {
-        exclude(group = "com.ibm.mq", module = "com.ibm.mq.allclient")
-    }
+
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
     implementation ("javax.activation:activation:$javaxActivationVersion")
 
     implementation ("org.apache.commons:commons-text:$commonsTextVersion")
-    implementation ("org.apache.cxf:cxf-rt-frontend-jaxws:$cxfVersion")
-    implementation ("org.apache.cxf:cxf-rt-features-logging:$cxfVersion")
-    implementation ("org.apache.cxf:cxf-rt-transports-http:$cxfVersion")
-    implementation ("org.apache.cxf:cxf-rt-ws-security:$cxfVersion")
 
-    implementation ("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
     implementation ("javax.annotation:javax.annotation-api:$javaxAnnotationApiVersion")
     implementation ("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation ("org.glassfish.jaxb:jaxb-runtime:$jaxbRuntimeVersion")
     implementation ("javax.activation:activation:$javaxActivationVersion")
-    implementation("com.sun.xml.ws:jaxws-tools:$jaxwsToolsVersion") {
-        exclude(group = "com.sun.xml.ws", module = "policy")
-    }
     implementation("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation ("org.eclipse.jetty:jetty-servlet:$jettyVersion")

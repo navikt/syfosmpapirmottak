@@ -1,16 +1,14 @@
 package no.nav.syfo.client
 
 import FindJournalpostQuery
-import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import type.Variantformat
 import java.time.Month
-import kotlin.test.assertFailsWith
 
-@KtorExperimentalAPI
 object SafJournalpostClientSpek : Spek({
     val loggingMetadata = LoggingMeta("sykmeldingId", "123", "hendelsesId")
 

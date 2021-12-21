@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
@@ -17,7 +16,6 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-@KtorExperimentalAPI
 object PapirSmMapperServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"
