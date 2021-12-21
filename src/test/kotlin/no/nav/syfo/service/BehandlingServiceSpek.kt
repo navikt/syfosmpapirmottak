@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import io.mockk.Called
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -22,13 +21,12 @@ import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
+import org.amshove.kluent.internal.assertFailsWith
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.time.LocalDateTime
-import kotlin.test.assertFailsWith
 
-@KtorExperimentalAPI
 object BehandlingServiceSpek : Spek({
     val sykmeldingId = "1234"
     val loggingMetadata = LoggingMeta(sykmeldingId, "123", "hendelsesId")

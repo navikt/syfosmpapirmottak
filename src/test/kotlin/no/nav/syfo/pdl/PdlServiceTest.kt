@@ -1,6 +1,5 @@
 package no.nav.syfo.pdl
 
-import io.ktor.util.KtorExperimentalAPI
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.mockkClass
@@ -20,7 +19,6 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-@KtorExperimentalAPI
 object PdlServiceTest : Spek({
 
     val pdlClient = mockkClass(PdlClient::class)

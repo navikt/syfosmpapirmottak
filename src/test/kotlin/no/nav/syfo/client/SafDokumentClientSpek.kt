@@ -18,12 +18,12 @@ import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.util.KtorExperimentalAPI
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEqualTo
 import org.spekframework.spek2.Spek
@@ -36,9 +36,7 @@ import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.Month
 import java.util.concurrent.TimeUnit
-import kotlin.test.assertFailsWith
 
-@KtorExperimentalAPI
 object SafDokumentClientSpek : Spek({
     val stsOidcClientMock = mockk<StsOidcClient>()
     val httpClient = HttpClient(Apache) {

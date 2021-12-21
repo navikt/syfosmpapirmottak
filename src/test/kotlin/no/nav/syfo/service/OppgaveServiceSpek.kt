@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -12,7 +11,6 @@ import no.nav.syfo.util.LoggingMeta
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-@KtorExperimentalAPI
 object OppgaveServiceSpek : Spek({
     val sykmeldingId = "1234"
     val journalpostId = "123"
