@@ -95,7 +95,7 @@ fun main() {
     DefaultExports.initialize()
 
     val kafkaBaseConfig = loadBaseConfig(env, credentials).envOverrides()
-    kafkaBaseConfig["auto.offset.reset"] = "latest"
+    kafkaBaseConfig["auto.offset.reset"] = "none"
 
     val consumerProperties = kafkaBaseConfig.toConsumerConfig(
         "${env.applicationName}-consumer-v2",
