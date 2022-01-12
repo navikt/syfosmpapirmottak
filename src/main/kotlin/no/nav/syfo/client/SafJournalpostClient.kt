@@ -6,7 +6,6 @@ import com.apollographql.apollo.ApolloQueryCall
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
-import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
@@ -29,7 +28,6 @@ suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { c
     })
 }
 
-@KtorExperimentalAPI
 class SafJournalpostClient(private val apolloClient: ApolloClient, private val stsClient: StsOidcClient) {
     suspend fun getJournalpostMetadata(
         journalpostId: String,

@@ -7,7 +7,6 @@ import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.NotFound
-import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import java.io.IOException
@@ -19,7 +18,6 @@ class NorskHelsenettClient(
     private val httpClient: HttpClient
 ) {
 
-    @KtorExperimentalAPI
     suspend fun finnBehandler(hprNummer: String, sykmeldingId: String): Behandler? = retry(
         callName = "finnbehandler",
         retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L)

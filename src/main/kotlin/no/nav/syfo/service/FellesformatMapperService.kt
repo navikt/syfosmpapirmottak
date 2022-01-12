@@ -465,7 +465,7 @@ fun tilPeriodeListe(aktivitetType: AktivitetType): List<HelseOpplysningerArbeids
 
 fun tilArbeidsgiver(arbeidsgiverType: ArbeidsgiverType?, loggingMeta: LoggingMeta): HelseOpplysningerArbeidsuforhet.Arbeidsgiver =
     HelseOpplysningerArbeidsuforhet.Arbeidsgiver().apply {
-        harArbeidsgiver = with(arbeidsgiverType?.harArbeidsgiver?.toLowerCase()) {
+        harArbeidsgiver = with(arbeidsgiverType?.harArbeidsgiver?.lowercase()) {
             when {
                 this == null -> CS().apply {
                     dn = "Ingen arbeidsgiver"
@@ -536,8 +536,8 @@ fun tilMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType, loggin
 }
 
 fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?, diagnose: String?): String {
-    val sanitisertSystem = system?.replace(".", "")?.replace(" ", "")?.replace("-", "")?.toUpperCase()
-    val sanitisertKode = diagnoseKode.replace(".", "").replace(" ", "").toUpperCase()
+    val sanitisertSystem = system?.replace(".", "")?.replace(" ", "")?.replace("-", "")?.uppercase()
+    val sanitisertKode = diagnoseKode.replace(".", "").replace(" ", "").uppercase()
 
     return if (sanitisertSystem == "ICD10") {
         Diagnosekoder.ICD10_CODE
@@ -552,9 +552,9 @@ fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?, diagnose:
 
 fun toMedisinskVurderingDiagnose(originalDiagnosekode: String, originalSystem: String?, diagnose: String?, loggingMeta: LoggingMeta): CV {
     val diagnosekode = if (originalDiagnosekode.contains(".")) {
-        originalDiagnosekode.replace(".", "").toUpperCase().replace(" ", "")
+        originalDiagnosekode.replace(".", "").uppercase().replace(" ", "")
     } else {
-        originalDiagnosekode.toUpperCase().replace(" ", "")
+        originalDiagnosekode.uppercase().replace(" ", "")
     }
 
     val identifisertKodeverk = identifiserDiagnoseKodeverk(originalDiagnosekode, originalSystem, diagnose)

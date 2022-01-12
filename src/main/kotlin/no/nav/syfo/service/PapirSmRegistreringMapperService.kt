@@ -288,7 +288,7 @@ private fun toErIkkeIArbeid(utenArbeidsgiver: UtenArbeidsgiverType): ErIkkeIArbe
 
 private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arbeidsgiver(
     navn = arbeidsgiver?.navnArbeidsgiver,
-    harArbeidsgiver = with(arbeidsgiver?.harArbeidsgiver?.toLowerCase()) {
+    harArbeidsgiver = with(arbeidsgiver?.harArbeidsgiver?.lowercase()) {
         when {
             this == null -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
             this.contains("ingen") -> HarArbeidsgiver.INGEN_ARBEIDSGIVER
@@ -332,9 +332,9 @@ private fun toMedisinskVurderingDiagnose(diagnoseKodeSystem: String?, diagnoseKo
     if (diagnoseKode != null) {
         val sanitisertDiagnoseKode = when {
             diagnoseKode.contains(".") -> {
-                diagnoseKode.replace(".", "").toUpperCase().replace(" ", "")
+                diagnoseKode.replace(".", "").uppercase().replace(" ", "")
             }
-            else -> diagnoseKode.toUpperCase().replace(" ", "")
+            else -> diagnoseKode.uppercase().replace(" ", "")
         }
 
         if (Diagnosekoder.icd10.containsKey(sanitisertDiagnoseKode)) {

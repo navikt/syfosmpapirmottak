@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.syfo.client.DokArkivClient
@@ -10,7 +9,6 @@ import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.util.LoggingMeta
 import org.apache.kafka.clients.producer.KafkaProducer
 
-@KtorExperimentalAPI
 suspend fun handleOk(
     kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
     sm2013AutomaticHandlingTopic: String,

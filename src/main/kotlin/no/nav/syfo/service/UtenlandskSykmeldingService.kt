@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.client.SakClient
 import no.nav.syfo.log
@@ -8,7 +7,6 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
 
-@KtorExperimentalAPI
 class UtenlandskSykmeldingService constructor(
     private val sakClient: SakClient,
     private val oppgaveService: OppgaveService
