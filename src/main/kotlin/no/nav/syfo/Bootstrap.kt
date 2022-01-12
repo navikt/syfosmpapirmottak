@@ -38,6 +38,7 @@ import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
+import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
@@ -103,7 +104,10 @@ fun main() {
 
     val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
 
-    val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerProperties)
+    val producerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
+        .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
+
+    val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerProperties)
     val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerProperties)
 
@@ -210,7 +214,7 @@ fun launchListeners(
             applicationState = applicationState,
             consumer = kafkaconsumerJournalfoeringHendelse,
             behandlingService = behandlingService,
-            sm2013AutomaticHandlingTopic = env.sm2013AutomaticHandlingTopic,
+            okSykmeldingTopic = env.okSykmeldingTopic,
             kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
             dokArkivClient = dokArkivClient,
             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -223,7 +227,7 @@ suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService,
-    sm2013AutomaticHandlingTopic: String,
+    okSykmeldingTopic: String,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
@@ -243,7 +247,7 @@ suspend fun blockingApplicationLogic(
                 journalfoeringEvent = journalfoeringHendelseRecord,
                 loggingMeta = loggingMeta,
                 sykmeldingId = sykmeldingId,
-                sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                okSykmeldingTopic = okSykmeldingTopic,
                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,

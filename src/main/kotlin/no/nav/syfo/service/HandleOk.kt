@@ -11,7 +11,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 
 suspend fun handleOk(
     kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
-    sm2013AutomaticHandlingTopic: String,
+    okSykmeldingTopic: String,
     receivedSykmelding: ReceivedSykmelding,
     syfoserviceProducer: KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>,
     syfoserviceTopic: String,
@@ -24,7 +24,7 @@ suspend fun handleOk(
 
     dokArkivClient.oppdaterOgFerdigstillJournalpost(journalpostId = journalpostid, fnr = receivedSykmelding.personNrPasient, sykmeldingId = sykmeldingId, behandler = receivedSykmelding.sykmelding.behandler, loggingMeta = loggingMeta)
 
-    sendReceivedSykmeldingToKafka(kafkaReceivedSykmeldingProducer, sm2013AutomaticHandlingTopic, receivedSykmelding, loggingMeta)
+    sendReceivedSykmeldingToKafka(kafkaReceivedSykmeldingProducer, okSykmeldingTopic, receivedSykmelding, loggingMeta)
 
     notifySyfoService(
         syfoserviceProducer = syfoserviceProducer,

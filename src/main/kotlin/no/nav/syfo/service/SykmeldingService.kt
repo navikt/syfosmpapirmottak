@@ -56,7 +56,7 @@ class SykmeldingService(
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
-        sm2013AutomaticHandlingTopic: String,
+        okSykmeldingTopic: String,
         kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
@@ -170,7 +170,7 @@ class SykmeldingService(
                     } else if (validationResult.status == Status.OK) {
                         handleOk(
                             kafkaReceivedSykmeldingProducer = kafkaReceivedSykmeldingProducer,
-                            sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                            okSykmeldingTopic = okSykmeldingTopic,
                             receivedSykmelding = receivedSykmelding,
                             sykmeldingId = receivedSykmelding.sykmelding.id,
                             healthInformation = healthInformation,
