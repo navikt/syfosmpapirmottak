@@ -109,7 +109,7 @@ fun main() {
 
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerProperties)
-    val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerProperties)
+    val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerPropertiesAiven)
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl)
 
@@ -194,6 +194,7 @@ fun createListener(applicationState: ApplicationState, action: suspend Coroutine
         }
     }
 
+@DelicateCoroutinesApi
 fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,

@@ -1,5 +1,6 @@
 package no.nav.syfo.client
 
+import FindJournalpostQuery
 import com.apollographql.apollo.ApolloCall
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.ApolloQueryCall
@@ -37,15 +38,15 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
             FindJournalpostQuery.builder()
                 .id(journalpostId)
                 .build()
-        )
+        ).toBuilder()
             .requestHeaders(
                 RequestHeaders.builder()
                     .addHeader("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
                     .addHeader("X-Correlation-ID", journalpostId)
                     .build()
-            )
+            ).build()
             .execute()
-            .data()
+            .data
             ?.journalpost()
         val dokumentId: String? = finnDokumentIdForOcr(journalpost?.dokumenter(), loggingMeta)
         return journalpost?.let {
