@@ -14,9 +14,9 @@ import io.ktor.client.engine.apache.ApacheEngineConfig
 import io.ktor.client.features.HttpResponseValidator
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
-import io.ktor.util.KtorExperimentalAPI
 import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -38,6 +38,7 @@ import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
+import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
@@ -71,7 +72,6 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 }
 
-@KtorExperimentalAPI
 fun main() {
     val env = Environment()
     val credentials = VaultCredentials(
@@ -104,7 +104,10 @@ fun main() {
 
     val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
 
-    val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerProperties)
+    val producerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
+        .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
+
+    val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerProperties)
     val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerProperties)
 
@@ -179,6 +182,7 @@ fun main() {
     )
 }
 
+@DelicateCoroutinesApi
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
     GlobalScope.launch {
         try {
@@ -190,7 +194,6 @@ fun createListener(applicationState: ApplicationState, action: suspend Coroutine
         }
     }
 
-@KtorExperimentalAPI
 fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
@@ -211,7 +214,7 @@ fun launchListeners(
             applicationState = applicationState,
             consumer = kafkaconsumerJournalfoeringHendelse,
             behandlingService = behandlingService,
-            sm2013AutomaticHandlingTopic = env.sm2013AutomaticHandlingTopic,
+            okSykmeldingTopic = env.okSykmeldingTopic,
             kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
             dokArkivClient = dokArkivClient,
             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
@@ -220,12 +223,11 @@ fun launchListeners(
     }
 }
 
-@KtorExperimentalAPI
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService,
-    sm2013AutomaticHandlingTopic: String,
+    okSykmeldingTopic: String,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
@@ -245,7 +247,7 @@ suspend fun blockingApplicationLogic(
                 journalfoeringEvent = journalfoeringHendelseRecord,
                 loggingMeta = loggingMeta,
                 sykmeldingId = sykmeldingId,
-                sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                okSykmeldingTopic = okSykmeldingTopic,
                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,

@@ -7,7 +7,6 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.NotFound
-import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.helpers.retry
@@ -19,7 +18,6 @@ import org.xml.sax.InputSource
 import java.io.IOException
 import javax.xml.bind.JAXBException
 
-@KtorExperimentalAPI
 class SafDokumentClient constructor(
     private val url: String,
     private val oidcClient: StsOidcClient,

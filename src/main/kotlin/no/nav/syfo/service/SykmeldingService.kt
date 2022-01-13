@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -38,7 +37,6 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
-@KtorExperimentalAPI
 class SykmeldingService(
     private val oppgaveService: OppgaveService,
     private val safDokumentClient: SafDokumentClient,
@@ -58,7 +56,7 @@ class SykmeldingService(
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
-        sm2013AutomaticHandlingTopic: String,
+        okSykmeldingTopic: String,
         kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
@@ -172,7 +170,7 @@ class SykmeldingService(
                     } else if (validationResult.status == Status.OK) {
                         handleOk(
                             kafkaReceivedSykmeldingProducer = kafkaReceivedSykmeldingProducer,
-                            sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                            okSykmeldingTopic = okSykmeldingTopic,
                             receivedSykmelding = receivedSykmelding,
                             sykmeldingId = receivedSykmelding.sykmelding.id,
                             healthInformation = healthInformation,

@@ -7,7 +7,6 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.helpers.retry
@@ -16,7 +15,6 @@ import no.nav.syfo.util.LoggingMeta
 import java.time.DayOfWeek
 import java.time.LocalDate
 
-@KtorExperimentalAPI
 class OppgaveClient constructor(private val url: String, private val oidcClient: StsOidcClient, private val httpClient: HttpClient) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse = retry("opprett_oppgave") {
         httpClient.post<OpprettOppgaveResponse>(url) {

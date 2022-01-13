@@ -1,6 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.util.KtorExperimentalAPI
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
@@ -19,7 +18,6 @@ import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import org.apache.kafka.clients.producer.KafkaProducer
 
-@KtorExperimentalAPI
 class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
     private val sykmeldingService: SykmeldingService,
@@ -30,7 +28,7 @@ class BehandlingService(
         journalfoeringEvent: JournalfoeringHendelseRecord,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
-        sm2013AutomaticHandlingTopic: String,
+        okSykmeldingTopic: String,
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
@@ -85,7 +83,7 @@ class BehandlingService(
                             temaEndret = journalfoeringEvent.hendelsesType == "TemaEndret",
                             loggingMeta = loggingMeta,
                             sykmeldingId = sykmeldingId,
-                            sm2013AutomaticHandlingTopic = sm2013AutomaticHandlingTopic,
+                            okSykmeldingTopic = okSykmeldingTopic,
                             kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmelding,
                             dokArkivClient = dokArkivClient,
                             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
