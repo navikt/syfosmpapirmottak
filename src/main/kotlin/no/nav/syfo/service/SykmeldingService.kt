@@ -60,7 +60,7 @@ class SykmeldingService(
         kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        sm2013SmregistreringTopic: String
+        smregistreringTopic: String
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -165,7 +165,7 @@ class SykmeldingService(
                             sykmelder = sykmelder,
                             ocrFil = ocrFil,
                             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                            sm2013SmregistreringTopic = sm2013SmregistreringTopic
+                            smregistreringTopic = smregistreringTopic
                         )
                     } else if (validationResult.status == Status.OK) {
                         handleOk(
@@ -208,7 +208,7 @@ class SykmeldingService(
                 sykmelder = sykmelder,
                 ocrFil = ocrFil,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                sm2013SmregistreringTopic = sm2013SmregistreringTopic
+                smregistreringTopic = smregistreringTopic
             )
         }
     }
@@ -225,7 +225,7 @@ class SykmeldingService(
         sykmelder: Sykmelder?,
         ocrFil: Skanningmetadata?,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        sm2013SmregistreringTopic: String
+        smregistreringTopic: String
     ) {
         log.info("Ruter oppgaven til smregistrering", fields(loggingMeta))
         val oppgave = oppgaveService.hentOppgave(journalpostId, sykmeldingId)
@@ -242,7 +242,7 @@ class SykmeldingService(
                 sykmelder = sykmelder,
                 ocrFil = ocrFil
             )
-            sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, sm2013SmregistreringTopic, papirSmRegistering, loggingMeta)
+            sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, smregistreringTopic, papirSmRegistering, loggingMeta)
         } else {
             log.info("duplikat oppgave {}", fields(loggingMeta))
         }

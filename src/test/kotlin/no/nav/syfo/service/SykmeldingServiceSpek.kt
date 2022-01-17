@@ -128,7 +128,7 @@ object SykmeldingServiceSpek : Spek({
                     kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3"
+                    smregistreringTopic = "topic3"
                 )
             }
             coEvery { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -155,7 +155,7 @@ object SykmeldingServiceSpek : Spek({
                     kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3"
+                    smregistreringTopic = "topic3"
                 )
             }
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
@@ -184,7 +184,7 @@ object SykmeldingServiceSpek : Spek({
                     kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3"
+                    smregistreringTopic = "topic3"
                 )
             }
 
@@ -225,7 +225,7 @@ object SykmeldingServiceSpek : Spek({
                     kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3"
+                    smregistreringTopic = "topic3"
                 )
             }
 
@@ -269,7 +269,7 @@ object SykmeldingServiceSpek : Spek({
                     kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3"
+                    smregistreringTopic = "topic3"
                 )
             }
 
@@ -313,7 +313,7 @@ object SykmeldingServiceSpek : Spek({
                     kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3"
+                    smregistreringTopic = "topic3"
                 )
             }
 
@@ -343,7 +343,7 @@ object SykmeldingServiceSpek : Spek({
                     kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
                     dokArkivClient = dokArkivClientMock,
                     kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                    sm2013SmregistreringTopic = "topic3"
+                    smregistreringTopic = "topic3"
                 )
             }
 

@@ -24,7 +24,7 @@ data class Environment(
     val kuhrSarApiUrl: String = getEnvVar("KUHR_SAR_API_URL", "http://kuhr-sar-api.teamkuhr.svc.nais.local"),
     val dokArkivUrl: String = getEnvVar("DOK_ARKIV_URL"),
     val okSykmeldingTopic: String = "teamsykmelding.ok-sykmelding",
-    val sm2013SmregistreringTopic: String = getEnvVar("KAFKA_PAPIR_SM_REGISTERING_TOPIC", "privat-syfo-papir-sm-registering"),
+    val smregistreringTopic: String = getEnvVar("KAFKA_PAPIR_SM_REGISTERING_TOPIC", "teamsykmelding.papir-sm-registering"),
     val syfoserviceMqTopic: String = "teamsykmelding.syfoservice-mq",
     val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
     val aadAccessTokenV2Url: String = getEnvVar("AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"),
