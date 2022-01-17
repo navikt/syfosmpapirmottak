@@ -102,13 +102,11 @@ fun main() {
         valueDeserializer = KafkaAvroDeserializer::class
     )
 
-    val producerProperties = kafkaBaseConfig.toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
-
     val producerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
         .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
 
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
-    val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerProperties)
+    val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerPropertiesAiven)
     val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerPropertiesAiven)
 
     val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl)
@@ -219,7 +217,7 @@ fun launchListeners(
             kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
             dokArkivClient = dokArkivClient,
             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-            sm2013SmregistreringTopic = env.sm2013SmregistreringTopic
+            smregistreringTopic = env.smregistreringTopic
         )
     }
 }
@@ -232,7 +230,7 @@ suspend fun blockingApplicationLogic(
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-    sm2013SmregistreringTopic: String
+    smregistreringTopic: String
 ) {
     while (applicationState.ready) {
         consumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
@@ -252,7 +250,7 @@ suspend fun blockingApplicationLogic(
                 kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
                 dokArkivClient = dokArkivClient,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                sm2013SmregistreringTopic = sm2013SmregistreringTopic,
+                smregistreringTopic = smregistreringTopic,
             )
         }
     }

@@ -32,7 +32,7 @@ class BehandlingService(
         kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
         dokArkivClient: DokArkivClient,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        sm2013SmregistreringTopic: String,
+        smregistreringTopic: String,
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -87,7 +87,7 @@ class BehandlingService(
                             kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmelding,
                             dokArkivClient = dokArkivClient,
                             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                            sm2013SmregistreringTopic = sm2013SmregistreringTopic
+                            smregistreringTopic = smregistreringTopic
                         )
                     }
                 } else {
