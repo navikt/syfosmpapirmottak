@@ -72,6 +72,7 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 }
 
+@DelicateCoroutinesApi
 fun main() {
     val env = Environment()
     val credentials = VaultCredentials(
@@ -147,11 +148,12 @@ fun main() {
     val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
     val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
-    val kuhrsarClient = SarClient(env.kuhrSarApiUrl, httpClient)
+
+    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
+    val kuhrsarClient = SarClient(env.kuhrSarApiUrl, accessTokenClientV2, env.kuhrSarApiScope, httpClient)
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, oidcClient, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
-    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClientV2, env.helsenettproxyScope, httpClient)
     val regelClient = RegelClient(env.regelEndpointURL, accessTokenClientV2, env.syfosmpapirregelScope, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
