@@ -15,7 +15,7 @@ This project contains the receiving a paper sykmelding2013 message
 
 #### Requirements
 
-* JDK 12
+* JDK 17
 
 ## Getting started
 ### Getting github-package-registry packages NAV-IT
@@ -85,21 +85,21 @@ https://confluence.adeo.no/display/KES/Testing+av+papirsykemlinger#Testingavpapi
 1. Login User (Case managers / supervisors):
    Z992389
 2. Check that the sykmelding is placed in gosys:
-   - Log in at https://gosys-nais-q1.nais.preprod.local/gosys
+   - Log in at https://gosys-q1.dev.intern.nav.no/gosys
    - Search for user with fnr
 3. Verify that there is a sykmelding under "Dokumentoversikt", see that the pdf is correct
 
 
 ### Verification in «ditt sykefravær»:
 1. Check that the sykmelding is on ditt sykefravær
-2. Go to https://tjenester-q1.nav.no/sykefravaer
+2. Go to https://www-gcp.dev.nav.no/syk/sykefravaer
 3. Log in with the fnr for the user as the username and a password
 3. Then select "Uten IDPorten"
 4. Enter the user's fnr again and press sign-in
 5. Verify that a new task has appeared for the user
 
 ### Verification in Modia:
-1. Log in to the modes, https://app-q1.adeo.no/sykefravaer/
+1. Log in to the modes, https://www-gcp.dev.nav.no/syk/sykefravaer
 2. Log in with Case Manager: User: Z990625, password for testing can be found here (NAV internal sites):
    https://confluence.adeo.no/display/KES/Generell+testing+av+sykemelding+2013+i+preprod under "Verifisering i Modia"
 3. See "Sykmeldt enkeltperson" verifying that the sykmelding that is there is correct
