@@ -116,7 +116,8 @@ object FellesformatMapperServiceSpek : Spek({
                 merknader = null,
                 legeHelsepersonellkategori = godkjenninger.getHelsepersonellKategori(),
                 legeHprNr = hprNummer,
-                partnerreferanse = null
+                partnerreferanse = null,
+                vedlegg = emptyList()
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
@@ -190,7 +191,8 @@ object FellesformatMapperServiceSpek : Spek({
                 merknader = null,
                 legeHelsepersonellkategori = "LE",
                 legeHprNr = hprNummer,
-                partnerreferanse = null
+                partnerreferanse = null,
+                vedlegg = emptyList()
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
