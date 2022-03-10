@@ -50,8 +50,6 @@ spec:
   env:
     - name: SAFGRAPHQL_URL
       value: https://saf-q1.nais.preprod.local/graphql
-    - name: DOK_JOURNALFOERING_V1_TOPIC
-      value: aapen-dok-journalfoering-v1-q1
     - name: DOK_JOURNALFOERING_AIVEN_TOPIC
       value: teamdokumenthandtering.aapen-dok-journalfoering-q1
     - name: HENT_DOKUMENT_URL
@@ -60,8 +58,6 @@ spec:
       value: api://dev-fss.teamsykmelding.syfohelsenettproxy/.default
     - name: SYFOSMPAPIRREGLER_SCOPE
       value: api://dev-fss.teamsykmelding.syfosmpapirregler/.default
-    - name: KAFKA_BOOTSTRAP_SERVERS_URL
-      value: SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443
     - name: DOK_ARKIV_URL
       value: https://dokarkiv-q1.nais.preprod.local/rest/journalpostapi/v1/journalpost
     - name: PDL_GRAPHQL_PATH
