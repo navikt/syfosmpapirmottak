@@ -40,8 +40,6 @@ import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.kafka.aiven.KafkaUtils
-import no.nav.syfo.kafka.envOverrides
-import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.model.ReceivedSykmelding
@@ -97,14 +95,6 @@ fun main() {
 
     DefaultExports.initialize()
 
-    val kafkaBaseConfig = loadBaseConfig(env, credentials).envOverrides()
-    kafkaBaseConfig["auto.offset.reset"] = "none"
-
-    val consumerProperties = kafkaBaseConfig.toConsumerConfig(
-        "${env.applicationName}-consumer-v2",
-        valueDeserializer = KafkaAvroDeserializer::class
-    )
-
     val consumerPropertiesAiven = KafkaUtils.getAivenKafkaConfig().apply {
         setProperty(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, env.schemaRegistryUrl)
         setProperty(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${env.kafkaSchemaRegistryUsername}:${env.kafkaSchemaRegistryPassword}")
@@ -113,7 +103,7 @@ fun main() {
         "${env.applicationName}-consumer",
         valueDeserializer = KafkaAvroDeserializer::class
     ).also {
-        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
         it["specific.avro.reader"] = true
     }
 
@@ -188,7 +178,6 @@ fun main() {
     launchListeners(
         env,
         applicationState,
-        consumerProperties,
         consumerPropertiesAiven,
         behandlingService,
         kafkaProducerReceivedSykmelding,
@@ -213,16 +202,12 @@ fun createListener(applicationState: ApplicationState, action: suspend Coroutine
 fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
-    consumerProperties: Properties,
     consumerPropertiesAiven: Properties,
     behandlingService: BehandlingService,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>
 ) {
-    val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
-    kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
-
     val kafkaConsumerJournalfoeringHendelseAiven = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
     kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
 
@@ -232,7 +217,6 @@ fun launchListeners(
 
         blockingApplicationLogic(
             applicationState = applicationState,
-            consumer = kafkaconsumerJournalfoeringHendelse,
             aivenConsumer = kafkaConsumerJournalfoeringHendelseAiven,
             behandlingService = behandlingService,
             okSykmeldingTopic = env.okSykmeldingTopic,
@@ -246,7 +230,6 @@ fun launchListeners(
 
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
-    consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     aivenConsumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService,
     okSykmeldingTopic: String,
@@ -256,26 +239,6 @@ suspend fun blockingApplicationLogic(
     smregistreringTopic: String
 ) {
     while (applicationState.ready) {
-        consumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
-            val journalfoeringHendelseRecord = consumerRecord.value()
-            val sykmeldingId = UUID.randomUUID().toString()
-            val loggingMeta = LoggingMeta(
-                sykmeldingId = sykmeldingId,
-                journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
-                hendelsesId = journalfoeringHendelseRecord.hendelsesId
-            )
-
-            behandlingService.handleJournalpost(
-                journalfoeringEvent = journalfoeringHendelseRecord,
-                loggingMeta = loggingMeta,
-                sykmeldingId = sykmeldingId,
-                okSykmeldingTopic = okSykmeldingTopic,
-                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
-                dokArkivClient = dokArkivClient,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = smregistreringTopic,
-            )
-        }
         aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
             val sykmeldingId = UUID.randomUUID().toString()
@@ -285,7 +248,6 @@ suspend fun blockingApplicationLogic(
                 hendelsesId = journalfoeringHendelseRecord.hendelsesId
             )
 
-            log.info("Mottatt melding fra aiven, {}", StructuredArguments.fields(loggingMeta))
             behandlingService.handleJournalpost(
                 journalfoeringEvent = journalfoeringHendelseRecord,
                 loggingMeta = loggingMeta,
