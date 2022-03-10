@@ -54,6 +54,7 @@ import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
@@ -102,6 +103,14 @@ fun main() {
         "${env.applicationName}-consumer-v2",
         valueDeserializer = KafkaAvroDeserializer::class
     )
+
+    val consumerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
+        .toConsumerConfig(
+            "${env.applicationName}-consumer",
+            valueDeserializer = KafkaAvroDeserializer::class
+        ).also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+        }
 
     val producerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
         .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
@@ -175,6 +184,7 @@ fun main() {
         env,
         applicationState,
         consumerProperties,
+        consumerPropertiesAiven,
         behandlingService,
         kafkaProducerReceivedSykmelding,
         dokArkivClient,
@@ -199,6 +209,7 @@ fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerProperties: Properties,
+    consumerPropertiesAiven: Properties,
     behandlingService: BehandlingService,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
     dokArkivClient: DokArkivClient,
@@ -207,6 +218,9 @@ fun launchListeners(
     val kafkaconsumerJournalfoeringHendelse = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerProperties)
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
+    val kafkaConsumerJournalfoeringHendelseAiven = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
+    kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
+
     applicationState.ready = true
 
     createListener(applicationState) {
@@ -214,6 +228,7 @@ fun launchListeners(
         blockingApplicationLogic(
             applicationState = applicationState,
             consumer = kafkaconsumerJournalfoeringHendelse,
+            aivenConsumer = kafkaConsumerJournalfoeringHendelseAiven,
             behandlingService = behandlingService,
             okSykmeldingTopic = env.okSykmeldingTopic,
             kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
@@ -227,6 +242,7 @@ fun launchListeners(
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     consumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
+    aivenConsumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService,
     okSykmeldingTopic: String,
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
@@ -244,6 +260,27 @@ suspend fun blockingApplicationLogic(
                 hendelsesId = journalfoeringHendelseRecord.hendelsesId
             )
 
+            behandlingService.handleJournalpost(
+                journalfoeringEvent = journalfoeringHendelseRecord,
+                loggingMeta = loggingMeta,
+                sykmeldingId = sykmeldingId,
+                okSykmeldingTopic = okSykmeldingTopic,
+                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
+                dokArkivClient = dokArkivClient,
+                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                smregistreringTopic = smregistreringTopic,
+            )
+        }
+        aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
+            val journalfoeringHendelseRecord = consumerRecord.value()
+            val sykmeldingId = UUID.randomUUID().toString()
+            val loggingMeta = LoggingMeta(
+                sykmeldingId = sykmeldingId,
+                journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
+                hendelsesId = journalfoeringHendelseRecord.hendelsesId
+            )
+
+            log.info("Mottatt melding fra aiven, {}", StructuredArguments.fields(loggingMeta))
             behandlingService.handleJournalpost(
                 journalfoeringEvent = journalfoeringHendelseRecord,
                 loggingMeta = loggingMeta,
