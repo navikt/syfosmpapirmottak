@@ -21,11 +21,10 @@ val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
 val jacksonVersion = "2.13.1"
-val joarkHendelseVersion = "67a9be4476b63b7247cfacfaf821ab656bd2a952"
+val joarkHendelseVersion = "96ec5ebb"
 val confluentVersion = "6.2.2"
 val jettyVersion = "11.0.6"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
-val syfooppgaveSchemasVersion = "c8be932543e7356a34690ce7979d494c5d8516d8"
 val commonsTextVersion = "1.9"
 val cxfVersion = "3.4.5"
 val javaxAnnotationApiVersion = "1.3.2"
@@ -91,13 +90,12 @@ dependencies {
 
     implementation ("org.apache.kafka:kafka_2.12:$kafkaVersion")
     implementation ("io.confluent:kafka-avro-serializer:$confluentVersion")
-    implementation ("no.nav.syfo.schemas:dok-journalfoering-hendelse-v1:$joarkHendelseVersion")
+    implementation("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
 
     implementation ("no.nav.helse.xml:xmlfellesformat:$fellesformatVersion")
     implementation ("no.nav.helse.xml:kith-hodemelding:$kithHodemeldingVersion")
     implementation ("no.nav.helse.xml:papirSykemelding:$papirSykemeldingVersion")
     implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
-    implementation ("no.nav.syfo.schemas:syfosmoppgave-avro:$syfooppgaveSchemasVersion")
 
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")
     implementation ("io.ktor:ktor-client-auth-basic-jvm:$ktorVersion")
