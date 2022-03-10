@@ -52,6 +52,8 @@ spec:
       value: https://saf-q1.nais.preprod.local/graphql
     - name: DOK_JOURNALFOERING_V1_TOPIC
       value: aapen-dok-journalfoering-v1-q1
+    - name: DOK_JOURNALFOERING_AIVEN_TOPIC
+      value: teamdokumenthandtering.aapen-dok-journalfoering-q1
     - name: HENT_DOKUMENT_URL
       value: https://saf-q1.nais.preprod.local/
     - name: HELSENETT_SCOPE

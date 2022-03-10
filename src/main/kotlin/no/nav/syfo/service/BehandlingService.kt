@@ -39,7 +39,10 @@ class BehandlingService(
 
             if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
                 (journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" || journalfoeringEvent.mottaksKanal.toString() == "SKAN_IM") &&
-                (journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" || journalfoeringEvent.hendelsesType.toString() == "TemaEndret")
+                (
+                    journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" ||
+                        journalfoeringEvent.hendelsesType.toString() == "JournalpostMottatt" || journalfoeringEvent.hendelsesType.toString() == "TemaEndret"
+                    )
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
