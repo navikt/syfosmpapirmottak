@@ -110,6 +110,8 @@ fun main() {
             valueDeserializer = KafkaAvroDeserializer::class
         ).also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+            it["specific.avro.reader"] = false
+            it["schema.registry.url"] = env.avroSchemaRegistryUrl
         }
 
     val producerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
