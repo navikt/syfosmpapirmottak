@@ -90,7 +90,7 @@ dependencies {
 
     implementation ("org.apache.kafka:kafka_2.12:$kafkaVersion")
     implementation ("io.confluent:kafka-avro-serializer:$confluentVersion")
-    implementation("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
+    implementation ("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
 
     implementation ("no.nav.helse.xml:xmlfellesformat:$fellesformatVersion")
     implementation ("no.nav.helse.xml:kith-hodemelding:$kithHodemeldingVersion")

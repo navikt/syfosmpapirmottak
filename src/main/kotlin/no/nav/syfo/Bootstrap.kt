@@ -224,7 +224,7 @@ fun launchListeners(
     kafkaconsumerJournalfoeringHendelse.subscribe(listOf(env.dokJournalfoeringV1Topic))
 
     val kafkaConsumerJournalfoeringHendelseAiven = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
-    // kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
+    kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
 
     applicationState.ready = true
 
@@ -276,7 +276,7 @@ suspend fun blockingApplicationLogic(
                 smregistreringTopic = smregistreringTopic,
             )
         }
-        /*aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
+        aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
             val sykmeldingId = UUID.randomUUID().toString()
             val loggingMeta = LoggingMeta(
@@ -296,6 +296,6 @@ suspend fun blockingApplicationLogic(
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 smregistreringTopic = smregistreringTopic,
             )
-        }*/
+        }
     }
 }
