@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
+import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.apache.Apache
@@ -104,15 +105,17 @@ fun main() {
         valueDeserializer = KafkaAvroDeserializer::class
     )
 
-    val consumerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
-        .toConsumerConfig(
-            "${env.applicationName}-consumer",
-            valueDeserializer = KafkaAvroDeserializer::class
-        ).also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
-            it["specific.avro.reader"] = false
-            it["schema.registry.url"] = env.avroSchemaRegistryUrl
-        }
+    val consumerPropertiesAiven = KafkaUtils.getAivenKafkaConfig().apply {
+        setProperty(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, env.schemaRegistryUrl)
+        setProperty(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${env.kafkaSchemaRegistryUsername}:${env.kafkaSchemaRegistryPassword}")
+        setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
+    }.toConsumerConfig(
+        "${env.applicationName}-consumer",
+        valueDeserializer = KafkaAvroDeserializer::class
+    ).also {
+        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+        it["specific.avro.reader"] = false
+    }
 
     val producerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
         .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)

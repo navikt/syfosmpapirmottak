@@ -80,5 +80,3 @@ spec:
       value: api://dev-fss.teamkuhr.kuhr-sar-api/.default
     - name: KUHR_SAR_API_URL
       value: https://kuhr-sar-api.dev.adeo.no
-    - name: KAFKA_SCHEMA_REGISTRY_URL
-      value: https://kafka-schema-registry.nais-q.adeo.no
