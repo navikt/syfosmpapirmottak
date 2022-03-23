@@ -14,7 +14,6 @@ data class Environment(
     val securityTokenServiceUrl: String = getEnvVar("SECURITY_TOKEN_SERVICE_URL", "http://security-token-service.default/rest/v1/sts/token"),
     val safV1Url: String = getEnvVar("SAFGRAPHQL_URL"),
     val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL"),
-    val opprettSakUrl: String = getEnvVar("OPPRETT_SAK_URL"),
     val hentDokumentUrl: String = getEnvVar("HENT_DOKUMENT_URL"),
     val helsenettproxyScope: String = getEnvVar("HELSENETT_SCOPE"),
     val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL"),

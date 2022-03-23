@@ -1,14 +1,12 @@
 package no.nav.syfo.service
 
 import net.logstash.logback.argument.StructuredArguments.fields
-import no.nav.syfo.client.SakClient
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
 
-class UtenlandskSykmeldingService constructor(
-    private val sakClient: SakClient,
+class UtenlandskSykmeldingService(
     private val oppgaveService: OppgaveService
 ) {
     suspend fun behandleUtenlandskSykmelding(
@@ -24,10 +22,8 @@ class UtenlandskSykmeldingService constructor(
         if (pasient?.aktorId == null || pasient.fnr == null) {
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
         } else {
-            val sakId = sakClient.finnEllerOpprettSak(sykmeldingsId = sykmeldingId, aktorId = pasient.aktorId, loggingMeta = loggingMeta)
             oppgaveService.opprettOppgave(
-                aktoerIdPasient = pasient.aktorId, sakId = sakId,
-                journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
+                aktoerIdPasient = pasient.aktorId, journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
             )
         }
     }

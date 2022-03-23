@@ -61,7 +61,7 @@ object OppgaveClientSpek : Spek({
                             listOf(
                                 Oppgave(
                                     1, "9999",
-                                    "123456789", "123", "2",
+                                    "123456789", "123",
                                     "SYM", "JFR",
                                     ""
                                 )
@@ -74,7 +74,7 @@ object OppgaveClientSpek : Spek({
                             listOf(
                                 Oppgave(
                                     1, "9999",
-                                    null, "123", "2",
+                                    null, "123",
                                     "SYM", "FDR",
                                     ""
                                 )
@@ -106,7 +106,7 @@ object OppgaveClientSpek : Spek({
         it("Oppretter ikke JFR-oppgave hvis finnes fra før") {
             var oppgave: OppgaveResultat? = null
             runBlocking {
-                oppgave = oppgaveClient.opprettOppgave("sakId", "123", "123456789", false, "sykmeldingId", loggingMetadata)
+                oppgave = oppgaveClient.opprettOppgave("123", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
             oppgave?.oppgaveId shouldBeEqualTo 1
@@ -124,7 +124,7 @@ object OppgaveClientSpek : Spek({
         it("Oppretter JFR-oppgave hvis det ikke finnes fra før") {
             var oppgave: OppgaveResultat? = null
             runBlocking {
-                oppgave = oppgaveClient.opprettOppgave("sakId", "987", "123456789", false, "sykmeldingId", loggingMetadata)
+                oppgave = oppgaveClient.opprettOppgave("987", "123456789", false, "sykmeldingId", loggingMetadata)
             }
 
             oppgave?.oppgaveId shouldBeEqualTo 42
