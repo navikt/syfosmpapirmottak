@@ -70,8 +70,6 @@ spec:
       value: https://syfosmpapirregler.nais.preprod.local
     - name: PDL_SCOPE
       value: api://dev-fss.pdl.pdl-api/.default
-    - name: OPPRETT_SAK_URL
-      value: https://sak-q1.dev.intern.nav.no/api/v1/saker
     - name: KUHR_SAR_API_SCOPE
       value: api://dev-fss.teamkuhr.kuhr-sar-api/.default
     - name: KUHR_SAR_API_URL

@@ -15,7 +15,6 @@ class OppgaveService(
 ) {
     suspend fun opprettOppgave(
         aktoerIdPasient: String,
-        sakId: String,
         journalpostId: String,
         gjelderUtland: Boolean,
         trackingId: String,
@@ -24,7 +23,7 @@ class OppgaveService(
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
         val oppgave = oppgaveClient.opprettOppgave(
-            sakId, journalpostId,
+            journalpostId,
             aktoerIdPasient, gjelderUtland, trackingId, loggingMeta
         )
 
@@ -32,7 +31,6 @@ class OppgaveService(
             log.info(
                 "Opprettet oppgave for utenlandsk sykmelding med {}, {} {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                StructuredArguments.keyValue("sakid", sakId),
                 fields(loggingMeta)
             )
             PAPIRSM_OPPGAVE.inc()

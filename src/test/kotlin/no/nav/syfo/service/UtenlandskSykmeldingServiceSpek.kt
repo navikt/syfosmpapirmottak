@@ -5,7 +5,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.syfo.client.SakClient
 import no.nav.syfo.pdl.model.Navn
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
@@ -20,16 +19,14 @@ object UtenlandskSykmeldingServiceSpek : Spek({
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
 
     val oppgaveserviceMock = mockk<OppgaveService>()
-    val sakClientMock = mockk<SakClient>()
     val pasient = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnr, aktorId, null)
-    val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClientMock, oppgaveserviceMock)
+    val utenlandskSykmeldingService = UtenlandskSykmeldingService(oppgaveserviceMock)
 
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns Unit
+        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) } returns Unit
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns Unit
-        coEvery { sakClientMock.finnEllerOpprettSak(any(), any(), any()) } returns "sakId"
     }
 
     describe("UtenlandskSykmeldingService ende-til-ende") {
@@ -39,8 +36,7 @@ object UtenlandskSykmeldingServiceSpek : Spek({
             }
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
-            coVerify { sakClientMock.finnEllerOpprettSak(sykmeldingId, aktorId, any()) }
-            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, eq("sakId"), journalpostId, true, any(), any()) }
+            coVerify { oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis fnr mangler") {
@@ -50,8 +46,7 @@ object UtenlandskSykmeldingServiceSpek : Spek({
             }
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
-            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
-            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) }
         }
 
         it("Oppretter fordelingsoppgave hvis aktørid mangler") {
@@ -61,8 +56,7 @@ object UtenlandskSykmeldingServiceSpek : Spek({
             }
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
-            coVerify(exactly = 0) { sakClientMock.finnEllerOpprettSak(any(), any(), any()) }
-            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) }
         }
     }
 })

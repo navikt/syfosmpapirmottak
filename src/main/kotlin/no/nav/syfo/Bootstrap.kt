@@ -34,7 +34,6 @@ import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
-import no.nav.syfo.client.SakClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.domain.PapirSmRegistering
@@ -151,7 +150,6 @@ fun main() {
     val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
     val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
-    val sakClient = SakClient(env.opprettSakUrl, oidcClient, httpClient)
 
     val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
     val kuhrsarClient = SarClient(env.kuhrSarApiUrl, accessTokenClientV2, env.kuhrSarApiScope, httpClient)
@@ -172,7 +170,7 @@ fun main() {
         kafkaSyfoserviceProducer = kafkaSyfoserviceProducer,
         syfoserviceTopic = env.syfoserviceMqTopic
     )
-    val utenlandskSykmeldingService = UtenlandskSykmeldingService(sakClient, oppgaveService)
+    val utenlandskSykmeldingService = UtenlandskSykmeldingService(oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
 
     launchListeners(

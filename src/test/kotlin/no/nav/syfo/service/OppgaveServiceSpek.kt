@@ -23,41 +23,41 @@ object OppgaveServiceSpek : Spek({
     beforeEachTest {
         clearAllMocks()
 
-        coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false)
+        coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false)
         coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2, false)
     }
 
     describe("OppgaveService ende-til-ende") {
         it("Ende-til-ende") {
             runBlocking {
-                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
 
         it("Ende-til-ende utland") {
             runBlocking {
-                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, true, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", journalpostId, true, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), true, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), true, sykmeldingId, loggingMetadata) }
         }
 
         it("Ende-til-ende kode 6") {
             runBlocking {
-                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
 
         it("Behandlende enhet mangler") {
             runBlocking {
-                oppgaveService.opprettOppgave("aktorId", "sakId", journalpostId, false, sykmeldingId, loggingMetadata)
+                oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
             }
 
-            coVerify { oppgaveClientMock.opprettOppgave(eq("sakId"), journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
     }
 
