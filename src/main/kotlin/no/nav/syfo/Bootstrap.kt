@@ -144,16 +144,17 @@ fun main() {
     val httpClientWithProxy = HttpClient(Apache, proxyConfig)
     val httpClient = HttpClient(Apache, config)
 
+    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
+
     val apolloClient: ApolloClient = ApolloClient.builder()
         .serverUrl(env.safV1Url)
         .build()
-    val safJournalpostClient = SafJournalpostClient(apolloClient, oidcClient)
-    val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, oidcClient, httpClient)
+    val safJournalpostClient = SafJournalpostClient(apolloClient, accessTokenClientV2, env.safScope)
+    val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, accessTokenClientV2, env.safScope, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClient)
 
-    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
     val kuhrsarClient = SarClient(env.kuhrSarApiUrl, accessTokenClientV2, env.kuhrSarApiScope, httpClient)
-    val dokArkivClient = DokArkivClient(env.dokArkivUrl, oidcClient, httpClient)
+    val dokArkivClient = DokArkivClient(env.dokArkivUrl, accessTokenClientV2, env.dokArkivScope, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClientV2, env.helsenettproxyScope, httpClient)

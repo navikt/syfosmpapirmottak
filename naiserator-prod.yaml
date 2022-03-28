@@ -49,17 +49,21 @@ spec:
   webproxy: true
   env:
     - name: SAFGRAPHQL_URL
-      value: https://saf.nais.adeo.no/graphql
+      value: https://saf.intern.nav.no/graphql
     - name: DOK_JOURNALFOERING_AIVEN_TOPIC
       value: teamdokumenthandtering.aapen-dok-journalfoering
     - name: HENT_DOKUMENT_URL
-      value: https://saf.nais.adeo.no/
+      value: https://saf.intern.nav.no/
+    - name: SAF_SCOPE
+      value: api://prod-fss.teamdokumenthandtering.saf/.default
     - name: HELSENETT_SCOPE
       value: api://prod-fss.teamsykmelding.syfohelsenettproxy/.default
     - name: SYFOSMPAPIRREGLER_SCOPE
       value: api://prod-fss.teamsykmelding.syfosmpapirregler/.default
     - name: DOK_ARKIV_URL
-      value: https://dokarkiv.nais.adeo.no/rest/journalpostapi/v1/journalpost
+      value: https://dokarkiv.intern.nav.no/rest/journalpostapi/v1/journalpost
+    - name: DOK_ARKIV_SCOPE
+      value: api://prod-fss.teamdokumenthandtering.dokarkiv/.default
     - name: PDL_GRAPHQL_PATH
       value: https://pdl-api.nais.adeo.no/graphql
     - name: OPPGAVEBEHANDLING_URL

@@ -20,7 +20,8 @@ import javax.xml.bind.JAXBException
 
 class SafDokumentClient constructor(
     private val url: String,
-    private val oidcClient: StsOidcClient,
+    private val accessTokenClientV2: AccessTokenClientV2,
+    private val scope: String,
     private val httpClient: HttpClient
 ) {
 
@@ -28,8 +29,7 @@ class SafDokumentClient constructor(
         try {
             return@retry httpClient.get<String>("$url/rest/hentdokument/$journalpostId/$dokumentInfoId/ORIGINAL") {
                 accept(ContentType.Application.Xml)
-                val oidcToken = oidcClient.oidcToken()
-                header("Authorization", "Bearer ${oidcToken.access_token}")
+                header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
                 header("Nav-Callid", msgId)
                 header("Nav-Consumer-Id", "syfosmpapirmottak")
             }.also { log.info("Hentet OCR-dokument for msgId {}, {}", msgId, fields(loggingMeta)) }

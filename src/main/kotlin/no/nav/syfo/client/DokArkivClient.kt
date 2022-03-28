@@ -19,7 +19,8 @@ import java.io.IOException
 
 class DokArkivClient(
     private val url: String,
-    private val oidcClient: StsOidcClient,
+    private val accessTokenClientV2: AccessTokenClientV2,
+    private val scope: String,
     private val httpClient: HttpClient
 ) {
     suspend fun oppdaterOgFerdigstillJournalpost(
@@ -42,8 +43,7 @@ class DokArkivClient(
             return@retry httpClient.patch<String>("$url/$journalpostId/ferdigstill") {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Application.Json)
-                val oidcToken = oidcClient.oidcToken()
-                header("Authorization", "Bearer ${oidcToken.access_token}")
+                header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
                 header("Nav-Callid", msgId)
                 body = FerdigstillJournal("9999")
             }.also { log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta)) }
@@ -76,8 +76,7 @@ class DokArkivClient(
             httpClient.put<HttpResponse>("$url/$journalpostId") {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Application.Json)
-                val oidcToken = oidcClient.oidcToken()
-                header("Authorization", "Bearer ${oidcToken.access_token}")
+                header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
                 header("Nav-Callid", msgId)
                 body = OppdaterJournalpost(
                     avsenderMottaker = AvsenderMottaker(
