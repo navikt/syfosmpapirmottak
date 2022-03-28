@@ -53,7 +53,7 @@ spec:
     - name: DOK_JOURNALFOERING_AIVEN_TOPIC
       value: teamdokumenthandtering.aapen-dok-journalfoering-q1
     - name: HENT_DOKUMENT_URL
-      value: https://saf-q1.dev.intern.nav.no/
+      value: https://saf-q1.dev.intern.nav.no
     - name: SAF_SCOPE
       value: api://dev-fss.teamdokumenthandtering.saf/.default
     - name: HELSENETT_SCOPE
