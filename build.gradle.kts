@@ -11,8 +11,8 @@ val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1
 val kafkaVersion = "2.8.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.68"
-val ktorVersion = "1.6.7"
-val logbackVersion = "1.2.10"
+val ktorVersion = "1.6.8"
+val logbackVersion = "1.2.11"
 val logstashLogbackEncoderVersion = "7.0.1"
 val prometheusVersion = "0.15.0"
 val spekVersion = "2.0.17"
@@ -20,7 +20,7 @@ val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
-val jacksonVersion = "2.13.1"
+val jacksonVersion = "2.13.2"
 val joarkHendelseVersion = "96ec5ebb"
 val confluentVersion = "6.2.2"
 val jettyVersion = "11.0.6"
@@ -31,7 +31,7 @@ val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val smCommonVersion = "1.ed38c78"
 val javaTimeAdapterVersion = "1.1.3"
-val ioMockVersion = "1.12.2"
+val ioMockVersion = "1.12.3"
 val kotlinVersion = "1.6.0"
 
 plugins {
@@ -79,7 +79,6 @@ dependencies {
     implementation ("com.fasterxml.jackson.module:jackson-module-jaxb-annotations:$jacksonVersion")
     implementation ("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation ("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
-    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
     implementation ("io.prometheus:simpleclient_hotspot:$prometheusVersion")

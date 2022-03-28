@@ -38,7 +38,7 @@ import java.time.Month
 import java.util.concurrent.TimeUnit
 
 object SafDokumentClientSpek : Spek({
-    val stsOidcClientMock = mockk<StsOidcClient>()
+    val accessTokenClientV2 = mockk<AccessTokenClientV2>()
     val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer {
@@ -70,14 +70,14 @@ object SafDokumentClientSpek : Spek({
         }
     }.start()
 
-    val safDokumentClient = SafDokumentClient("$mockHttpServerUrl/saf", stsOidcClientMock, httpClient)
+    val safDokumentClient = SafDokumentClient("$mockHttpServerUrl/saf", accessTokenClientV2, "scope", httpClient)
 
     afterGroup {
         mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
     beforeGroup {
-        coEvery { stsOidcClientMock.oidcToken() } returns OidcToken("token", "type", 300L)
+        coEvery { accessTokenClientV2.getAccessTokenV2(any()) } returns "token"
     }
 
     describe("SafDokumentClient håndterer respons korrekt") {

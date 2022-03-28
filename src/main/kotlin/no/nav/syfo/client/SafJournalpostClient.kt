@@ -29,7 +29,11 @@ suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { c
     })
 }
 
-class SafJournalpostClient(private val apolloClient: ApolloClient, private val stsClient: StsOidcClient) {
+class SafJournalpostClient(
+    private val apolloClient: ApolloClient,
+    private val accessTokenClientV2: AccessTokenClientV2,
+    private val scope: String
+) {
     suspend fun getJournalpostMetadata(
         journalpostId: String,
         loggingMeta: LoggingMeta
@@ -41,7 +45,7 @@ class SafJournalpostClient(private val apolloClient: ApolloClient, private val s
         ).toBuilder()
             .requestHeaders(
                 RequestHeaders.builder()
-                    .addHeader("Authorization", "Bearer ${stsClient.oidcToken().access_token}")
+                    .addHeader("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
                     .addHeader("X-Correlation-ID", journalpostId)
                     .build()
             ).build()
