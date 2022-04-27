@@ -1,5 +1,6 @@
 package no.nav.syfo.service
 
+import io.kotest.core.spec.style.FunSpec
 import io.mockk.Called
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -23,11 +24,9 @@ import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
 import org.amshove.kluent.internal.assertFailsWith
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.time.LocalDateTime
 
-object BehandlingServiceSpek : Spek({
+class BehandlingServiceSpek : FunSpec({
     val sykmeldingId = "1234"
     val loggingMetadata = LoggingMeta(sykmeldingId, "123", "hendelsesId")
     val datoOpprettet = LocalDateTime.now()
@@ -41,7 +40,7 @@ object BehandlingServiceSpek : Spek({
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
     val behandlingService = BehandlingService(safJournalpostClientMock, sykmeldingServiceMock, utenlandskSykmeldingServiceMock, pdlService)
 
-    beforeEachTest {
+    beforeTest {
         clearAllMocks()
 
         coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorid", null)
@@ -57,17 +56,15 @@ object BehandlingServiceSpek : Spek({
         coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) } just Runs
     }
 
-    describe("BehandlingService ende-til-ende") {
-        it("Ende-til-ende journalpost med fnr") {
+    context("BehandlingService ende-til-ende") {
+        test("Ende-til-ende journalpost med fnr") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
@@ -75,16 +72,14 @@ object BehandlingServiceSpek : Spek({
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
 
-        it("Ende-til-ende journalpost med fnr og endret-tema") {
+        test("Ende-til-ende journalpost med fnr og endret-tema") {
             val journalfoeringEvent = lagJournalfoeringEvent("TemaEndret", "SYM", "SKAN_IM")
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
@@ -92,16 +87,14 @@ object BehandlingServiceSpek : Spek({
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
 
-        it("Ende-til-ende journalpost med fnr ny skanningleverandør") {
+        test("Ende-til-ende journalpost med fnr ny skanningleverandør") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_IM")
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
@@ -109,7 +102,7 @@ object BehandlingServiceSpek : Spek({
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
 
-        it("Ende-til-ende journalpost med aktorId") {
+        test("Ende-til-ende journalpost med aktorId") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
@@ -120,13 +113,11 @@ object BehandlingServiceSpek : Spek({
                 dokumentInfoIdPdf = ""
             )
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson("aktorId", any()) }
@@ -134,7 +125,7 @@ object BehandlingServiceSpek : Spek({
             coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
         }
 
-        it("Ende-til-ende journalpost med fnr for utlandssykmelding") {
+        test("Ende-til-ende journalpost med fnr for utlandssykmelding") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("fnr", "FNR"),
@@ -145,13 +136,11 @@ object BehandlingServiceSpek : Spek({
                 dokumentInfoIdPdf = ""
             )
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
@@ -159,7 +148,7 @@ object BehandlingServiceSpek : Spek({
             coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
         }
 
-        it("Ende-til-ende journalpost med aktørid for utlandssykmelding") {
+        test("Ende-til-ende journalpost med aktørid for utlandssykmelding") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
@@ -170,13 +159,11 @@ object BehandlingServiceSpek : Spek({
                 dokumentInfoIdPdf = ""
             )
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("aktorId"), any()) }
@@ -184,7 +171,7 @@ object BehandlingServiceSpek : Spek({
             coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
         }
 
-        it("Kaster feil hvis journalpost mangler") {
+        test("Kaster feil hvis journalpost mangler") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns null
 
@@ -202,7 +189,7 @@ object BehandlingServiceSpek : Spek({
             coVerify { listOf(pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
-        it("Sender null som fnr og aktørid hvis journalpost mangler brukerid") {
+        test("Sender null som fnr og aktørid hvis journalpost mangler brukerid") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker(null, "type"),
@@ -213,19 +200,17 @@ object BehandlingServiceSpek : Spek({
                 dokumentInfoIdPdf = ""
             )
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { listOf(pdlService, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
-        it("Sender null som fnr og aktørid hvis journalpost mangler brukertype") {
+        test("Sender null som fnr og aktørid hvis journalpost mangler brukertype") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("id", null),
@@ -236,35 +221,31 @@ object BehandlingServiceSpek : Spek({
                 dokumentInfoIdPdf = ""
             )
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { listOf(pdlService, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
-        it("Sender aktørid==null hvis ikke kan hente aktørid fra aktørregister") {
+        test("Sender aktørid==null hvis ikke kan hente aktørid fra aktørregister") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { pdlService.getPdlPerson(any(), any()) } returns null
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock wasNot Called }
         }
 
-        it("Sender fnr==null hvis ikke kan hente fnr fra PDL") {
+        test("Sender fnr==null hvis ikke kan hente fnr fra PDL") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
@@ -277,19 +258,17 @@ object BehandlingServiceSpek : Spek({
             val pasient = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), null, "aktorId", adressebeskyttelse = null)
             coEvery { pdlService.getPdlPerson(any(), any()) } returns pasient
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), pasient, null, datoOpprettet, any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             coVerify { utenlandskSykmeldingServiceMock wasNot Called }
         }
 
-        it("Feiler uten å opprette oppgave hvis PDL svarer med feilmelding") {
+        test("Feiler uten å opprette oppgave hvis PDL svarer med feilmelding") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
@@ -314,7 +293,7 @@ object BehandlingServiceSpek : Spek({
             coVerify { listOf(sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
-        it("Behandler ikke melding hvis journalpost allerede er journalført") {
+        test("Behandler ikke melding hvis journalpost allerede er journalført") {
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
@@ -325,56 +304,48 @@ object BehandlingServiceSpek : Spek({
                 dokumentInfoIdPdf = ""
             )
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEvent, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEvent, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { listOf(pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
-        it("Behandler ikke meldinger med feil tema") {
+        test("Behandler ikke meldinger med feil tema") {
             val journalfoeringEventFeilTema = lagJournalfoeringEvent("MidlertidigJournalført", "FEIL_TEMA", "SKAN_NETS")
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEventFeilTema, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEventFeilTema, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
-        it("Behandler ikke meldinger med feil mottakskanal") {
+        test("Behandler ikke meldinger med feil mottakskanal") {
             val journalfoeringEventFeilKanal = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "FEIL_KANAL")
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEventFeilKanal, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEventFeilKanal, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
         }
 
-        it("Behandler ikke meldinger med feil hendelsestype") {
+        test("Behandler ikke meldinger med feil hendelsestype") {
             val journalfoeringEventFeilType = lagJournalfoeringEvent("Ferdigstilt", "SYM", "SKAN_NETS")
 
-            runBlocking {
-                behandlingService.handleJournalpost(
-                    journalfoeringEventFeilType, loggingMetadata, sykmeldingId,
-                    "topic", kafkaproducerreceivedSykmelding,
-                    dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
-                )
-            }
+            behandlingService.handleJournalpost(
+                journalfoeringEventFeilType, loggingMetadata, sykmeldingId,
+                "topic", kafkaproducerreceivedSykmelding,
+                dokArkivClientMock, kafkaproducerPapirSmRegistering, "topic"
+            )
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
         }

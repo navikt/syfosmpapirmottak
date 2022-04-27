@@ -1,5 +1,6 @@
 package no.nav.syfo.service
 
+import io.kotest.core.spec.style.FunSpec
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
@@ -45,8 +46,6 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEqualTo
 import org.amshove.kluent.shouldNotThrow
 import org.amshove.kluent.shouldThrow
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.io.StringReader
 import java.math.BigInteger
 import java.time.LocalDate
@@ -55,7 +54,7 @@ import java.time.LocalTime
 import java.time.Month
 import java.util.UUID
 
-object FellesformatMapperServiceSpek : Spek({
+class FellesformatMapperServiceSpek : FunSpec({
     val sykmeldingId = "1234"
     val journalpostId = "123"
     val fnrPasient = "12345678910"
@@ -67,8 +66,8 @@ object FellesformatMapperServiceSpek : Spek({
     val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
     val godkjenninger = listOf(Godkjenning(helsepersonellkategori = Kode(true, 1, "LE")))
 
-    describe("MappingService ende-til-ende") {
-        it("Realistisk case ende-til-ende") {
+    context("MappingService ende-til-ende") {
+        test("Realistisk case ende-til-ende") {
             val skanningMetadata = skanningMetadataUnmarshaller
                 .unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml")))
                 as Skanningmetadata
@@ -149,7 +148,7 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.legeHelsepersonellkategori shouldBeEqualTo "LE"
         }
 
-        it("Minimal ocr-fil") {
+        test("Minimal ocr-fil") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/minimal-ocr-sykmelding.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, godkjenninger = listOf())
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
@@ -233,7 +232,7 @@ object FellesformatMapperServiceSpek : Spek({
             receivedSykmelding.sykmelding.navnFastlege shouldBeEqualTo null
         }
 
-        it("Tilbakedatering settes riktig") {
+        test("Tilbakedatering settes riktig") {
             val skanningMetadata = skanningMetadataUnmarshaller
                 .unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett.xml")))
                 as Skanningmetadata
@@ -267,7 +266,7 @@ object FellesformatMapperServiceSpek : Spek({
             sykmelding.behandletTidspunkt shouldBeEqualTo LocalDateTime.of(LocalDate.of(2020, Month.MAY, 2), LocalTime.NOON)
         }
 
-        it("Map with avventendeSykmelding uten innspillTilArbeidsgiver") {
+        test("Map with avventendeSykmelding uten innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-ugyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, listOf())
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
@@ -286,7 +285,7 @@ object FellesformatMapperServiceSpek : Spek({
             func shouldThrow IllegalStateException::class
         }
 
-        it("map with avventendeSykmelding og innspillTilArbeidsgiver") {
+        test("map with avventendeSykmelding og innspillTilArbeidsgiver") {
             val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/sykmelding-avventendesykmelding-gyldig.xml"))) as Skanningmetadata
             val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, listOf())
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
@@ -306,8 +305,8 @@ object FellesformatMapperServiceSpek : Spek({
         }
     }
 
-    describe("Hver del av MappingService mapper korrekt") {
-        it("tilMedisinskVurdering") {
+    context("Hver del av MappingService mapper korrekt") {
+        test("tilMedisinskVurdering") {
             val dato = LocalDate.now()
             val medisinskVurderingType = MedisinskVurderingType().apply {
                 hovedDiagnose.add(
@@ -343,84 +342,84 @@ object FellesformatMapperServiceSpek : Spek({
             medisinskVurdering.annenFraversArsak?.arsakskode?.size shouldBeEqualTo 1
         }
 
-        it("diagnoseFraDiagnosekode ICD10") {
+        test("diagnoseFraDiagnosekode ICD10") {
             val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode = "S52.5", originalSystem = "ICD-10", diagnose = "foo Bar", loggingMeta = loggingMetadata)
 
             diagnose.s shouldBeEqualTo Diagnosekoder.ICD10_CODE
             diagnose.v shouldBeEqualTo "S525"
         }
 
-        it("diagnoseFraDiagnosekode ICPC2") {
+        test("diagnoseFraDiagnosekode ICPC2") {
             val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode = "L72", originalSystem = "ICPC2", diagnose = "foo Bar", loggingMeta = loggingMetadata)
 
             diagnose.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
             diagnose.v shouldBeEqualTo "L72"
         }
 
-        it("tilMedisinskVurderingDiagnose bruker ICPC2 hvis system ikke er satt men koden finnes der og ikke i ICD10") {
+        test("tilMedisinskVurderingDiagnose bruker ICPC2 hvis system ikke er satt men koden finnes der og ikke i ICD10") {
             val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode = "L72", originalSystem = null, diagnose = "foo Bar", loggingMeta = loggingMetadata)
 
             diagnose.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
             diagnose.v shouldBeEqualTo "L72"
         }
 
-        it("tilMedisinskVurderingDiagnose bruker ICD10 hvis system ikke er satt men koden finnes der og ikke i ICPC2") {
+        test("tilMedisinskVurderingDiagnose bruker ICD10 hvis system ikke er satt men koden finnes der og ikke i ICPC2") {
             val diagnose = toMedisinskVurderingDiagnose(originalDiagnosekode = "S52.5", originalSystem = null, diagnose = "foo Bar", loggingMeta = loggingMetadata)
 
             diagnose.s shouldBeEqualTo Diagnosekoder.ICD10_CODE
             diagnose.v shouldBeEqualTo "S525"
         }
 
-        it("tilMedisinskVurderingDiagnose feiler hvis system er ICD10 men koden finnes ikke der") {
+        test("tilMedisinskVurderingDiagnose feiler hvis system er ICD10 men koden finnes ikke der") {
             val func = { toMedisinskVurderingDiagnose(originalDiagnosekode = "L72", originalSystem = "ICD-10", diagnose = "foo Bar", loggingMeta = loggingMetadata) }
             func shouldThrow IllegalStateException::class
         }
 
-        it("tilMedisinskVurderingDiagnose feiler hvis system er ICPC2 men koden finnes ikke der") {
+        test("tilMedisinskVurderingDiagnose feiler hvis system er ICPC2 men koden finnes ikke der") {
             val func = { toMedisinskVurderingDiagnose(originalDiagnosekode = "S52.5", originalSystem = "ICPC2", diagnose = "foo Bar", loggingMeta = loggingMetadata) }
             func shouldThrow IllegalStateException::class
         }
-        it("tilMedisinskVurderingDiagnose feiler hvis system er ICD10 men koden finnes kun i ICPC2") {
+        test("tilMedisinskVurderingDiagnose feiler hvis system er ICD10 men koden finnes kun i ICPC2") {
             val func = { toMedisinskVurderingDiagnose(originalDiagnosekode = "L60", originalSystem = "ICD-10", diagnose = "foo Bar", loggingMeta = loggingMetadata) }
             func shouldThrow IllegalStateException::class
         }
 
-        it("diagnoseFraDiagnosekode ICD10, ugyldig kode") {
+        test("diagnoseFraDiagnosekode ICD10, ugyldig kode") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "foobar", system = "ICD-10", diagnose = "foo bar")
             system shouldBeEqualTo Diagnosekoder.ICD10_CODE
         }
 
-        it("diagnoseFraDiagnosekode ICD10, gyldig kode") {
+        test("diagnoseFraDiagnosekode ICD10, gyldig kode") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "S52.5", system = "ICD-10", diagnose = "foo bar")
             system shouldBeEqualTo Diagnosekoder.ICD10_CODE
         }
 
-        it("diagnoseFraDiagnosekode ICD10, gyldig kode, gyldig diagnose, ugyldig system") {
+        test("diagnoseFraDiagnosekode ICD10, gyldig kode, gyldig diagnose, ugyldig system") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "S52.5", system = "foo bar", diagnose = "Brudd i distal ende av radius")
             system shouldBeEqualTo Diagnosekoder.ICD10_CODE
         }
 
-        it("diagnoseFraDiagnosekode ICPC-2, gyldig kode") {
+        test("diagnoseFraDiagnosekode ICPC-2, gyldig kode") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "L72", system = "ICPC-2", diagnose = "foo bar")
             system shouldBeEqualTo Diagnosekoder.ICPC2_CODE
         }
 
-        it("diagnoseFraDiagnosekode ICPC-2, gyldig kode, gyldig diagnose, manglende kodeverk") {
+        test("diagnoseFraDiagnosekode ICPC-2, gyldig kode, gyldig diagnose, manglende kodeverk") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "L72", system = "", diagnose = "Brudd underarm")
             system shouldBeEqualTo Diagnosekoder.ICPC2_CODE
         }
 
-        it("Skal ikke endre system hvis det er satt korrekt, ICPC-2") {
+        test("Skal ikke endre system hvis det er satt korrekt, ICPC-2") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "foobar", system = "ICPC-2", diagnose = "foo bar")
             system shouldBeEqualTo Diagnosekoder.ICPC2_CODE
         }
 
-        it("Skal ikke endre system hvis det er satt korrekt, ICD-10") {
+        test("Skal ikke endre system hvis det er satt korrekt, ICD-10") {
             val system = identifiserDiagnoseKodeverk(diagnoseKode = "L60", system = "ICD-10", diagnose = "Inngrodd tånegl , bilateralt")
             system shouldBeEqualTo Diagnosekoder.ICD10_CODE
         }
 
-        it("tilArbeidsgiver en arbeidsgiver") {
+        test("tilArbeidsgiver en arbeidsgiver") {
             val arbeidsgiverType = ArbeidsgiverType().apply {
                 harArbeidsgiver = "En arbeidsgiver"
                 navnArbeidsgiver = "Arbeidsgiver"
@@ -436,7 +435,7 @@ object FellesformatMapperServiceSpek : Spek({
             arbeidsgiver.stillingsprosent shouldBeEqualTo 80
         }
 
-        it("tilArbeidsgiver flere arbeidsgivere") {
+        test("tilArbeidsgiver flere arbeidsgivere") {
             val arbeidsgiverType = ArbeidsgiverType().apply {
                 harArbeidsgiver = "Flere arbeidsgivere"
                 navnArbeidsgiver = "Arbeidsgiver"
@@ -450,7 +449,7 @@ object FellesformatMapperServiceSpek : Spek({
             arbeidsgiver.yrkesbetegnelse shouldBeEqualTo "Lærer"
         }
 
-        it("tilArbeidsgiver ingen arbeidsgiver") {
+        test("tilArbeidsgiver ingen arbeidsgiver") {
             val arbeidsgiverType = ArbeidsgiverType().apply {
                 harArbeidsgiver = "Ingen arbeidsgiver"
             }
@@ -460,14 +459,14 @@ object FellesformatMapperServiceSpek : Spek({
             arbeidsgiver.harArbeidsgiver.v shouldBeEqualTo "3"
         }
 
-        it("tilPeriodeListe shoulld throw exception, when missing aktivitetstype") {
+        test("tilPeriodeListe shoulld throw exception, when missing aktivitetstype") {
             val aktivitetType = AktivitetType()
 
             val func = { tilPeriodeListe(aktivitetType) }
             func shouldThrow IllegalStateException::class
         }
 
-        it("tilPeriodeListe") {
+        test("tilPeriodeListe") {
             val fom = LocalDate.now()
             val tom = LocalDate.now().plusWeeks(3)
             val aktivitetType = AktivitetType().apply {
@@ -550,7 +549,7 @@ object FellesformatMapperServiceSpek : Spek({
             periodeliste[4].isReisetilskudd shouldBeEqualTo true
         }
 
-        it("tilPrognose i arbeid") {
+        test("tilPrognose i arbeid") {
             val tilbakeIArbeidDato = LocalDate.now().plusWeeks(2)
             val datoForNyTilbakemelding = LocalDate.now().plusWeeks(1)
             val prognoseType = PrognoseType().apply {
@@ -577,7 +576,7 @@ object FellesformatMapperServiceSpek : Spek({
             prognose.erIkkeIArbeid shouldBeEqualTo null
         }
 
-        it("tilPrognose ikke i arbeid") {
+        test("tilPrognose ikke i arbeid") {
             val tilbakeIArbeidDato = LocalDate.now().plusWeeks(2)
             val datoForNyTilbakemelding = LocalDate.now().plusWeeks(1)
             val prognoseType = PrognoseType().apply {
@@ -598,7 +597,7 @@ object FellesformatMapperServiceSpek : Spek({
             prognose.erIArbeid shouldBeEqualTo null
         }
 
-        it("tilUtdypendeOpplysninger") {
+        test("tilUtdypendeOpplysninger") {
             val utdypendeOpplysningerType = UtdypendeOpplysningerType().apply {
                 sykehistorie = "Er syk"
                 arbeidsevne = "Ikke så bra"
@@ -631,7 +630,7 @@ object FellesformatMapperServiceSpek : Spek({
             utdypendeOpplysninger.spmGruppe.first().spmSvar?.find { it.spmId == "6.2.4" }?.restriksjon?.restriksjonskode?.firstOrNull()?.dn shouldBeEqualTo "Informasjonen skal ikke vises arbeidsgiver"
         }
 
-        it("tilBehandler") {
+        test("tilBehandler") {
             val sykmelder = Sykmelder(hprNummer = "654321", fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn", mellomnavn = "Mellomnavn", etternavn = "Etternavn", telefonnummer = "12345678", godkjenninger = listOf())
 
             val behandler = tilBehandler(sykmelder)
@@ -647,7 +646,7 @@ object FellesformatMapperServiceSpek : Spek({
             behandler.kontaktInfo.firstOrNull()?.teleAddress?.v shouldBeEqualTo "tel:12345678"
         }
 
-        it("velgRiktigKontaktOgSignaturDato") {
+        test("velgRiktigKontaktOgSignaturDato") {
             val fom = LocalDate.of(2019, Month.SEPTEMBER, 1)
             val periodeliste = listOf(
                 HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
@@ -662,7 +661,7 @@ object FellesformatMapperServiceSpek : Spek({
             dato shouldBeEqualTo LocalDateTime.of(fom, LocalTime.NOON)
         }
 
-        it("diagnosekodemapping små bokstaver") {
+        test("diagnosekodemapping små bokstaver") {
             val gyldigdiagnose = "t81.9"
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",
@@ -675,7 +674,7 @@ object FellesformatMapperServiceSpek : Spek({
             hoveddiagnose.v shouldBeEqualTo "T819"
         }
 
-        it("Ugyldig diagnosesystem-mapping") {
+        test("Ugyldig diagnosesystem-mapping") {
             val gyldigdiagnose = "t8221.9"
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",
@@ -687,7 +686,7 @@ object FellesformatMapperServiceSpek : Spek({
             func shouldThrow IllegalStateException::class
         }
 
-        it("Gyldig diagnosekode mapping") {
+        test("Gyldig diagnosekode mapping") {
             val gyldigdiagnose = "T81.9"
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",
@@ -700,7 +699,7 @@ object FellesformatMapperServiceSpek : Spek({
             hoveddiagnose.v shouldBeEqualTo "T819"
         }
 
-        it("Gyldig diagnosekode mapping med space") {
+        test("Gyldig diagnosekode mapping med space") {
             val gyldigdiagnose = "t 81.9"
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",

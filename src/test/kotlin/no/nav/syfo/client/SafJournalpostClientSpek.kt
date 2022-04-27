@@ -1,19 +1,18 @@
 package no.nav.syfo.client
 
 import FindJournalpostQuery
+import io.kotest.core.spec.style.FunSpec
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import type.Variantformat
 import java.time.Month
 
-object SafJournalpostClientSpek : Spek({
+class SafJournalpostClientSpek : FunSpec({
     val loggingMetadata = LoggingMeta("sykmeldingId", "123", "hendelsesId")
 
-    describe("finnDokumentIdForOcr fungerer som den skal") {
-        it("Henter riktig dokumentId for happy-case") {
+    context("finnDokumentIdForOcr fungerer som den skal") {
+        test("Henter riktig dokumentId for happy-case") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo", "dokumentInfoIdArkiv", "brevkode",
@@ -31,7 +30,7 @@ object SafJournalpostClientSpek : Spek({
             dokumentId shouldBeEqualTo "dokumentInfoIdOriginal"
         }
 
-        it("Returnerer null hvis dokumentListe er tom") {
+        test("Returnerer null hvis dokumentListe er tom") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = emptyList()
 
             val dokumentId = finnDokumentIdForOcr(dokumentListe, loggingMetadata)
@@ -39,15 +38,15 @@ object SafJournalpostClientSpek : Spek({
             dokumentId shouldBeEqualTo null
         }
 
-        it("Returnerer null hvis dokumentListe er null") {
+        test("Returnerer null hvis dokumentListe er null") {
             val dokumentId = finnDokumentIdForOcr(null, loggingMetadata)
 
             dokumentId shouldBeEqualTo null
         }
     }
 
-    describe("finnDokumentIdForPdf fungerer som den skal") {
-        it("Henter riktig dokumentId for happy-case") {
+    context("finnDokumentIdForPdf fungerer som den skal") {
+        test("Henter riktig dokumentId for happy-case") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo", "dokumentInfoIdArkiv", "brevkode",
@@ -65,7 +64,7 @@ object SafJournalpostClientSpek : Spek({
             dokumentId shouldBeEqualTo "dokumentInfoIdArkiv"
         }
 
-        it("Kaster feil hvis dokumentListe er tom") {
+        test("Kaster feil hvis dokumentListe er tom") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = emptyList()
 
             assertFailsWith<RuntimeException> {
@@ -74,8 +73,8 @@ object SafJournalpostClientSpek : Spek({
         }
     }
 
-    describe("dateTimeStringTilLocalDate mapper dato riktig") {
-        it("Mapper dato riktig") {
+    context("dateTimeStringTilLocalDate mapper dato riktig") {
+        test("Mapper dato riktig") {
             val dateTime = "2019-09-24T11:27:23"
 
             val dato = dateTimeStringTilLocalDateTime(dateTime, loggingMetadata)
@@ -88,7 +87,7 @@ object SafJournalpostClientSpek : Spek({
             dato?.second shouldBeEqualTo 23
         }
 
-        it("Returnerer null hvis datoen ikke er en dato") {
+        test("Returnerer null hvis datoen ikke er en dato") {
             val dateTime = "2019-09-"
 
             val dato = dateTimeStringTilLocalDateTime(dateTime, loggingMetadata)
@@ -96,15 +95,15 @@ object SafJournalpostClientSpek : Spek({
             dato shouldBeEqualTo null
         }
 
-        it("Returnerer null hvis datoen mangler") {
+        test("Returnerer null hvis datoen mangler") {
             val dato = dateTimeStringTilLocalDateTime(null, loggingMetadata)
 
             dato shouldBeEqualTo null
         }
     }
 
-    describe("sykmeldingGjelderUtland gir riktig resultat") {
-        it("Returnerer true hvis brevkoden er utland") {
+    context("sykmeldingGjelderUtland gir riktig resultat") {
+        test("Returnerer true hvis brevkoden er utland") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo", "dokumentInfoIdArkiv", BREVKODE_UTLAND,
@@ -123,7 +122,7 @@ object SafJournalpostClientSpek : Spek({
             utenlandskSykmelding shouldBeEqualTo true
         }
 
-        it("Returnerer false hvis brevkoden ikke er utland") {
+        test("Returnerer false hvis brevkoden ikke er utland") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo", "dokumentInfoIdArkiv", BREVKODE_UTLAND,
@@ -142,13 +141,13 @@ object SafJournalpostClientSpek : Spek({
             utenlandskSykmelding shouldBeEqualTo false
         }
 
-        it("Returnerer true hvis dokumentliste mangler") {
+        test("Returnerer true hvis dokumentliste mangler") {
             val utenlandskSykmelding = sykmeldingGjelderUtland(null, null, loggingMetadata)
 
             utenlandskSykmelding shouldBeEqualTo true
         }
 
-        it("Returnerer true hvis brevkoden er utland og OCR-dokument mangler") {
+        test("Returnerer true hvis brevkoden er utland og OCR-dokument mangler") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo", "dokumentInfoIdArkiv", "annenBrevkode",
@@ -163,7 +162,7 @@ object SafJournalpostClientSpek : Spek({
             utenlandskSykmelding shouldBeEqualTo true
         }
 
-        it("Returnerer false hvis brevkoden ikke er utland og OCR-dokument mangler") {
+        test("Returnerer false hvis brevkoden ikke er utland og OCR-dokument mangler") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo", "dokumentInfoIdArkiv", "annenBrevkode",

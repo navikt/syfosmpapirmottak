@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.kotest.core.spec.style.FunSpec
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.client.HttpClient
@@ -20,15 +21,12 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBe
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
 import java.util.concurrent.TimeUnit
 
-object NorskHelsenettClientSpek : Spek({
+class NorskHelsenettClientSpek : FunSpec({
     val accessTokenClientMock = mockk<AccessTokenClientV2>()
     val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
@@ -68,20 +66,17 @@ object NorskHelsenettClientSpek : Spek({
 
     val norskHelsenettClient = NorskHelsenettClient("$mockHttpServerUrl/syfohelsenettproxy", accessTokenClientMock, "resourceId", httpClient)
 
-    afterGroup {
+    afterSpec {
         mockServer.stop(TimeUnit.SECONDS.toMillis(1), TimeUnit.SECONDS.toMillis(1))
     }
 
-    beforeGroup {
+    beforeSpec {
         coEvery { accessTokenClientMock.getAccessTokenV2(any()) } returns "token"
     }
 
-    describe("Håndtering av respons fra syfohelsenettproxy") {
-        it("Får hente behandler som finnes") {
-            var behandler: Behandler?
-            runBlocking {
-                behandler = norskHelsenettClient.finnBehandler("1234", "sykmeldingsId")
-            }
+    context("Håndtering av respons fra syfohelsenettproxy") {
+        test("Får hente behandler som finnes") {
+            val behandler = norskHelsenettClient.finnBehandler("1234", "sykmeldingsId")
 
             behandler shouldNotBe null
             behandler?.godkjenninger?.size shouldBeEqualTo 1
@@ -90,11 +85,8 @@ object NorskHelsenettClientSpek : Spek({
             behandler?.etternavn shouldBeEqualTo "Etternavn"
             behandler?.fnr shouldBeEqualTo "12345678910"
         }
-        it("Returnerer null for behandler som ikke finnes") {
-            var behandler: Behandler?
-            runBlocking {
-                behandler = norskHelsenettClient.finnBehandler("0", "sykmeldingsId")
-            }
+        test("Returnerer null for behandler som ikke finnes") {
+            val behandler = norskHelsenettClient.finnBehandler("0", "sykmeldingsId")
 
             behandler shouldBeEqualTo null
         }
