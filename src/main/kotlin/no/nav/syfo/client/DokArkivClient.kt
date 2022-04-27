@@ -1,17 +1,17 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
-import io.ktor.client.features.ClientRequestException
+import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments.fields
-import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.util.LoggingMeta
@@ -38,30 +38,29 @@ class DokArkivClient(
         journalpostId: String,
         msgId: String,
         loggingMeta: LoggingMeta
-    ): String = retry("ferdigstill_journalpost") {
-        try {
-            return@retry httpClient.patch<String>("$url/$journalpostId/ferdigstill") {
-                contentType(ContentType.Application.Json)
-                accept(ContentType.Application.Json)
-                header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
-                header("Nav-Callid", msgId)
-                body = FerdigstillJournal("9999")
-            }.also { log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta)) }
-        } catch (e: Exception) {
-            if (e is ClientRequestException) {
-                when (e.response.status) {
-                    HttpStatusCode.NotFound -> {
-                        log.error("Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
-                        throw RuntimeException("Ferdigstilling: Journalposten finnes ikke for journalpostid $journalpostId msgid $msgId")
-                    }
-                    else -> {
-                        log.error("Fikk http status {} for journalpostid {}, msgId {}, {}", e.response.status, journalpostId, msgId, fields(loggingMeta))
-                        throw RuntimeException("Fikk feilmelding ved ferdigstilling av journalpostid $journalpostId msgid $msgId")
-                    }
-                }
+    ): String {
+        val httpResponse: HttpResponse = httpClient.patch("$url/$journalpostId/ferdigstill") {
+            contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Json)
+            header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
+            header("Nav-Callid", msgId)
+            setBody(
+                FerdigstillJournal("9999")
+            )
+        }
+        when (httpResponse.status) {
+            HttpStatusCode.InternalServerError -> {
+                log.error("Dokarkiv svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+                throw IOException("Dokarkiv svarte med feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId")
             }
-            log.error("Dokarkiv svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
-            throw IOException("Dokarkiv svarte med feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId")
+            HttpStatusCode.NotFound -> {
+                log.error("Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
+                throw RuntimeException("Ferdigstilling: Journalposten finnes ikke for journalpostid $journalpostId msgid $msgId")
+            }
+            else -> {
+                log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
+                return httpResponse.body<String>()
+            }
         }
     }
 
@@ -71,14 +70,14 @@ class DokArkivClient(
         behandler: Behandler,
         msgId: String,
         loggingMeta: LoggingMeta
-    ) = retry("oppdater_journalpost") {
-        try {
-            httpClient.put<HttpResponse>("$url/$journalpostId") {
-                contentType(ContentType.Application.Json)
-                accept(ContentType.Application.Json)
-                header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
-                header("Nav-Callid", msgId)
-                body = OppdaterJournalpost(
+    ) {
+        val httpResponse: HttpResponse = httpClient.put("$url/$journalpostId") {
+            contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Json)
+            header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
+            header("Nav-Callid", msgId)
+            setBody(
+                OppdaterJournalpost(
                     avsenderMottaker = AvsenderMottaker(
                         id = hprnummerMedRiktigLengde(behandler.hpr!!),
                         navn = finnNavn(behandler)
@@ -86,22 +85,20 @@ class DokArkivClient(
                     bruker = Bruker(id = fnr),
                     sak = Sak()
                 )
-            }.also { log.info("Oppdatering av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta)) }
-        } catch (e: Exception) {
-            if (e is ClientRequestException) {
-                when (e.response.status) {
-                    HttpStatusCode.NotFound -> {
-                        log.error("Oppdatering: Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
-                        throw RuntimeException("Oppdatering: Journalposten finnes ikke for journalpostid $journalpostId msgid $msgId")
-                    }
-                    else -> {
-                        log.error("Fikk http status {} ved oppdatering av journalpostid {}, msgId {}, {}", e.response.status, journalpostId, msgId, fields(loggingMeta))
-                        throw RuntimeException("Fikk feilmelding ved oppdatering av journalpostid $journalpostId msgid $msgId")
-                    }
-                }
+            )
+        }
+        when (httpResponse.status) {
+            HttpStatusCode.InternalServerError -> {
+                log.error("Dokarkiv svarte med feilmelding ved oppdatering av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+                throw IOException("Dokarkiv svarte med feilmelding ved oppdatering av journalpost for $journalpostId msgid $msgId")
             }
-            log.error("Dokarkiv svarte med feilmelding ved oppdatering av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
-            throw IOException("Dokarkiv svarte med feilmelding ved oppdatering av journalpost for $journalpostId msgid $msgId")
+            HttpStatusCode.NotFound -> {
+                log.error("Oppdatering: Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
+                throw RuntimeException("Oppdatering: Journalposten finnes ikke for journalpostid $journalpostId msgid $msgId")
+            }
+            else -> {
+                log.info("Oppdatering av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
+            }
         }
     }
 

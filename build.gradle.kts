@@ -11,7 +11,7 @@ val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1
 val kafkaVersion = "3.1.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.68"
-val ktorVersion = "1.6.8"
+val ktorVersion = "2.0.0"
 val logbackVersion = "1.2.11"
 val logstashLogbackEncoderVersion = "7.1.1"
 val prometheusVersion = "0.15.0"
@@ -31,7 +31,7 @@ val commonsTextVersion = "1.9"
 val cxfVersion = "3.4.5"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
-val smCommonVersion = "1.ed38c78"
+val smCommonVersion = "1.5fc89e0-SNAPSHOT"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.12.3"
 val kotlinVersion = "1.6.20"
@@ -81,6 +81,7 @@ dependencies {
     implementation ("com.fasterxml.jackson.module:jackson-module-jaxb-annotations:$jacksonVersion")
     implementation ("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation ("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
     implementation ("com.fasterxml.jackson:jackson-bom:$jacksonBomVersion")
     implementation ("com.fasterxml.jackson.core:jackson-databind:$jacksonPatchVersion")
 
@@ -100,16 +101,16 @@ dependencies {
     implementation ("no.nav.helse.xml:papirSykemelding:$papirSykemeldingVersion")
     implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
 
-    implementation ("io.ktor:ktor-client-apache:$ktorVersion")
-    implementation ("io.ktor:ktor-client-auth-basic-jvm:$ktorVersion")
+    implementation ("io.ktor:ktor-server-core:$ktorVersion")
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation ("io.ktor:ktor-client-jackson:$ktorVersion")
-    implementation ("io.ktor:ktor-jackson:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-apache:$ktorVersion")
 
     implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion")
 
     implementation ("no.nav.helse:syfosm-common-models:$smCommonVersion")
-    implementation ("no.nav.helse:syfosm-common-networking:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-rest-sts:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonVersion")
@@ -130,6 +131,7 @@ dependencies {
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     testImplementation ("io.mockk:mockk:$ioMockVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
