@@ -1,36 +1,37 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.OppgaveResultat
-import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
 import java.time.DayOfWeek
 import java.time.LocalDate
 
 class OppgaveClient constructor(private val url: String, private val oidcClient: StsOidcClient, private val httpClient: HttpClient) {
-    private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse = retry("opprett_oppgave") {
-        httpClient.post<OpprettOppgaveResponse>(url) {
+    private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
+        return httpClient.post(url) {
             contentType(ContentType.Application.Json)
             val oidcToken = oidcClient.oidcToken()
-            this.header("Authorization", "Bearer ${oidcToken.access_token}")
-            this.header("X-Correlation-ID", msgId)
-            body = opprettOppgaveRequest
-        }
+            header("Authorization", "Bearer ${oidcToken.access_token}")
+            header("X-Correlation-ID", msgId)
+            setBody(opprettOppgaveRequest)
+        }.body<OpprettOppgaveResponse>()
     }
 
-    suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse = retry("hent_oppgave") {
-        httpClient.get<OppgaveResponse>(url) {
+    suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {
+        return httpClient.get(url) {
             val oidcToken = oidcClient.oidcToken()
-            this.header("Authorization", "Bearer ${oidcToken.access_token}")
-            this.header("X-Correlation-ID", msgId)
+            header("Authorization", "Bearer ${oidcToken.access_token}")
+            header("X-Correlation-ID", msgId)
             parameter("tema", "SYM")
             parameter("oppgavetype", oppgavetype)
             parameter("journalpostId", journalpostId)
@@ -38,7 +39,7 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
             parameter("sorteringsrekkefolge", "ASC")
             parameter("sorteringsfelt", "FRIST")
             parameter("limit", "10")
-        }
+        }.body<OppgaveResponse>()
     }
 
     suspend fun opprettOppgave(

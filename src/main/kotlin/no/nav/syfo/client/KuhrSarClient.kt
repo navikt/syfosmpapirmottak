@@ -1,12 +1,12 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
-import no.nav.syfo.helpers.retry
 import no.nav.syfo.metrics.SAMHANDLERPRAKSIS_FOUND_COUNTER
 import no.nav.syfo.metrics.SAMHANDLERPRAKSIS_NOT_FOUND_COUNTER
 import java.util.Date
@@ -17,13 +17,13 @@ class SarClient(
     private val resourceId: String,
     private val httpClient: HttpClient
 ) {
-    suspend fun getSamhandler(ident: String): List<Samhandler> = retry("get_samhandler") {
+    suspend fun getSamhandler(ident: String): List<Samhandler> {
         val accessToken = accessTokenClientV2.getAccessTokenV2(resourceId)
-        httpClient.get<List<Samhandler>>("$endpointUrl/sar/rest/v2/samh") {
+        return httpClient.get("$endpointUrl/sar/rest/v2/samh") {
             accept(ContentType.Application.Json)
             header("Authorization", "Bearer $accessToken")
             parameter("ident", ident)
-        }
+        }.body<List<Samhandler>>()
     }
 }
 

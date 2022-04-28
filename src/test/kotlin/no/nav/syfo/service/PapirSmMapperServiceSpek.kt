@@ -1,22 +1,20 @@
 package no.nav.syfo.service
 
+import io.kotest.core.spec.style.FunSpec
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.skanningMetadataUnmarshaller
-import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo
-import org.amshove.kluent.shouldNotBe
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
+import org.amshove.kluent.shouldNotBeEqualTo
 import java.io.StringReader
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-object PapirSmMapperServiceSpek : Spek({
+class PapirSmMapperServiceSpek : FunSpec({
     val sykmeldingId = "1234"
     val journalpostId = "123"
     val oppgaveId = "123"
@@ -25,9 +23,9 @@ object PapirSmMapperServiceSpek : Spek({
     val aktorId = "aktorId"
     val datoOpprettet = OffsetDateTime.now(ZoneOffset.UTC)
 
-    describe("PapirSmMappingService") {
+    context("PapirSmMappingService") {
 
-        it("test OCR file with empty behandlngsdager") {
+        test("test OCR file with empty behandlngsdager") {
             val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett-uten-behandlingsdager.xml"))) as Skanningmetadata
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
@@ -42,10 +40,10 @@ object PapirSmMapperServiceSpek : Spek({
                 ocrFil = ocrFil
             )
 
-            papirSm.perioder shouldNotBe null
+            papirSm.perioder shouldNotBeEqualTo null
         }
 
-        it("Test ocr file with empty hoveddiagnoselist") {
+        test("Test ocr file with empty hoveddiagnoselist") {
             val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett-uten-hoveddiagnose.xml"))) as Skanningmetadata
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
@@ -60,10 +58,10 @@ object PapirSmMapperServiceSpek : Spek({
                 ocrFil = ocrFil
             )
 
-            papirSm.medisinskVurdering?.hovedDiagnose shouldBe null
+            papirSm.medisinskVurdering?.hovedDiagnose shouldBeEqualTo null
         }
 
-        it("Tests a complete OCR file, and should parse fine") {
+        test("Tests a complete OCR file, and should parse fine") {
             val ocrFil = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett.xml"))) as Skanningmetadata
 
             val papirSm = mapOcrFilTilPapirSmRegistrering(
@@ -115,13 +113,13 @@ object PapirSmMapperServiceSpek : Spek({
             papirSm.prognose?.erIkkeIArbeid?.vurderingsdato shouldBeEqualTo LocalDate.of(2020, 6, 1)
             papirSm.prognose?.erIkkeIArbeid?.arbeidsforPaSikt shouldBeEqualTo true
 
-            papirSm.utdypendeOpplysninger?.size shouldBe 1
-            papirSm.utdypendeOpplysninger?.containsKey("6.2") shouldBe true
+            papirSm.utdypendeOpplysninger?.size shouldBeEqualTo 1
+            papirSm.utdypendeOpplysninger?.containsKey("6.2") shouldBeEqualTo true
             papirSm.utdypendeOpplysninger?.get("6.2")?.size shouldBeEqualTo 4
-            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.1") shouldBe true
-            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.2") shouldBe true
-            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.3") shouldBe true
-            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.4") shouldBe true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.1") shouldBeEqualTo true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.2") shouldBeEqualTo true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.3") shouldBeEqualTo true
+            papirSm.utdypendeOpplysninger?.get("6.2")?.containsKey("6.2.4") shouldBeEqualTo true
             papirSm.utdypendeOpplysninger?.get("6.2")?.get("6.2.4")?.sporsmal shouldBeEqualTo "Beskriv pågående og planlagt henvisning,utredning og/eller behandling"
             papirSm.utdypendeOpplysninger?.get("6.2")?.get("6.2.4")?.svar shouldBeEqualTo "Rolig ferie i kullfritt miljø"
             papirSm.utdypendeOpplysninger?.get("6.2")?.get("6.2.4")?.restriksjoner?.first() shouldBeEqualTo SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER

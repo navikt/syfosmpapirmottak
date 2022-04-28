@@ -1,13 +1,14 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
-import io.ktor.client.features.ClientRequestException
+import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.NotFound
-import no.nav.syfo.helpers.retry
 import no.nav.syfo.log
 import java.io.IOException
 
@@ -18,30 +19,30 @@ class NorskHelsenettClient(
     private val httpClient: HttpClient
 ) {
 
-    suspend fun finnBehandler(hprNummer: String, sykmeldingId: String): Behandler? = retry(
-        callName = "finnbehandler",
-        retryIntervals = arrayOf(500L, 1000L, 3000L, 5000L)
-    ) {
+    suspend fun finnBehandler(hprNummer: String, sykmeldingId: String): Behandler? {
         log.info("Henter behandler fra syfohelsenettproxy for sykmeldingId {}", sykmeldingId)
-        try {
-            return@retry httpClient.get<Behandler>("$endpointUrl/api/v2/behandlerMedHprNummer") {
-                accept(ContentType.Application.Json)
-                val accessToken = accessTokenClient.getAccessTokenV2(resourceId)
-                headers {
-                    append("Authorization", "Bearer $accessToken")
-                    append("Nav-CallId", sykmeldingId)
-                    append("hprNummer", hprNummer)
-                }
-            }.also {
-                log.info("Hentet behandler for sykmeldingId {}", sykmeldingId)
+
+        val httpResponse: HttpResponse = httpClient.get("$endpointUrl/api/v2/behandlerMedHprNummer") {
+            accept(ContentType.Application.Json)
+            val accessToken = accessTokenClient.getAccessTokenV2(resourceId)
+            headers {
+                append("Authorization", "Bearer $accessToken")
+                append("Nav-CallId", sykmeldingId)
+                append("hprNummer", hprNummer)
             }
-        } catch (e: Exception) {
-            if (e is ClientRequestException && e.response.status == NotFound) {
-                log.warn("Fant ikke behandler for HprNummer $hprNummer for sykmeldingId $sykmeldingId")
-                null
-            } else {
+        }
+        return when (httpResponse.status) {
+            HttpStatusCode.InternalServerError -> {
                 log.error("Syfohelsenettproxy svarte med feilmelding for sykmeldingId {}", sykmeldingId)
                 throw IOException("Syfohelsenettproxy svarte med feilmelding for $sykmeldingId")
+            }
+            NotFound -> {
+                log.warn("Fant ikke behandler for HprNummer $hprNummer for sykmeldingId $sykmeldingId")
+                null
+            }
+            else -> {
+                log.info("Hentet behandler for sykmeldingId {}", sykmeldingId)
+                httpResponse.call.response.body<Behandler>()
             }
         }
     }

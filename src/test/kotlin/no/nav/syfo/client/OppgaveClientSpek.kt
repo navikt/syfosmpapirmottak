@@ -4,43 +4,45 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import io.ktor.application.call
-import io.ktor.application.install
+import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
-import io.ktor.client.features.json.JacksonSerializer
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.features.ContentNegotiation
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
-import io.ktor.jackson.jackson
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.routing
+import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.call
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
-import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldBeEqualTo
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-object OppgaveClientSpek : Spek({
+class OppgaveClientSpek : FunSpec({
     val stsOidcClientMock = mockk<StsOidcClient>()
     val httpClient = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer {
+        install(ContentNegotiation) {
+            jackson {
                 registerKotlinModule()
                 registerModule(JavaTimeModule())
                 configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
+        }
+        install(HttpRequestRetry) {
+            maxRetries = 3
+            delayMillis { retry ->
+                retry * 50L
             }
         }
     }
@@ -49,7 +51,7 @@ object OppgaveClientSpek : Spek({
     val mockHttpServerPort = ServerSocket(0).use { it.localPort }
     val mockHttpServerUrl = "http://localhost:$mockHttpServerPort"
     val mockServer = embeddedServer(Netty, mockHttpServerPort) {
-        install(ContentNegotiation) {
+        install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
             jackson {}
         }
         routing {
@@ -94,70 +96,58 @@ object OppgaveClientSpek : Spek({
 
     val oppgaveClient = OppgaveClient("$mockHttpServerUrl/oppgave", stsOidcClientMock, httpClient)
 
-    afterGroup {
+    afterSpec {
         mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
-    beforeGroup {
+    beforeSpec {
         coEvery { stsOidcClientMock.oidcToken() } returns OidcToken("token", "type", 300L)
     }
 
-    describe("OppgaveClient oppretter oppgave når det ikke finnes fra før") {
-        it("Oppretter ikke JFR-oppgave hvis finnes fra før") {
-            var oppgave: OppgaveResultat? = null
-            runBlocking {
-                oppgave = oppgaveClient.opprettOppgave("123", "123456789", false, "sykmeldingId", loggingMetadata)
-            }
+    context("OppgaveClient oppretter oppgave når det ikke finnes fra før") {
+        test("Oppretter ikke JFR-oppgave hvis finnes fra før") {
+            val oppgave = oppgaveClient.opprettOppgave("123", "123456789", false, "sykmeldingId", loggingMetadata)
 
-            oppgave?.oppgaveId shouldBeEqualTo 1
-            oppgave?.duplikat shouldBeEqualTo true
+            oppgave.oppgaveId shouldBeEqualTo 1
+            oppgave.duplikat shouldBeEqualTo true
         }
-        it("Oppretter ikke FDR-oppgave hvis finnes fra før") {
-            var oppgave: OppgaveResultat? = null
-            runBlocking {
-                oppgave = oppgaveClient.opprettFordelingsOppgave("123", false, "sykmeldingId", loggingMetadata)
-            }
+        test("Oppretter ikke FDR-oppgave hvis finnes fra før") {
+            val oppgave = oppgaveClient.opprettFordelingsOppgave("123", false, "sykmeldingId", loggingMetadata)
 
-            oppgave?.oppgaveId shouldBeEqualTo 1
-            oppgave?.duplikat shouldBeEqualTo true
+            oppgave.oppgaveId shouldBeEqualTo 1
+            oppgave.duplikat shouldBeEqualTo true
         }
-        it("Oppretter JFR-oppgave hvis det ikke finnes fra før") {
-            var oppgave: OppgaveResultat? = null
-            runBlocking {
-                oppgave = oppgaveClient.opprettOppgave("987", "123456789", false, "sykmeldingId", loggingMetadata)
-            }
+        test("Oppretter JFR-oppgave hvis det ikke finnes fra før") {
+            val oppgave = oppgaveClient.opprettOppgave("987", "123456789", false, "sykmeldingId", loggingMetadata)
 
-            oppgave?.oppgaveId shouldBeEqualTo 42
-            oppgave?.duplikat shouldBeEqualTo false
+            oppgave.oppgaveId shouldBeEqualTo 42
+            oppgave.duplikat shouldBeEqualTo false
         }
-        it("Oppretter FDR-oppgave hvis det ikke finnes fra før") {
-            var oppgave: OppgaveResultat? = null
-            runBlocking {
-                oppgave = oppgaveClient.opprettFordelingsOppgave("987", false, "sykmeldingId", loggingMetadata)
-            }
+        test("Oppretter FDR-oppgave hvis det ikke finnes fra før") {
+            val oppgave = oppgaveClient.opprettFordelingsOppgave("987", false, "sykmeldingId", loggingMetadata)
 
-            oppgave?.oppgaveId shouldBeEqualTo 42
-            oppgave?.duplikat shouldBeEqualTo false
+            oppgave.oppgaveId shouldBeEqualTo 42
+            oppgave.duplikat shouldBeEqualTo false
         }
     }
 
-    describe("OppgaveClient setter fristFerdigstillelse til forvenetet journalføringsfrist") {
-        it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på søndag") {
+    context("OppgaveClient setter fristFerdigstillelse til forvenetet journalføringsfrist") {
+        test("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på søndag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 12, 1))
             fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.MONDAY
         }
 
-        it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på lørdag") {
+        test("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på lørdag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 11, 30))
             fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.MONDAY
         }
 
-        it("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på fredag") {
+        test("Setter fristFerdigstillelse til mandag, viss oppgaven kom inn på fredag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 11, 29))
             fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.MONDAY
         }
 
-        it("Setter fristFerdigstillelse til tirsdag, viss oppgaven kom inn på mandag") {
+        test("Setter fristFerdigstillelse til tirsdag, viss oppgaven kom inn på mandag") {
             val fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.of(2019, 12, 2))
             fristFerdigstillelse.dayOfWeek shouldBeEqualTo DayOfWeek.TUESDAY
         }
