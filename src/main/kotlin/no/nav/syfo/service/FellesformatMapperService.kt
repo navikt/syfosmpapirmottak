@@ -47,8 +47,7 @@ fun mapOcrFilTilFellesformat(
     journalpostId: String
 ): XMLEIFellesformat {
     if (skanningmetadata.sykemeldinger.pasient.fnr != pdlPerson.fnr) {
-        log.error("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen, avbryter.. {}", fields(loggingMeta))
-        throw IllegalStateException("Fnr fra sykmelding matcher ikke fnr fra journalposthendelsen")
+        log.warn("Fnr fra sykmelding matcher ikke fnr fra journalpost/PDL, bruker fnr fra PDL {}", fields(loggingMeta))
     }
 
     return XMLEIFellesformat().apply {
@@ -150,7 +149,7 @@ fun mapOcrFilTilFellesformat(
                                                 etternavn = pdlPerson.navn.etternavn
                                             }
                                             fodselsnummer = Ident().apply {
-                                                id = skanningmetadata.sykemeldinger.pasient.fnr
+                                                id = pdlPerson.fnr
                                                 typeId = CV().apply {
                                                     dn = "Fødselsnummer"
                                                     s = "2.16.578.1.12.4.1.1.8116"

@@ -303,6 +303,25 @@ class FellesformatMapperServiceSpek : FunSpec({
 
             func shouldNotThrow Exception::class
         }
+
+        test("Bruker fnr fra PDL hvis det er ulikt fnr fra ocr") {
+            val fnrPasientPdl = "10987654321"
+            val skanningMetadata = skanningMetadataUnmarshaller.unmarshal(StringReader(getFileAsString("src/test/resources/minimal-ocr-sykmelding.xml"))) as Skanningmetadata
+            val sykmelder = Sykmelder(hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = null, mellomnavn = null, etternavn = null, telefonnummer = null, godkjenninger = listOf())
+            val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), fnrPasientPdl, "aktorid", null)
+
+            val fellesformat = mapOcrFilTilFellesformat(
+                skanningmetadata = skanningMetadata,
+                sykmelder = sykmelder,
+                sykmeldingId = sykmeldingId,
+                loggingMeta = loggingMetadata,
+                pdlPerson = pdlPerson,
+                journalpostId = journalpostId
+            )
+
+            val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
+            healthInformation.pasient.fodselsnummer.id shouldBeEqualTo fnrPasientPdl
+        }
     }
 
     context("Hver del av MappingService mapper korrekt") {
