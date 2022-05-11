@@ -36,7 +36,6 @@ import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SarClient
-import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.kafka.aiven.KafkaUtils
@@ -75,10 +74,6 @@ val objectMapper: ObjectMapper = ObjectMapper().apply {
 @DelicateCoroutinesApi
 fun main() {
     val env = Environment()
-    val credentials = VaultCredentials(
-        serviceuserPassword = getFileAsString("/secrets/serviceuser/password"),
-        serviceuserUsername = getFileAsString("/secrets/serviceuser/username")
-    )
 
     val applicationState = ApplicationState()
     val applicationEngine = createApplicationEngine(
@@ -113,8 +108,6 @@ fun main() {
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerPropertiesAiven)
     val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerPropertiesAiven)
-
-    val oidcClient = StsOidcClient(credentials.serviceuserUsername, credentials.serviceuserPassword, env.securityTokenServiceUrl)
 
     val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         install(ContentNegotiation) {
@@ -163,7 +156,7 @@ fun main() {
         .build()
     val safJournalpostClient = SafJournalpostClient(apolloClient, accessTokenClientV2, env.safScope)
     val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, accessTokenClientV2, env.safScope, httpClientWithRetry)
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, oidcClient, httpClientWithRetry)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope)
 
     val kuhrsarClient = SarClient(env.kuhrSarApiUrl, accessTokenClientV2, env.kuhrSarApiScope, httpClientWithRetry)
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, accessTokenClientV2, env.dokArkivScope, httpClientWithRetry)

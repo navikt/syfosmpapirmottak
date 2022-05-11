@@ -16,12 +16,17 @@ import no.nav.syfo.util.LoggingMeta
 import java.time.DayOfWeek
 import java.time.LocalDate
 
-class OppgaveClient constructor(private val url: String, private val oidcClient: StsOidcClient, private val httpClient: HttpClient) {
+class OppgaveClient(
+    private val url: String,
+    private val accessTokenClientV2: AccessTokenClientV2,
+    private val httpClient: HttpClient,
+    private val scope: String
+) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
         return httpClient.post(url) {
             contentType(ContentType.Application.Json)
-            val oidcToken = oidcClient.oidcToken()
-            header("Authorization", "Bearer ${oidcToken.access_token}")
+            val token = accessTokenClientV2.getAccessTokenV2(scope)
+            header("Authorization", "Bearer $token")
             header("X-Correlation-ID", msgId)
             setBody(opprettOppgaveRequest)
         }.body<OpprettOppgaveResponse>()
@@ -29,8 +34,8 @@ class OppgaveClient constructor(private val url: String, private val oidcClient:
 
     suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {
         return httpClient.get(url) {
-            val oidcToken = oidcClient.oidcToken()
-            header("Authorization", "Bearer ${oidcToken.access_token}")
+            val token = accessTokenClientV2.getAccessTokenV2(scope)
+            header("Authorization", "Bearer $token")
             header("X-Correlation-ID", msgId)
             parameter("tema", "SYM")
             parameter("oppgavetype", oppgavetype)

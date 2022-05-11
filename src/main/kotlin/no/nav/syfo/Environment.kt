@@ -1,9 +1,5 @@
 package no.nav.syfo
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
-
 data class Environment(
     val applicationPort: Int = getEnvVar("APPLICATION_PORT", "8080").toInt(),
     val applicationName: String = getEnvVar("NAIS_APP_NAME", "syfosmpapirmottak"),
@@ -11,7 +7,6 @@ data class Environment(
     val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val kafkaSchemaRegistryUsername: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_USER"),
     val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
-    val securityTokenServiceUrl: String = getEnvVar("SECURITY_TOKEN_SERVICE_URL", "http://security-token-service.default/rest/v1/sts/token"),
     val safV1Url: String = getEnvVar("SAFGRAPHQL_URL"),
     val safScope: String = getEnvVar("SAF_SCOPE"),
     val oppgavebehandlingUrl: String = getEnvVar("OPPGAVEBEHANDLING_URL"),
@@ -31,15 +26,9 @@ data class Environment(
     val aadAccessTokenV2Url: String = getEnvVar("AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"),
     val clientIdV2: String = getEnvVar("AZURE_APP_CLIENT_ID"),
     val clientSecretV2: String = getEnvVar("AZURE_APP_CLIENT_SECRET"),
-    val pdlScope: String = getEnvVar("PDL_SCOPE")
-)
-
-data class VaultCredentials(
-    val serviceuserUsername: String,
-    val serviceuserPassword: String
+    val pdlScope: String = getEnvVar("PDL_SCOPE"),
+    val oppgaveScope: String = getEnvVar("OPPGAVE_SCOPE")
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
     System.getenv(varName) ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")
-
-fun getFileAsString(filePath: String) = String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8)
