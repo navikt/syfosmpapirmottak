@@ -41,9 +41,6 @@ spec:
       tenant: trygdeetaten.no
   vault:
     enabled: true
-    paths:
-      - kvPath: serviceuser/data/dev/srvsyfosmpapirmottak
-        mountPath: /secrets/serviceuser
   ingresses:
     - "https://syfosmpapirmottak.nais.preprod.local"
   webproxy: true
@@ -78,3 +75,5 @@ spec:
       value: api://dev-fss.teamkuhr.kuhr-sar-api/.default
     - name: KUHR_SAR_API_URL
       value: https://kuhr-sar-api.dev.adeo.no
+    - name: OPPGAVE_SCOPE
+      value: api://dev-fss.oppgavehandtering.oppgave-q1/.default

@@ -41,9 +41,6 @@ spec:
       tenant: nav.no
   vault:
     enabled: true
-    paths:
-      - kvPath: serviceuser/data/prod/srvsyfosmpapirmottak
-        mountPath: /secrets/serviceuser
   ingresses:
     - "https://syfosmpapirmottak.nais.adeo.no"
   webproxy: true
@@ -78,3 +75,5 @@ spec:
       value: api://prod-fss.teamkuhr.kuhr-sar-api/.default
     - name: KUHR_SAR_API_URL
       value: https://kuhr-sar-api.nais.adeo.no
+    - name: OPPGAVE_SCOPE
+      value: api://prod-fss.oppgavehandtering.oppgave/.default

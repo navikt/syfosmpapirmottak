@@ -29,7 +29,7 @@ import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 class OppgaveClientSpek : FunSpec({
-    val stsOidcClientMock = mockk<StsOidcClient>()
+    val accessTokenClient = mockk<AccessTokenClientV2>()
     val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             jackson {
@@ -94,14 +94,14 @@ class OppgaveClientSpek : FunSpec({
         }
     }.start()
 
-    val oppgaveClient = OppgaveClient("$mockHttpServerUrl/oppgave", stsOidcClientMock, httpClient)
+    val oppgaveClient = OppgaveClient("$mockHttpServerUrl/oppgave", accessTokenClient, httpClient, "scope")
 
     afterSpec {
         mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
     }
 
     beforeSpec {
-        coEvery { stsOidcClientMock.oidcToken() } returns OidcToken("token", "type", 300L)
+        coEvery { accessTokenClient.getAccessTokenV2(any()) } returns "token"
     }
 
     context("OppgaveClient oppretter oppgave når det ikke finnes fra før") {
