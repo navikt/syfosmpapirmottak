@@ -82,7 +82,6 @@ fun main() {
     )
 
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
-    applicationServer.start()
 
     if (Diagnosekoder.icd10.isEmpty() || Diagnosekoder.icpc2.isEmpty()) {
         throw RuntimeException("Kunne ikke laste ICD10/ICPC2-diagnosekoder.")
@@ -188,6 +187,8 @@ fun main() {
         dokArkivClient,
         kafkaProducerPapirSmRegistering
     )
+
+    applicationServer.start()
 }
 
 @DelicateCoroutinesApi
@@ -198,6 +199,7 @@ fun createListener(applicationState: ApplicationState, action: suspend Coroutine
         } catch (e: TrackableException) {
             log.error("En uhåndtert feil oppstod, applikasjonen restarter {}", StructuredArguments.fields(e.loggingMeta), e.cause)
         } finally {
+            applicationState.ready = false
             applicationState.alive = false
         }
     }
@@ -214,8 +216,6 @@ fun launchListeners(
 ) {
     val kafkaConsumerJournalfoeringHendelseAiven = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
     kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
-
-    applicationState.ready = true
 
     createListener(applicationState) {
 
