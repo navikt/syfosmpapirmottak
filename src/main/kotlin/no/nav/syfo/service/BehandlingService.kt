@@ -3,20 +3,16 @@ package no.nav.syfo.service
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.domain.JournalpostMetadata
-import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.log
 import no.nav.syfo.metrics.ENDRET_PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_OCR
 import no.nav.syfo.metrics.REQUEST_TIME
-import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
-import org.apache.kafka.clients.producer.KafkaProducer
 
 class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
@@ -27,12 +23,7 @@ class BehandlingService(
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String,
-        okSykmeldingTopic: String,
-        kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-        dokArkivClient: DokArkivClient,
-        kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        smregistreringTopic: String,
+        sykmeldingId: String
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -85,12 +76,7 @@ class BehandlingService(
                             dokumentInfoId = journalpostMetadata.dokumentInfoId,
                             temaEndret = journalfoeringEvent.hendelsesType == "TemaEndret",
                             loggingMeta = loggingMeta,
-                            sykmeldingId = sykmeldingId,
-                            okSykmeldingTopic = okSykmeldingTopic,
-                            kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmelding,
-                            dokArkivClient = dokArkivClient,
-                            kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                            smregistreringTopic = smregistreringTopic
+                            sykmeldingId = sykmeldingId
                         )
                     }
                 } else {
