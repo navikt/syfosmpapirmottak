@@ -26,7 +26,6 @@ import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.Samhandler
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.PapirSmRegistering
-import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
@@ -63,7 +62,6 @@ class SykmeldingServiceSpek : FunSpec({
     val kuhrSarClientMock = mockk<SarClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
-    val kafkaProducerSyfoservice = mockk<KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>>(relaxed = true)
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
     val sykmeldingService = SykmeldingService(
         oppgaveserviceMock,
@@ -72,8 +70,11 @@ class SykmeldingServiceSpek : FunSpec({
         regelClientMock,
         kuhrSarClientMock,
         pdlService,
-        kafkaProducerSyfoservice,
-        "topic"
+        "ok",
+        kafkaproducerreceivedSykmeldingMock,
+        dokArkivClientMock,
+        kafkaproducerPapirSmRegistering,
+        "smregistrering"
     )
 
     beforeTest {
@@ -120,12 +121,7 @@ class SykmeldingServiceSpek : FunSpec({
                 dokumentInfoIdPdf = dokumentInfoId,
                 temaEndret = temaEndret,
                 loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId,
-                okSykmeldingTopic = "",
-                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
-                dokArkivClient = dokArkivClientMock,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = "topic3"
+                sykmeldingId = sykmeldingId
             )
 
             coEvery { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -146,11 +142,7 @@ class SykmeldingServiceSpek : FunSpec({
             sykmeldingServiceSpy.behandleSykmelding(
                 journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = null, datoOpprettet = datoOpprettet,
                 dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId, okSykmeldingTopic = "",
-                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
-                dokArkivClient = dokArkivClientMock,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = "topic3"
+                sykmeldingId = sykmeldingId
             )
 
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
@@ -173,11 +165,7 @@ class SykmeldingServiceSpek : FunSpec({
                 journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
                 datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret,
                 loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId, okSykmeldingTopic = "",
-                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
-                dokArkivClient = dokArkivClientMock,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = "topic3"
+                sykmeldingId = sykmeldingId
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -213,11 +201,7 @@ class SykmeldingServiceSpek : FunSpec({
             sykmeldingService.behandleSykmelding(
                 journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                 dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId, okSykmeldingTopic = "",
-                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
-                dokArkivClient = dokArkivClientMock,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = "topic3"
+                sykmeldingId = sykmeldingId
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -256,11 +240,7 @@ class SykmeldingServiceSpek : FunSpec({
             sykmeldingService.behandleSykmelding(
                 journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                 dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId, okSykmeldingTopic = "",
-                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
-                dokArkivClient = dokArkivClientMock,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = "topic3"
+                sykmeldingId = sykmeldingId
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -299,11 +279,7 @@ class SykmeldingServiceSpek : FunSpec({
             sykmeldingService.behandleSykmelding(
                 journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
                 dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId, okSykmeldingTopic = "",
-                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
-                dokArkivClient = dokArkivClientMock,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = "topic3"
+                sykmeldingId = sykmeldingId
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -327,11 +303,7 @@ class SykmeldingServiceSpek : FunSpec({
                 journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
                 datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret,
                 loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId, okSykmeldingTopic = "",
-                kafkaReceivedSykmeldingProducer = kafkaproducerreceivedSykmeldingMock,
-                dokArkivClient = dokArkivClientMock,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = "topic3"
+                sykmeldingId = sykmeldingId
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }

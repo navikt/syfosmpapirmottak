@@ -21,7 +21,6 @@ data class Environment(
     val dokArkivScope: String = getEnvVar("DOK_ARKIV_SCOPE"),
     val okSykmeldingTopic: String = "teamsykmelding.ok-sykmelding",
     val smregistreringTopic: String = getEnvVar("KAFKA_PAPIR_SM_REGISTERING_TOPIC", "teamsykmelding.papir-sm-registering"),
-    val syfoserviceMqTopic: String = "teamsykmelding.syfoservice-mq",
     val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
     val aadAccessTokenV2Url: String = getEnvVar("AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"),
     val clientIdV2: String = getEnvVar("AZURE_APP_CLIENT_ID"),

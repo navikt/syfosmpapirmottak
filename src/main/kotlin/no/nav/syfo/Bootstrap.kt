@@ -37,7 +37,6 @@ import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.domain.PapirSmRegistering
-import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
@@ -106,7 +105,6 @@ fun main() {
 
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerPropertiesAiven)
-    val kafkaSyfoserviceProducer = KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>(producerPropertiesAiven)
 
     val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         install(ContentNegotiation) {
@@ -172,8 +170,11 @@ fun main() {
         regelClient = regelClient,
         kuhrSarClient = kuhrsarClient,
         pdlPersonService = pdlPersonService,
-        kafkaSyfoserviceProducer = kafkaSyfoserviceProducer,
-        syfoserviceTopic = env.syfoserviceMqTopic
+        okSykmeldingTopic = env.okSykmeldingTopic,
+        kafkaReceivedSykmeldingProducer = kafkaProducerReceivedSykmelding,
+        dokArkivClient = dokArkivClient,
+        kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
+        smregistreringTopic = env.smregistreringTopic
     )
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(oppgaveService)
     val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
@@ -182,10 +183,7 @@ fun main() {
         env,
         applicationState,
         consumerPropertiesAiven,
-        behandlingService,
-        kafkaProducerReceivedSykmelding,
-        dokArkivClient,
-        kafkaProducerPapirSmRegistering
+        behandlingService
     )
 
     applicationServer.start()
@@ -209,10 +207,7 @@ fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerPropertiesAiven: Properties,
-    behandlingService: BehandlingService,
-    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-    dokArkivClient: DokArkivClient,
-    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>
+    behandlingService: BehandlingService
 ) {
     val kafkaConsumerJournalfoeringHendelseAiven = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
     kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
@@ -222,12 +217,7 @@ fun launchListeners(
         blockingApplicationLogic(
             applicationState = applicationState,
             aivenConsumer = kafkaConsumerJournalfoeringHendelseAiven,
-            behandlingService = behandlingService,
-            okSykmeldingTopic = env.okSykmeldingTopic,
-            kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
-            dokArkivClient = dokArkivClient,
-            kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-            smregistreringTopic = env.smregistreringTopic
+            behandlingService = behandlingService
         )
     }
 }
@@ -235,12 +225,7 @@ fun launchListeners(
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     aivenConsumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    behandlingService: BehandlingService,
-    okSykmeldingTopic: String,
-    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
-    dokArkivClient: DokArkivClient,
-    kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-    smregistreringTopic: String
+    behandlingService: BehandlingService
 ) {
     while (applicationState.ready) {
         aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
@@ -255,12 +240,7 @@ suspend fun blockingApplicationLogic(
             behandlingService.handleJournalpost(
                 journalfoeringEvent = journalfoeringHendelseRecord,
                 loggingMeta = loggingMeta,
-                sykmeldingId = sykmeldingId,
-                okSykmeldingTopic = okSykmeldingTopic,
-                kafkaproducerreceivedSykmelding = kafkaproducerreceivedSykmelding,
-                dokArkivClient = dokArkivClient,
-                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = smregistreringTopic,
+                sykmeldingId = sykmeldingId
             )
         }
     }

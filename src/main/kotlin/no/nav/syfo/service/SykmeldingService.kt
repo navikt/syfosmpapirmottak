@@ -13,7 +13,6 @@ import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SarClient
 import no.nav.syfo.client.findBestSamhandlerPraksis
 import no.nav.syfo.domain.PapirSmRegistering
-import no.nav.syfo.domain.SyfoserviceSykmeldingKafkaMessage
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.FEILARSAK
@@ -44,8 +43,11 @@ class SykmeldingService(
     private val regelClient: RegelClient,
     private val kuhrSarClient: SarClient,
     private val pdlPersonService: PdlPersonService,
-    private val kafkaSyfoserviceProducer: KafkaProducer<String, SyfoserviceSykmeldingKafkaMessage>,
-    private val syfoserviceTopic: String,
+    private val okSykmeldingTopic: String,
+    private val kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
+    private val dokArkivClient: DokArkivClient,
+    private val kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
+    private val smregistreringTopic: String
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -55,12 +57,7 @@ class SykmeldingService(
         dokumentInfoIdPdf: String,
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String,
-        okSykmeldingTopic: String,
-        kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
-        dokArkivClient: DokArkivClient,
-        kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        smregistreringTopic: String
+        sykmeldingId: String
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -174,10 +171,7 @@ class SykmeldingService(
                             okSykmeldingTopic = okSykmeldingTopic,
                             receivedSykmelding = receivedSykmelding,
                             sykmeldingId = receivedSykmelding.sykmelding.id,
-                            healthInformation = healthInformation,
                             dokArkivClient = dokArkivClient,
-                            syfoserviceProducer = kafkaSyfoserviceProducer,
-                            syfoserviceTopic = syfoserviceTopic,
                             journalpostid = journalpostId,
                             loggingMeta = loggingMeta
                         )
