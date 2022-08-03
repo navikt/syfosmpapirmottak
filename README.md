@@ -19,7 +19,7 @@ This project contains the receiving a paper sykmelding2013 message
 
 ## Getting started
 ### Getting github-package-registry packages NAV-IT
-Some packages used in this repo is uploaded to the Github Package Registry which requires authentication. It can, for example, be solved like this in Gradle:
+Some packages used in this repo is uploaded to the GitHub Package Registry which requires authentication. It can, for example, be solved like this in Gradle:
 ```
 val githubUser: String by project
 val githubPassword: String by project
@@ -132,3 +132,14 @@ https://confluence.adeo.no/display/KES/SyfoSmMottak.
 3. Do the changes you want, and the save it as a drawio, back to /src/flowchart/flyttdiagram.drawio
 4. Click on File -> Export as SVG... save the file to here: file here: /src/svg/flytdiagram.svg
 5. Commit and push the changes so its up to date
+
+### Upgrading the gradle wrapper
+Find the newest version of gradle here: https://gradle.org/releases/ Then run this command:
+
+```./gradlew wrapper --gradle-version $gradleVersjon```
+
+### Inquiries
+Questions related to the code or the project can be asked as issues here on GitHub
+
+### For NAV employees
+We are available at the Slack channel #team-sykmelding
