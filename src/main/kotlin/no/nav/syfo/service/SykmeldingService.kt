@@ -188,6 +188,12 @@ class SykmeldingService(
                 tellFeilArsak(e.message)
                 PAPIRSM_MAPPET.labels("feil").inc()
                 log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
+                try {
+                    log.warn(e.stackTraceToString())
+                }
+                catch (exception: Exception){
+                    log.info("Failed to log stackTrace")
+                }
             }
 
             // Fallback hvis OCR er null ELLER parsing av OCR til sykmeldingformat mislykkes
