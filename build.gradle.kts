@@ -5,17 +5,17 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val apolloVersion = "2.5.11"
-val coroutinesVersion = "1.6.1"
+val apolloVersion = "2.5.12"
+val coroutinesVersion = "1.6.4"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "3.1.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.68"
-val ktorVersion = "2.0.1"
+val ktorVersion = "2.0.3"
 val logbackVersion = "1.2.11"
-val logstashLogbackEncoderVersion = "7.1.1"
-val prometheusVersion = "0.15.0"
-val kotestVersion = "5.3.0"
+val logstashLogbackEncoderVersion = "7.2"
+val prometheusVersion = "0.16.0"
+val kotestVersion = "5.3.2"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
@@ -32,14 +32,14 @@ val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val smCommonVersion = "1.f132f2b"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.12.4"
-val kotlinVersion = "1.6.21"
+val kotlinVersion = "1.7.10"
 
 plugins {
     java
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.7.10"
     id("com.diffplug.spotless") version "6.5.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("com.apollographql.apollo") version "2.5.11"
+    id("com.apollographql.apollo") version "2.5.12"
     id("org.jmailen.kotlinter") version "3.10.0"
 }
 
@@ -53,7 +53,7 @@ buildscript {
         classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
         classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
         classpath("com.sun.activation:javax.activation:1.2.0")
-        classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.11")
+        classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.12")
     }
 }
 
@@ -126,7 +126,7 @@ dependencies {
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.kotest:kotest-runner-junit5:$kotestVersion")
-    testImplementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    testImplementation ("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     testImplementation ("io.mockk:mockk:$ioMockVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty") // conflicts with WireMock
