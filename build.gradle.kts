@@ -33,6 +33,7 @@ val smCommonVersion = "1.f132f2b"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.12.4"
 val kotlinVersion = "1.7.10"
+val okhttp3Version = "4.10.0"
 
 plugins {
     java
@@ -104,7 +105,10 @@ dependencies {
     implementation ("io.ktor:ktor-client-core:$ktorVersion")
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")
 
-    implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion")
+    implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion") {
+        exclude("com.squareup.okhttp3")
+    }
+    implementation ("com.squareup.okhttp3:okhttp:$okhttp3Version")
 
     implementation ("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
