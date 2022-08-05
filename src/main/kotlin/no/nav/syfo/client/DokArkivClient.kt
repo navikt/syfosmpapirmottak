@@ -57,7 +57,20 @@ class DokArkivClient(
                 log.error("Journalposten finnes ikke for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
                 throw RuntimeException("Ferdigstilling: Journalposten finnes ikke for journalpostid $journalpostId msgid $msgId")
             }
+            HttpStatusCode.Unauthorized -> {
+                log.error("Dokarkiv svarte med uautorisert feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+                throw IOException("Dokarkiv svarte med uautorisert feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId\"")
+            }
+            HttpStatusCode.Forbidden -> {
+                log.error("Dokarkiv svarte med ingen tilgang feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+                throw IOException("Dokarkiv svarte med ingen tilgang feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId\"")
+            }
+            HttpStatusCode.BadRequest -> {
+                log.error("Dokarkiv svarte med dårlig forespørsel feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
+                throw IOException("Dokarkiv svarte med dårlig forespørsel feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId\"")
+            }
             else -> {
+                log.info("Dokarkiv svarte med følgende httpStatus: {}", httpResponse.status)
                 log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
                 return httpResponse.body<String>()
             }
