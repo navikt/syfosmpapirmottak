@@ -1,7 +1,6 @@
 package no.nav.syfo.client
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
@@ -29,7 +28,7 @@ class DokArkivClient(
         sykmeldingId: String,
         behandler: Behandler,
         loggingMeta: LoggingMeta
-    ): String {
+    ) {
         oppdaterJournalpost(journalpostId = journalpostId, fnr = fnr, behandler = behandler, msgId = sykmeldingId, loggingMeta = loggingMeta)
         return ferdigstillJournalpost(journalpostId = journalpostId, msgId = sykmeldingId, loggingMeta = loggingMeta)
     }
@@ -38,7 +37,7 @@ class DokArkivClient(
         journalpostId: String,
         msgId: String,
         loggingMeta: LoggingMeta
-    ): String {
+    ) {
         val httpResponse: HttpResponse = httpClient.patch("$url/$journalpostId/ferdigstill") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
@@ -69,10 +68,14 @@ class DokArkivClient(
                 log.error("Dokarkiv svarte med dårlig forespørsel feilmelding ved ferdigstilling av journalpost for msgId {}, {}", msgId, fields(loggingMeta))
                 throw IOException("Dokarkiv svarte med dårlig forespørsel feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId\"")
             }
-            else -> {
+            HttpStatusCode.OK -> {
                 log.info("Dokarkiv svarte med følgende httpStatus: {}", httpResponse.status)
                 log.info("ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}", journalpostId, msgId, fields(loggingMeta))
-                return httpResponse.body<String>()
+            }
+            else -> {
+                val httpstatus = httpResponse.status
+                log.error("Dokarkiv svarte med følgende httpStatus: {}", httpstatus)
+                throw RuntimeException("Ferdigstilling: Dokarkiv svarte med $httpstatus ved ferdigstilling av journalpost for $journalpostId msgid $msgId")
             }
         }
     }

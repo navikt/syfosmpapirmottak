@@ -190,8 +190,7 @@ class SykmeldingService(
                 log.warn("Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}", fields(loggingMeta))
                 try {
                     log.warn(e.stackTraceToString())
-                }
-                catch (exception: Exception){
+                } catch (exception: Exception) {
                     log.info("Failed to log stackTrace")
                 }
             }
