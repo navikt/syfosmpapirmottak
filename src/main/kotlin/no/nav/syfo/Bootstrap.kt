@@ -26,9 +26,9 @@ import net.logstash.logback.argument.StructuredArguments
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.application.ApplicationServer
 import no.nav.syfo.application.ApplicationState
+import no.nav.syfo.application.azuread.v2.AzureAdV2Client
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.application.exception.ServiceUnavailableException
-import no.nav.syfo.client.AccessTokenClientV2
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.OppgaveClient
@@ -50,13 +50,11 @@ import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.net.ProxySelector
 import java.net.SocketTimeoutException
 import java.time.Duration
 import java.util.Properties
@@ -123,14 +121,7 @@ fun main() {
             }
         }
     }
-    val proxyConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
-        config()
-        engine {
-            customizeClient {
-                setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-            }
-        }
-    }
+
     val retryConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         config().apply {
             install(HttpRequestRetry) {
@@ -142,26 +133,25 @@ fun main() {
         }
     }
 
-    val httpClientWithProxy = HttpClient(Apache, proxyConfig)
     val httpClientWithRetry = HttpClient(Apache, retryConfig)
     val httpClient = HttpClient(Apache, config)
 
-    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
+    val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
     val apolloClient: ApolloClient = ApolloClient.builder()
         .serverUrl(env.safV1Url)
         .build()
-    val safJournalpostClient = SafJournalpostClient(apolloClient, accessTokenClientV2, env.safScope)
-    val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, accessTokenClientV2, env.safScope, httpClientWithRetry)
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope)
+    val safJournalpostClient = SafJournalpostClient(apolloClient, azureAdV2Client, env.safScope)
+    val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, azureAdV2Client, env.safScope, httpClientWithRetry)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, azureAdV2Client, httpClientWithRetry, env.oppgaveScope)
 
-    val kuhrsarClient = SarClient(env.kuhrSarApiUrl, accessTokenClientV2, env.kuhrSarApiScope, httpClientWithRetry)
-    val dokArkivClient = DokArkivClient(env.dokArkivUrl, accessTokenClientV2, env.dokArkivScope, httpClientWithRetry)
+    val kuhrsarClient = SarClient(env.kuhrSarApiUrl, azureAdV2Client, env.kuhrSarApiScope, httpClientWithRetry)
+    val dokArkivClient = DokArkivClient(env.dokArkivUrl, azureAdV2Client, env.dokArkivScope, httpClientWithRetry)
 
     val oppgaveService = OppgaveService(oppgaveClient)
-    val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClientV2, env.helsenettproxyScope, httpClientWithRetry)
-    val regelClient = RegelClient(env.regelEndpointURL, accessTokenClientV2, env.syfosmpapirregelScope, httpClientWithRetry)
-    val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
+    val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, azureAdV2Client, env.helsenettproxyScope, httpClientWithRetry)
+    val regelClient = RegelClient(env.regelEndpointURL, azureAdV2Client, env.syfosmpapirregelScope, httpClientWithRetry)
+    val pdlPersonService = PdlFactory.getPdlService(env, httpClient, azureAdV2Client, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
         oppgaveService = oppgaveService,

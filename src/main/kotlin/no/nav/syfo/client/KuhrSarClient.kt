@@ -7,21 +7,25 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
+import no.nav.syfo.application.azuread.v2.AzureAdV2Client
 import no.nav.syfo.metrics.SAMHANDLERPRAKSIS_FOUND_COUNTER
 import no.nav.syfo.metrics.SAMHANDLERPRAKSIS_NOT_FOUND_COUNTER
 import java.util.Date
 
 class SarClient(
     private val endpointUrl: String,
-    private val accessTokenClientV2: AccessTokenClientV2,
+    private val azureAdV2Client: AzureAdV2Client,
     private val resourceId: String,
     private val httpClient: HttpClient
 ) {
     suspend fun getSamhandler(ident: String): List<Samhandler> {
-        val accessToken = accessTokenClientV2.getAccessTokenV2(resourceId)
+        val accessToken = azureAdV2Client.getAccessToken(resourceId)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for SarClient")
+        }
         return httpClient.get("$endpointUrl/sar/rest/v2/samh") {
             accept(ContentType.Application.Json)
-            header("Authorization", "Bearer $accessToken")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             parameter("ident", ident)
         }.body<List<Samhandler>>()
     }

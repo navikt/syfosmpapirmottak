@@ -4,7 +4,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.mockkClass
-import no.nav.syfo.client.AccessTokenClientV2
+import no.nav.syfo.application.azuread.v2.AzureAdV2Client
+import no.nav.syfo.application.azuread.v2.AzureAdV2Token
 import no.nav.syfo.pdl.client.PdlClient
 import no.nav.syfo.pdl.client.model.GetPersonResponse
 import no.nav.syfo.pdl.client.model.HentIdenter
@@ -16,18 +17,22 @@ import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo
+import java.time.OffsetDateTime
 
 class PdlServiceTest : FunSpec({
 
     val pdlClient = mockkClass(PdlClient::class)
-    val accessTokenClientV2 = mockkClass(AccessTokenClientV2::class)
+    val accessTokenClientV2 = mockkClass(AzureAdV2Client::class)
     val pdlService = PdlPersonService(pdlClient, accessTokenClientV2, "littaScope")
 
     val loggingMeta = LoggingMeta("sykmeldingId", "journalpostId", "hendelsesId")
 
     beforeEach {
         clearAllMocks()
-        coEvery { accessTokenClientV2.getAccessTokenV2(any()) } returns "token"
+        coEvery { accessTokenClientV2.getAccessToken(any()) } returns AzureAdV2Token(
+            "accessToken",
+            OffsetDateTime.now().plusHours(1)
+        )
     }
 
     context("Tests PDL Service") {

@@ -10,6 +10,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.application.azuread.v2.AzureAdV2Client
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
@@ -18,15 +19,19 @@ import java.time.LocalDate
 
 class OppgaveClient(
     private val url: String,
-    private val accessTokenClientV2: AccessTokenClientV2,
+    private val azureAdV2Client: AzureAdV2Client,
     private val httpClient: HttpClient,
     private val scope: String
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
         return httpClient.post(url) {
             contentType(ContentType.Application.Json)
-            val token = accessTokenClientV2.getAccessTokenV2(scope)
-            header("Authorization", "Bearer $token")
+            val accessToken = azureAdV2Client.getAccessToken(scope)
+            if (accessToken?.accessToken == null) {
+                throw RuntimeException("Klarte ikke hente ut accesstoken for OppgaveClient")
+            }
+
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("X-Correlation-ID", msgId)
             setBody(opprettOppgaveRequest)
         }.body<OpprettOppgaveResponse>()
@@ -34,8 +39,12 @@ class OppgaveClient(
 
     suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {
         return httpClient.get(url) {
-            val token = accessTokenClientV2.getAccessTokenV2(scope)
-            header("Authorization", "Bearer $token")
+            val accessToken = azureAdV2Client.getAccessToken(scope)
+            if (accessToken?.accessToken == null) {
+                throw RuntimeException("Klarte ikke hente ut accesstoken for OppgaveClient")
+            }
+
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("X-Correlation-ID", msgId)
             parameter("tema", "SYM")
             parameter("oppgavetype", oppgavetype)

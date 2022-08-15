@@ -34,6 +34,7 @@ val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.12.4"
 val kotlinVersion = "1.7.10"
 val okhttp3Version = "4.10.0"
+val caffeineVersion = "3.1.1"
 
 plugins {
     java
@@ -104,6 +105,8 @@ dependencies {
     implementation ("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation ("io.ktor:ktor-client-core:$ktorVersion")
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")
+
+    implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 
     implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion") {
         exclude("com.squareup.okhttp3")

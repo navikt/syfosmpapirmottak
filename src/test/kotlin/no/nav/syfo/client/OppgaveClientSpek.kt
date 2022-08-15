@@ -21,15 +21,18 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.nav.syfo.application.azuread.v2.AzureAdV2Client
+import no.nav.syfo.application.azuread.v2.AzureAdV2Token
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.shouldBeEqualTo
 import java.net.ServerSocket
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
 class OppgaveClientSpek : FunSpec({
-    val accessTokenClient = mockk<AccessTokenClientV2>()
+    val accessTokenClient = mockk<AzureAdV2Client>()
     val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             jackson {
@@ -101,7 +104,10 @@ class OppgaveClientSpek : FunSpec({
     }
 
     beforeSpec {
-        coEvery { accessTokenClient.getAccessTokenV2(any()) } returns "token"
+        coEvery { accessTokenClient.getAccessToken(any()) } returns AzureAdV2Token(
+            "accessToken",
+            OffsetDateTime.now().plusHours(1)
+        )
     }
 
     context("OppgaveClient oppretter oppgave når det ikke finnes fra før") {

@@ -22,6 +22,8 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.syfo.application.azuread.v2.AzureAdV2Client
+import no.nav.syfo.application.azuread.v2.AzureAdV2Token
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
@@ -33,10 +35,11 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.Month
+import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
 class SafDokumentClientSpek : FunSpec({
-    val accessTokenClientV2 = mockk<AccessTokenClientV2>()
+    val accessTokenClientV2 = mockk<AzureAdV2Client>()
     val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             jackson {
@@ -81,7 +84,10 @@ class SafDokumentClientSpek : FunSpec({
     }
 
     beforeSpec {
-        coEvery { accessTokenClientV2.getAccessTokenV2(any()) } returns "token"
+        coEvery { accessTokenClientV2.getAccessToken(any()) } returns AzureAdV2Token(
+            "accessToken",
+            OffsetDateTime.now().plusHours(1)
+        )
     }
 
     context("SafDokumentClient håndterer respons korrekt") {
