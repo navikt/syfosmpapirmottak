@@ -50,13 +50,11 @@ import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.net.ProxySelector
 import java.net.SocketTimeoutException
 import java.time.Duration
 import java.util.Properties
@@ -123,14 +121,6 @@ fun main() {
             }
         }
     }
-    val proxyConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
-        config()
-        engine {
-            customizeClient {
-                setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-            }
-        }
-    }
     val retryConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         config().apply {
             install(HttpRequestRetry) {
@@ -142,25 +132,24 @@ fun main() {
         }
     }
 
-    val httpClientWithProxy = HttpClient(Apache, proxyConfig)
     val httpClientWithRetry = HttpClient(Apache, retryConfig)
     val httpClient = HttpClient(Apache, config)
 
-    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClientWithProxy)
+    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClient)
 
     val apolloClient: ApolloClient = ApolloClient.builder()
-        .serverUrl(env.safV1Url)
+        .serverUrl("${env.safV1Url}/graphql")
         .build()
     val safJournalpostClient = SafJournalpostClient(apolloClient, accessTokenClientV2, env.safScope)
-    val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, accessTokenClientV2, env.safScope, httpClientWithRetry)
+    val safDokumentClient = SafDokumentClient(env.safV1Url, accessTokenClientV2, env.safScope, httpClientWithRetry)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope)
 
-    val kuhrsarClient = SarClient(env.kuhrSarApiUrl, accessTokenClientV2, env.kuhrSarApiScope, httpClientWithRetry)
+    val kuhrsarClient = SarClient(env.smgcpProxyUrl, accessTokenClientV2, env.smgcpProxyScope, httpClientWithRetry)
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, accessTokenClientV2, env.dokArkivScope, httpClientWithRetry)
 
     val oppgaveService = OppgaveService(oppgaveClient)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClientV2, env.helsenettproxyScope, httpClientWithRetry)
-    val regelClient = RegelClient(env.regelEndpointURL, accessTokenClientV2, env.syfosmpapirregelScope, httpClientWithRetry)
+    val regelClient = RegelClient(env.syfosmpapirregelUrl, accessTokenClientV2, env.syfosmpapirregelScope, httpClientWithRetry)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
