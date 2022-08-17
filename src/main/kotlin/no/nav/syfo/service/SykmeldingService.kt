@@ -82,7 +82,7 @@ class SykmeldingService(
 
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                    val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr)
+                    val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr, sykmeldingId)
                     val samhandlerPraksis = findBestSamhandlerPraksis(
                         samhandlerInfo
                     )

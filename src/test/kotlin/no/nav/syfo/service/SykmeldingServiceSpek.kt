@@ -87,7 +87,7 @@ class SykmeldingServiceSpek : FunSpec({
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
         coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.OK, emptyList())
-        coEvery { kuhrSarClientMock.getSamhandler(any()) } returns listOf(
+        coEvery { kuhrSarClientMock.getSamhandler(any(), any()) } returns listOf(
             Samhandler(
                 samh_id = "12341",
                 navn = "Perhansen",
