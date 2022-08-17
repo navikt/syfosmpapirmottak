@@ -138,10 +138,10 @@ fun main() {
     val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClient)
 
     val apolloClient: ApolloClient = ApolloClient.builder()
-        .serverUrl(env.safV1Url)
+        .serverUrl("${env.safV1Url}/graphql")
         .build()
     val safJournalpostClient = SafJournalpostClient(apolloClient, accessTokenClientV2, env.safScope)
-    val safDokumentClient = SafDokumentClient(env.hentDokumentUrl, accessTokenClientV2, env.safScope, httpClientWithRetry)
+    val safDokumentClient = SafDokumentClient(env.safV1Url, accessTokenClientV2, env.safScope, httpClientWithRetry)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope)
 
     val kuhrsarClient = SarClient(env.smgcpProxyUrl, accessTokenClientV2, env.smgcpProxyScope, httpClientWithRetry)
@@ -149,7 +149,7 @@ fun main() {
 
     val oppgaveService = OppgaveService(oppgaveClient)
     val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClientV2, env.helsenettproxyScope, httpClientWithRetry)
-    val regelClient = RegelClient(env.regelEndpointURL, accessTokenClientV2, env.syfosmpapirregelScope, httpClientWithRetry)
+    val regelClient = RegelClient(env.syfosmpapirregelUrl, accessTokenClientV2, env.syfosmpapirregelScope, httpClientWithRetry)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
