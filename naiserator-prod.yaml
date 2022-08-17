@@ -44,11 +44,11 @@ spec:
   webproxy: false
   env:
     - name: SAFGRAPHQL_URL
-      value: https://saf.intern.nav.no/graphql
+      value: https://saf.prod-fss-pub.nais.io/graphql
     - name: DOK_JOURNALFOERING_AIVEN_TOPIC
       value: teamdokumenthandtering.aapen-dok-journalfoering
     - name: HENT_DOKUMENT_URL
-      value: https://saf.intern.nav.no
+      value: https://saf.prod-fss-pub.nais.io
     - name: SAF_SCOPE
       value: api://prod-fss.teamdokumenthandtering.saf/.default
     - name: HELSENETT_SCOPE
@@ -56,7 +56,7 @@ spec:
     - name: SYFOSMPAPIRREGLER_SCOPE
       value: api://prod-gcp.teamsykmelding.syfosmpapirregler/.default
     - name: DOK_ARKIV_URL
-      value: https://dokarkiv.intern.nav.no/rest/journalpostapi/v1/journalpost
+      value: https://dokarkiv.prod-fss-pub.nais.io/rest/journalpostapi/v1/journalpost
     - name: DOK_ARKIV_SCOPE
       value: api://prod-fss.teamdokumenthandtering.dokarkiv/.default
     - name: PDL_GRAPHQL_PATH
