@@ -11,16 +11,16 @@ val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1
 val kafkaVersion = "3.1.0"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.68"
-val ktorVersion = "2.0.3"
-val logbackVersion = "1.2.11"
+val ktorVersion = "2.1.1"
+val logbackVersion = "1.4.0"
 val logstashLogbackEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
-val kotestVersion = "5.4.1"
+val kotestVersion = "5.4.2"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
-val jacksonVersion = "2.13.3"
+val jacksonVersion = "2.13.4"
 val joarkHendelseVersion = "96ec5ebb"
 val confluentVersion = "6.2.2"
 val jettyVersion = "11.0.6"
@@ -31,7 +31,7 @@ val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val smCommonVersion = "1.f132f2b"
 val javaTimeAdapterVersion = "1.1.3"
-val ioMockVersion = "1.12.5"
+val ioMockVersion = "1.12.7"
 val kotlinVersion = "1.7.10"
 val okhttp3Version = "4.10.0"
 
@@ -162,7 +162,11 @@ tasks {
     withType<Test> {
         useJUnitPlatform {
         }
-        testLogging.showStandardStreams = true
+        testLogging {
+            events("skipped", "failed")
+            showStackTraces = true
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
     }
 
 
