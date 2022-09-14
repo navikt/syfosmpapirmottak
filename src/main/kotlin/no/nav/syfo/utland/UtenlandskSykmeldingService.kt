@@ -32,6 +32,7 @@ class UtenlandskSykmeldingService(
             if (cluster == "dev-gcp" && oppgaveId != null) {
                 log.info("Sender utenlandsk sykmelding til syk-dig i dev {}", fields(loggingMeta))
                 sykDigProducer.send(
+                    sykmeldingId,
                     DigitaliseringsoppgaveKafka(
                         oppgaveId = oppgaveId.toString(),
                         fnr = pasient.fnr,

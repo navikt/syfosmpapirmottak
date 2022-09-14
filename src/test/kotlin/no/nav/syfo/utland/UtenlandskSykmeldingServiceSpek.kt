@@ -37,7 +37,7 @@ class UtenlandskSykmeldingServiceSpek : FunSpec({
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any()) }
-            coVerify(exactly = 0) { sykDigProducer.send(any(), any()) }
+            coVerify(exactly = 0) { sykDigProducer.send(any(), any(), any()) }
         }
 
         test("Oppretter fordelingsoppgave hvis fnr mangler") {
@@ -62,7 +62,7 @@ class UtenlandskSykmeldingServiceSpek : FunSpec({
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any()) }
-            coVerify { sykDigProducer.send(match { it == DigitaliseringsoppgaveKafka(oppgaveId = "1", fnr = fnr, journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, type = "UTLAND") }, any()) }
+            coVerify { sykDigProducer.send(sykmeldingId, match { it == DigitaliseringsoppgaveKafka(oppgaveId = "1", fnr = fnr, journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, type = "UTLAND") }, any()) }
         }
         test("Sender ikke digitaliseringsoppgave i dev-gcp for duplikat oppgave") {
             coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) } returns null
@@ -71,7 +71,7 @@ class UtenlandskSykmeldingServiceSpek : FunSpec({
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any()) }
-            coVerify(exactly = 0) { sykDigProducer.send(any(), any()) }
+            coVerify(exactly = 0) { sykDigProducer.send(any(), any(), any()) }
         }
     }
 })

@@ -10,18 +10,18 @@ class SykDigProducer(
     private val kafkaProducer: KafkaProducer<String, DigitaliseringsoppgaveKafka>,
     private val topicName: String
 ) {
-    fun send(digitaliseringsoppgave: DigitaliseringsoppgaveKafka, loggingMeta: LoggingMeta) {
+    fun send(sykmeldingId: String, digitaliseringsoppgave: DigitaliseringsoppgaveKafka, loggingMeta: LoggingMeta) {
         try {
             kafkaProducer.send(
                 ProducerRecord(
                     topicName,
-                    digitaliseringsoppgave.oppgaveId,
+                    sykmeldingId,
                     digitaliseringsoppgave
                 )
             ).get()
         } catch (ex: Exception) {
             log.error(
-                "Noe gikk galt ved skriving av digitaliseringsoppgave til kafka for oppgaveId ${digitaliseringsoppgave.oppgaveId}, {}",
+                "Noe gikk galt ved skriving av digitaliseringsoppgave til kafka for oppgaveId ${digitaliseringsoppgave.oppgaveId} og sykmeldingId $sykmeldingId, {}",
                 StructuredArguments.fields(loggingMeta),
                 ex.message
             )
