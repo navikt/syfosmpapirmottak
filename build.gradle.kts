@@ -5,10 +5,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val apolloVersion = "2.5.12"
+val apolloVersion = "2.5.13"
 val coroutinesVersion = "1.6.4"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
-val kafkaVersion = "3.1.0"
+val kafkaVersion = "3.2.1"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.68"
 val ktorVersion = "2.1.1"
@@ -22,7 +22,7 @@ val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
 val jacksonVersion = "2.13.4"
 val joarkHendelseVersion = "96ec5ebb"
-val confluentVersion = "6.2.2"
+val confluentVersion = "7.2.1"
 val jettyVersion = "11.0.6"
 val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val commonsTextVersion = "1.9"
@@ -40,7 +40,7 @@ plugins {
     kotlin("jvm") version "1.7.10"
     id("com.diffplug.spotless") version "6.5.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("com.apollographql.apollo") version "2.5.12"
+    id("com.apollographql.apollo") version "2.5.13"
     id("org.jmailen.kotlinter") version "3.10.0"
 }
 
@@ -54,7 +54,7 @@ buildscript {
         classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
         classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
         classpath("com.sun.activation:javax.activation:1.2.0")
-        classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.12")
+        classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.13")
     }
 }
 

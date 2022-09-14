@@ -13,6 +13,7 @@ import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
+import no.nav.syfo.utland.UtenlandskSykmeldingService
 
 class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
@@ -66,7 +67,7 @@ class BehandlingService(
                     }
 
                     if (journalpostMetadata.gjelderUtland) {
-                        utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
+                        utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = journalpostMetadata.dokumentInfoIdPdf, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
                     } else {
                         sykmeldingService.behandleSykmelding(
                             journalpostId = journalpostId,

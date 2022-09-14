@@ -45,11 +45,13 @@ import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
-import no.nav.syfo.service.UtenlandskSykmeldingService
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
+import no.nav.syfo.utland.DigitaliseringsoppgaveKafka
+import no.nav.syfo.utland.SykDigProducer
+import no.nav.syfo.utland.UtenlandskSykmeldingService
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -103,6 +105,7 @@ fun main() {
 
     val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
     val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerPropertiesAiven)
+    val sykDigProducer = SykDigProducer(KafkaProducer<String, DigitaliseringsoppgaveKafka>(producerPropertiesAiven), env.sykDigTopic)
 
     val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         install(ContentNegotiation) {
@@ -165,7 +168,7 @@ fun main() {
         kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
         smregistreringTopic = env.smregistreringTopic
     )
-    val utenlandskSykmeldingService = UtenlandskSykmeldingService(oppgaveService)
+    val utenlandskSykmeldingService = UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
     val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
 
     launchListeners(

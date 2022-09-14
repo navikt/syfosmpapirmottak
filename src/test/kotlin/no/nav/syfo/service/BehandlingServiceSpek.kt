@@ -19,6 +19,7 @@ import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
+import no.nav.syfo.utland.UtenlandskSykmeldingService
 import org.amshove.kluent.internal.assertFailsWith
 import java.time.LocalDateTime
 
@@ -46,7 +47,7 @@ class BehandlingServiceSpek : FunSpec({
             dokumentInfoIdPdf = ""
         )
         coEvery { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any()) } just Runs
-        coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) } just Runs
+        coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) } just Runs
     }
 
     context("BehandlingService ende-til-ende") {
@@ -60,7 +61,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med fnr og endret-tema") {
@@ -73,7 +74,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med fnr ny skanningleverandør") {
@@ -86,7 +87,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med aktorId") {
@@ -107,7 +108,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson("aktorId", any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med fnr for utlandssykmelding") {
@@ -128,7 +129,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any()) }
-            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
+            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med aktørid for utlandssykmelding") {
@@ -149,7 +150,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("aktorId"), any()) }
             coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any()) }
-            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any()) }
+            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any(), any()) }
         }
 
         test("Kaster feil hvis journalpost mangler") {

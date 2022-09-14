@@ -80,7 +80,6 @@ class SykmeldingServiceSpek : FunSpec({
     beforeTest {
         clearAllMocks()
 
-        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) } returns Unit
         coEvery { oppgaveserviceMock.hentOppgave(any(), any()) } returns OppgaveResponse(0, emptyList())
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns Unit
         coEvery { dokArkivClientMock.oppdaterOgFerdigstillJournalpost(any(), any(), any(), any(), any()) } returns Unit

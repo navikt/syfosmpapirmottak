@@ -19,7 +19,7 @@ class OppgaveService(
         gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta
-    ) {
+    ): Int? {
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
         val oppgave = oppgaveClient.opprettOppgave(
@@ -29,13 +29,15 @@ class OppgaveService(
 
         if (!oppgave.duplikat) {
             log.info(
-                "Opprettet oppgave for utenlandsk sykmelding med {}, {} {}",
+                "Opprettet oppgave for utenlandsk sykmelding med {}, {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
                 fields(loggingMeta)
             )
             PAPIRSM_OPPGAVE.inc()
+            return oppgave.oppgaveId
         } else {
-            log.info("duplikat oppgave med {}, {} {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
+            log.info("duplikat oppgave med {}, {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
+            return null
         }
     }
 
