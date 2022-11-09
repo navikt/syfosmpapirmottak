@@ -20,7 +20,8 @@ class OppgaveClient(
     private val url: String,
     private val accessTokenClientV2: AccessTokenClientV2,
     private val httpClient: HttpClient,
-    private val scope: String
+    private val scope: String,
+    private val cluster: String
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
         return httpClient.post(url) {
@@ -64,11 +65,17 @@ class OppgaveClient(
             log.info("Gjelder utland, {}", fields(loggingMeta))
             behandlingstype = "ae0106"
         }
+        val behandlesAvApplikasjon = if (gjelderUtland && cluster == "dev-gcp") {
+            log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
+            "SMD"
+        } else {
+            "FS22"
+        }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
             aktoerId = aktoerId,
             opprettetAvEnhetsnr = "9999",
             journalpostId = journalpostId,
-            behandlesAvApplikasjon = "FS22",
+            behandlesAvApplikasjon = behandlesAvApplikasjon,
             beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
             tema = "SYM",
             oppgavetype = "JFR",

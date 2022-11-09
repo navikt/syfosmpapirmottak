@@ -145,7 +145,7 @@ fun main() {
         .build()
     val safJournalpostClient = SafJournalpostClient(apolloClient, accessTokenClientV2, env.safScope)
     val safDokumentClient = SafDokumentClient(env.safV1Url, accessTokenClientV2, env.safScope, httpClientWithRetry)
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope, env.cluster)
 
     val kuhrsarClient = SarClient(env.smgcpProxyUrl, accessTokenClientV2, env.smgcpProxyScope, httpClientWithRetry)
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, accessTokenClientV2, env.dokArkivScope, httpClientWithRetry)
