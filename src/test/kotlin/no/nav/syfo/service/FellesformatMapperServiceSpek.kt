@@ -116,7 +116,8 @@ class FellesformatMapperServiceSpek : FunSpec({
                 legeHelsepersonellkategori = godkjenninger.getHelsepersonellKategori(),
                 legeHprNr = hprNummer,
                 partnerreferanse = null,
-                vedlegg = emptyList()
+                vedlegg = emptyList(),
+                utenlandskSykmelding = null
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
@@ -191,7 +192,8 @@ class FellesformatMapperServiceSpek : FunSpec({
                 legeHelsepersonellkategori = "LE",
                 legeHprNr = hprNummer,
                 partnerreferanse = null,
-                vedlegg = emptyList()
+                vedlegg = emptyList(),
+                utenlandskSykmelding = null
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
