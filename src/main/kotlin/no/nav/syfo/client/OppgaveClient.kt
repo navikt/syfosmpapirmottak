@@ -60,10 +60,11 @@ class OppgaveClient(
             log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
             return OppgaveResultat(oppgaveResponse.oppgaver.first().id, true)
         }
-        var behandlingstype: String? = null
-        if (gjelderUtland) {
+        val behandlingstype = if (gjelderUtland) {
             log.info("Gjelder utland, {}", fields(loggingMeta))
-            behandlingstype = "ae0106"
+            "ae0106"
+        } else {
+            null
         }
         val behandlesAvApplikasjon = if (gjelderUtland && cluster == "dev-gcp") {
             log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
@@ -71,12 +72,17 @@ class OppgaveClient(
         } else {
             "FS22"
         }
+        val beskrivelse = if (gjelderUtland && cluster == "dev-gcp") {
+            "Manuell registrering av utenlandsk sykmelding"
+        } else {
+            "Papirsykmelding som må legges inn i infotrygd manuelt"
+        }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
             aktoerId = aktoerId,
             opprettetAvEnhetsnr = "9999",
             journalpostId = journalpostId,
             behandlesAvApplikasjon = behandlesAvApplikasjon,
-            beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
+            beskrivelse = beskrivelse,
             tema = "SYM",
             oppgavetype = "JFR",
             behandlingstype = behandlingstype,
