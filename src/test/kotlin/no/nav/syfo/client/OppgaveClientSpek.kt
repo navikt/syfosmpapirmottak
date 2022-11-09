@@ -94,7 +94,7 @@ class OppgaveClientSpek : FunSpec({
         }
     }.start()
 
-    val oppgaveClient = OppgaveClient("$mockHttpServerUrl/oppgave", accessTokenClient, httpClient, "scope")
+    val oppgaveClient = OppgaveClient("$mockHttpServerUrl/oppgave", accessTokenClient, httpClient, "scope", "prod-gcp")
 
     afterSpec {
         mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))

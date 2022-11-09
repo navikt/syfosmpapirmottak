@@ -1,4 +1,4 @@
-FROM navikt/java:17
+FROM ghcr.io/navikt/baseimages/temurin:17
 COPY build/libs/*-all.jar app.jar
 ENV JAVA_OPTS='-Dlogback.configurationFile=logback-remote.xml'
 ENV APPLICATION_PROFILE="remote"

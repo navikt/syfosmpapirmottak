@@ -133,7 +133,8 @@ class SykmeldingService(
                         tssid = samhandlerPraksis?.tss_ident ?: "",
                         merknader = null,
                         partnerreferanse = null,
-                        vedlegg = emptyList()
+                        vedlegg = emptyList(),
+                        utenlandskSykmelding = null
                     )
 
                     log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))

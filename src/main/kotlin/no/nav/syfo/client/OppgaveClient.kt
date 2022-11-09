@@ -20,7 +20,8 @@ class OppgaveClient(
     private val url: String,
     private val accessTokenClientV2: AccessTokenClientV2,
     private val httpClient: HttpClient,
-    private val scope: String
+    private val scope: String,
+    private val cluster: String
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
         return httpClient.post(url) {
@@ -59,17 +60,29 @@ class OppgaveClient(
             log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
             return OppgaveResultat(oppgaveResponse.oppgaver.first().id, true)
         }
-        var behandlingstype: String? = null
-        if (gjelderUtland) {
+        val behandlingstype = if (gjelderUtland) {
             log.info("Gjelder utland, {}", fields(loggingMeta))
-            behandlingstype = "ae0106"
+            "ae0106"
+        } else {
+            null
+        }
+        val behandlesAvApplikasjon = if (gjelderUtland && cluster == "dev-gcp") {
+            log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
+            "SMD"
+        } else {
+            "FS22"
+        }
+        val beskrivelse = if (gjelderUtland && cluster == "dev-gcp") {
+            "Manuell registrering av utenlandsk sykmelding"
+        } else {
+            "Papirsykmelding som må legges inn i infotrygd manuelt"
         }
         val opprettOppgaveRequest = OpprettOppgaveRequest(
             aktoerId = aktoerId,
             opprettetAvEnhetsnr = "9999",
             journalpostId = journalpostId,
-            behandlesAvApplikasjon = "FS22",
-            beskrivelse = "Papirsykmelding som må legges inn i infotrygd manuelt",
+            behandlesAvApplikasjon = behandlesAvApplikasjon,
+            beskrivelse = beskrivelse,
             tema = "SYM",
             oppgavetype = "JFR",
             behandlingstype = behandlingstype,

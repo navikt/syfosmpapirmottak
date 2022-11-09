@@ -10,12 +10,12 @@ val coroutinesVersion = "1.6.4"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "3.3.1"
 val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
-val kluentVersion = "1.68"
-val ktorVersion = "2.1.2"
-val logbackVersion = "1.4.3"
+val kluentVersion = "1.72"
+val ktorVersion = "2.1.3"
+val logbackVersion = "1.4.4"
 val logstashLogbackEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
-val kotestVersion = "5.5.0"
+val kotestVersion = "5.5.4"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
@@ -29,7 +29,7 @@ val commonsTextVersion = "1.10.0"
 val cxfVersion = "3.4.5"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
-val smCommonVersion = "1.f132f2b"
+val smCommonVersion = "1.ea531b3"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.2"
 val kotlinVersion = "1.7.20"
@@ -127,13 +127,11 @@ dependencies {
     implementation ("com.migesok", "jaxb-java-time-adapters", javaTimeAdapterVersion)
 
     testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
-    testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation ("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation ("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation ("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     testImplementation ("io.mockk:mockk:$ioMockVersion")
     testImplementation ("io.ktor:ktor-server-test-host:$ktorVersion") {
-        exclude(group = "org.eclipse.jetty") // conflicts with WireMock
+        exclude(group = "org.eclipse.jetty")
     }
 }
 
