@@ -46,7 +46,7 @@ spec:
     - name: SAF_URL
       value: https://saf.dev-fss-pub.nais.io
     - name: SAF_SCOPE
-      value: api://dev-fss.teamdokumenthandtering.saf/.default
+      value: api://dev-fss.teamdokumenthandtering.saf-q1/.default
     - name: DOK_JOURNALFOERING_AIVEN_TOPIC
       value: teamdokumenthandtering.aapen-dok-journalfoering-q1
     - name: HELSENETT_ENDPOINT_URL
