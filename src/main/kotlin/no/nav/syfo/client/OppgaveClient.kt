@@ -7,12 +7,13 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
-import no.nav.syfo.objectMapper
 import no.nav.syfo.util.LoggingMeta
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -25,17 +26,19 @@ class OppgaveClient(
     private val cluster: String
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
-        try {
-            return httpClient.post(url) {
-                contentType(ContentType.Application.Json)
-                val token = accessTokenClientV2.getAccessTokenV2(scope)
-                header("Authorization", "Bearer $token")
-                header("X-Correlation-ID", msgId)
-                setBody(opprettOppgaveRequest)
-            }.body<OpprettOppgaveResponse>()
-        } catch (e: Exception) {
-            log.error("Noe gikk galt ved oppretting av oppgave for sykmeldingId $msgId", e)
-            throw e
+        val httpResponse: HttpResponse = httpClient.post(url) {
+            contentType(ContentType.Application.Json)
+            val token = accessTokenClientV2.getAccessTokenV2(scope)
+            header("Authorization", "Bearer $token")
+            header("X-Correlation-ID", msgId)
+            setBody(opprettOppgaveRequest)
+        }
+        return when (httpResponse.status) {
+            HttpStatusCode.Created -> httpResponse.body<OpprettOppgaveResponse>()
+            else -> {
+                log.error("Noe gikk galt ved oppretting av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}")
+                throw RuntimeException("Noe gikk galt ved oppretting av oppgave, responskode ${httpResponse.status}")
+            }
         }
     }
 
@@ -96,7 +99,6 @@ class OppgaveClient(
             fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
             prioritet = "NORM"
         )
-        log.info("Opprett oppgave-request: ${objectMapper.writeValueAsString(opprettOppgaveRequest)}")
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
     }

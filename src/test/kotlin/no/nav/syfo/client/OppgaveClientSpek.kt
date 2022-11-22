@@ -30,6 +30,7 @@ import java.net.ServerSocket
 import java.net.SocketTimeoutException
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class OppgaveClientSpek : FunSpec({
@@ -101,8 +102,8 @@ class OppgaveClientSpek : FunSpec({
             }
             post("/oppgave") {
                 when {
-                    call.request.headers["X-Correlation-ID"] == "feiler" -> call.respond(HttpStatusCode.BadRequest, "Fant ikke person")
-                    else -> call.respond(OpprettOppgaveResponse(42))
+                    call.request.headers["X-Correlation-ID"] == "feiler" -> call.respond(HttpStatusCode.BadRequest, OppgaveFeilrespons(UUID.randomUUID().toString(), "Fant ikke person"))
+                    else -> call.respond(HttpStatusCode.Created, OpprettOppgaveResponse(42))
                 }
             }
         }
@@ -172,3 +173,8 @@ class OppgaveClientSpek : FunSpec({
         }
     }
 })
+
+private data class OppgaveFeilrespons(
+    val uuid: String,
+    val feilmelding: String
+)
