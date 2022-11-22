@@ -8,6 +8,8 @@ import io.mockk.mockk
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.internal.assertFailsWith
+import org.amshove.kluent.shouldBeEqualTo
 
 class OppgaveServiceSpek : FunSpec({
     val sykmeldingId = "1234"
@@ -27,27 +29,29 @@ class OppgaveServiceSpek : FunSpec({
 
     context("OppgaveService ende-til-ende") {
         test("Ende-til-ende") {
-            oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
+            val oppgaveId = oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
 
+            oppgaveId shouldBeEqualTo 1
             coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
         }
-
         test("Ende-til-ende utland") {
             oppgaveService.opprettOppgave("aktorId", journalpostId, true, sykmeldingId, loggingMetadata)
 
             coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), true, sykmeldingId, loggingMetadata) }
         }
+        test("Returnerer null hvis oppgaven finnes fra før") {
+            coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, true)
 
-        test("Ende-til-ende kode 6") {
-            oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
+            val oppgaveId = oppgaveService.opprettOppgave("aktorId", journalpostId, true, sykmeldingId, loggingMetadata)
 
-            coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            oppgaveId shouldBeEqualTo null
         }
+        test("Kaster feil hvis oppretting av oppgaven feiler") {
+            coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any()) } throws RuntimeException("Noe gikk galt")
 
-        test("Behandlende enhet mangler") {
-            oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
-
-            coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
+            assertFailsWith<RuntimeException> {
+                oppgaveService.opprettOppgave("aktorId", journalpostId, true, sykmeldingId, loggingMetadata)
+            }
         }
     }
 
@@ -57,17 +61,10 @@ class OppgaveServiceSpek : FunSpec({
 
             coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata) }
         }
-
         test("Ende-til-ende utland") {
             oppgaveService.opprettFordelingsOppgave(journalpostId, true, sykmeldingId, loggingMetadata)
 
             coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, true, sykmeldingId, loggingMetadata) }
-        }
-
-        test("Behandlende enhet mangler") {
-            oppgaveService.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata)
-
-            coVerify { oppgaveClientMock.opprettFordelingsOppgave(journalpostId, false, sykmeldingId, loggingMetadata) }
         }
     }
 })

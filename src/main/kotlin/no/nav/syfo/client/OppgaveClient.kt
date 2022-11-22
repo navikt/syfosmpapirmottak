@@ -7,7 +7,9 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.OppgaveResultat
@@ -24,13 +26,20 @@ class OppgaveClient(
     private val cluster: String
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
-        return httpClient.post(url) {
+        val httpResponse: HttpResponse = httpClient.post(url) {
             contentType(ContentType.Application.Json)
             val token = accessTokenClientV2.getAccessTokenV2(scope)
             header("Authorization", "Bearer $token")
             header("X-Correlation-ID", msgId)
             setBody(opprettOppgaveRequest)
-        }.body<OpprettOppgaveResponse>()
+        }
+        return when (httpResponse.status) {
+            HttpStatusCode.Created -> httpResponse.body<OpprettOppgaveResponse>()
+            else -> {
+                log.error("Noe gikk galt ved oppretting av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}")
+                throw RuntimeException("Noe gikk galt ved oppretting av oppgave, responskode ${httpResponse.status}")
+            }
+        }
     }
 
     suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {

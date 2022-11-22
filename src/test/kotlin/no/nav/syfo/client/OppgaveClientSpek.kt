@@ -8,6 +8,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
@@ -21,11 +22,15 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.nav.syfo.application.exception.ServiceUnavailableException
 import no.nav.syfo.util.LoggingMeta
+import org.amshove.kluent.internal.assertFails
 import org.amshove.kluent.shouldBeEqualTo
 import java.net.ServerSocket
+import java.net.SocketTimeoutException
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class OppgaveClientSpek : FunSpec({
@@ -39,10 +44,17 @@ class OppgaveClientSpek : FunSpec({
                 configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             }
         }
+        HttpResponseValidator {
+            handleResponseExceptionWithRequest { exception, _ ->
+                when (exception) {
+                    is SocketTimeoutException -> throw ServiceUnavailableException(exception.message)
+                }
+            }
+        }
         install(HttpRequestRetry) {
-            maxRetries = 3
+            maxRetries = 2
             delayMillis { retry ->
-                retry * 50L
+                retry * 5L
             }
         }
     }
@@ -89,7 +101,10 @@ class OppgaveClientSpek : FunSpec({
                 }
             }
             post("/oppgave") {
-                call.respond(OpprettOppgaveResponse(42))
+                when {
+                    call.request.headers["X-Correlation-ID"] == "feiler" -> call.respond(HttpStatusCode.BadRequest, OppgaveFeilrespons(UUID.randomUUID().toString(), "Fant ikke person"))
+                    else -> call.respond(HttpStatusCode.Created, OpprettOppgaveResponse(42))
+                }
             }
         }
     }.start()
@@ -97,7 +112,7 @@ class OppgaveClientSpek : FunSpec({
     val oppgaveClient = OppgaveClient("$mockHttpServerUrl/oppgave", accessTokenClient, httpClient, "scope", "prod-gcp")
 
     afterSpec {
-        mockServer.stop(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(10))
+        mockServer.stop(TimeUnit.SECONDS.toMillis(1), TimeUnit.SECONDS.toMillis(1))
     }
 
     beforeSpec {
@@ -129,6 +144,11 @@ class OppgaveClientSpek : FunSpec({
             oppgave.oppgaveId shouldBeEqualTo 42
             oppgave.duplikat shouldBeEqualTo false
         }
+        test("Opprett oppgave feiler hvis Oppgave svarer med feilmelding") {
+            assertFails {
+                oppgaveClient.opprettOppgave("987", "123456789", false, "feiler", loggingMetadata)
+            }
+        }
     }
 
     context("OppgaveClient setter fristFerdigstillelse til forvenetet journalføringsfrist") {
@@ -153,3 +173,8 @@ class OppgaveClientSpek : FunSpec({
         }
     }
 })
+
+private data class OppgaveFeilrespons(
+    val uuid: String,
+    val feilmelding: String
+)
