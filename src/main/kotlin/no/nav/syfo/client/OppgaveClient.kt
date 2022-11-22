@@ -12,6 +12,7 @@ import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
+import no.nav.syfo.objectMapper
 import no.nav.syfo.util.LoggingMeta
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -95,6 +96,7 @@ class OppgaveClient(
             fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
             prioritet = "NORM"
         )
+        log.info("Opprett oppgave-request: ${objectMapper.writeValueAsString(opprettOppgaveRequest)}")
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
     }
