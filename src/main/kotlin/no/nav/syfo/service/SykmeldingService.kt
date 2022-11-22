@@ -228,7 +228,7 @@ class SykmeldingService(
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
         smregistreringTopic: String
     ) {
-        log.info("Ruter oppgaven til smregistrering", fields(loggingMeta))
+        log.info("Ruter oppgaven til smregistrering {}", fields(loggingMeta))
         val oppgave = oppgaveService.hentOppgave(journalpostId, sykmeldingId)
 
         if (oppgave.antallTreffTotalt == 0 || oppgave.antallTreffTotalt > 0 && temaEndret) {

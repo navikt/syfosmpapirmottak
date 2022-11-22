@@ -27,17 +27,17 @@ class OppgaveService(
             aktoerIdPasient, gjelderUtland, trackingId, loggingMeta
         )
 
-        if (!oppgave.duplikat) {
+        return if (!oppgave.duplikat) {
             log.info(
                 "Opprettet oppgave for utenlandsk sykmelding med {}, {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
                 fields(loggingMeta)
             )
             PAPIRSM_OPPGAVE.inc()
-            return oppgave.oppgaveId
+            oppgave.oppgaveId
         } else {
             log.info("duplikat oppgave med {}, {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
-            return null
+            null
         }
     }
 

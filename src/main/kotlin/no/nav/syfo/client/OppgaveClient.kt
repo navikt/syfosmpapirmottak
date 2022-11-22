@@ -24,13 +24,18 @@ class OppgaveClient(
     private val cluster: String
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
-        return httpClient.post(url) {
-            contentType(ContentType.Application.Json)
-            val token = accessTokenClientV2.getAccessTokenV2(scope)
-            header("Authorization", "Bearer $token")
-            header("X-Correlation-ID", msgId)
-            setBody(opprettOppgaveRequest)
-        }.body<OpprettOppgaveResponse>()
+        try {
+            return httpClient.post(url) {
+                contentType(ContentType.Application.Json)
+                val token = accessTokenClientV2.getAccessTokenV2(scope)
+                header("Authorization", "Bearer $token")
+                header("X-Correlation-ID", msgId)
+                setBody(opprettOppgaveRequest)
+            }.body<OpprettOppgaveResponse>()
+        } catch (e: Exception) {
+            log.error("Noe gikk galt ved oppretting av oppgave for sykmeldingId $msgId", e)
+            throw e
+        }
     }
 
     suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {
