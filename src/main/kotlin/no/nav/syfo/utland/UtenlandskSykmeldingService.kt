@@ -26,15 +26,16 @@ class UtenlandskSykmeldingService(
         if (pasient?.aktorId == null || pasient.fnr == null) {
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
         } else {
-            val oppgaveId = oppgaveService.opprettOppgave(
+            val oppgave = oppgaveService.opprettOppgave(
                 aktoerIdPasient = pasient.aktorId, journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
             )
-            if (cluster == "dev-gcp" && oppgaveId != null) {
+            oppgave?.let { log.info("Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}") }
+            if (cluster == "dev-gcp" && oppgave?.oppgaveId != null) {
                 log.info("Sender utenlandsk sykmelding til syk-dig i dev {}", fields(loggingMeta))
                 sykDigProducer.send(
                     sykmeldingId,
                     DigitaliseringsoppgaveKafka(
-                        oppgaveId = oppgaveId.toString(),
+                        oppgaveId = oppgave.oppgaveId.toString(),
                         fnr = pasient.fnr,
                         journalpostId = journalpostId,
                         dokumentInfoId = dokumentInfoId,
