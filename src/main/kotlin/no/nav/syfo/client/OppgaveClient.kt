@@ -67,7 +67,11 @@ class OppgaveClient(
         val oppgaveResponse = hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
-            return OppgaveResultat(oppgaveResponse.oppgaver.first().id, true)
+            return OppgaveResultat(
+                oppgaveId = oppgaveResponse.oppgaver.first().id,
+                duplikat = true,
+                tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr
+            )
         }
         val behandlingstype = if (gjelderUtland) {
             log.info("Gjelder utland, {}", fields(loggingMeta))
@@ -100,7 +104,12 @@ class OppgaveClient(
             prioritet = "NORM"
         )
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
-        return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
+        val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
+        return OppgaveResultat(
+            oppgaveId = opprettetOppgave.id,
+            duplikat = false,
+            tildeltEnhetsnr = opprettetOppgave.tildeltEnhetsnr
+        )
     }
 
     suspend fun opprettFordelingsOppgave(
@@ -112,7 +121,11 @@ class OppgaveClient(
         val oppgaveResponse = hentOppgave(oppgavetype = "FDR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info("Det finnes allerede fordelingsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
-            return OppgaveResultat(oppgaveResponse.oppgaver.first().id, true)
+            return OppgaveResultat(
+                oppgaveId = oppgaveResponse.oppgaver.first().id,
+                duplikat = true,
+                tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr
+            )
         }
         var behandlingstype: String? = null
         if (gjelderUtland) {
@@ -132,7 +145,12 @@ class OppgaveClient(
             prioritet = "NORM"
         )
         log.info("Oppretter fordelingsoppgave {}", fields(loggingMeta))
-        return OppgaveResultat(opprettOppgave(opprettOppgaveRequest, sykmeldingId).id, false)
+        val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
+        return OppgaveResultat(
+            oppgaveId = opprettetOppgave.id,
+            duplikat = false,
+            tildeltEnhetsnr = opprettetOppgave.tildeltEnhetsnr
+        )
     }
 }
 
@@ -153,7 +171,8 @@ data class OpprettOppgaveRequest(
 )
 
 data class OpprettOppgaveResponse(
-    val id: Int
+    val id: Int,
+    val tildeltEnhetsnr: String? = null
 )
 
 data class OppgaveResponse(

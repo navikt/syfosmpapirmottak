@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.pdl.model.Navn
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.service.OppgaveService
@@ -27,7 +28,7 @@ class UtenlandskSykmeldingServiceSpek : FunSpec({
     beforeTest {
         clearAllMocks()
 
-        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) } returns 1
+        coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false, "2990")
         coEvery { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns Unit
     }
 

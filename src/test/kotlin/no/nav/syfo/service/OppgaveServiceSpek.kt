@@ -23,13 +23,13 @@ class OppgaveServiceSpek : FunSpec({
     beforeTest {
         clearAllMocks()
 
-        coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false)
-        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2, false)
+        coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, false, "2990")
+        coEvery { oppgaveClientMock.opprettFordelingsOppgave(any(), any(), any(), any()) } returns OppgaveResultat(2, false, "2990")
     }
 
     context("OppgaveService ende-til-ende") {
         test("Ende-til-ende") {
-            val oppgaveId = oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)
+            val oppgaveId = oppgaveService.opprettOppgave("aktorId", journalpostId, false, sykmeldingId, loggingMetadata)?.oppgaveId
 
             oppgaveId shouldBeEqualTo 1
             coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), false, sykmeldingId, loggingMetadata) }
@@ -40,7 +40,7 @@ class OppgaveServiceSpek : FunSpec({
             coVerify { oppgaveClientMock.opprettOppgave(journalpostId, eq("aktorId"), true, sykmeldingId, loggingMetadata) }
         }
         test("Returnerer null hvis oppgaven finnes fra før") {
-            coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, true)
+            coEvery { oppgaveClientMock.opprettOppgave(any(), any(), any(), any(), any()) } returns OppgaveResultat(1, true, "2990")
 
             val oppgaveId = oppgaveService.opprettOppgave("aktorId", journalpostId, true, sykmeldingId, loggingMetadata)
 
