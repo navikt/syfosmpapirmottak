@@ -7,6 +7,7 @@ import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.util.LoggingMeta
 
+const val NAV_OSLO = "0301"
 class UtenlandskSykmeldingService(
     private val oppgaveService: OppgaveService,
     private val sykDigProducer: SykDigProducer,
@@ -43,6 +44,19 @@ class UtenlandskSykmeldingService(
                     ),
                     loggingMeta
                 )
+            }
+        }
+    }
+
+    fun behandlesISykDig(tildeltEnhetsnr: String?, fnr: String, loggingMeta: LoggingMeta): Boolean {
+        return if (cluster == "dev-gcp") {
+            true
+        } else {
+            if (tildeltEnhetsnr == NAV_OSLO && trefferAldersfilter(fnr, Filter.ETTER1995)) {
+                log.info("Sender utenlandsk sykmelding til syk-dig i dev {}", fields(loggingMeta))
+                true
+            } else {
+                false
             }
         }
     }
