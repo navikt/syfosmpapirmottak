@@ -3,6 +3,7 @@ package no.nav.syfo.utland
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
+import no.nav.syfo.metrics.SYK_DIG_OPPGAVER
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.util.LoggingMeta
@@ -44,6 +45,7 @@ class UtenlandskSykmeldingService(
                     ),
                     loggingMeta
                 )
+                SYK_DIG_OPPGAVER.inc()
             }
         }
     }
