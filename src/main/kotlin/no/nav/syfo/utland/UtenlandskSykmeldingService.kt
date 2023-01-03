@@ -1,6 +1,7 @@
 package no.nav.syfo.utland
 
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
 import no.nav.syfo.metrics.SYK_DIG_OPPGAVER
@@ -32,12 +33,11 @@ class UtenlandskSykmeldingService(
                 aktoerIdPasient = pasient.aktorId, journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
             )
             oppgave?.let { log.info("Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}") }
-            if (cluster == "dev-gcp" && oppgave?.oppgaveId != null) {
-                log.info("Sender utenlandsk sykmelding til syk-dig i dev {}", fields(loggingMeta))
+            if (behandlesISykDig(oppgave?.tildeltEnhetsnr, oppgave, loggingMeta)) {
                 sykDigProducer.send(
                     sykmeldingId,
                     DigitaliseringsoppgaveKafka(
-                        oppgaveId = oppgave.oppgaveId.toString(),
+                        oppgaveId = oppgave?.oppgaveId.toString(),
                         fnr = pasient.fnr,
                         journalpostId = journalpostId,
                         dokumentInfoId = dokumentInfoId,
@@ -50,11 +50,12 @@ class UtenlandskSykmeldingService(
         }
     }
 
-    fun behandlesISykDig(tildeltEnhetsnr: String?, fnr: String, loggingMeta: LoggingMeta): Boolean {
-        return if (cluster == "dev-gcp") {
+    fun behandlesISykDig(tildeltEnhetsnr: String?, oppgave: OppgaveResultat?, loggingMeta: LoggingMeta): Boolean {
+        return if (cluster == "dev-gcp" && oppgave?.oppgaveId != null) {
+            log.info("Sender utenlandsk sykmelding til syk-dig i dev {}", fields(loggingMeta))
             true
         } else {
-            if (tildeltEnhetsnr == NAV_OSLO && trefferAldersfilter(fnr, Filter.ETTER1995)) {
+            if (tildeltEnhetsnr == NAV_OSLO && oppgave?.oppgaveId != null) {
                 log.info("Sender utenlandsk sykmelding til syk-dig {}", fields(loggingMeta))
                 true
             } else {
