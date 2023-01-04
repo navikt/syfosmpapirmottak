@@ -1,7 +1,6 @@
 package no.nav.syfo.utland
 
 import net.logstash.logback.argument.StructuredArguments.fields
-import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
 import no.nav.syfo.metrics.SYK_DIG_OPPGAVER
@@ -33,11 +32,11 @@ class UtenlandskSykmeldingService(
                 aktoerIdPasient = pasient.aktorId, journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
             )
             oppgave?.let { log.info("Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}") }
-            if (behandlesISykDig(oppgave?.tildeltEnhetsnr, oppgave, loggingMeta)) {
+            if (oppgave?.oppgaveId != null && behandlesISykDig(oppgave.tildeltEnhetsnr, oppgave.oppgaveId, loggingMeta)) {
                 sykDigProducer.send(
                     sykmeldingId,
                     DigitaliseringsoppgaveKafka(
-                        oppgaveId = oppgave?.oppgaveId.toString(),
+                        oppgaveId = oppgave.oppgaveId.toString(),
                         fnr = pasient.fnr,
                         journalpostId = journalpostId,
                         dokumentInfoId = dokumentInfoId,
@@ -50,13 +49,13 @@ class UtenlandskSykmeldingService(
         }
     }
 
-    fun behandlesISykDig(tildeltEnhetsnr: String?, oppgave: OppgaveResultat?, loggingMeta: LoggingMeta): Boolean {
-        return if (cluster == "dev-gcp" && oppgave?.oppgaveId != null) {
-            log.info("Sender utenlandsk sykmelding til syk-dig i dev {}", fields(loggingMeta))
+    fun behandlesISykDig(tildeltEnhetsnr: String?, oppgaveId: Int, loggingMeta: LoggingMeta): Boolean {
+        return if (cluster == "dev-gcp") {
+            log.info("Sender utenlandsk sykmelding til syk-dig i dev med oppgaveId: $oppgaveId {}", fields(loggingMeta))
             true
         } else {
-            if (tildeltEnhetsnr == NAV_OSLO && oppgave?.oppgaveId != null) {
-                log.info("Sender utenlandsk sykmelding til syk-dig {}", fields(loggingMeta))
+            if (tildeltEnhetsnr == NAV_OSLO) {
+                log.info("Sender utenlandsk sykmelding til syk-dig med oppgaveId: $oppgaveId {}", fields(loggingMeta))
                 true
             } else {
                 false
