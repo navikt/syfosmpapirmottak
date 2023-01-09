@@ -32,8 +32,7 @@ class UtenlandskSykmeldingService(
                 aktoerIdPasient = pasient.aktorId, journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
             )
             oppgave?.let { log.info("Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}") }
-            if (cluster == "dev-gcp" && oppgave?.oppgaveId != null) {
-                log.info("Sender utenlandsk sykmelding til syk-dig i dev {}", fields(loggingMeta))
+            if (oppgave?.oppgaveId != null && behandlesISykDig(oppgave.tildeltEnhetsnr, oppgave.oppgaveId, loggingMeta)) {
                 sykDigProducer.send(
                     sykmeldingId,
                     DigitaliseringsoppgaveKafka(
@@ -50,12 +49,13 @@ class UtenlandskSykmeldingService(
         }
     }
 
-    fun behandlesISykDig(tildeltEnhetsnr: String?, fnr: String, loggingMeta: LoggingMeta): Boolean {
+    fun behandlesISykDig(tildeltEnhetsnr: String?, oppgaveId: Int, loggingMeta: LoggingMeta): Boolean {
         return if (cluster == "dev-gcp") {
+            log.info("Sender utenlandsk sykmelding til syk-dig i dev med oppgaveId: $oppgaveId {}", fields(loggingMeta))
             true
         } else {
-            if (tildeltEnhetsnr == NAV_OSLO && trefferAldersfilter(fnr, Filter.ETTER1995)) {
-                log.info("Sender utenlandsk sykmelding til syk-dig {}", fields(loggingMeta))
+            if (tildeltEnhetsnr == NAV_OSLO) {
+                log.info("Sender utenlandsk sykmelding til syk-dig med oppgaveId: $oppgaveId {}", fields(loggingMeta))
                 true
             } else {
                 false
