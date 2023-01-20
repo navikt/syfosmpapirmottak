@@ -113,10 +113,12 @@ fun finnDokumentIdForPdf(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, 
     throw RuntimeException("Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}")
 }
 
-const val BREVKODE_UTLAND: String = "900023"
+const val GAMMEL_BREVKODE_UTLAND: String = "900023"
+const val BREVKODE_UTLAND: String = "NAV 08-07.04 U"
+const val BREVKODE_NORSK: String = "NAV 08-07.04"
 
 fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, dokumentId: String?, loggingMeta: LoggingMeta): Boolean {
-    if (dokumentListe == null || dokumentListe.isEmpty()) {
+    if (dokumentListe.isNullOrEmpty()) {
         log.warn("Mangler info om brevkode, antar utenlandsk sykmelding {}", fields(loggingMeta))
         return true
     }
@@ -127,15 +129,23 @@ fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>
         val dokumenterMedRiktigId = dokumentListe.filter { it.dokumentInfoId() == dokumentId }
         if (dokumenterMedRiktigId.isNotEmpty()) {
             brevkode = dokumenterMedRiktigId[0].brevkode()
+            if (brevkode != BREVKODE_NORSK) {
+                log.warn("Fant OCR-fil med uventet brevkode: $brevkode {}", fields(loggingMeta))
+            }
         }
     } else {
         log.info("Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}", fields(loggingMeta))
         val inneholderUtlandBrevkode: Boolean = dokumentListe.any { dok -> dok.brevkode() == BREVKODE_UTLAND }
         if (inneholderUtlandBrevkode) {
             brevkode = BREVKODE_UTLAND
+        } else {
+            val inneholderGammelUtlandBrevkode: Boolean = dokumentListe.any { dok -> dok.brevkode() == GAMMEL_BREVKODE_UTLAND }
+            if (inneholderGammelUtlandBrevkode) {
+                brevkode = GAMMEL_BREVKODE_UTLAND
+            }
         }
     }
-    return if (brevkode == BREVKODE_UTLAND) {
+    return if (brevkode == BREVKODE_UTLAND || brevkode == GAMMEL_BREVKODE_UTLAND) {
         log.info("Sykmelding gjelder utenlandsk sykmelding, brevkode: {}, {}", brevkode, fields(loggingMeta))
         true
     } else {
