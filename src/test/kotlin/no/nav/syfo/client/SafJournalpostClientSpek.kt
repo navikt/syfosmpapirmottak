@@ -122,6 +122,25 @@ class SafJournalpostClientSpek : FunSpec({
             utenlandskSykmelding shouldBeEqualTo true
         }
 
+        test("Returnerer true hvis brevkoden er gammel kode for utland") {
+            val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
+                FindJournalpostQuery.Dokumenter(
+                    "dokumentinfo", "dokumentInfoIdArkiv", GAMMEL_BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                ),
+                FindJournalpostQuery.Dokumenter(
+                    "dokumentinfo", "dokumentInfoIdOriginal", GAMMEL_BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))
+                ),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "dokumentInfoId", GAMMEL_BREVKODE_UTLAND, emptyList()),
+                FindJournalpostQuery.Dokumenter("dokumentinfo", "annenDokumentInfoId", "brevkode", emptyList())
+            )
+
+            val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, "dokumentInfoIdOriginal", loggingMetadata)
+
+            utenlandskSykmelding shouldBeEqualTo true
+        }
+
         test("Returnerer false hvis brevkoden ikke er utland") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
