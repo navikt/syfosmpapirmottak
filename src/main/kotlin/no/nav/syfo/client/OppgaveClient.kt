@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -15,6 +16,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.utland.NAV_OSLO
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -38,6 +40,23 @@ class OppgaveClient(
             else -> {
                 log.error("Noe gikk galt ved oppretting av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}")
                 throw RuntimeException("Noe gikk galt ved oppretting av oppgave, responskode ${httpResponse.status}")
+            }
+        }
+    }
+
+    private suspend fun oppdaterOppgave(oppdaterOppgaveRequest: OppdaterOppgaveRequest, oppgaveId: Int, msgId: String): OpprettOppgaveResponse {
+        val httpResponse: HttpResponse = httpClient.patch("$url/$oppgaveId") {
+            contentType(ContentType.Application.Json)
+            val token = accessTokenClientV2.getAccessTokenV2(scope)
+            header("Authorization", "Bearer $token")
+            header("X-Correlation-ID", msgId)
+            setBody(oppdaterOppgaveRequest)
+        }
+        return when (httpResponse.status) {
+            HttpStatusCode.Created -> httpResponse.body<OpprettOppgaveResponse>()
+            else -> {
+                log.error("Noe gikk galt ved oppdatering av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}")
+                throw RuntimeException("Noe gikk galt ved oppdatering av oppgave, responskode ${httpResponse.status}")
             }
         }
     }
@@ -79,12 +98,6 @@ class OppgaveClient(
         } else {
             null
         }
-        val behandlesAvApplikasjon = if (gjelderUtland && cluster == "dev-gcp") {
-            log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
-            "SMD"
-        } else {
-            "FS22"
-        }
         val beskrivelse = if (gjelderUtland && cluster == "dev-gcp") {
             "Manuell registrering av utenlandsk sykmelding"
         } else {
@@ -94,7 +107,7 @@ class OppgaveClient(
             aktoerId = aktoerId,
             opprettetAvEnhetsnr = "9999",
             journalpostId = journalpostId,
-            behandlesAvApplikasjon = behandlesAvApplikasjon,
+            behandlesAvApplikasjon = "FS22",
             beskrivelse = beskrivelse,
             tema = "SYM",
             oppgavetype = "JFR",
@@ -105,6 +118,12 @@ class OppgaveClient(
         )
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
+
+        // Når syk-dig er ute av pilot kan vi sette dette direkte ved oppretting av oppgaven hvis sykmeldingen gjelder utland
+        if (gjelderUtland && (opprettetOppgave.tildeltEnhetsnr == NAV_OSLO || cluster == "dev-gcp")) {
+            log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
+            oppdaterOppgave(OppdaterOppgaveRequest(behandlesAvApplikasjon = "SMD"), opprettetOppgave.id, sykmeldingId)
+        }
         return OppgaveResultat(
             oppgaveId = opprettetOppgave.id,
             duplikat = false,
@@ -168,6 +187,10 @@ data class OpprettOppgaveRequest(
     val aktivDato: LocalDate,
     val fristFerdigstillelse: LocalDate? = null,
     val prioritet: String
+)
+
+data class OppdaterOppgaveRequest(
+    val behandlesAvApplikasjon: String
 )
 
 data class OpprettOppgaveResponse(
