@@ -53,7 +53,7 @@ class OppgaveClient(
             setBody(oppdaterOppgaveRequest)
         }
         return when (httpResponse.status) {
-            HttpStatusCode.Created -> httpResponse.body<OpprettOppgaveResponse>()
+            HttpStatusCode.OK -> httpResponse.body<OpprettOppgaveResponse>()
             else -> {
                 log.error("Noe gikk galt ved oppdatering av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}")
                 throw RuntimeException("Noe gikk galt ved oppdatering av oppgave, responskode ${httpResponse.status}")
