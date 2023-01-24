@@ -44,8 +44,8 @@ class OppgaveClient(
         }
     }
 
-    private suspend fun oppdaterOppgave(oppdaterOppgaveRequest: OppdaterOppgaveRequest, oppgaveId: Int, msgId: String): OpprettOppgaveResponse {
-        val httpResponse: HttpResponse = httpClient.patch("$url/$oppgaveId") {
+    private suspend fun oppdaterOppgave(oppdaterOppgaveRequest: OppdaterOppgaveRequest, msgId: String): OpprettOppgaveResponse {
+        val httpResponse: HttpResponse = httpClient.patch("$url/${oppdaterOppgaveRequest.id}") {
             contentType(ContentType.Application.Json)
             val token = accessTokenClientV2.getAccessTokenV2(scope)
             header("Authorization", "Bearer $token")
@@ -122,7 +122,14 @@ class OppgaveClient(
         // Når syk-dig er ute av pilot kan vi sette dette direkte ved oppretting av oppgaven hvis sykmeldingen gjelder utland
         if (gjelderUtland && (opprettetOppgave.tildeltEnhetsnr == NAV_OSLO || cluster == "dev-gcp")) {
             log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
-            oppdaterOppgave(OppdaterOppgaveRequest(behandlesAvApplikasjon = "SMD"), opprettetOppgave.id, sykmeldingId)
+            oppdaterOppgave(
+                oppdaterOppgaveRequest = OppdaterOppgaveRequest(
+                    id = opprettetOppgave.id,
+                    versjon = opprettetOppgave.versjon,
+                    behandlesAvApplikasjon = "SMD"
+                ),
+                msgId = sykmeldingId
+            )
         }
         return OppgaveResultat(
             oppgaveId = opprettetOppgave.id,
@@ -190,11 +197,14 @@ data class OpprettOppgaveRequest(
 )
 
 data class OppdaterOppgaveRequest(
+    val id: Int,
+    val versjon: Int,
     val behandlesAvApplikasjon: String
 )
 
 data class OpprettOppgaveResponse(
     val id: Int,
+    val versjon: Int,
     val tildeltEnhetsnr: String? = null
 )
 
