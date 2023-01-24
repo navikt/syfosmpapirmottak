@@ -103,7 +103,7 @@ class OppgaveClientSpek : FunSpec({
             post("/oppgave") {
                 when {
                     call.request.headers["X-Correlation-ID"] == "feiler" -> call.respond(HttpStatusCode.BadRequest, OppgaveFeilrespons(UUID.randomUUID().toString(), "Fant ikke person"))
-                    else -> call.respond(HttpStatusCode.Created, OpprettOppgaveResponse(42))
+                    else -> call.respond(HttpStatusCode.Created, OpprettOppgaveResponse(id = 42, versjon = 1))
                 }
             }
         }

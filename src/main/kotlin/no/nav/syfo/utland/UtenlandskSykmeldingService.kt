@@ -8,7 +8,7 @@ import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.util.LoggingMeta
 
-const val NAV_OSLO = "0301"
+const val NAV_OSLO = "0393"
 class UtenlandskSykmeldingService(
     private val oppgaveService: OppgaveService,
     private val sykDigProducer: SykDigProducer,
