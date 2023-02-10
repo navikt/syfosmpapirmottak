@@ -13,7 +13,7 @@ data class Environment(
     val oppgaveScope: String = getEnvVar("OPPGAVE_SCOPE"),
     val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL"),
     val helsenettproxyScope: String = getEnvVar("HELSENETT_SCOPE"),
-    val syfosmpapirregelUrl: String = getEnvVar("SYFOSMPAPIRREGLER_URL"),
+    val syfosmpapirregelUrl: String = getEnvVar("SYFOSMPAPIRREGLER_URL", "http://syfosmpapirregler"),
     val syfosmpapirregelScope: String = getEnvVar("SYFOSMPAPIRREGLER_SCOPE"),
     val smgcpProxyUrl: String = getEnvVar("SMGCP_PROXY_URL"),
     val smgcpProxyScope: String = getEnvVar("SMGCP_PROXY_SCOPE"),
