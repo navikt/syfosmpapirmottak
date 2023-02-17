@@ -1,6 +1,7 @@
 package no.nav.syfo.utland
 
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.client.DokumentMedTittel
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
 import no.nav.syfo.metrics.SYK_DIG_OPPGAVER
@@ -17,6 +18,7 @@ class UtenlandskSykmeldingService(
     suspend fun behandleUtenlandskSykmelding(
         journalpostId: String,
         dokumentInfoId: String,
+        dokumenter: List<DokumentMedTittel>,
         pasient: PdlPerson?,
         loggingMeta: LoggingMeta,
         sykmeldingId: String
@@ -40,6 +42,7 @@ class UtenlandskSykmeldingService(
                         fnr = pasient.fnr,
                         journalpostId = journalpostId,
                         dokumentInfoId = dokumentInfoId,
+                        dokumenter = dokumenter.map { DokumentKafka(it.tittel, it.dokumentInfoId) },
                         type = "UTLAND"
                     ),
                     loggingMeta

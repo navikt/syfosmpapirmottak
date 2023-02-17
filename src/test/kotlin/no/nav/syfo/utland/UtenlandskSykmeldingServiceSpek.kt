@@ -34,7 +34,7 @@ class UtenlandskSykmeldingServiceSpek : FunSpec({
 
     context("UtenlandskSykmeldingService ende-til-ende") {
         test("Happy-case journalpost med bruker") {
-            utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasient, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasient, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId, dokumenter = emptyList())
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any()) }
@@ -44,7 +44,7 @@ class UtenlandskSykmeldingServiceSpek : FunSpec({
         test("Oppretter fordelingsoppgave hvis fnr mangler") {
             val pasientCopy = pasient.copy(fnr = null)
 
-            utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasientCopy, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasientCopy, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId, dokumenter = emptyList())
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) }
@@ -53,22 +53,22 @@ class UtenlandskSykmeldingServiceSpek : FunSpec({
         test("Oppretter fordelingsoppgave hvis aktørid mangler") {
             val pasientCopy = pasient.copy(aktorId = null)
 
-            utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasientCopy, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasientCopy, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId, dokumenter = emptyList())
 
             coVerify { oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any()) }
             coVerify(exactly = 0) { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) }
         }
         test("Sender digitaliseringsoppgave i dev-gcp") {
-            utenlandskSykmeldingServiceDev.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasient, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            utenlandskSykmeldingServiceDev.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasient, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId, dokumenter = emptyList())
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any()) }
-            coVerify { sykDigProducer.send(sykmeldingId, match { it == DigitaliseringsoppgaveKafka(oppgaveId = "1", fnr = fnr, journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, type = "UTLAND") }, any()) }
+            coVerify { sykDigProducer.send(sykmeldingId, match { it == DigitaliseringsoppgaveKafka(oppgaveId = "1", fnr = fnr, journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, type = "UTLAND", dokumenter = emptyList()) }, any()) }
         }
         test("Sender ikke digitaliseringsoppgave i dev-gcp for duplikat oppgave") {
             coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) } returns null
 
-            utenlandskSykmeldingServiceDev.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasient, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId)
+            utenlandskSykmeldingServiceDev.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = dokumentInfoId, pasient = pasient, loggingMeta = loggingMetadata, sykmeldingId = sykmeldingId, dokumenter = emptyList())
 
             coVerify(exactly = 0) { oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any()) }
             coVerify { oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any()) }
