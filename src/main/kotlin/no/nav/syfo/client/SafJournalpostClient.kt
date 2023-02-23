@@ -32,11 +32,11 @@ suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { c
 class SafJournalpostClient(
     private val apolloClient: ApolloClient,
     private val accessTokenClientV2: AccessTokenClientV2,
-    private val scope: String
+    private val scope: String,
 ) {
     suspend fun getJournalpostMetadata(
         journalpostId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ): JournalpostMetadata? {
         val journalpost = apolloClient.query(
             FindJournalpostQuery.builder()
@@ -54,6 +54,8 @@ class SafJournalpostClient(
             ?.journalpost()
         val dokumentId: String? = finnDokumentIdForOcr(journalpost?.dokumenter(), loggingMeta)
         return journalpost?.let {
+            val dokumenter = finnDokumentIdForPdf(journalpost.dokumenter(), loggingMeta)
+
             JournalpostMetadata(
                 bruker = Bruker(
                     it.bruker()?.id(),
@@ -63,7 +65,8 @@ class SafJournalpostClient(
                 jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus()),
                 gjelderUtland = sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta),
                 datoOpprettet = dateTimeStringTilLocalDateTime(it.datoOpprettet(), loggingMeta),
-                dokumentInfoIdPdf = finnDokumentIdForPdf(journalpost.dokumenter(), loggingMeta)
+                dokumentInfoIdPdf = dokumenter.first().dokumentInfoId,
+                dokumenter = dokumenter,
             )
         }
     }
@@ -101,23 +104,41 @@ fun finnDokumentIdForOcr(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, 
     return null
 }
 
-fun finnDokumentIdForPdf(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, loggingMeta: LoggingMeta): String {
-    dokumentListe?.forEach { dokument ->
-        dokument.dokumentvarianter().forEach {
-            if (it.variantformat().name == "ARKIV") {
-                return dokument.dokumentInfoId()
+data class DokumentMedTittel(
+    val tittel: String,
+    val dokumentInfoId: String,
+)
+
+fun finnDokumentIdForPdf(
+    dokumentListe: List<FindJournalpostQuery.Dokumenter>?,
+    loggingMeta: LoggingMeta,
+): List<DokumentMedTittel> {
+    val dokumenter =
+        dokumentListe?.filter { it.dokumentvarianter().any { variant -> variant.variantformat().name == "ARKIV" } }
+            ?.map { dokument ->
+                DokumentMedTittel(
+                    tittel = dokument.tittel() ?: "Dokument uten tittel",
+                    dokumentInfoId = dokument.dokumentInfoId()
+                )
             }
-        }
+
+    if (dokumenter.isNullOrEmpty()) {
+        log.error("Fant ikke PDF-dokument {}", fields(loggingMeta))
+        throw RuntimeException("Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}")
     }
-    log.error("Fant ikke PDF-dokument {}", fields(loggingMeta))
-    throw RuntimeException("Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}")
+
+    return dokumenter
 }
 
 const val GAMMEL_BREVKODE_UTLAND: String = "900023"
 const val BREVKODE_UTLAND: String = "NAV 08-07.04 U"
 const val BREVKODE_NORSK: String = "NAV 08-07.04"
 
-fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>?, dokumentId: String?, loggingMeta: LoggingMeta): Boolean {
+fun sykmeldingGjelderUtland(
+    dokumentListe: List<FindJournalpostQuery.Dokumenter>?,
+    dokumentId: String?,
+    loggingMeta: LoggingMeta,
+): Boolean {
     if (dokumentListe.isNullOrEmpty()) {
         log.warn("Mangler info om brevkode, antar utenlandsk sykmelding {}", fields(loggingMeta))
         return true
@@ -134,12 +155,16 @@ fun sykmeldingGjelderUtland(dokumentListe: List<FindJournalpostQuery.Dokumenter>
             }
         }
     } else {
-        log.info("Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}", fields(loggingMeta))
+        log.info(
+            "Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}",
+            fields(loggingMeta)
+        )
         val inneholderUtlandBrevkode: Boolean = dokumentListe.any { dok -> dok.brevkode() == BREVKODE_UTLAND }
         if (inneholderUtlandBrevkode) {
             brevkode = BREVKODE_UTLAND
         } else {
-            val inneholderGammelUtlandBrevkode: Boolean = dokumentListe.any { dok -> dok.brevkode() == GAMMEL_BREVKODE_UTLAND }
+            val inneholderGammelUtlandBrevkode: Boolean =
+                dokumentListe.any { dok -> dok.brevkode() == GAMMEL_BREVKODE_UTLAND }
             if (inneholderGammelUtlandBrevkode) {
                 brevkode = GAMMEL_BREVKODE_UTLAND
             }

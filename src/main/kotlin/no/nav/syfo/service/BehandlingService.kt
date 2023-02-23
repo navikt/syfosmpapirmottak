@@ -19,12 +19,12 @@ class BehandlingService(
     private val safJournalpostClient: SafJournalpostClient,
     private val sykmeldingService: SykmeldingService,
     private val utenlandskSykmeldingService: UtenlandskSykmeldingService,
-    private val pdlPersonService: PdlPersonService
+    private val pdlPersonService: PdlPersonService,
 ) {
     suspend fun handleJournalpost(
         journalfoeringEvent: JournalfoeringHendelseRecord,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String
+        sykmeldingId: String,
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
@@ -38,7 +38,11 @@ class BehandlingService(
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
-                log.info("Mottatt papirsykmelding fra mottakskanal {}, {}", journalfoeringEvent.mottaksKanal, fields(loggingMeta))
+                log.info(
+                    "Mottatt papirsykmelding fra mottakskanal {}, {}",
+                    journalfoeringEvent.mottaksKanal,
+                    fields(loggingMeta)
+                )
 
                 if (journalfoeringEvent.hendelsesType.toString() == "TemaEndret") {
                     ENDRET_PAPIRSM_MOTTATT.inc()
@@ -62,12 +66,21 @@ class BehandlingService(
                             log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
                             null
                         } else {
-                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let { pdlPersonService.getPdlPerson(it, loggingMeta) }
+                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let {ident ->
+                                pdlPersonService.getPdlPerson(ident, loggingMeta)
+                            }
                         }
                     }
 
                     if (journalpostMetadata.gjelderUtland) {
-                        utenlandskSykmeldingService.behandleUtenlandskSykmelding(journalpostId = journalpostId, dokumentInfoId = journalpostMetadata.dokumentInfoIdPdf, pasient = pasient, loggingMeta = loggingMeta, sykmeldingId = sykmeldingId)
+                        utenlandskSykmeldingService.behandleUtenlandskSykmelding(
+                            journalpostId = journalpostId,
+                            dokumentInfoId = journalpostMetadata.dokumentInfoIdPdf,
+                            dokumenter = journalpostMetadata.dokumenter,
+                            pasient = pasient,
+                            loggingMeta = loggingMeta,
+                            sykmeldingId = sykmeldingId
+                        )
                     } else {
                         sykmeldingService.behandleSykmelding(
                             journalpostId = journalpostId,
@@ -85,12 +98,20 @@ class BehandlingService(
                 }
                 val currentRequestLatency = requestLatency.observeDuration()
 
-                log.info("Finished processing took {}s, {}", StructuredArguments.keyValue("latency", currentRequestLatency), fields(loggingMeta))
+                log.info(
+                    "Finished processing took {}s, {}",
+                    StructuredArguments.keyValue("latency", currentRequestLatency),
+                    fields(loggingMeta)
+                )
             }
         }
     }
 
-    private fun ocrDebugLog(journalpostId: String, journalpostMetadata: JournalpostMetadata, journalfoeringEvent: JournalfoeringHendelseRecord) {
+    private fun ocrDebugLog(
+        journalpostId: String,
+        journalpostMetadata: JournalpostMetadata,
+        journalfoeringEvent: JournalfoeringHendelseRecord,
+    ) {
         // Midlertidig logging for å lettere kunne grave i sykmeldinger som ikke blir OCR-tolket riktig
         val harOcr = when (journalpostMetadata.dokumentInfoId != null) {
             true -> "har OCR"
@@ -105,7 +126,7 @@ class BehandlingService(
     }
 
     fun hentBrukerIdFraJournalpost(
-        journalpost: JournalpostMetadata
+        journalpost: JournalpostMetadata,
     ): String? {
         val bruker = journalpost.bruker
         val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid, skal ikke kunne skje")

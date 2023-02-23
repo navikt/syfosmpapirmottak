@@ -41,13 +41,14 @@ class BehandlingServiceSpek : FunSpec({
         coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
             bruker = Bruker("fnr", "FNR"),
             dokumentInfoId = null,
+            dokumenter = emptyList(),
             jpErIkkeJournalfort = true,
             gjelderUtland = false,
             datoOpprettet = datoOpprettet,
             dokumentInfoIdPdf = ""
         )
         coEvery { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any()) } just Runs
-        coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) } just Runs
+        coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any(), any()) } just Runs
     }
 
     context("BehandlingService ende-til-ende") {
@@ -61,7 +62,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med fnr og endret-tema") {
@@ -74,7 +75,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med fnr ny skanningleverandør") {
@@ -87,7 +88,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med aktorId") {
@@ -95,6 +96,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
@@ -108,7 +110,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson("aktorId", any()) }
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), any(), null, datoOpprettet, any(), any(), any(), any()) }
-            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med fnr for utlandssykmelding") {
@@ -116,6 +118,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("fnr", "FNR"),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = true,
                 gjelderUtland = true,
                 datoOpprettet = datoOpprettet,
@@ -129,7 +132,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
             coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any()) }
-            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any(), any()) }
+            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any(), any(), any()) }
         }
 
         test("Ende-til-ende journalpost med aktørid for utlandssykmelding") {
@@ -137,6 +140,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = true,
                 gjelderUtland = true,
                 datoOpprettet = datoOpprettet,
@@ -150,7 +154,7 @@ class BehandlingServiceSpek : FunSpec({
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
             coVerify { pdlService.getPdlPerson(eq("aktorId"), any()) }
             coVerify(exactly = 0) { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any()) }
-            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any(), any()) }
+            coVerify { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(eq("123"), any(), any(), any(), any(), any()) }
         }
 
         test("Kaster feil hvis journalpost mangler") {
@@ -174,6 +178,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker(null, "type"),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
@@ -193,6 +198,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("id", null),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
@@ -224,6 +230,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
@@ -245,6 +252,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
@@ -268,6 +276,7 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns JournalpostMetadata(
                 bruker = Bruker("aktorId", "AKTOERID"),
                 dokumentInfoId = null,
+                dokumenter = emptyList(),
                 jpErIkkeJournalfort = false,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
