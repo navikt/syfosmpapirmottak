@@ -33,7 +33,8 @@ class UtenlandskSykmeldingService(
             val oppgave = oppgaveService.opprettOppgave(
                 aktoerIdPasient = pasient.aktorId, journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
             )
-            oppgave?.let { log.info("Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}") }
+            oppgave?.let { log.info("Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}, " +
+                    "antall dokumenter: ${dokumenter.size}") }
             if (oppgave?.oppgaveId != null && behandlesISykDig(oppgave.tildeltEnhetsnr, oppgave.oppgaveId, loggingMeta)) {
                 sykDigProducer.send(
                     sykmeldingId,
