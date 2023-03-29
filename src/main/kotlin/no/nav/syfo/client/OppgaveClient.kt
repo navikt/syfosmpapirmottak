@@ -98,7 +98,7 @@ class OppgaveClient(
         } else {
             null
         }
-        val beskrivelse = if (gjelderUtland && cluster == "dev-gcp") {
+        val beskrivelse = if (gjelderUtland) {
             "Manuell registrering av utenlandsk sykmelding"
         } else {
             "Papirsykmelding som må legges inn i infotrygd manuelt"
