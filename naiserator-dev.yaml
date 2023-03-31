@@ -39,15 +39,19 @@ spec:
     application:
       enabled: true
       tenant: trygdeetaten.no
-  vault:
-    enabled: false
-  webproxy: false
   accessPolicy:
     outbound:
       rules:
         - application: syfosmpapirregler
           namespace: teamsykmelding
           cluster: dev-gcp
+      external:
+        - host: saf.dev-fss-pub.nais.io
+        - host: syfohelsenettproxy.dev-fss-pub.nais.io
+        - host: dokarkiv.dev-fss-pub.nais.io
+        - host: pdl-api.dev-fss-pub.nais.io
+        - host: oppgave-q1.dev-fss-pub.nais.io
+        - host: smgcp-proxy.dev-fss-pub.nais.io
   env:
     - name: SAF_URL
       value: https://saf.dev-fss-pub.nais.io
