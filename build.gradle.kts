@@ -16,7 +16,7 @@ val logbackVersion = "1.4.5"
 val logstashLogbackEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
 val kotestVersion = "5.5.4"
-val jaxbApiVersion = "2.1"
+val jaxbApiVersion = "2.3.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
@@ -53,7 +53,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
+        classpath("javax.xml.bind:jaxb-api:2.3.1")
         classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
         classpath("com.sun.activation:javax.activation:1.2.0")
         classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.13")
