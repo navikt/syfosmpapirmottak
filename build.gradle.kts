@@ -41,7 +41,7 @@ plugins {
     kotlin("jvm") version "1.8.20"
     id("com.diffplug.spotless") version "6.18.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("com.apollographql.apollo") version "2.5.13"
+    id("com.apollographql.apollo") version "2.5.14"
     id("org.jmailen.kotlinter") version "3.14.0"
 }
 
