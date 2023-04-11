@@ -34,7 +34,7 @@ val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.2"
 val kotlinVersion = "1.8.20"
 val okhttp3Version = "4.10.0"
-val nettyCodecVersion = "4.1.86.Final"
+val nettyCodecVersion = "4.1.91.Final"
 
 
 plugins {
