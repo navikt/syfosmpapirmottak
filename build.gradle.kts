@@ -34,7 +34,6 @@ val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.4"
 val kotlinVersion = "1.8.20"
 val okhttp3Version = "4.10.0"
-val nettyCodecVersion = "4.1.86.Final"
 
 
 plugins {
@@ -102,9 +101,6 @@ dependencies {
 
     implementation ("io.ktor:ktor-server-core:$ktorVersion")
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
-    //This is to override version that is in io.ktor:ktor-server-netty
-    //https://www.cve.org/CVERecord?id=CVE-2022-41915
-    implementation("io.netty:netty-codec:$nettyCodecVersion")
     implementation ("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation ("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation ("io.ktor:ktor-client-core:$ktorVersion")
