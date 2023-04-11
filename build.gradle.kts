@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val apolloVersion = "2.5.13"
+val apolloVersion = "2.5.14"
 val coroutinesVersion = "1.6.4"
 val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "3.3.1"
