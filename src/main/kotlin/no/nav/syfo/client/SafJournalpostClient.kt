@@ -41,13 +41,13 @@ class SafJournalpostClient(
         val journalpost = apolloClient.query(
             FindJournalpostQuery.builder()
                 .id(journalpostId)
-                .build()
+                .build(),
         ).toBuilder()
             .requestHeaders(
                 RequestHeaders.builder()
                     .addHeader("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
                     .addHeader("X-Correlation-ID", journalpostId)
-                    .build()
+                    .build(),
             ).build()
             .execute()
             .data
@@ -59,7 +59,7 @@ class SafJournalpostClient(
             JournalpostMetadata(
                 bruker = Bruker(
                     it.bruker()?.id(),
-                    it.bruker()?.type()?.name
+                    it.bruker()?.type()?.name,
                 ),
                 dokumentInfoId = dokumentId,
                 jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus()),
@@ -118,7 +118,7 @@ fun finnDokumentIdForPdf(
             ?.map { dokument ->
                 DokumentMedTittel(
                     tittel = dokument.tittel() ?: "Dokument uten tittel",
-                    dokumentInfoId = dokument.dokumentInfoId()
+                    dokumentInfoId = dokument.dokumentInfoId(),
                 )
             }
 
@@ -157,7 +157,7 @@ fun sykmeldingGjelderUtland(
     } else {
         log.info(
             "Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}",
-            fields(loggingMeta)
+            fields(loggingMeta),
         )
         val inneholderUtlandBrevkode: Boolean = dokumentListe.any { dok -> dok.brevkode() == BREVKODE_UTLAND }
         if (inneholderUtlandBrevkode) {

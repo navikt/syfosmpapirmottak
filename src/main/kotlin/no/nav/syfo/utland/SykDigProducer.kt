@@ -8,7 +8,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 
 class SykDigProducer(
     private val kafkaProducer: KafkaProducer<String, DigitaliseringsoppgaveKafka>,
-    private val topicName: String
+    private val topicName: String,
 ) {
     fun send(sykmeldingId: String, digitaliseringsoppgave: DigitaliseringsoppgaveKafka, loggingMeta: LoggingMeta) {
         try {
@@ -16,14 +16,14 @@ class SykDigProducer(
                 ProducerRecord(
                     topicName,
                     sykmeldingId,
-                    digitaliseringsoppgave
-                )
+                    digitaliseringsoppgave,
+                ),
             ).get()
         } catch (ex: Exception) {
             log.error(
                 "Noe gikk galt ved skriving av digitaliseringsoppgave til kafka for oppgaveId ${digitaliseringsoppgave.oppgaveId} og sykmeldingId $sykmeldingId, {}",
                 StructuredArguments.fields(loggingMeta),
-                ex.message
+                ex.message,
             )
             throw ex
         }

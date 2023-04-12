@@ -52,11 +52,12 @@ class PdlServiceTest : FunSpec({
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
                 ResponseData(
                     hentPerson = HentPerson(
-                        navn = emptyList(), adressebeskyttelse = null
+                        navn = emptyList(),
+                        adressebeskyttelse = null,
                     ),
-                    hentIdenter = HentIdenter(emptyList())
+                    hentIdenter = HentIdenter(emptyList()),
                 ),
-                errors = null
+                errors = null,
             )
 
             val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
@@ -67,11 +68,12 @@ class PdlServiceTest : FunSpec({
             coEvery { pdlClient.getPerson(any(), any()) } returns GetPersonResponse(
                 ResponseData(
                     hentPerson = HentPerson(
-                        navn = null, adressebeskyttelse = null
+                        navn = null,
+                        adressebeskyttelse = null,
                     ),
-                    hentIdenter = HentIdenter(listOf(PdlIdent(ident = "987654321", gruppe = "foo")))
+                    hentIdenter = HentIdenter(listOf(PdlIdent(ident = "987654321", gruppe = "foo"))),
                 ),
-                errors = null
+                errors = null,
             )
 
             val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)
@@ -83,11 +85,11 @@ class PdlServiceTest : FunSpec({
                 ResponseData(
                     hentPerson = HentPerson(
                         navn = listOf(Navn("fornavn", "mellomnavn", "etternavn")),
-                        adressebeskyttelse = null
+                        adressebeskyttelse = null,
                     ),
-                    hentIdenter = HentIdenter(emptyList())
+                    hentIdenter = HentIdenter(emptyList()),
                 ),
-                errors = null
+                errors = null,
             )
 
             val pdlPerson = pdlService.getPdlPerson("123", loggingMeta)

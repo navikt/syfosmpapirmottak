@@ -3,7 +3,7 @@ package no.nav.syfo.util
 data class LoggingMeta(
     val sykmeldingId: String,
     val journalpostId: String,
-    val hendelsesId: String
+    val hendelsesId: String,
 )
 
 class TrackableException(override val cause: Throwable, val loggingMeta: LoggingMeta) : RuntimeException()

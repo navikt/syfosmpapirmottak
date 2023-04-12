@@ -12,7 +12,7 @@ suspend fun handleOk(
     sykmeldingId: String,
     dokArkivClient: DokArkivClient,
     journalpostid: String,
-    loggingMeta: LoggingMeta
+    loggingMeta: LoggingMeta,
 ) {
     dokArkivClient.oppdaterOgFerdigstillJournalpost(journalpostId = journalpostid, fnr = receivedSykmelding.personNrPasient, sykmeldingId = sykmeldingId, behandler = receivedSykmelding.sykmelding.behandler, loggingMeta = loggingMeta)
 

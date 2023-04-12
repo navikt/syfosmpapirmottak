@@ -77,7 +77,7 @@ fun main() {
     val applicationState = ApplicationState()
     val applicationEngine = createApplicationEngine(
         env,
-        applicationState
+        applicationState,
     )
 
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
@@ -94,7 +94,7 @@ fun main() {
         setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
     }.toConsumerConfig(
         "${env.applicationName}-consumer",
-        valueDeserializer = KafkaAvroDeserializer::class
+        valueDeserializer = KafkaAvroDeserializer::class,
     ).also {
         it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
         it["specific.avro.reader"] = true
@@ -166,7 +166,7 @@ fun main() {
         kafkaReceivedSykmeldingProducer = kafkaProducerReceivedSykmelding,
         dokArkivClient = dokArkivClient,
         kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
-        smregistreringTopic = env.smregistreringTopic
+        smregistreringTopic = env.smregistreringTopic,
     )
     val utenlandskSykmeldingService = UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
     val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
@@ -175,7 +175,7 @@ fun main() {
         env,
         applicationState,
         consumerPropertiesAiven,
-        behandlingService
+        behandlingService,
     )
 
     applicationServer.start()
@@ -199,17 +199,16 @@ fun launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerPropertiesAiven: Properties,
-    behandlingService: BehandlingService
+    behandlingService: BehandlingService,
 ) {
     val kafkaConsumerJournalfoeringHendelseAiven = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
     kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
 
     createListener(applicationState) {
-
         blockingApplicationLogic(
             applicationState = applicationState,
             aivenConsumer = kafkaConsumerJournalfoeringHendelseAiven,
-            behandlingService = behandlingService
+            behandlingService = behandlingService,
         )
     }
 }
@@ -217,7 +216,7 @@ fun launchListeners(
 suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     aivenConsumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
-    behandlingService: BehandlingService
+    behandlingService: BehandlingService,
 ) {
     while (applicationState.ready) {
         aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
@@ -226,13 +225,13 @@ suspend fun blockingApplicationLogic(
             val loggingMeta = LoggingMeta(
                 sykmeldingId = sykmeldingId,
                 journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
-                hendelsesId = journalfoeringHendelseRecord.hendelsesId
+                hendelsesId = journalfoeringHendelseRecord.hendelsesId,
             )
 
             behandlingService.handleJournalpost(
                 journalfoeringEvent = journalfoeringHendelseRecord,
                 loggingMeta = loggingMeta,
-                sykmeldingId = sykmeldingId
+                sykmeldingId = sykmeldingId,
             )
         }
     }

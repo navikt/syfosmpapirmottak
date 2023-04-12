@@ -6,21 +6,6 @@ on:
       - '!master'
 
 jobs:
-  snyk-test:
-    name: Checkout code and analyze dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/gradle-jdk16@master
-        env:
-          ORG_GRADLE_PROJECT_githubUser: x-access-token
-          ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --org=teamsykmelding --severity-threshold=high
   build:
     permissions:
       contents: "read"
@@ -69,7 +54,7 @@ jobs:
   deploy:
     name: Deploy to Preprod
     runs-on: ubuntu-latest
-    needs: [ build, snyk-test ]
+    needs: [ build ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

@@ -13,7 +13,7 @@ const val NAV_OSLO = "0393"
 class UtenlandskSykmeldingService(
     private val oppgaveService: OppgaveService,
     private val sykDigProducer: SykDigProducer,
-    private val cluster: String
+    private val cluster: String,
 ) {
     suspend fun behandleUtenlandskSykmelding(
         journalpostId: String,
@@ -21,9 +21,8 @@ class UtenlandskSykmeldingService(
         dokumenter: List<DokumentMedTittel>,
         pasient: PdlPerson?,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String
+        sykmeldingId: String,
     ) {
-
         log.info("Mottatt utenlandsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_UTLAND.inc()
 
@@ -31,10 +30,18 @@ class UtenlandskSykmeldingService(
             oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
         } else {
             val oppgave = oppgaveService.opprettOppgave(
-                aktoerIdPasient = pasient.aktorId, journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta
+                aktoerIdPasient = pasient.aktorId,
+                journalpostId = journalpostId,
+                gjelderUtland = true,
+                trackingId = sykmeldingId,
+                loggingMeta = loggingMeta,
             )
-            oppgave?.let { log.info("Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}, " +
-                    "antall dokumenter: ${dokumenter.size}") }
+            oppgave?.let {
+                log.info(
+                    "Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}, " +
+                        "antall dokumenter: ${dokumenter.size}",
+                )
+            }
             if (oppgave?.oppgaveId != null && behandlesISykDig(oppgave.tildeltEnhetsnr, oppgave.oppgaveId, loggingMeta)) {
                 sykDigProducer.send(
                     sykmeldingId,
@@ -44,9 +51,9 @@ class UtenlandskSykmeldingService(
                         journalpostId = journalpostId,
                         dokumentInfoId = dokumentInfoId,
                         dokumenter = dokumenter.map { DokumentKafka(it.tittel, it.dokumentInfoId) },
-                        type = "UTLAND"
+                        type = "UTLAND",
                     ),
-                    loggingMeta
+                    loggingMeta,
                 )
                 SYK_DIG_OPPGAVER.inc()
             }

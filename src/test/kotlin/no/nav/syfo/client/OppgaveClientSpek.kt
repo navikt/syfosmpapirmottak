@@ -74,26 +74,32 @@ class OppgaveClientSpek : FunSpec({
                             1,
                             listOf(
                                 Oppgave(
-                                    1, "9999",
-                                    "123456789", "123",
-                                    "SYM", "JFR",
-                                    ""
-                                )
-                            )
-                        )
+                                    1,
+                                    "9999",
+                                    "123456789",
+                                    "123",
+                                    "SYM",
+                                    "JFR",
+                                    "",
+                                ),
+                            ),
+                        ),
                     )
                     call.request.queryParameters["oppgavetype"] == "FDR" && call.request.queryParameters["journalpostId"] == "123" -> call.respond(
                         OppgaveResponse(
                             1,
                             listOf(
                                 Oppgave(
-                                    1, "9999",
-                                    null, "123",
-                                    "SYM", "FDR",
-                                    ""
-                                )
-                            )
-                        )
+                                    1,
+                                    "9999",
+                                    null,
+                                    "123",
+                                    "SYM",
+                                    "FDR",
+                                    "",
+                                ),
+                            ),
+                        ),
                     )
                     call.request.queryParameters["oppgavetype"] == "JFR" && call.request.queryParameters["journalpostId"] == "987" -> call.respond(OppgaveResponse(0, emptyList()))
                     call.request.queryParameters["oppgavetype"] == "FDR" && call.request.queryParameters["journalpostId"] == "987" -> call.respond(OppgaveResponse(0, emptyList()))
@@ -176,5 +182,5 @@ class OppgaveClientSpek : FunSpec({
 
 private data class OppgaveFeilrespons(
     val uuid: String,
-    val feilmelding: String
+    val feilmelding: String,
 )

@@ -72,8 +72,14 @@ class FellesformatMapperServiceSpek : FunSpec({
                 .unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding.xml")))
                 as Skanningmetadata
             val sykmelder = Sykmelder(
-                hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn",
-                mellomnavn = null, etternavn = "Etternavn", telefonnummer = null, godkjenninger = listOf()
+                hprNummer = hprNummer,
+                fnr = fnrLege,
+                aktorId = aktorIdLege,
+                fornavn = "Fornavn",
+                mellomnavn = null,
+                etternavn = "Etternavn",
+                telefonnummer = null,
+                godkjenninger = listOf(),
             )
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
@@ -83,7 +89,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 sykmeldingId = sykmeldingId,
                 loggingMeta = loggingMetadata,
                 pdlPerson = pdlPerson,
-                journalpostId = journalpostId
+                journalpostId = journalpostId,
             )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -94,7 +100,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 pasientAktoerId = aktorId,
                 legeAktoerId = sykmelder.aktorId,
                 msgId = sykmeldingId,
-                signaturDato = msgHead.msgInfo.genDate
+                signaturDato = msgHead.msgInfo.genDate,
             )
 
             val receivedSykmelding = ReceivedSykmelding(
@@ -117,7 +123,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 legeHprNr = hprNummer,
                 partnerreferanse = null,
                 vedlegg = emptyList(),
-                utenlandskSykmelding = null
+                utenlandskSykmelding = null,
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
@@ -159,7 +165,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 sykmeldingId = sykmeldingId,
                 loggingMeta = loggingMetadata,
                 pdlPerson = pdlPerson,
-                journalpostId = journalpostId
+                journalpostId = journalpostId,
             )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -170,7 +176,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 pasientAktoerId = aktorId,
                 legeAktoerId = sykmelder.aktorId,
                 msgId = sykmeldingId,
-                signaturDato = msgHead.msgInfo.genDate
+                signaturDato = msgHead.msgInfo.genDate,
             )
 
             val receivedSykmelding = ReceivedSykmelding(
@@ -193,7 +199,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 legeHprNr = hprNummer,
                 partnerreferanse = null,
                 vedlegg = emptyList(),
-                utenlandskSykmelding = null
+                utenlandskSykmelding = null,
             )
 
             receivedSykmelding.personNrPasient shouldBeEqualTo fnrPasient
@@ -226,7 +232,7 @@ class FellesformatMapperServiceSpek : FunSpec({
             receivedSykmelding.sykmelding.kontaktMedPasient shouldBeEqualTo KontaktMedPasient(null, null)
             receivedSykmelding.sykmelding.behandletTidspunkt shouldBeEqualTo LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
             receivedSykmelding.sykmelding.behandler shouldBeEqualTo Behandler(
-                fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null
+                fornavn = "", mellomnavn = null, etternavn = "", aktoerId = aktorIdLege, fnr = fnrLege, hpr = hprNummer, her = null, adresse = Adresse(null, null, null, null, null), tlf = null,
             )
             receivedSykmelding.sykmelding.avsenderSystem shouldBeEqualTo AvsenderSystem("Papirsykmelding", journalpostId)
             receivedSykmelding.sykmelding.syketilfelleStartDato shouldBeEqualTo LocalDate.of(2019, Month.AUGUST, 15)
@@ -239,8 +245,14 @@ class FellesformatMapperServiceSpek : FunSpec({
                 .unmarshal(StringReader(getFileAsString("src/test/resources/ocr-sykmelding-komplett.xml")))
                 as Skanningmetadata
             val sykmelder = Sykmelder(
-                hprNummer = hprNummer, fnr = fnrLege, aktorId = aktorIdLege, fornavn = "Fornavn",
-                mellomnavn = null, etternavn = "Etternavn", telefonnummer = null, godkjenninger = listOf()
+                hprNummer = hprNummer,
+                fnr = fnrLege,
+                aktorId = aktorIdLege,
+                fornavn = "Fornavn",
+                mellomnavn = null,
+                etternavn = "Etternavn",
+                telefonnummer = null,
+                godkjenninger = listOf(),
             )
             val pdlPerson = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), "12345678910", "aktorid", null)
 
@@ -250,7 +262,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 sykmeldingId = sykmeldingId,
                 loggingMeta = loggingMetadata,
                 pdlPerson = pdlPerson,
-                journalpostId = journalpostId
+                journalpostId = journalpostId,
             )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -261,7 +273,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 pasientAktoerId = aktorId,
                 legeAktoerId = sykmelder.aktorId,
                 msgId = sykmeldingId,
-                signaturDato = msgHead.msgInfo.genDate
+                signaturDato = msgHead.msgInfo.genDate,
             )
 
             sykmelding.kontaktMedPasient shouldBeEqualTo KontaktMedPasient(LocalDate.of(2000, 8, 10), "Han var syk i 2000 også.")
@@ -280,7 +292,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                     sykmeldingId = sykmeldingId,
                     loggingMeta = loggingMetadata,
                     pdlPerson = pdlPerson,
-                    journalpostId = journalpostId
+                    journalpostId = journalpostId,
                 )
             }
 
@@ -299,7 +311,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                     sykmeldingId = sykmeldingId,
                     loggingMeta = loggingMetadata,
                     pdlPerson = pdlPerson,
-                    journalpostId = journalpostId
+                    journalpostId = journalpostId,
                 )
             }
 
@@ -318,7 +330,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 sykmeldingId = sykmeldingId,
                 loggingMeta = loggingMetadata,
                 pdlPerson = pdlPerson,
-                journalpostId = journalpostId
+                journalpostId = journalpostId,
             )
 
             val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -334,13 +346,13 @@ class FellesformatMapperServiceSpek : FunSpec({
                     HovedDiagnoseType().apply {
                         diagnosekode = "S52.5"
                         diagnose = "Syk"
-                    }
+                    },
                 )
                 bidiagnose.add(
                     BidiagnoseType().apply {
                         diagnosekode = "S69.7"
                         diagnose = "Sår hals"
-                    }
+                    },
                 )
                 isSvangerskap = false
                 isYrkesskade = true
@@ -674,7 +686,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                     periodeFOMDato = fom
                     periodeTOMDato = LocalDate.of(2019, Month.OCTOBER, 16)
                     aktivitetIkkeMulig = HelseOpplysningerArbeidsuforhet.Aktivitet.Periode.AktivitetIkkeMulig()
-                }
+                },
             )
 
             val dato = velgRiktigKontaktOgSignaturDato(null, periodeliste)
@@ -687,7 +699,7 @@ class FellesformatMapperServiceSpek : FunSpec({
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",
                 journalpostId = "5",
-                hendelsesId = "2"
+                hendelsesId = "2",
             )
 
             val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
@@ -700,7 +712,7 @@ class FellesformatMapperServiceSpek : FunSpec({
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",
                 journalpostId = "5",
-                hendelsesId = "2"
+                hendelsesId = "2",
             )
 
             val func = { toMedisinskVurderingDiagnose(gyldigdiagnose, "IC", "foo Bar", loggingmetea) }
@@ -712,7 +724,7 @@ class FellesformatMapperServiceSpek : FunSpec({
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",
                 journalpostId = "5",
-                hendelsesId = "2"
+                hendelsesId = "2",
             )
 
             val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
@@ -725,7 +737,7 @@ class FellesformatMapperServiceSpek : FunSpec({
             val loggingmetea = LoggingMeta(
                 sykmeldingId = "1313",
                 journalpostId = "5",
-                hendelsesId = "2"
+                hendelsesId = "2",
             )
 
             val hoveddiagnose = toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)

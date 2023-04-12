@@ -6,10 +6,10 @@ data class DigitaliseringsoppgaveKafka(
     val journalpostId: String,
     val dokumentInfoId: String?,
     val dokumenter: List<DokumentKafka>?,
-    val type: String
+    val type: String,
 )
 
 data class DokumentKafka(
     val tittel: String,
-    val dokumentInfoId: String
+    val dokumentInfoId: String,
 )

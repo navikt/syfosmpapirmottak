@@ -12,27 +12,30 @@ import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
 import no.nav.syfo.util.LoggingMeta
 
 class OppgaveService(
-    private val oppgaveClient: OppgaveClient
+    private val oppgaveClient: OppgaveClient,
 ) {
     suspend fun opprettOppgave(
         aktoerIdPasient: String,
         journalpostId: String,
         gjelderUtland: Boolean,
         trackingId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ): OppgaveResultat? {
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
         val oppgave = oppgaveClient.opprettOppgave(
             journalpostId,
-            aktoerIdPasient, gjelderUtland, trackingId, loggingMeta
+            aktoerIdPasient,
+            gjelderUtland,
+            trackingId,
+            loggingMeta,
         )
 
         return if (!oppgave.duplikat) {
             log.info(
                 "Opprettet oppgave for utenlandsk sykmelding med {}, {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             PAPIRSM_OPPGAVE.inc()
             oppgave
@@ -44,7 +47,7 @@ class OppgaveService(
 
     suspend fun hentOppgave(
         journalpostId: String,
-        sykmeldingId: String
+        sykmeldingId: String,
     ): OppgaveResponse {
         return oppgaveClient.hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
     }
@@ -53,7 +56,7 @@ class OppgaveService(
         journalpostId: String,
         gjelderUtland: Boolean,
         trackingId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ) {
         PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
         log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
@@ -66,7 +69,7 @@ class OppgaveService(
                 "Opprettet fordelingsoppgave med {}, {} {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
                 StructuredArguments.keyValue("journalpostId", journalpostId),
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
         }
     }

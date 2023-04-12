@@ -59,8 +59,8 @@ class NorskHelsenettClientSpek : FunSpec({
                             fnr = "12345678910",
                             fornavn = "Fornavn",
                             mellomnavn = null,
-                            etternavn = "Etternavn"
-                        )
+                            etternavn = "Etternavn",
+                        ),
                     )
                     call.request.headers["hprNummer"] == "0" -> call.respond(HttpStatusCode.NotFound, "Behandler finnes ikke")
                     else -> call.respond(HttpStatusCode.InternalServerError, "Noe gikk galt")

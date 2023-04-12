@@ -25,7 +25,7 @@ class OppgaveClient(
     private val accessTokenClientV2: AccessTokenClientV2,
     private val httpClient: HttpClient,
     private val scope: String,
-    private val cluster: String
+    private val cluster: String,
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
         val httpResponse: HttpResponse = httpClient.post(url) {
@@ -81,7 +81,7 @@ class OppgaveClient(
         aktoerId: String,
         gjelderUtland: Boolean,
         sykmeldingId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ): OppgaveResultat {
         val oppgaveResponse = hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
@@ -89,7 +89,7 @@ class OppgaveClient(
             return OppgaveResultat(
                 oppgaveId = oppgaveResponse.oppgaver.first().id,
                 duplikat = true,
-                tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr
+                tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr,
             )
         }
         val behandlingstype = if (gjelderUtland) {
@@ -114,7 +114,7 @@ class OppgaveClient(
             behandlingstype = behandlingstype,
             aktivDato = LocalDate.now(),
             fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
-            prioritet = "NORM"
+            prioritet = "NORM",
         )
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
@@ -126,15 +126,15 @@ class OppgaveClient(
                 oppdaterOppgaveRequest = OppdaterOppgaveRequest(
                     id = opprettetOppgave.id,
                     versjon = opprettetOppgave.versjon,
-                    behandlesAvApplikasjon = "SMD"
+                    behandlesAvApplikasjon = "SMD",
                 ),
-                msgId = sykmeldingId
+                msgId = sykmeldingId,
             )
         }
         return OppgaveResultat(
             oppgaveId = opprettetOppgave.id,
             duplikat = false,
-            tildeltEnhetsnr = opprettetOppgave.tildeltEnhetsnr
+            tildeltEnhetsnr = opprettetOppgave.tildeltEnhetsnr,
         )
     }
 
@@ -142,7 +142,7 @@ class OppgaveClient(
         journalpostId: String,
         gjelderUtland: Boolean,
         sykmeldingId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ): OppgaveResultat {
         val oppgaveResponse = hentOppgave(oppgavetype = "FDR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
@@ -150,7 +150,7 @@ class OppgaveClient(
             return OppgaveResultat(
                 oppgaveId = oppgaveResponse.oppgaver.first().id,
                 duplikat = true,
-                tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr
+                tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr,
             )
         }
         var behandlingstype: String? = null
@@ -168,14 +168,14 @@ class OppgaveClient(
             behandlingstype = behandlingstype,
             aktivDato = LocalDate.now(),
             fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
-            prioritet = "NORM"
+            prioritet = "NORM",
         )
         log.info("Oppretter fordelingsoppgave {}", fields(loggingMeta))
         val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
         return OppgaveResultat(
             oppgaveId = opprettetOppgave.id,
             duplikat = false,
-            tildeltEnhetsnr = opprettetOppgave.tildeltEnhetsnr
+            tildeltEnhetsnr = opprettetOppgave.tildeltEnhetsnr,
         )
     }
 }
@@ -193,24 +193,24 @@ data class OpprettOppgaveRequest(
     val behandlingstype: String? = null,
     val aktivDato: LocalDate,
     val fristFerdigstillelse: LocalDate? = null,
-    val prioritet: String
+    val prioritet: String,
 )
 
 data class OppdaterOppgaveRequest(
     val id: Int,
     val versjon: Int,
-    val behandlesAvApplikasjon: String
+    val behandlesAvApplikasjon: String,
 )
 
 data class OpprettOppgaveResponse(
     val id: Int,
     val versjon: Int,
-    val tildeltEnhetsnr: String? = null
+    val tildeltEnhetsnr: String? = null,
 )
 
 data class OppgaveResponse(
     val antallTreffTotalt: Int,
-    val oppgaver: List<Oppgave>
+    val oppgaver: List<Oppgave>,
 )
 
 data class Oppgave(
@@ -220,7 +220,7 @@ data class Oppgave(
     val journalpostId: String?,
     val tema: String?,
     val oppgavetype: String?,
-    val behandlesAvApplikasjon: String?
+    val behandlesAvApplikasjon: String?,
 )
 
 fun finnFristForFerdigstillingAvOppgave(today: LocalDate): LocalDate {

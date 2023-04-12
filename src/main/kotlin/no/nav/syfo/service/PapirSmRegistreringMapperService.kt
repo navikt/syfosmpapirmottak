@@ -42,9 +42,8 @@ fun mapOcrFilTilPapirSmRegistrering(
     datoOpprettet: OffsetDateTime?,
     sykmeldingId: String,
     sykmelder: Sykmelder?,
-    ocrFil: Skanningmetadata?
+    ocrFil: Skanningmetadata?,
 ): PapirSmRegistering {
-
     val sykmelding = ocrFil?.sykemeldinger
 
     return PapirSmRegistering(
@@ -68,23 +67,22 @@ fun mapOcrFilTilPapirSmRegistrering(
         meldingTilNAV = sykmelding?.meldingTilNAV.let {
             MeldingTilNAV(
                 bistandUmiddelbart = it?.isBistandNAVUmiddelbart ?: false,
-                beskrivBistand = it?.beskrivBistandNAV
+                beskrivBistand = it?.beskrivBistandNAV,
             )
         },
         meldingTilArbeidsgiver = sykmelding?.meldingTilArbeidsgiver,
         kontaktMedPasient = sykmelding?.tilbakedatering?.let {
             KontaktMedPasient(
                 kontaktDato = it.tilbakeDato,
-                begrunnelseIkkeKontakt = it.tilbakebegrunnelse
+                begrunnelseIkkeKontakt = it.tilbakebegrunnelse,
             )
         },
         behandletTidspunkt = sykmelding?.kontaktMedPasient?.behandletDato,
-        behandler = toBehandler(sykmelder, sykmelding?.behandler)
+        behandler = toBehandler(sykmelder, sykmelding?.behandler),
     )
 }
 
 private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
-
     val periodeListe = ArrayList<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>()
 
     if (aktivitetType?.aktivitetIkkeMulig != null) {
@@ -114,7 +112,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = false
-            }
+            },
         )
     }
 
@@ -135,7 +133,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                 }
                 behandlingsdager = null
                 isReisetilskudd = false
-            }
+            },
         )
     }
     if (aktivitetType?.avventendeSykmelding != null && !aktivitetType.innspillTilArbeidsgiver.isNullOrEmpty()) {
@@ -150,7 +148,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = false
-            }
+            },
         )
     }
     if (aktivitetType?.behandlingsdager != null) {
@@ -165,7 +163,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                     antallBehandlingsdagerUke = aktivitetType.behandlingsdager?.antallBehandlingsdager?.toInt() ?: 1
                 }
                 isReisetilskudd = false
-            }
+            },
         )
     }
     if (aktivitetType?.reisetilskudd != null) {
@@ -178,7 +176,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = true
-            }
+            },
         )
     }
     if (periodeListe.isEmpty()) {
@@ -198,7 +196,7 @@ private fun toBehandler(sykmelder: Sykmelder?, behandler: BehandlerType?): Behan
     hpr = (sykmelder?.hprNummer ?: behandler?.hpr ?: "").toString(),
     her = "",
     adresse = Adresse("", 0, "", "", ""),
-    tlf = (sykmelder?.telefonnummer ?: behandler?.telefon ?: "").toString()
+    tlf = (sykmelder?.telefonnummer ?: behandler?.telefon ?: "").toString(),
 )
 
 private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysningerType?): Map<String, Map<String, SporsmalSvar>> {
@@ -209,7 +207,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val sporsmalSvar = SporsmalSvar(
             sporsmal = "Beskriv kort sykehistorie, symptomer og funn i dagens situasjon",
             svar = utdypendeOpplysninger.sykehistorie,
-            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
+            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER),
         )
         map[id] = sporsmalSvar
     }
@@ -219,7 +217,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val sporsmalSvar = SporsmalSvar(
             sporsmal = "Hvordan påvirker sykdommen arbeidsevnen",
             svar = utdypendeOpplysninger.arbeidsevne,
-            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
+            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER),
         )
         map[id] = sporsmalSvar
     }
@@ -229,7 +227,7 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val sporsmalSvar = SporsmalSvar(
             sporsmal = "Har behandlingen frem til nå bedret arbeidsevnen",
             svar = utdypendeOpplysninger.behandlingsresultat,
-            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
+            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER),
         )
         map[id] = sporsmalSvar
     }
@@ -239,13 +237,15 @@ private fun toUtdypendeOpplysninger(utdypendeOpplysninger: UtdypendeOpplysninger
         val sporsmalSvar = SporsmalSvar(
             sporsmal = "Beskriv pågående og planlagt henvisning,utredning og/eller behandling",
             svar = utdypendeOpplysninger.planlagtBehandling,
-            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER)
+            restriksjoner = listOf(SvarRestriksjon.SKJERMET_FOR_ARBEIDSGIVER),
         )
         map[id] = sporsmalSvar
     }
     if (map.size > 0) {
         return mapOf<String, Map<String, SporsmalSvar>>(Pair("6.2", map))
-    } else return emptyMap()
+    } else {
+        return emptyMap()
+    }
 }
 
 private fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
@@ -253,10 +253,14 @@ private fun toPrognose(prognose: PrognoseType?): Prognose? = Prognose(
     hensynArbeidsplassen = prognose?.friskmelding?.beskrivHensynArbeidsplassen,
     erIArbeid = if (prognose != null && prognose.medArbeidsgiver != null) {
         toErIArbeid(prognose.medArbeidsgiver)
-    } else null,
+    } else {
+        null
+    },
     erIkkeIArbeid = if (prognose != null && prognose.utenArbeidsgiver != null) {
         toErIkkeIArbeid(prognose.utenArbeidsgiver)
-    } else null
+    } else {
+        null
+    },
 )
 
 private fun toErIArbeid(medArbeidsgiver: MedArbeidsgiverType): ErIArbeid? {
@@ -269,7 +273,7 @@ private fun toErIArbeid(medArbeidsgiver: MedArbeidsgiverType): ErIArbeid? {
         annetArbeidPaSikt = medArbeidsgiver.isTilbakeAnnenArbeidsgiver ?: false,
         egetArbeidPaSikt = medArbeidsgiver.isTilbakeSammeArbeidsgiver ?: false,
         arbeidFOM = medArbeidsgiver.tilbakeDato,
-        vurderingsdato = medArbeidsgiver.datoNyTilbakemelding
+        vurderingsdato = medArbeidsgiver.datoNyTilbakemelding,
     )
 }
 
@@ -282,7 +286,7 @@ private fun toErIkkeIArbeid(utenArbeidsgiver: UtenArbeidsgiverType): ErIkkeIArbe
     return ErIkkeIArbeid(
         arbeidsforPaSikt = utenArbeidsgiver.isTilbakeArbeid ?: false,
         arbeidsforFOM = utenArbeidsgiver.tilbakeDato,
-        vurderingsdato = utenArbeidsgiver.datoNyTilbakemelding
+        vurderingsdato = utenArbeidsgiver.datoNyTilbakemelding,
     )
 }
 
@@ -299,11 +303,10 @@ private fun toArbeidsgiver(arbeidsgiver: ArbeidsgiverType?): Arbeidsgiver? = Arb
         }
     },
     stillingsprosent = arbeidsgiver?.stillingsprosent?.toInt(),
-    yrkesbetegnelse = arbeidsgiver?.yrkesbetegnelse
+    yrkesbetegnelse = arbeidsgiver?.yrkesbetegnelse,
 )
 
 private fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?): MedisinskVurdering {
-
     return MedisinskVurdering(
         hovedDiagnose = medisinskVurderingType?.hovedDiagnose?.firstOrNull()?.let { toMedisinskVurderingDiagnose(it) },
         biDiagnoser = medisinskVurderingType?.bidiagnose?.map {
@@ -312,20 +315,20 @@ private fun toMedisinskVurdering(medisinskVurderingType: MedisinskVurderingType?
         svangerskap = medisinskVurderingType?.isSvangerskap ?: false,
         yrkesskade = medisinskVurderingType?.isYrkesskade ?: false,
         yrkesskadeDato = medisinskVurderingType?.yrkesskadedato,
-        annenFraversArsak = null // Can't safely map this
+        annenFraversArsak = null, // Can't safely map this
     )
 }
 
 private fun toMedisinskVurderingDiagnose(hovedDiagnoseType: HovedDiagnoseType?): Diagnose? = toMedisinskVurderingDiagnose(
     diagnoseKode = hovedDiagnoseType?.diagnosekode,
     diagnoseKodeSystem = hovedDiagnoseType?.diagnosekodeSystem,
-    diagnoseTekst = hovedDiagnoseType?.diagnose
+    diagnoseTekst = hovedDiagnoseType?.diagnose,
 )
 
 private fun toMedisinskVurderingDiagnose(bidiagnoseType: BidiagnoseType?): Diagnose? = toMedisinskVurderingDiagnose(
     diagnoseKode = bidiagnoseType?.diagnosekode,
     diagnoseKodeSystem = bidiagnoseType?.diagnosekodeSystem,
-    diagnoseTekst = bidiagnoseType?.diagnose
+    diagnoseTekst = bidiagnoseType?.diagnose,
 )
 
 private fun toMedisinskVurderingDiagnose(diagnoseKodeSystem: String?, diagnoseKode: String?, diagnoseTekst: String?): Diagnose {
@@ -341,13 +344,13 @@ private fun toMedisinskVurderingDiagnose(diagnoseKodeSystem: String?, diagnoseKo
             return Diagnose(
                 kode = sanitisertDiagnoseKode,
                 system = Diagnosekoder.ICD10_CODE,
-                tekst = Diagnosekoder.icd10[sanitisertDiagnoseKode]?.text ?: ""
+                tekst = Diagnosekoder.icd10[sanitisertDiagnoseKode]?.text ?: "",
             )
         } else if (Diagnosekoder.icpc2.containsKey(sanitisertDiagnoseKode)) {
             return Diagnose(
                 kode = sanitisertDiagnoseKode,
                 system = Diagnosekoder.ICPC2_CODE,
-                tekst = Diagnosekoder.icpc2[sanitisertDiagnoseKode]?.text ?: ""
+                tekst = Diagnosekoder.icpc2[sanitisertDiagnoseKode]?.text ?: "",
             )
         }
     }

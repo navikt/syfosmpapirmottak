@@ -34,6 +34,7 @@ val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.4"
 val kotlinVersion = "1.8.20"
 val okhttp3Version = "4.10.0"
+val commonsCodecVersion = "1.15"
 
 
 plugins {
@@ -55,7 +56,7 @@ buildscript {
         classpath("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
         classpath("org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438")
         classpath("com.sun.activation:javax.activation:1.2.0")
-        classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.13")
+        classpath("com.apollographql.apollo:apollo-gradle-plugin:2.5.14")
     }
 }
 
@@ -105,6 +106,7 @@ dependencies {
     implementation ("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation ("io.ktor:ktor-client-core:$ktorVersion")
     implementation ("io.ktor:ktor-client-apache:$ktorVersion")
+    implementation("commons-codec:commons-codec:$commonsCodecVersion")// override transient version 1.10
 
     implementation ("com.apollographql.apollo:apollo-runtime:$apolloVersion") {
         exclude("com.squareup.okhttp3")
@@ -149,6 +151,7 @@ tasks {
     }
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
+        dependsOn("generateTestServiceApolloSources")
     }
 
     withType<ShadowJar> {

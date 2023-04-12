@@ -74,7 +74,7 @@ class SykmeldingServiceSpek : FunSpec({
         kafkaproducerreceivedSykmeldingMock,
         dokArkivClientMock,
         kafkaproducerPapirSmRegistering,
-        "smregistrering"
+        "smregistrering",
     )
 
     beforeTest {
@@ -99,8 +99,8 @@ class SykmeldingServiceSpek : FunSpec({
                 godkjent_for_fil = "0",
                 endringslogg_tidspunkt_siste = Calendar.getInstance().time,
                 samh_praksis = listOf(),
-                samh_ident = listOf()
-            )
+                samh_ident = listOf(),
+            ),
         )
 
         coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId, null)
@@ -120,14 +120,14 @@ class SykmeldingServiceSpek : FunSpec({
                 dokumentInfoIdPdf = dokumentInfoId,
                 temaEndret = temaEndret,
                 loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId
+                sykmeldingId = sykmeldingId,
             )
 
             coEvery { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
             coVerify(exactly = 1) {
                 sykmeldingServiceSpy.manuellBehandling(
                     any(), any(), any(), any(), any(), any(),
-                    any(), any(), any(), any(), any(), any()
+                    any(), any(), any(), any(), any(), any(),
                 )
             }
             coVerify(exactly = 1) { kafkaproducerPapirSmRegistering.send(any()) }
@@ -139,9 +139,14 @@ class SykmeldingServiceSpek : FunSpec({
             val sykmeldingServiceSpy = spyk(sykmeldingService)
 
             sykmeldingServiceSpy.behandleSykmelding(
-                journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = null, datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId
+                journalpostId = journalpostId,
+                pasient = pdlPerson,
+                dokumentInfoId = null,
+                datoOpprettet = datoOpprettet,
+                dokumentInfoIdPdf = dokumentInfoId,
+                temaEndret = temaEndret,
+                loggingMeta = loggingMetadata,
+                sykmeldingId = sykmeldingId,
             )
 
             coVerify(exactly = 0) { safDokumentClientMock.hentDokument(any(), any(), any(), any()) }
@@ -152,7 +157,7 @@ class SykmeldingServiceSpek : FunSpec({
             coVerify(exactly = 1) {
                 sykmeldingServiceSpy.manuellBehandling(
                     any(), any(), any(), eq(dokumentInfoId), any(), any(),
-                    any(), any(), any(), any(), any(), any()
+                    any(), any(), any(), any(), any(), any(),
                 )
             }
         }
@@ -161,10 +166,14 @@ class SykmeldingServiceSpek : FunSpec({
             coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws SafNotFoundException("Fant ikke dokumentet for msgId 1234 i SAF")
 
             sykmeldingService.behandleSykmelding(
-                journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
-                datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret,
+                journalpostId = journalpostId,
+                pasient = pdlPerson,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet,
+                dokumentInfoIdPdf = dokumentInfoId,
+                temaEndret = temaEndret,
                 loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId
+                sykmeldingId = sykmeldingId,
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -190,7 +199,7 @@ class SykmeldingServiceSpek : FunSpec({
                             hovedDiagnose.add(
                                 HovedDiagnoseType().apply {
                                     diagnosekode = "S52.5"
-                                }
+                                },
                             )
                         }
                     }
@@ -198,9 +207,14 @@ class SykmeldingServiceSpek : FunSpec({
             }
 
             sykmeldingService.behandleSykmelding(
-                journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId
+                journalpostId = journalpostId,
+                pasient = pdlPerson,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet,
+                dokumentInfoIdPdf = dokumentInfoId,
+                temaEndret = temaEndret,
+                loggingMeta = loggingMetadata,
+                sykmeldingId = sykmeldingId,
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -229,7 +243,7 @@ class SykmeldingServiceSpek : FunSpec({
                             hovedDiagnose.add(
                                 HovedDiagnoseType().apply {
                                     diagnosekode = "S52.5"
-                                }
+                                },
                             )
                         }
                     }
@@ -237,9 +251,14 @@ class SykmeldingServiceSpek : FunSpec({
             }
 
             sykmeldingService.behandleSykmelding(
-                journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId
+                journalpostId = journalpostId,
+                pasient = pdlPerson,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet,
+                dokumentInfoIdPdf = dokumentInfoId,
+                temaEndret = temaEndret,
+                loggingMeta = loggingMetadata,
+                sykmeldingId = sykmeldingId,
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -268,7 +287,7 @@ class SykmeldingServiceSpek : FunSpec({
                             hovedDiagnose.add(
                                 HovedDiagnoseType().apply {
                                     diagnosekode = "S52.5"
-                                }
+                                },
                             )
                         }
                     }
@@ -276,9 +295,14 @@ class SykmeldingServiceSpek : FunSpec({
             }
 
             sykmeldingService.behandleSykmelding(
-                journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId, datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret, loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId
+                journalpostId = journalpostId,
+                pasient = pdlPerson,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet,
+                dokumentInfoIdPdf = dokumentInfoId,
+                temaEndret = temaEndret,
+                loggingMeta = loggingMetadata,
+                sykmeldingId = sykmeldingId,
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }
@@ -299,10 +323,14 @@ class SykmeldingServiceSpek : FunSpec({
             }
 
             sykmeldingService.behandleSykmelding(
-                journalpostId = journalpostId, pasient = pdlPerson, dokumentInfoId = dokumentInfoId,
-                datoOpprettet = datoOpprettet, dokumentInfoIdPdf = dokumentInfoId, temaEndret = temaEndret,
+                journalpostId = journalpostId,
+                pasient = pdlPerson,
+                dokumentInfoId = dokumentInfoId,
+                datoOpprettet = datoOpprettet,
+                dokumentInfoIdPdf = dokumentInfoId,
+                temaEndret = temaEndret,
                 loggingMeta = loggingMetadata,
-                sykmeldingId = sykmeldingId
+                sykmeldingId = sykmeldingId,
             )
 
             coVerify { safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any()) }

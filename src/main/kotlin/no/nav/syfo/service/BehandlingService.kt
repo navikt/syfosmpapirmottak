@@ -41,7 +41,7 @@ class BehandlingService(
                 log.info(
                     "Mottatt papirsykmelding fra mottakskanal {}, {}",
                     journalfoeringEvent.mottaksKanal,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
 
                 if (journalfoeringEvent.hendelsesType.toString() == "TemaEndret") {
@@ -66,7 +66,7 @@ class BehandlingService(
                             log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
                             null
                         } else {
-                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let {ident ->
+                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let { ident ->
                                 pdlPersonService.getPdlPerson(ident, loggingMeta)
                             }
                         }
@@ -79,7 +79,7 @@ class BehandlingService(
                             dokumenter = journalpostMetadata.dokumenter,
                             pasient = pasient,
                             loggingMeta = loggingMeta,
-                            sykmeldingId = sykmeldingId
+                            sykmeldingId = sykmeldingId,
                         )
                     } else {
                         sykmeldingService.behandleSykmelding(
@@ -90,7 +90,7 @@ class BehandlingService(
                             dokumentInfoId = journalpostMetadata.dokumentInfoId,
                             temaEndret = journalfoeringEvent.hendelsesType == "TemaEndret",
                             loggingMeta = loggingMeta,
-                            sykmeldingId = sykmeldingId
+                            sykmeldingId = sykmeldingId,
                         )
                     }
                 } else {
@@ -101,7 +101,7 @@ class BehandlingService(
                 log.info(
                     "Finished processing took {}s, {}",
                     StructuredArguments.keyValue("latency", currentRequestLatency),
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
             }
         }
@@ -132,7 +132,8 @@ class BehandlingService(
         val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid, skal ikke kunne skje")
         return if (bruker.type == "AKTOERID" || bruker.type == "FNR") {
             brukerId
-        } else
+        } else {
             return null
+        }
     }
 }

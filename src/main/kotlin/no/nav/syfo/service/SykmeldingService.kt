@@ -47,7 +47,7 @@ class SykmeldingService(
     private val kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
     private val dokArkivClient: DokArkivClient,
     private val kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-    private val smregistreringTopic: String
+    private val smregistreringTopic: String,
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -57,7 +57,7 @@ class SykmeldingService(
         dokumentInfoIdPdf: String,
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
-        sykmeldingId: String
+        sykmeldingId: String,
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -74,9 +74,11 @@ class SykmeldingService(
                         journalpostId = journalpostId,
                         dokumentInfoId = dokumentInfoId,
                         msgId = sykmeldingId,
-                        loggingMeta = loggingMeta
+                        loggingMeta = loggingMeta,
                     )
-                } else null
+                } else {
+                    null
+                }
 
                 ocrFil?.let { ocr ->
 
@@ -84,7 +86,7 @@ class SykmeldingService(
 
                     val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr, sykmeldingId)
                     val samhandlerPraksis = findBestSamhandlerPraksis(
-                        samhandlerInfo
+                        samhandlerInfo,
                     )
 
                     log.info("Fant ${when (samhandlerPraksis) { null -> "ikke " else -> "" }}samhandlerpraksis for hpr ${sykmelder!!.hprNummer}")
@@ -97,7 +99,7 @@ class SykmeldingService(
                         sykmeldingId = sykmeldingId,
                         loggingMeta = loggingMeta,
                         pdlPerson = pasient,
-                        journalpostId = journalpostId
+                        journalpostId = journalpostId,
                     )
 
                     val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -108,7 +110,7 @@ class SykmeldingService(
                         pasientAktoerId = pasient.aktorId,
                         legeAktoerId = sykmelder!!.aktorId,
                         msgId = sykmeldingId,
-                        signaturDato = msgHead.msgInfo.genDate
+                        signaturDato = msgHead.msgInfo.genDate,
                     )
 
                     val receivedSykmelding = ReceivedSykmelding(
@@ -134,7 +136,7 @@ class SykmeldingService(
                         merknader = null,
                         partnerreferanse = null,
                         vedlegg = emptyList(),
-                        utenlandskSykmelding = null
+                        utenlandskSykmelding = null,
                     )
 
                     log.info("Sykmelding mappet til internt format uten feil {}", fields(loggingMeta))
@@ -146,7 +148,7 @@ class SykmeldingService(
                         "Resultat: {}, {}, {}",
                         StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
                         StructuredArguments.keyValue("ruleHits", validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }),
-                        fields(loggingMeta)
+                        fields(loggingMeta),
                     )
 
                     if (validationResult.status == Status.MANUAL_PROCESSING ||
@@ -164,7 +166,7 @@ class SykmeldingService(
                             sykmelder = sykmelder,
                             ocrFil = ocrFil,
                             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                            smregistreringTopic = smregistreringTopic
+                            smregistreringTopic = smregistreringTopic,
                         )
                     } else if (validationResult.status == Status.OK) {
                         handleOk(
@@ -174,7 +176,7 @@ class SykmeldingService(
                             sykmeldingId = receivedSykmelding.sykmelding.id,
                             dokArkivClient = dokArkivClient,
                             journalpostid = journalpostId,
-                            loggingMeta = loggingMeta
+                            loggingMeta = loggingMeta,
                         )
                     } else {
                         throw IllegalStateException("Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING")
@@ -209,7 +211,7 @@ class SykmeldingService(
                 sykmelder = sykmelder,
                 ocrFil = ocrFil,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                smregistreringTopic = smregistreringTopic
+                smregistreringTopic = smregistreringTopic,
             )
         }
     }
@@ -226,7 +228,7 @@ class SykmeldingService(
         sykmelder: Sykmelder?,
         ocrFil: Skanningmetadata?,
         kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
-        smregistreringTopic: String
+        smregistreringTopic: String,
     ) {
         log.info("Ruter oppgaven til smregistrering {}", fields(loggingMeta))
         val oppgave = oppgaveService.hentOppgave(journalpostId, sykmeldingId)
@@ -241,7 +243,7 @@ class SykmeldingService(
                 datoOpprettet = datoOpprettet?.atZone(ZoneId.systemDefault())?.withZoneSameInstant(ZoneOffset.UTC)?.toOffsetDateTime(),
                 sykmeldingId = sykmeldingId,
                 sykmelder = sykmelder,
-                ocrFil = ocrFil
+                ocrFil = ocrFil,
             )
             sendPapirSmRegistreringToKafka(kafkaproducerPapirSmRegistering, smregistreringTopic, papirSmRegistering, loggingMeta)
         } else {
@@ -299,7 +301,7 @@ class SykmeldingService(
             mellomnavn = behandler.navn.mellomnavn,
             etternavn = behandler.navn.etternavn,
             telefonnummer = ocrFil.sykemeldinger.behandler.telefon?.toString(),
-            godkjenninger = behandlerFraHpr.godkjenninger
+            godkjenninger = behandlerFraHpr.godkjenninger,
         )
     }
 

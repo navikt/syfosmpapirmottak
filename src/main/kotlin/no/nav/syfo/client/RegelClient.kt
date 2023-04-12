@@ -15,7 +15,7 @@ class RegelClient(
     private val endpointUrl: String,
     private val accessTokenClient: AccessTokenClientV2,
     private val resourceId: String,
-    private val client: HttpClient
+    private val client: HttpClient,
 ) {
     suspend fun valider(sykmelding: ReceivedSykmelding, msgId: String): ValidationResult {
         return client.post("$endpointUrl/api/v2/rules/validate") {

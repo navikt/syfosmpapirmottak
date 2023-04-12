@@ -45,7 +45,7 @@ class BehandlingServiceSpek : FunSpec({
             jpErIkkeJournalfort = true,
             gjelderUtland = false,
             datoOpprettet = datoOpprettet,
-            dokumentInfoIdPdf = ""
+            dokumentInfoIdPdf = "",
         )
         coEvery { sykmeldingServiceMock.behandleSykmelding(any(), any(), any(), any(), any(), any(), any(), any()) } just Runs
         coEvery { utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(any(), any(), any(), any(), any(), any()) } just Runs
@@ -56,7 +56,9 @@ class BehandlingServiceSpek : FunSpec({
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -69,7 +71,9 @@ class BehandlingServiceSpek : FunSpec({
             val journalfoeringEvent = lagJournalfoeringEvent("TemaEndret", "SYM", "SKAN_IM")
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -82,7 +86,9 @@ class BehandlingServiceSpek : FunSpec({
             val journalfoeringEvent = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_IM")
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -100,11 +106,13 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -122,11 +130,13 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = true,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -144,11 +154,13 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = true,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -164,7 +176,9 @@ class BehandlingServiceSpek : FunSpec({
             assertFailsWith<TrackableException> {
                 runBlocking {
                     behandlingService.handleJournalpost(
-                        journalfoeringEvent, loggingMetadata, sykmeldingId
+                        journalfoeringEvent,
+                        loggingMetadata,
+                        sykmeldingId,
                     )
                 }
             }
@@ -182,11 +196,13 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any()) }
@@ -202,11 +218,13 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any()) }
@@ -218,7 +236,9 @@ class BehandlingServiceSpek : FunSpec({
             coEvery { pdlService.getPdlPerson(any(), any()) } returns null
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), null, null, datoOpprettet, any(), any(), any(), any()) }
@@ -234,13 +254,15 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
             val pasient = PdlPerson(Navn("fornavn", "mellomnavn", "etternavn"), null, "aktorId", adressebeskyttelse = null)
             coEvery { pdlService.getPdlPerson(any(), any()) } returns pasient
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { sykmeldingServiceMock.behandleSykmelding(eq("123"), pasient, null, datoOpprettet, any(), any(), any(), any()) }
@@ -256,14 +278,16 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = true,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
             coEvery { pdlService.getPdlPerson(any(), any()) } throws IllegalStateException("feilmelding")
 
             assertFailsWith<TrackableException> {
                 runBlocking {
                     behandlingService.handleJournalpost(
-                        journalfoeringEvent, loggingMetadata, sykmeldingId
+                        journalfoeringEvent,
+                        loggingMetadata,
+                        sykmeldingId,
                     )
                 }
             }
@@ -280,11 +304,13 @@ class BehandlingServiceSpek : FunSpec({
                 jpErIkkeJournalfort = false,
                 gjelderUtland = false,
                 datoOpprettet = datoOpprettet,
-                dokumentInfoIdPdf = ""
+                dokumentInfoIdPdf = "",
             )
 
             behandlingService.handleJournalpost(
-                journalfoeringEvent, loggingMetadata, sykmeldingId
+                journalfoeringEvent,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
@@ -295,7 +321,9 @@ class BehandlingServiceSpek : FunSpec({
             val journalfoeringEventFeilTema = lagJournalfoeringEvent("MidlertidigJournalført", "FEIL_TEMA", "SKAN_NETS")
 
             behandlingService.handleJournalpost(
-                journalfoeringEventFeilTema, loggingMetadata, sykmeldingId
+                journalfoeringEventFeilTema,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
@@ -305,7 +333,9 @@ class BehandlingServiceSpek : FunSpec({
             val journalfoeringEventFeilKanal = lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "FEIL_KANAL")
 
             behandlingService.handleJournalpost(
-                journalfoeringEventFeilKanal, loggingMetadata, sykmeldingId
+                journalfoeringEventFeilKanal,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }
@@ -315,7 +345,9 @@ class BehandlingServiceSpek : FunSpec({
             val journalfoeringEventFeilType = lagJournalfoeringEvent("Ferdigstilt", "SYM", "SKAN_NETS")
 
             behandlingService.handleJournalpost(
-                journalfoeringEventFeilType, loggingMetadata, sykmeldingId
+                journalfoeringEventFeilType,
+                loggingMetadata,
+                sykmeldingId,
             )
 
             coVerify { listOf(safJournalpostClientMock, pdlService, sykmeldingServiceMock, utenlandskSykmeldingServiceMock) wasNot Called }

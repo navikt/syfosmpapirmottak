@@ -37,7 +37,7 @@ class PapirSmMapperServiceSpek : FunSpec({
                 datoOpprettet = datoOpprettet,
                 sykmeldingId = sykmeldingId,
                 sykmelder = null,
-                ocrFil = ocrFil
+                ocrFil = ocrFil,
             )
 
             papirSm.perioder shouldNotBeEqualTo null
@@ -55,7 +55,7 @@ class PapirSmMapperServiceSpek : FunSpec({
                 datoOpprettet = datoOpprettet,
                 sykmeldingId = sykmeldingId,
                 sykmelder = null,
-                ocrFil = ocrFil
+                ocrFil = ocrFil,
             )
 
             papirSm.medisinskVurdering?.hovedDiagnose shouldBeEqualTo null
@@ -73,7 +73,7 @@ class PapirSmMapperServiceSpek : FunSpec({
                 datoOpprettet = datoOpprettet,
                 sykmeldingId = sykmeldingId,
                 sykmelder = null,
-                ocrFil = ocrFil
+                ocrFil = ocrFil,
             )
 
             papirSm.journalpostId shouldBeEqualTo journalpostId

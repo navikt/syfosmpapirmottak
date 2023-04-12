@@ -23,7 +23,7 @@ class SafDokumentClient constructor(
     private val url: String,
     private val accessTokenClientV2: AccessTokenClientV2,
     private val scope: String,
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
 ) {
 
     private suspend fun hentDokumentFraSaf(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): String {

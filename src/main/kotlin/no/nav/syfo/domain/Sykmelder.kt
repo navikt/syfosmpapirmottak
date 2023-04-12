@@ -10,5 +10,5 @@ data class Sykmelder(
     val mellomnavn: String?,
     val etternavn: String?,
     val telefonnummer: String?,
-    val godkjenninger: List<Godkjenning>
+    val godkjenninger: List<Godkjenning>,
 )

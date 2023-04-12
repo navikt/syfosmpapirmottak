@@ -19,8 +19,8 @@ class KuhrSarClientTest : FunSpec({
                     "KI",
                     "",
                     "",
-                    "", "", "", "", null, emptyList(), listOf(samhandlerPraksis)
-                )
+                    "", "", "", "", null, emptyList(), listOf(samhandlerPraksis),
+                ),
             )
             val hentetSamhandlerPraksis = findBestSamhandlerPraksis(samhandlere)
             hentetSamhandlerPraksis?.tss_ident shouldBeEqualTo "123456789101112"
@@ -70,7 +70,7 @@ private fun getSamhandler(type: String, vararg samhandlerPraksis: SamhandlerPrak
             type,
             "",
             "",
-            "", "", "", "", null, emptyList(), samhandlerPraksis.toList()
-        )
+            "", "", "", "", null, emptyList(), samhandlerPraksis.toList(),
+        ),
     )
 }

@@ -15,20 +15,26 @@ class SafJournalpostClientSpek : FunSpec({
         test("Henter riktig dokumentId for happy-case") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdArkiv", "brevkode",
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdArkiv",
+                    "brevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV)),
                 ),
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdOriginal", "brevkode",
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdOriginal",
+                    "brevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL)),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "dokumentInfoId",
                     "brevkode",
-                    emptyList()
-                )
+                    emptyList(),
+                ),
             )
 
             val dokumentId = finnDokumentIdForOcr(dokumentListe, loggingMetadata)
@@ -55,20 +61,26 @@ class SafJournalpostClientSpek : FunSpec({
         test("Henter riktig dokumentId for happy-case") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdArkiv", "brevkode",
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdArkiv",
+                    "brevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV)),
                 ),
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdOriginal", "brevkode",
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdOriginal",
+                    "brevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL)),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "dokumentInfoId",
                     "brevkode",
-                    emptyList()
-                )
+                    emptyList(),
+                ),
             )
 
             val dokumentId = finnDokumentIdForPdf(dokumentListe, loggingMetadata)
@@ -118,27 +130,33 @@ class SafJournalpostClientSpek : FunSpec({
         test("Returnerer true hvis brevkoden er utland") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdArkiv", BREVKODE_UTLAND,
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdArkiv",
+                    BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV)),
                 ),
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdOriginal", BREVKODE_UTLAND,
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdOriginal",
+                    BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL)),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "dokumentInfoId",
                     BREVKODE_UTLAND,
-                    emptyList()
+                    emptyList(),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "annenDokumentInfoId",
                     "brevkode",
-                    emptyList()
-                )
+                    emptyList(),
+                ),
             )
 
             val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, "dokumentInfoIdOriginal", loggingMetadata)
@@ -149,27 +167,33 @@ class SafJournalpostClientSpek : FunSpec({
         test("Returnerer true hvis brevkoden er gammel kode for utland") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdArkiv", GAMMEL_BREVKODE_UTLAND,
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdArkiv",
+                    GAMMEL_BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV)),
                 ),
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdOriginal", GAMMEL_BREVKODE_UTLAND,
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdOriginal",
+                    GAMMEL_BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL)),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "dokumentInfoId",
                     GAMMEL_BREVKODE_UTLAND,
-                    emptyList()
+                    emptyList(),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "annenDokumentInfoId",
                     "brevkode",
-                    emptyList()
-                )
+                    emptyList(),
+                ),
             )
 
             val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, "dokumentInfoIdOriginal", loggingMetadata)
@@ -180,27 +204,33 @@ class SafJournalpostClientSpek : FunSpec({
         test("Returnerer false hvis brevkoden ikke er utland") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdArkiv", BREVKODE_UTLAND,
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdArkiv",
+                    BREVKODE_UTLAND,
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV)),
                 ),
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdOriginal", "NAV-skjema",
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdOriginal",
+                    "NAV-skjema",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ORIGINAL)),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "dokumentInfoId",
                     "annen brevkode",
-                    emptyList()
+                    emptyList(),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "annenDokumentInfoId",
                     "brevkode",
-                    emptyList()
-                )
+                    emptyList(),
+                ),
             )
 
             val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, "dokumentInfoIdOriginal", loggingMetadata)
@@ -217,23 +247,26 @@ class SafJournalpostClientSpek : FunSpec({
         test("Returnerer true hvis brevkoden er utland og OCR-dokument mangler") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdArkiv", "annenBrevkode",
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdArkiv",
+                    "annenBrevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV)),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "dokumentInfoId",
                     BREVKODE_UTLAND,
-                    emptyList()
+                    emptyList(),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "annenDokumentInfoId",
                     "brevkode",
-                    emptyList()
-                )
+                    emptyList(),
+                ),
             )
 
             val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, null, loggingMetadata)
@@ -244,23 +277,26 @@ class SafJournalpostClientSpek : FunSpec({
         test("Returnerer false hvis brevkoden ikke er utland og OCR-dokument mangler") {
             val dokumentListe: List<FindJournalpostQuery.Dokumenter> = listOf(
                 FindJournalpostQuery.Dokumenter(
-                    "dokumentinfo", "test-tittel", "dokumentInfoIdArkiv", "annenBrevkode",
-                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV))
+                    "dokumentinfo",
+                    "test-tittel",
+                    "dokumentInfoIdArkiv",
+                    "annenBrevkode",
+                    listOf(FindJournalpostQuery.Dokumentvarianter("dokumentvariant", Variantformat.ARKIV)),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "dokumentInfoId",
                     "brevkode",
-                    emptyList()
+                    emptyList(),
                 ),
                 FindJournalpostQuery.Dokumenter(
                     "dokumentinfo",
                     "test-tittel",
                     "annenDokumentInfoId",
                     "brevkode",
-                    emptyList()
-                )
+                    emptyList(),
+                ),
             )
 
             val utenlandskSykmelding = sykmeldingGjelderUtland(dokumentListe, null, loggingMetadata)

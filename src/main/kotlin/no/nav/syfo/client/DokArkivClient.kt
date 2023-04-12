@@ -20,14 +20,14 @@ class DokArkivClient(
     private val url: String,
     private val accessTokenClientV2: AccessTokenClientV2,
     private val scope: String,
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
 ) {
     suspend fun oppdaterOgFerdigstillJournalpost(
         journalpostId: String,
         fnr: String,
         sykmeldingId: String,
         behandler: Behandler,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ) {
         oppdaterJournalpost(journalpostId = journalpostId, fnr = fnr, behandler = behandler, msgId = sykmeldingId, loggingMeta = loggingMeta)
         return ferdigstillJournalpost(journalpostId = journalpostId, msgId = sykmeldingId, loggingMeta = loggingMeta)
@@ -36,7 +36,7 @@ class DokArkivClient(
     private suspend fun ferdigstillJournalpost(
         journalpostId: String,
         msgId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ) {
         val httpResponse: HttpResponse = httpClient.patch("$url/$journalpostId/ferdigstill") {
             contentType(ContentType.Application.Json)
@@ -44,7 +44,7 @@ class DokArkivClient(
             header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
             header("Nav-Callid", msgId)
             setBody(
-                FerdigstillJournal("9999")
+                FerdigstillJournal("9999"),
             )
         }
         when (httpResponse.status) {
@@ -85,7 +85,7 @@ class DokArkivClient(
         fnr: String,
         behandler: Behandler,
         msgId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ) {
         val httpResponse: HttpResponse = httpClient.put("$url/$journalpostId") {
             contentType(ContentType.Application.Json)
@@ -96,11 +96,11 @@ class DokArkivClient(
                 OppdaterJournalpost(
                     avsenderMottaker = AvsenderMottaker(
                         id = hprnummerMedRiktigLengde(behandler.hpr!!),
-                        navn = finnNavn(behandler)
+                        navn = finnNavn(behandler),
                     ),
                     bruker = Bruker(id = fnr),
-                    sak = Sak()
-                )
+                    sak = Sak(),
+                ),
             )
         }
         when (httpResponse.status) {
@@ -130,28 +130,28 @@ class DokArkivClient(
     }
 
     data class FerdigstillJournal(
-        val journalfoerendeEnhet: String
+        val journalfoerendeEnhet: String,
     )
 
     data class OppdaterJournalpost(
         val tema: String = "SYM",
         val avsenderMottaker: AvsenderMottaker,
         val bruker: Bruker,
-        val sak: Sak
+        val sak: Sak,
     )
 
     data class AvsenderMottaker(
         val id: String,
         val idType: String = "HPRNR",
-        val navn: String
+        val navn: String,
     )
 
     data class Bruker(
         val id: String,
-        val idType: String = "FNR"
+        val idType: String = "FNR",
     )
 
     data class Sak(
-        val sakstype: String = "GENERELL_SAK"
+        val sakstype: String = "GENERELL_SAK",
     )
 }
