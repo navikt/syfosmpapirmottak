@@ -10,8 +10,7 @@ import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
-import no.nav.syfo.client.SarClient
-import no.nav.syfo.client.findBestSamhandlerPraksis
+import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
@@ -41,7 +40,7 @@ class SykmeldingService(
     private val safDokumentClient: SafDokumentClient,
     private val norskHelsenettClient: NorskHelsenettClient,
     private val regelClient: RegelClient,
-    private val kuhrSarClient: SarClient,
+    private val smtssClient: SmtssClient,
     private val pdlPersonService: PdlPersonService,
     private val okSykmeldingTopic: String,
     private val kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
@@ -84,12 +83,7 @@ class SykmeldingService(
 
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                    val samhandlerInfo = kuhrSarClient.getSamhandler(sykmelder!!.fnr, sykmeldingId)
-                    val samhandlerPraksis = findBestSamhandlerPraksis(
-                        samhandlerInfo,
-                    )
-
-                    log.info("Fant ${when (samhandlerPraksis) { null -> "ikke " else -> "" }}samhandlerpraksis for hpr ${sykmelder!!.hprNummer}")
+                    val tssId = smtssClient.findBestTssInfotrygdId(sykmelder!!.fnr, "", loggingMeta)
 
                     tellOcrInnhold(ocr, loggingMeta)
 
@@ -132,7 +126,7 @@ class SykmeldingService(
                             ).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
                         rulesetVersion = healthInformation.regelSettVersjon,
                         fellesformat = fellesformatMarshaller.toString(fellesformat),
-                        tssid = samhandlerPraksis?.tss_ident ?: "",
+                        tssid = tssId ?: "",
                         merknader = null,
                         partnerreferanse = null,
                         vedlegg = emptyList(),
@@ -310,7 +304,7 @@ class SykmeldingService(
             ocr.sykemeldinger.medisinskVurdering.bidiagnose.isEmpty() &&
             ocr.sykemeldinger.medisinskVurdering.annenFraversArsak.isNullOrEmpty()
         ) {
-            log.info("Papirsykmelding inneholder ikke hovedDiagnose, biDiagnose eller annenFraversArsak", fields(loggingMeta))
+            log.info("Papirsykmelding inneholder ikke hovedDiagnose, biDiagnose eller annenFraversArsak {}", fields(loggingMeta))
             PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
         }
     }

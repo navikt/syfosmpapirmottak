@@ -35,7 +35,7 @@ import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
-import no.nav.syfo.client.SarClient
+import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
@@ -147,7 +147,7 @@ fun main() {
     val safDokumentClient = SafDokumentClient(env.safV1Url, accessTokenClientV2, env.safScope, httpClientWithRetry)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope, env.cluster)
 
-    val kuhrsarClient = SarClient(env.smgcpProxyUrl, accessTokenClientV2, env.smgcpProxyScope, httpClientWithRetry)
+    val smtssClient = SmtssClient(env.smtssApiUrl, accessTokenClientV2, env.smtssApiUrl, httpClientWithRetry)
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, accessTokenClientV2, env.dokArkivScope, httpClientWithRetry)
 
     val oppgaveService = OppgaveService(oppgaveClient)
@@ -160,7 +160,7 @@ fun main() {
         safDokumentClient = safDokumentClient,
         norskHelsenettClient = norskHelsenettClient,
         regelClient = regelClient,
-        kuhrSarClient = kuhrsarClient,
+        smtssClient = smtssClient,
         pdlPersonService = pdlPersonService,
         okSykmeldingTopic = env.okSykmeldingTopic,
         kafkaReceivedSykmeldingProducer = kafkaProducerReceivedSykmelding,
