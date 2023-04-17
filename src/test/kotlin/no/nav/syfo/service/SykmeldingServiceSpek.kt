@@ -23,8 +23,7 @@ import no.nav.syfo.client.OppgaveResponse
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
-import no.nav.syfo.client.Samhandler
-import no.nav.syfo.client.SarClient
+import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
@@ -40,7 +39,6 @@ import java.io.IOException
 import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.Calendar
 
 class SykmeldingServiceSpek : FunSpec({
     val sykmeldingId = "1234"
@@ -59,7 +57,7 @@ class SykmeldingServiceSpek : FunSpec({
     val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
     val regelClientMock = mockk<RegelClient>()
     val kafkaproducerreceivedSykmeldingMock = mockk<KafkaProducer<String, ReceivedSykmelding>>(relaxed = true)
-    val kuhrSarClientMock = mockk<SarClient>()
+    val smtssClientMock = mockk<SmtssClient>()
     val dokArkivClientMock = mockk<DokArkivClient>()
     val kafkaproducerPapirSmRegistering = mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
     val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
@@ -68,7 +66,7 @@ class SykmeldingServiceSpek : FunSpec({
         safDokumentClientMock,
         norskHelsenettClientMock,
         regelClientMock,
-        kuhrSarClientMock,
+        smtssClientMock,
         pdlService,
         "ok",
         kafkaproducerreceivedSykmeldingMock,
@@ -86,22 +84,7 @@ class SykmeldingServiceSpek : FunSpec({
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
         coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.OK, emptyList())
-        coEvery { kuhrSarClientMock.getSamhandler(any(), any()) } returns listOf(
-            Samhandler(
-                samh_id = "12341",
-                navn = "Perhansen",
-                samh_type_kode = "fALE",
-                behandling_utfall_kode = "auto",
-                unntatt_veiledning = "1",
-                godkjent_manuell_krav = "0",
-                ikke_godkjent_for_refusjon = "0",
-                godkjent_egenandel_refusjon = "0",
-                godkjent_for_fil = "0",
-                endringslogg_tidspunkt_siste = Calendar.getInstance().time,
-                samh_praksis = listOf(),
-                samh_ident = listOf(),
-            ),
-        )
+        coEvery { smtssClientMock.findBestTssInfotrygdId(any(), any(), any()) } returns "12341"
 
         coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId, null)
         coEvery { pdlService.getPdlPerson(fnrLege, any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrLege, aktorIdLege, null)
