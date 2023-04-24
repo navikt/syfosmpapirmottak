@@ -33,7 +33,7 @@ val smCommonVersion = "1.fbf33a9"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.5"
 val kotlinVersion = "1.8.20"
-val okhttp3Version = "4.10.0"
+val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.15"
 
 
