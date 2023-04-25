@@ -1,4 +1,4 @@
-[![Build status](https://github.com/navikt/syfosmpapirmottak/workflows/Deploy%20to%20dev%20and%20prod/badge.svg)](https://github.com/navikt/syfosmpapirmottak/workflows/Deploy%20to%20dev%20and%20prod/badge.svg)
+[![Deploy app to dev and prod](https://github.com/navikt/syfosmpapirmottak/actions/workflows/deploy.yml/badge.svg)](https://github.com/navikt/syfosmpapirmottak/actions/workflows/deploy.yml)
 
 # SYFOsmpapirmottak
 This project contains the receiving a paper sykmelding2013 message
