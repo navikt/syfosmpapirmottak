@@ -84,7 +84,7 @@ class SykmeldingServiceSpek : FunSpec({
         coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
         coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
         coEvery { regelClientMock.valider(any(), any()) } returns ValidationResult(Status.OK, emptyList())
-        coEvery { smtssClientMock.findBestTssInfotrygdId(any(), any(), any()) } returns "12341"
+        coEvery { smtssClientMock.findBestTssInfotrygdId(any(), any(), any(), any()) } returns "12341"
 
         coEvery { pdlService.getPdlPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrPasient, aktorId, null)
         coEvery { pdlService.getPdlPerson(fnrLege, any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnrLege, aktorIdLege, null)
