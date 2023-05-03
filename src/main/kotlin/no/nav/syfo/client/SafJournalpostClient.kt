@@ -39,6 +39,11 @@ class SafJournalpostClient(
         journalpostId: String,
         loggingMeta: LoggingMeta,
     ): JournalpostMetadata? {
+        val accessToken = accessTokenClientV2.getAccessToken(scope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Saf")
+        }
+
         val journalpost = apolloClient.query(
             FindJournalpostQuery.builder()
                 .id(journalpostId)
@@ -46,7 +51,7 @@ class SafJournalpostClient(
         ).toBuilder()
             .requestHeaders(
                 RequestHeaders.builder()
-                    .addHeader("Authorization", "Bearer ${accessTokenClientV2.getAccessToken(scope)}")
+                    .addHeader("Authorization", "Bearer ${accessToken.accessToken}")
                     .addHeader("X-Correlation-ID", journalpostId)
                     .build(),
             ).build()

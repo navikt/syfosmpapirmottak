@@ -46,10 +46,14 @@ class OppgaveClient(
     }
 
     private suspend fun oppdaterOppgave(oppdaterOppgaveRequest: OppdaterOppgaveRequest, msgId: String): OpprettOppgaveResponse {
+        val accessToken = accessTokenClientV2.getAccessToken(scope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
+        }
+
         val httpResponse: HttpResponse = httpClient.patch("$url/${oppdaterOppgaveRequest.id}") {
             contentType(ContentType.Application.Json)
-            val token = accessTokenClientV2.getAccessToken(scope)
-            header("Authorization", "Bearer $token")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("X-Correlation-ID", msgId)
             setBody(oppdaterOppgaveRequest)
         }

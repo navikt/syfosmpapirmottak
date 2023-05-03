@@ -17,7 +17,7 @@ class PdlPersonService(
     suspend fun getPdlPerson(ident: String, loggingMeta: LoggingMeta): PdlPerson? {
         val accessToken = accessTokenClientV2.getAccessToken(pdlScope)
         if (accessToken?.accessToken == null) {
-            throw RuntimeException("Klarte ikke hente ut accesstoken for Dokarkiv")
+            throw RuntimeException("Klarte ikke hente ut accesstoken for PDL")
         }
         val pdlResponse = pdlClient.getPerson(ident, accessToken.accessToken)
 

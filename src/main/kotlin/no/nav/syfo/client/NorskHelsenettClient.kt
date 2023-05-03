@@ -23,11 +23,16 @@ class NorskHelsenettClient(
     suspend fun finnBehandler(hprNummer: String, sykmeldingId: String): Behandler? {
         log.info("Henter behandler fra syfohelsenettproxy for sykmeldingId {}", sykmeldingId)
 
+        val accessToken = accessTokenClient.getAccessToken(resourceId)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Saf")
+        }
+
         val httpResponse: HttpResponse = httpClient.get("$endpointUrl/api/v2/behandlerMedHprNummer") {
             accept(ContentType.Application.Json)
-            val accessToken = accessTokenClient.getAccessToken((resourceId))
+
             headers {
-                append("Authorization", "Bearer $accessToken")
+                append("Authorization", "Bearer ${accessToken.accessToken}")
                 append("Nav-CallId", sykmeldingId)
                 append("hprNummer", hprNummer)
             }

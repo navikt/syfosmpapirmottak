@@ -19,12 +19,16 @@ class RegelClient(
     private val client: HttpClient,
 ) {
     suspend fun valider(sykmelding: ReceivedSykmelding, msgId: String): ValidationResult {
+        val accessToken = accessTokenClient.getAccessToken(resourceId)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for syfosmpapirregler")
+        }
+
         return client.post("$endpointUrl/api/v2/rules/validate") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
-            val accessToken = accessTokenClient.getAccessToken(resourceId)
             headers {
-                append("Authorization", "Bearer $accessToken")
+                append("Authorization", "Bearer ${accessToken.accessToken}")
                 append("Nav-CallId", msgId)
             }
             setBody(sykmelding)

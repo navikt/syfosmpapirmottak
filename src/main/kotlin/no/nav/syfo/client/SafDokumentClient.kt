@@ -28,9 +28,14 @@ class SafDokumentClient(
 ) {
 
     private suspend fun hentDokumentFraSaf(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): String {
+        val accessToken = accessTokenClientV2.getAccessToken(scope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Saf")
+        }
+
         val httpResponse: HttpResponse = httpClient.get("$url/rest/hentdokument/$journalpostId/$dokumentInfoId/ORIGINAL") {
             accept(ContentType.Application.Xml)
-            header("Authorization", "Bearer ${accessTokenClientV2.getAccessToken(scope)}")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("Nav-Callid", msgId)
             header("Nav-Consumer-Id", "syfosmpapirmottak")
         }
