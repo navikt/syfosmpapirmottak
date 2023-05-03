@@ -26,13 +26,17 @@ class SmtssClient(
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
     ): String? {
-        val accessToken = accessTokenClientV2.getAccessToken(resourceId)
+       val accessToken = accessTokenClientV2.getAccessToken(resourceId)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
+        }
+     
         val httpResponse = httpClient.get("$endpointUrl/api/v1/samhandler/infotrygd") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
             parameter("samhandlerFnr", samhandlerFnr)
             parameter("samhandlerOrgName", samhandlerOrgName)
-            header("Authorization", "Bearer $accessToken")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("requestId", sykmeldingId)
         }
         return if (httpResponse.status == HttpStatusCode.OK) {
