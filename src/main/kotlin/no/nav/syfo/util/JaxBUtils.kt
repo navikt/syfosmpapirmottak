@@ -3,8 +3,8 @@ package no.nav.syfo.util
 import com.migesok.jaxb.adapter.javatime.LocalDateXmlAdapter
 import no.nav.helse.eiFellesformat.XMLEIFellesformat
 import no.nav.helse.msgHead.XMLMsgHead
+import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
 import java.io.StringWriter
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.Marshaller

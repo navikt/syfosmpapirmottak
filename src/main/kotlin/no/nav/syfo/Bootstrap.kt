@@ -14,6 +14,7 @@ import io.ktor.client.engine.apache.Apache
 import io.ktor.client.engine.apache.ApacheEngineConfig
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
@@ -28,7 +29,7 @@ import no.nav.syfo.application.ApplicationServer
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.application.exception.ServiceUnavailableException
-import no.nav.syfo.client.AccessTokenClientV2
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.OppgaveClient
@@ -63,6 +64,7 @@ import java.util.Properties
 import java.util.UUID
 
 val log: Logger = LoggerFactory.getLogger("nav.syfo.papirmottak")
+val securelog: Logger = LoggerFactory.getLogger("securelog")
 
 val objectMapper: ObjectMapper = ObjectMapper().apply {
     registerKotlinModule()
@@ -127,33 +129,46 @@ fun main() {
     val retryConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         config().apply {
             install(HttpRequestRetry) {
-                maxRetries = 3
-                delayMillis { retry ->
-                    retry * 500L
+                constantDelay(50, 0, false)
+                retryOnExceptionIf(3) { request, throwable ->
+                    securelog.warn("Caught exception ${throwable.message}, for url ${request.url}")
+                    true
                 }
+                retryIf(maxRetries) { request, response ->
+                    if (response.status.value.let { it in 500..599 }) {
+                        securelog.warn("Retrying for statuscode ${response.status.value}, for url ${request.url}")
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
+            install(HttpTimeout) {
+                socketTimeoutMillis = 20_000
+                connectTimeoutMillis = 20_000
+                requestTimeoutMillis = 20_000
             }
         }
     }
 
-    val httpClientWithRetry = HttpClient(Apache, retryConfig)
-    val httpClient = HttpClient(Apache, config)
+    val httpClient = HttpClient(Apache, retryConfig)
 
-    val accessTokenClientV2 = AccessTokenClientV2(env.aadAccessTokenV2Url, env.clientIdV2, env.clientSecretV2, httpClient)
+    val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
     val apolloClient: ApolloClient = ApolloClient.builder()
         .serverUrl("${env.safV1Url}/graphql")
         .build()
-    val safJournalpostClient = SafJournalpostClient(apolloClient, accessTokenClientV2, env.safScope)
-    val safDokumentClient = SafDokumentClient(env.safV1Url, accessTokenClientV2, env.safScope, httpClientWithRetry)
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, accessTokenClientV2, httpClientWithRetry, env.oppgaveScope, env.cluster)
+    val safJournalpostClient = SafJournalpostClient(apolloClient, azureAdV2Client, env.safScope)
+    val safDokumentClient = SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClient)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, azureAdV2Client, httpClient, env.oppgaveScope, env.cluster)
 
-    val smtssClient = SmtssClient(env.smtssApiUrl, accessTokenClientV2, env.smtssApiUrl, httpClientWithRetry)
-    val dokArkivClient = DokArkivClient(env.dokArkivUrl, accessTokenClientV2, env.dokArkivScope, httpClientWithRetry)
+    val smtssClient = SmtssClient(env.smtssApiUrl, azureAdV2Client, env.smtssApiScope, httpClient)
+    val dokArkivClient = DokArkivClient(env.dokArkivUrl, azureAdV2Client, env.dokArkivScope, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
-    val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, accessTokenClientV2, env.helsenettproxyScope, httpClientWithRetry)
-    val regelClient = RegelClient(env.syfosmpapirregelUrl, accessTokenClientV2, env.syfosmpapirregelScope, httpClientWithRetry)
-    val pdlPersonService = PdlFactory.getPdlService(env, httpClient, accessTokenClientV2, env.pdlScope)
+    val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, azureAdV2Client, env.helsenettproxyScope, httpClient)
+    val regelClient = RegelClient(env.syfosmpapirregelUrl, azureAdV2Client, env.syfosmpapirregelScope, httpClient)
+    val pdlPersonService = PdlFactory.getPdlService(env, httpClient, azureAdV2Client, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
         oppgaveService = oppgaveService,

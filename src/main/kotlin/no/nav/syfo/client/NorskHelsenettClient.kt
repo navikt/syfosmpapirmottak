@@ -9,12 +9,13 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.NotFound
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.log
 import java.io.IOException
 
 class NorskHelsenettClient(
     private val endpointUrl: String,
-    private val accessTokenClient: AccessTokenClientV2,
+    private val accessTokenClient: AzureAdV2Client,
     private val resourceId: String,
     private val httpClient: HttpClient,
 ) {
@@ -22,11 +23,16 @@ class NorskHelsenettClient(
     suspend fun finnBehandler(hprNummer: String, sykmeldingId: String): Behandler? {
         log.info("Henter behandler fra syfohelsenettproxy for sykmeldingId {}", sykmeldingId)
 
+        val accessToken = accessTokenClient.getAccessToken(resourceId)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Saf")
+        }
+
         val httpResponse: HttpResponse = httpClient.get("$endpointUrl/api/v2/behandlerMedHprNummer") {
             accept(ContentType.Application.Json)
-            val accessToken = accessTokenClient.getAccessTokenV2(resourceId)
+
             headers {
-                append("Authorization", "Bearer $accessToken")
+                append("Authorization", "Bearer ${accessToken.accessToken}")
                 append("Nav-CallId", sykmeldingId)
                 append("hprNummer", hprNummer)
             }

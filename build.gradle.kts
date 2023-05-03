@@ -7,9 +7,7 @@ version = "1.0.0"
 
 val apolloVersion = "2.5.14"
 val coroutinesVersion = "1.6.4"
-val fellesformatVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kafkaVersion = "3.4.0"
-val kithHodemeldingVersion = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
 val kluentVersion = "1.73"
 val ktorVersion = "2.3.0"
 val logbackVersion = "1.4.7"
@@ -19,28 +17,27 @@ val kotestVersion = "5.6.1"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
-val papirSykemeldingVersion = "2019.09.09-08-50-693492ddc1d3f98e70c1638c94dcb95a66036d12"
 val jacksonVersion = "2.14.2"
 val joarkHendelseVersion = "96ec5ebb"
 val confluentVersion = "7.2.1"
 val jettyVersion = "11.0.6"
-val sykmelding2013Version = "2019.07.30-12-26-5c924ef4f04022bbb850aaf299eb8e4464c1ca6a"
+val syfoXmlCodegenVersion = "1.0.4"
 val commonsTextVersion = "1.10.0"
 val cxfVersion = "3.4.5"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
-val smCommonVersion = "1.fbf33a9"
+val smCommonVersion = "1.0.1"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.5"
 val kotlinVersion = "1.8.21"
 val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.15"
+val caffeineVersion = "3.1.6"
 
 
 plugins {
     java
     kotlin("jvm") version "1.8.21"
-    id("com.diffplug.spotless") version "6.18.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.apollographql.apollo") version "2.5.14"
     id("org.jmailen.kotlinter") version "3.14.0"
@@ -68,7 +65,16 @@ repositories {
     google()
     maven (url= "https://packages.confluent.io/maven/")
     maven {
+        name = "syfosm-common"
         url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
+        credentials {
+            username = githubUser
+            password = githubPassword
+        }
+    }
+    maven {
+        name = "syfo-xml-codegen"
+        url = uri("https://maven.pkg.github.com/navikt/syfo-xml-codegen")
         credentials {
             username = githubUser
             password = githubPassword
@@ -95,10 +101,10 @@ dependencies {
     implementation ("io.confluent:kafka-avro-serializer:$confluentVersion")
     implementation ("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
 
-    implementation ("no.nav.helse.xml:xmlfellesformat:$fellesformatVersion")
-    implementation ("no.nav.helse.xml:kith-hodemelding:$kithHodemeldingVersion")
-    implementation ("no.nav.helse.xml:papirSykemelding:$papirSykemeldingVersion")
-    implementation ("no.nav.helse.xml:sm2013:$sykmelding2013Version")
+    implementation ("no.nav.helse.xml:xmlfellesformat:$syfoXmlCodegenVersion")
+    implementation ("no.nav.helse.xml:kith-hodemelding:$syfoXmlCodegenVersion")
+    implementation ("no.nav.helse.xml:papirsykemelding:$syfoXmlCodegenVersion")
+    implementation ("no.nav.helse.xml:sm2013:$syfoXmlCodegenVersion")
 
     implementation ("io.ktor:ktor-server-core:$ktorVersion")
     implementation ("io.ktor:ktor-server-netty:$ktorVersion")
@@ -112,6 +118,9 @@ dependencies {
         exclude("com.squareup.okhttp3")
     }
     implementation ("com.squareup.okhttp3:okhttp:$okhttp3Version")
+
+    implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+
 
     implementation ("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")

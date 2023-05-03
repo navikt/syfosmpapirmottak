@@ -20,13 +20,14 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBe
 import java.net.ServerSocket
 import java.util.concurrent.TimeUnit
 
 class NorskHelsenettClientSpek : FunSpec({
-    val accessTokenClientMock = mockk<AccessTokenClientV2>()
+    val accessTokenClientMock = mockk<AzureAdV2Client>()
     val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             jackson {
@@ -76,7 +77,7 @@ class NorskHelsenettClientSpek : FunSpec({
     }
 
     beforeSpec {
-        coEvery { accessTokenClientMock.getAccessTokenV2(any()) } returns "token"
+        coEvery { accessTokenClientMock.getAccessToken(any())?.accessToken } returns "token"
     }
 
     context("Håndtering av respons fra syfohelsenettproxy") {

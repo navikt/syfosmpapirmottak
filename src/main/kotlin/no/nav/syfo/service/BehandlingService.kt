@@ -125,7 +125,7 @@ class BehandlingService(
         log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId")
     }
 
-    fun hentBrukerIdFraJournalpost(
+    private fun hentBrukerIdFraJournalpost(
         journalpost: JournalpostMetadata,
     ): String? {
         val bruker = journalpost.bruker

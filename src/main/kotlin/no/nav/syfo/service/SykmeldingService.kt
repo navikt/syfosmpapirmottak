@@ -3,7 +3,7 @@ package no.nav.syfo.service
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.Godkjenning
 import no.nav.syfo.client.NorskHelsenettClient
@@ -27,6 +27,7 @@ import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
+import no.nav.syfo.util.getLocalDateTime
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
 import java.time.LocalDate
@@ -83,7 +84,7 @@ class SykmeldingService(
 
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                    val tssId = smtssClient.findBestTssInfotrygdId(sykmelder!!.fnr, "", loggingMeta, sykmeldingId)
+                    val tssId = smtssClient.findBestTssInfotrygdId(sykmelder!!.fnr, "ukjent", loggingMeta, sykmeldingId)
 
                     tellOcrInnhold(ocr, loggingMeta)
 
@@ -104,7 +105,7 @@ class SykmeldingService(
                         pasientAktoerId = pasient.aktorId,
                         legeAktoerId = sykmelder!!.aktorId,
                         msgId = sykmeldingId,
-                        signaturDato = msgHead.msgInfo.genDate,
+                        signaturDato = getLocalDateTime(msgHead.msgInfo.genDate),
                     )
 
                     val receivedSykmelding = ReceivedSykmelding(
@@ -122,8 +123,8 @@ class SykmeldingService(
                         legekontorReshId = null,
                         mottattDato = (
                             datoOpprettet
-                                ?: msgHead.msgInfo.genDate
-                            ).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(),
+                                ?: getLocalDateTime(msgHead.msgInfo.genDate)
+                            ),
                         rulesetVersion = healthInformation.regelSettVersjon,
                         fellesformat = fellesformatMarshaller.toString(fellesformat),
                         tssid = tssId ?: "",

@@ -1,7 +1,7 @@
 package no.nav.syfo.service
 
 import io.kotest.core.spec.style.FunSpec
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.SvarRestriksjon

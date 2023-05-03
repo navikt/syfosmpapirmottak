@@ -23,6 +23,7 @@ import io.ktor.server.routing.routing
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.syfo.application.exception.ServiceUnavailableException
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFails
 import org.amshove.kluent.shouldBeEqualTo
@@ -34,7 +35,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class OppgaveClientSpek : FunSpec({
-    val accessTokenClient = mockk<AccessTokenClientV2>()
+    val accessTokenClient = mockk<AzureAdV2Client>()
     val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             jackson {
@@ -122,7 +123,7 @@ class OppgaveClientSpek : FunSpec({
     }
 
     beforeSpec {
-        coEvery { accessTokenClient.getAccessTokenV2(any()) } returns "token"
+        coEvery { accessTokenClient.getAccessToken(any())?.accessToken } returns "token"
     }
 
     context("OppgaveClient oppretter oppgave når det ikke finnes fra før") {

@@ -2,25 +2,25 @@ package no.nav.syfo.service
 
 import io.kotest.core.spec.style.FunSpec
 import no.nav.helse.msgHead.XMLMsgHead
+import no.nav.helse.papirsykemelding.AktivitetIkkeMuligType
+import no.nav.helse.papirsykemelding.AktivitetType
+import no.nav.helse.papirsykemelding.ArbeidsgiverType
+import no.nav.helse.papirsykemelding.ArbeidsplassenType
+import no.nav.helse.papirsykemelding.AvventendeSykmeldingType
+import no.nav.helse.papirsykemelding.BehandlingsdagerType
+import no.nav.helse.papirsykemelding.BidiagnoseType
+import no.nav.helse.papirsykemelding.FriskmeldingType
+import no.nav.helse.papirsykemelding.GradertSykmeldingType
+import no.nav.helse.papirsykemelding.HovedDiagnoseType
+import no.nav.helse.papirsykemelding.MedArbeidsgiverType
+import no.nav.helse.papirsykemelding.MedisinskVurderingType
+import no.nav.helse.papirsykemelding.MedisinskeArsakerType
+import no.nav.helse.papirsykemelding.PrognoseType
+import no.nav.helse.papirsykemelding.ReisetilskuddType
+import no.nav.helse.papirsykemelding.Skanningmetadata
+import no.nav.helse.papirsykemelding.UtdypendeOpplysningerType
+import no.nav.helse.papirsykemelding.UtenArbeidsgiverType
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
-import no.nav.helse.sykSkanningMeta.AktivitetIkkeMuligType
-import no.nav.helse.sykSkanningMeta.AktivitetType
-import no.nav.helse.sykSkanningMeta.ArbeidsgiverType
-import no.nav.helse.sykSkanningMeta.ArbeidsplassenType
-import no.nav.helse.sykSkanningMeta.AvventendeSykmeldingType
-import no.nav.helse.sykSkanningMeta.BehandlingsdagerType
-import no.nav.helse.sykSkanningMeta.BidiagnoseType
-import no.nav.helse.sykSkanningMeta.FriskmeldingType
-import no.nav.helse.sykSkanningMeta.GradertSykmeldingType
-import no.nav.helse.sykSkanningMeta.HovedDiagnoseType
-import no.nav.helse.sykSkanningMeta.MedArbeidsgiverType
-import no.nav.helse.sykSkanningMeta.MedisinskVurderingType
-import no.nav.helse.sykSkanningMeta.MedisinskeArsakerType
-import no.nav.helse.sykSkanningMeta.PrognoseType
-import no.nav.helse.sykSkanningMeta.ReisetilskuddType
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
-import no.nav.helse.sykSkanningMeta.UtdypendeOpplysningerType
-import no.nav.helse.sykSkanningMeta.UtenArbeidsgiverType
 import no.nav.syfo.client.Godkjenning
 import no.nav.syfo.client.Kode
 import no.nav.syfo.client.getFileAsString
@@ -41,6 +41,7 @@ import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.get
+import no.nav.syfo.util.getLocalDateTime
 import no.nav.syfo.util.skanningMetadataUnmarshaller
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEqualTo
@@ -100,7 +101,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 pasientAktoerId = aktorId,
                 legeAktoerId = sykmelder.aktorId,
                 msgId = sykmeldingId,
-                signaturDato = msgHead.msgInfo.genDate,
+                signaturDato = getLocalDateTime(msgHead.msgInfo.genDate),
             )
 
             val receivedSykmelding = ReceivedSykmelding(
@@ -150,7 +151,7 @@ class FellesformatMapperServiceSpek : FunSpec({
             receivedSykmelding.sykmelding.behandler shouldNotBeEqualTo null
             receivedSykmelding.sykmelding.avsenderSystem shouldBeEqualTo AvsenderSystem("Papirsykmelding", journalpostId)
             receivedSykmelding.sykmelding.syketilfelleStartDato shouldBeEqualTo LocalDate.of(2019, Month.AUGUST, 15)
-            receivedSykmelding.sykmelding.signaturDato shouldBeEqualTo LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
+            receivedSykmelding.sykmelding.signaturDato shouldBeEqualTo LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.of(10, 0, 0))
             receivedSykmelding.sykmelding.navnFastlege shouldBeEqualTo null
             receivedSykmelding.legeHelsepersonellkategori shouldBeEqualTo "LE"
         }
@@ -176,7 +177,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 pasientAktoerId = aktorId,
                 legeAktoerId = sykmelder.aktorId,
                 msgId = sykmeldingId,
-                signaturDato = msgHead.msgInfo.genDate,
+                signaturDato = getLocalDateTime(msgHead.msgInfo.genDate),
             )
 
             val receivedSykmelding = ReceivedSykmelding(
@@ -236,7 +237,7 @@ class FellesformatMapperServiceSpek : FunSpec({
             )
             receivedSykmelding.sykmelding.avsenderSystem shouldBeEqualTo AvsenderSystem("Papirsykmelding", journalpostId)
             receivedSykmelding.sykmelding.syketilfelleStartDato shouldBeEqualTo LocalDate.of(2019, Month.AUGUST, 15)
-            receivedSykmelding.sykmelding.signaturDato shouldBeEqualTo LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.NOON)
+            receivedSykmelding.sykmelding.signaturDato shouldBeEqualTo LocalDateTime.of(LocalDate.of(2019, Month.AUGUST, 15), LocalTime.of(10, 0, 0))
             receivedSykmelding.sykmelding.navnFastlege shouldBeEqualTo null
         }
 
@@ -273,7 +274,7 @@ class FellesformatMapperServiceSpek : FunSpec({
                 pasientAktoerId = aktorId,
                 legeAktoerId = sykmelder.aktorId,
                 msgId = sykmeldingId,
-                signaturDato = msgHead.msgInfo.genDate,
+                signaturDato = getLocalDateTime(msgHead.msgInfo.genDate),
             )
 
             sykmelding.kontaktMedPasient shouldBeEqualTo KontaktMedPasient(LocalDate.of(2000, 8, 10), "Han var syk i 2000 også.")

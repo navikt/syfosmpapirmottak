@@ -10,12 +10,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
 
 class SmtssClient(
     private val endpointUrl: String,
-    private val accessTokenClientV2: AccessTokenClientV2,
+    private val accessTokenClientV2: AzureAdV2Client,
     private val resourceId: String,
     private val httpClient: HttpClient,
 ) {
@@ -25,7 +26,7 @@ class SmtssClient(
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
     ): String? {
-        val accessToken = accessTokenClientV2.getAccessTokenV2(resourceId)
+        val accessToken = accessTokenClientV2.getAccessToken(resourceId)
         val httpResponse = httpClient.get("$endpointUrl/api/v1/samhandler/infotrygd") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
