@@ -58,7 +58,7 @@ class AzureAdV2Client(
             val response: HttpResponse = httpClient.post(azureTokenEndpoint) {
                 accept(ContentType.Application.Json)
                 setBody(FormDataContent(formParameters))
-            }.also { securelog.info("azure reponse status: ${it.status} and body is ${it.bodyAsText()}") }
+            }.also { securelog.info("azure reponse status: ${it.status}") }
 
             response.body<AzureAdV2TokenResponse>()
         } catch (e: ClientRequestException) {

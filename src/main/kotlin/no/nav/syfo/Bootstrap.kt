@@ -162,7 +162,7 @@ fun main() {
     val safDokumentClient = SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClient)
     val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, azureAdV2Client, httpClient, env.oppgaveScope, env.cluster)
 
-    val smtssClient = SmtssClient(env.smtssApiUrl, azureAdV2Client, env.smtssApiUrl, httpClient)
+    val smtssClient = SmtssClient(env.smtssApiUrl, azureAdV2Client, env.smtssApiScope, httpClient)
     val dokArkivClient = DokArkivClient(env.dokArkivUrl, azureAdV2Client, env.dokArkivScope, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
