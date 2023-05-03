@@ -10,9 +10,11 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Parameters
 import no.nav.syfo.Environment
+import no.nav.syfo.securelog
 import org.slf4j.LoggerFactory
 
 class AzureAdV2Client(
@@ -56,7 +58,8 @@ class AzureAdV2Client(
             val response: HttpResponse = httpClient.post(azureTokenEndpoint) {
                 accept(ContentType.Application.Json)
                 setBody(FormDataContent(formParameters))
-            }
+            }.also { securelog.info("azure reponse status: ${it.status} and body is ${it.bodyAsText()}") }
+
             response.body<AzureAdV2TokenResponse>()
         } catch (e: ClientRequestException) {
             handleUnexpectedResponseException(e)
