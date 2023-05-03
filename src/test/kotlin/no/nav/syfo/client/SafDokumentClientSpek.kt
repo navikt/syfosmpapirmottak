@@ -21,7 +21,7 @@ import io.ktor.server.routing.routing
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo

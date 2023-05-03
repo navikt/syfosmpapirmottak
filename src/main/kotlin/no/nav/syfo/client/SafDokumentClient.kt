@@ -10,7 +10,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import net.logstash.logback.argument.StructuredArguments.fields
-import no.nav.helse.sykSkanningMeta.Skanningmetadata
+import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
