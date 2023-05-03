@@ -28,7 +28,7 @@ class SmtssClient(
     ): String? {
        val accessToken = accessTokenClientV2.getAccessToken(resourceId)
         if (accessToken?.accessToken == null) {
-            throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
+            throw RuntimeException("Klarte ikke hente ut accesstoken for smtsd")
         }
      
         val httpResponse = httpClient.get("$endpointUrl/api/v1/samhandler/infotrygd") {
