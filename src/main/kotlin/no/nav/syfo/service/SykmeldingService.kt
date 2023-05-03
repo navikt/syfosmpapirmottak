@@ -84,7 +84,7 @@ class SykmeldingService(
 
                     sykmelder = hentSykmelder(ocrFil = ocr, sykmeldingId = sykmeldingId, loggingMeta = loggingMeta)
 
-                    val tssId = smtssClient.findBestTssInfotrygdId(sykmelder!!.fnr, "", loggingMeta, sykmeldingId)
+                    val tssId = smtssClient.findBestTssInfotrygdId(sykmelder!!.fnr, "ukjent", loggingMeta, sykmeldingId)
 
                     tellOcrInnhold(ocr, loggingMeta)
 
