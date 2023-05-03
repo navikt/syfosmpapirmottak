@@ -14,6 +14,7 @@ import io.ktor.client.engine.apache.Apache
 import io.ktor.client.engine.apache.ApacheEngineConfig
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
@@ -128,16 +129,29 @@ fun main() {
     val retryConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         config().apply {
             install(HttpRequestRetry) {
-                maxRetries = 3
-                delayMillis { retry ->
-                    retry * 500L
+                constantDelay(50, 0, false)
+                retryOnExceptionIf(3) { request, throwable ->
+                    log.warn("Caught exception ${throwable.message}, for url ${request.url}")
+                    true
                 }
+                retryIf(maxRetries) { request, response ->
+                    if (response.status.value.let { it in 500..599 }) {
+                        log.warn("Retrying for statuscode ${response.status.value}, for url ${request.url}")
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
+            install(HttpTimeout) {
+                socketTimeoutMillis = 20_000
+                connectTimeoutMillis = 20_000
+                requestTimeoutMillis = 20_000
             }
         }
     }
 
-    val httpClientWithRetry = HttpClient(Apache, retryConfig)
-    val httpClient = HttpClient(Apache, config)
+    val httpClient = HttpClient(Apache, retryConfig)
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
@@ -145,15 +159,15 @@ fun main() {
         .serverUrl("${env.safV1Url}/graphql")
         .build()
     val safJournalpostClient = SafJournalpostClient(apolloClient, azureAdV2Client, env.safScope)
-    val safDokumentClient = SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClientWithRetry)
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, azureAdV2Client, httpClientWithRetry, env.oppgaveScope, env.cluster)
+    val safDokumentClient = SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClient)
+    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, azureAdV2Client, httpClient, env.oppgaveScope, env.cluster)
 
-    val smtssClient = SmtssClient(env.smtssApiUrl, azureAdV2Client, env.smtssApiUrl, httpClientWithRetry)
-    val dokArkivClient = DokArkivClient(env.dokArkivUrl, azureAdV2Client, env.dokArkivScope, httpClientWithRetry)
+    val smtssClient = SmtssClient(env.smtssApiUrl, azureAdV2Client, env.smtssApiUrl, httpClient)
+    val dokArkivClient = DokArkivClient(env.dokArkivUrl, azureAdV2Client, env.dokArkivScope, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
-    val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, azureAdV2Client, env.helsenettproxyScope, httpClientWithRetry)
-    val regelClient = RegelClient(env.syfosmpapirregelUrl, azureAdV2Client, env.syfosmpapirregelScope, httpClientWithRetry)
+    val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, azureAdV2Client, env.helsenettproxyScope, httpClient)
+    val regelClient = RegelClient(env.syfosmpapirregelUrl, azureAdV2Client, env.syfosmpapirregelScope, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, azureAdV2Client, env.pdlScope)
 
     val sykmeldingService = SykmeldingService(
