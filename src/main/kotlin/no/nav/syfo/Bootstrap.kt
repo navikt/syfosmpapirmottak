@@ -131,12 +131,12 @@ fun main() {
             install(HttpRequestRetry) {
                 constantDelay(50, 0, false)
                 retryOnExceptionIf(3) { request, throwable ->
-                    log.warn("Caught exception ${throwable.message}, for url ${request.url}")
+                    securelog.warn("Caught exception ${throwable.message}, for url ${request.url}")
                     true
                 }
                 retryIf(maxRetries) { request, response ->
                     if (response.status.value.let { it in 500..599 }) {
-                        log.warn("Retrying for statuscode ${response.status.value}, for url ${request.url}")
+                        securelog.warn("Retrying for statuscode ${response.status.value}, for url ${request.url}")
                         true
                     } else {
                         false
