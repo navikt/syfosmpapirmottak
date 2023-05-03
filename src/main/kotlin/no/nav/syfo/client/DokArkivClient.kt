@@ -39,10 +39,16 @@ class DokArkivClient(
         msgId: String,
         loggingMeta: LoggingMeta,
     ) {
+
+        val accessToken = azureAdV2Client.getAccessToken(scope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Dokarkiv")
+        }
+
         val httpResponse: HttpResponse = httpClient.patch("$url/$journalpostId/ferdigstill") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
-            header("Authorization", "Bearer ${azureAdV2Client.getAccessToken(scope)}")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("Nav-Callid", msgId)
             setBody(
                 FerdigstillJournal("9999"),
