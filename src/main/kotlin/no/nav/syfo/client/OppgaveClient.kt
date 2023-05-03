@@ -69,9 +69,13 @@ class OppgaveClient(
     }
 
     suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {
+        val accessToken = accessTokenClientV2.getAccessToken(scope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
+        }
+
         val response: HttpResponse = httpClient.get(url) {
-            val token = accessTokenClientV2.getAccessToken(scope)
-            header("Authorization", "Bearer $token")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("X-Correlation-ID", msgId)
             parameter("tema", "SYM")
             parameter("oppgavetype", oppgavetype)
