@@ -39,7 +39,6 @@ class DokArkivClient(
         msgId: String,
         loggingMeta: LoggingMeta,
     ) {
-
         val accessToken = azureAdV2Client.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
             throw RuntimeException("Klarte ikke hente ut accesstoken for Dokarkiv")

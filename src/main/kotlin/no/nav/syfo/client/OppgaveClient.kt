@@ -9,6 +9,7 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -16,6 +17,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
+import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.utland.NAV_OSLO
 import java.time.DayOfWeek
@@ -67,7 +69,7 @@ class OppgaveClient(
     }
 
     suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {
-        return httpClient.get(url) {
+        val response: HttpResponse = httpClient.get(url) {
             val token = accessTokenClientV2.getAccessToken(scope)
             header("Authorization", "Bearer $token")
             header("X-Correlation-ID", msgId)
@@ -78,7 +80,11 @@ class OppgaveClient(
             parameter("sorteringsrekkefolge", "ASC")
             parameter("sorteringsfelt", "FRIST")
             parameter("limit", "10")
-        }.body<OppgaveResponse>()
+        }
+
+        securelog.info("Response from oppgave status: ${response.status} and body: ${response.bodyAsText()}")
+
+        return response.body<OppgaveResponse>()
     }
 
     suspend fun opprettOppgave(
