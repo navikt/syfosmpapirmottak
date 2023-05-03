@@ -31,10 +31,14 @@ class OppgaveClient(
     private val cluster: String,
 ) {
     private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
+    val accessToken = accessTokenClientV2.getAccessToken(scope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
+        }
+        
         val httpResponse: HttpResponse = httpClient.post(url) {
             contentType(ContentType.Application.Json)
-            val token = accessTokenClientV2.getAccessToken(scope)
-            header("Authorization", "Bearer $token")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("X-Correlation-ID", msgId)
             setBody(opprettOppgaveRequest)
         }
