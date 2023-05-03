@@ -11,6 +11,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.log
 import no.nav.syfo.model.Behandler
 import no.nav.syfo.util.LoggingMeta
@@ -18,7 +19,7 @@ import java.io.IOException
 
 class DokArkivClient(
     private val url: String,
-    private val accessTokenClientV2: AccessTokenClientV2,
+    private val azureAdV2Client: AzureAdV2Client,
     private val scope: String,
     private val httpClient: HttpClient,
 ) {
@@ -41,7 +42,7 @@ class DokArkivClient(
         val httpResponse: HttpResponse = httpClient.patch("$url/$journalpostId/ferdigstill") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
-            header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
+            header("Authorization", "Bearer ${azureAdV2Client.getAccessToken(scope)}")
             header("Nav-Callid", msgId)
             setBody(
                 FerdigstillJournal("9999"),
@@ -87,10 +88,15 @@ class DokArkivClient(
         msgId: String,
         loggingMeta: LoggingMeta,
     ) {
+        val accessToken = azureAdV2Client.getAccessToken(scope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Dokarkiv")
+        }
+
         val httpResponse: HttpResponse = httpClient.put("$url/$journalpostId") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
-            header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
+            header("Authorization", "Bearer ${accessToken.accessToken}")
             header("Nav-Callid", msgId)
             setBody(
                 OppdaterJournalpost(

@@ -1,7 +1,7 @@
 package no.nav.syfo.pdl.service
 
 import net.logstash.logback.argument.StructuredArguments
-import no.nav.syfo.client.AccessTokenClientV2
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.log
 import no.nav.syfo.pdl.client.PdlClient
 import no.nav.syfo.pdl.model.Navn
@@ -10,13 +10,16 @@ import no.nav.syfo.util.LoggingMeta
 
 class PdlPersonService(
     private val pdlClient: PdlClient,
-    private val accessTokenClientV2: AccessTokenClientV2,
+    private val accessTokenClientV2: AzureAdV2Client,
     private val pdlScope: String,
 ) {
 
     suspend fun getPdlPerson(ident: String, loggingMeta: LoggingMeta): PdlPerson? {
-        val accessToken = accessTokenClientV2.getAccessTokenV2(pdlScope)
-        val pdlResponse = pdlClient.getPerson(ident, accessToken)
+        val accessToken = accessTokenClientV2.getAccessToken(pdlScope)
+        if (accessToken?.accessToken == null) {
+            throw RuntimeException("Klarte ikke hente ut accesstoken for Dokarkiv")
+        }
+        val pdlResponse = pdlClient.getPerson(ident, accessToken.accessToken)
 
         if (pdlResponse.errors != null) {
             pdlResponse.errors.forEach {

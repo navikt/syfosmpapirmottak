@@ -8,12 +8,13 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.ValidationResult
 
 class RegelClient(
     private val endpointUrl: String,
-    private val accessTokenClient: AccessTokenClientV2,
+    private val accessTokenClient: AzureAdV2Client,
     private val resourceId: String,
     private val client: HttpClient,
 ) {
@@ -21,7 +22,7 @@ class RegelClient(
         return client.post("$endpointUrl/api/v2/rules/validate") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
-            val accessToken = accessTokenClient.getAccessTokenV2(resourceId)
+            val accessToken = accessTokenClient.getAccessToken(resourceId)
             headers {
                 append("Authorization", "Bearer $accessToken")
                 append("Nav-CallId", msgId)

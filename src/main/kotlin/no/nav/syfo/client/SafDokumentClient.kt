@@ -11,6 +11,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.papirsykemelding.Skanningmetadata
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
@@ -19,9 +20,9 @@ import org.xml.sax.InputSource
 import java.io.IOException
 import javax.xml.bind.JAXBException
 
-class SafDokumentClient constructor(
+class SafDokumentClient(
     private val url: String,
-    private val accessTokenClientV2: AccessTokenClientV2,
+    private val accessTokenClientV2: AzureAdV2Client,
     private val scope: String,
     private val httpClient: HttpClient,
 ) {
@@ -29,7 +30,7 @@ class SafDokumentClient constructor(
     private suspend fun hentDokumentFraSaf(journalpostId: String, dokumentInfoId: String, msgId: String, loggingMeta: LoggingMeta): String {
         val httpResponse: HttpResponse = httpClient.get("$url/rest/hentdokument/$journalpostId/$dokumentInfoId/ORIGINAL") {
             accept(ContentType.Application.Xml)
-            header("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
+            header("Authorization", "Bearer ${accessTokenClientV2.getAccessToken(scope)}")
             header("Nav-Callid", msgId)
             header("Nav-Consumer-Id", "syfosmpapirmottak")
         }

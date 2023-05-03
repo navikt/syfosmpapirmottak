@@ -52,6 +52,8 @@ spec:
         - host: dokarkiv.prod-fss-pub.nais.io
         - host: pdl-api.prod-fss-pub.nais.io
         - host: oppgave.prod-fss-pub.nais.io
+  secureLogs:
+    enabled: true
   env:
     - name: SAF_URL
       value: https://saf.prod-fss-pub.nais.io

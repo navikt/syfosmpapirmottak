@@ -32,6 +32,7 @@ val ioMockVersion = "1.13.5"
 val kotlinVersion = "1.8.21"
 val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.15"
+val caffeineVersion = "3.1.6"
 
 
 plugins {
@@ -117,6 +118,9 @@ dependencies {
         exclude("com.squareup.okhttp3")
     }
     implementation ("com.squareup.okhttp3:okhttp:$okhttp3Version")
+
+    implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+
 
     implementation ("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation ("no.nav.helse:syfosm-common-kafka:$smCommonVersion")

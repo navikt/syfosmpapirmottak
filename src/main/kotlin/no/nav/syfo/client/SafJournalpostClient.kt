@@ -8,6 +8,7 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.request.RequestHeaders
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
@@ -31,7 +32,7 @@ suspend fun <T> ApolloQueryCall<T>.execute() = suspendCoroutine<Response<T>> { c
 
 class SafJournalpostClient(
     private val apolloClient: ApolloClient,
-    private val accessTokenClientV2: AccessTokenClientV2,
+    private val accessTokenClientV2: AzureAdV2Client,
     private val scope: String,
 ) {
     suspend fun getJournalpostMetadata(
@@ -45,7 +46,7 @@ class SafJournalpostClient(
         ).toBuilder()
             .requestHeaders(
                 RequestHeaders.builder()
-                    .addHeader("Authorization", "Bearer ${accessTokenClientV2.getAccessTokenV2(scope)}")
+                    .addHeader("Authorization", "Bearer ${accessTokenClientV2.getAccessToken(scope)}")
                     .addHeader("X-Correlation-ID", journalpostId)
                     .build(),
             ).build()

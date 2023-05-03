@@ -9,12 +9,13 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.NotFound
+import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.log
 import java.io.IOException
 
 class NorskHelsenettClient(
     private val endpointUrl: String,
-    private val accessTokenClient: AccessTokenClientV2,
+    private val accessTokenClient: AzureAdV2Client,
     private val resourceId: String,
     private val httpClient: HttpClient,
 ) {
@@ -24,7 +25,7 @@ class NorskHelsenettClient(
 
         val httpResponse: HttpResponse = httpClient.get("$endpointUrl/api/v2/behandlerMedHprNummer") {
             accept(ContentType.Application.Json)
-            val accessToken = accessTokenClient.getAccessTokenV2(resourceId)
+            val accessToken = accessTokenClient.getAccessToken((resourceId))
             headers {
                 append("Authorization", "Bearer $accessToken")
                 append("Nav-CallId", sykmeldingId)
