@@ -6,7 +6,7 @@ group = "no.nav.syfo"
 version = "1.0.0"
 
 val apolloVersion = "2.5.14"
-val coroutinesVersion = "1.6.4"
+val coroutinesVersion = "1.7.0"
 val kafkaVersion = "3.4.0"
 val kluentVersion = "1.73"
 val ktorVersion = "2.3.0"
