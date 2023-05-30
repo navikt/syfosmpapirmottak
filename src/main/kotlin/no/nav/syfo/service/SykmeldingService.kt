@@ -11,6 +11,7 @@ import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
+import no.nav.syfo.client.TssException
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
@@ -182,6 +183,9 @@ class SykmeldingService(
                 }
             } catch (e: SafNotFoundException) {
                 log.warn("Noe gikk galt ved uthenting av dokument: ${e.message}")
+            } catch (e: TssException) {
+                log.error("feil fra SMTSS")
+                throw e
             } catch (e: Exception) {
                 tellFeilArsak(e.message)
                 PAPIRSM_MAPPET.labels("feil").inc()
