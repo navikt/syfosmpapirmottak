@@ -7,7 +7,7 @@ version = "1.0.0"
 
 val apolloVersion = "2.5.14"
 val coroutinesVersion = "1.7.1"
-val kafkaVersion = "3.4.1"
+val kafkaVersion = "3.5.0"
 val kluentVersion = "1.73"
 val ktorVersion = "2.3.1"
 val logbackVersion = "1.4.7"
