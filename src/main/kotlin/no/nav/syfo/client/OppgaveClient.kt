@@ -13,6 +13,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import java.time.DayOfWeek
+import java.time.LocalDate
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.domain.OppgaveResultat
@@ -20,8 +22,6 @@ import no.nav.syfo.log
 import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.utland.NAV_OSLO
-import java.time.DayOfWeek
-import java.time.LocalDate
 
 class OppgaveClient(
     private val url: String,
@@ -30,67 +30,90 @@ class OppgaveClient(
     private val scope: String,
     private val cluster: String,
 ) {
-    private suspend fun opprettOppgave(opprettOppgaveRequest: OpprettOppgaveRequest, msgId: String): OpprettOppgaveResponse {
+    private suspend fun opprettOppgave(
+        opprettOppgaveRequest: OpprettOppgaveRequest,
+        msgId: String
+    ): OpprettOppgaveResponse {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
             throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
         }
 
-        val httpResponse: HttpResponse = httpClient.post(url) {
-            contentType(ContentType.Application.Json)
-            header("Authorization", "Bearer ${accessToken.accessToken}")
-            header("X-Correlation-ID", msgId)
-            setBody(opprettOppgaveRequest)
-        }
+        val httpResponse: HttpResponse =
+            httpClient.post(url) {
+                contentType(ContentType.Application.Json)
+                header("Authorization", "Bearer ${accessToken.accessToken}")
+                header("X-Correlation-ID", msgId)
+                setBody(opprettOppgaveRequest)
+            }
         return when (httpResponse.status) {
             HttpStatusCode.Created -> httpResponse.body<OpprettOppgaveResponse>()
             else -> {
-                log.error("Noe gikk galt ved oppretting av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}")
-                throw RuntimeException("Noe gikk galt ved oppretting av oppgave, responskode ${httpResponse.status}")
+                log.error(
+                    "Noe gikk galt ved oppretting av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}"
+                )
+                throw RuntimeException(
+                    "Noe gikk galt ved oppretting av oppgave, responskode ${httpResponse.status}"
+                )
             }
         }
     }
 
-    private suspend fun oppdaterOppgave(oppdaterOppgaveRequest: OppdaterOppgaveRequest, msgId: String): OpprettOppgaveResponse {
+    private suspend fun oppdaterOppgave(
+        oppdaterOppgaveRequest: OppdaterOppgaveRequest,
+        msgId: String
+    ): OpprettOppgaveResponse {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
             throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
         }
 
-        val httpResponse: HttpResponse = httpClient.patch("$url/${oppdaterOppgaveRequest.id}") {
-            contentType(ContentType.Application.Json)
-            header("Authorization", "Bearer ${accessToken.accessToken}")
-            header("X-Correlation-ID", msgId)
-            setBody(oppdaterOppgaveRequest)
-        }
+        val httpResponse: HttpResponse =
+            httpClient.patch("$url/${oppdaterOppgaveRequest.id}") {
+                contentType(ContentType.Application.Json)
+                header("Authorization", "Bearer ${accessToken.accessToken}")
+                header("X-Correlation-ID", msgId)
+                setBody(oppdaterOppgaveRequest)
+            }
         return when (httpResponse.status) {
             HttpStatusCode.OK -> httpResponse.body<OpprettOppgaveResponse>()
             else -> {
-                log.error("Noe gikk galt ved oppdatering av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}")
-                throw RuntimeException("Noe gikk galt ved oppdatering av oppgave, responskode ${httpResponse.status}")
+                log.error(
+                    "Noe gikk galt ved oppdatering av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}"
+                )
+                throw RuntimeException(
+                    "Noe gikk galt ved oppdatering av oppgave, responskode ${httpResponse.status}"
+                )
             }
         }
     }
 
-    suspend fun hentOppgave(oppgavetype: String, journalpostId: String, msgId: String): OppgaveResponse {
+    suspend fun hentOppgave(
+        oppgavetype: String,
+        journalpostId: String,
+        msgId: String
+    ): OppgaveResponse {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
             throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
         }
 
-        val response: HttpResponse = httpClient.get(url) {
-            header("Authorization", "Bearer ${accessToken.accessToken}")
-            header("X-Correlation-ID", msgId)
-            parameter("tema", "SYM")
-            parameter("oppgavetype", oppgavetype)
-            parameter("journalpostId", journalpostId)
-            parameter("statuskategori", "AAPEN")
-            parameter("sorteringsrekkefolge", "ASC")
-            parameter("sorteringsfelt", "FRIST")
-            parameter("limit", "10")
-        }
+        val response: HttpResponse =
+            httpClient.get(url) {
+                header("Authorization", "Bearer ${accessToken.accessToken}")
+                header("X-Correlation-ID", msgId)
+                parameter("tema", "SYM")
+                parameter("oppgavetype", oppgavetype)
+                parameter("journalpostId", journalpostId)
+                parameter("statuskategori", "AAPEN")
+                parameter("sorteringsrekkefolge", "ASC")
+                parameter("sorteringsfelt", "FRIST")
+                parameter("limit", "10")
+            }
 
-        securelog.info("Response from oppgave status: ${response.status} and body: ${response.bodyAsText()}")
+        securelog.info(
+            "Response from oppgave status: ${response.status} and body: ${response.bodyAsText()}"
+        )
 
         return response.body<OppgaveResponse>()
     }
@@ -102,51 +125,62 @@ class OppgaveClient(
         sykmeldingId: String,
         loggingMeta: LoggingMeta,
     ): OppgaveResultat {
-        val oppgaveResponse = hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
+        val oppgaveResponse =
+            hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
-            log.info("Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
+            log.info(
+                "Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}",
+                fields(loggingMeta)
+            )
             return OppgaveResultat(
                 oppgaveId = oppgaveResponse.oppgaver.first().id,
                 duplikat = true,
                 tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr,
             )
         }
-        val behandlingstype = if (gjelderUtland) {
-            log.info("Gjelder utland, {}", fields(loggingMeta))
-            "ae0106"
-        } else {
-            null
-        }
-        val beskrivelse = if (gjelderUtland) {
-            "Manuell registrering av utenlandsk sykmelding"
-        } else {
-            "Papirsykmelding som må legges inn i infotrygd manuelt"
-        }
-        val opprettOppgaveRequest = OpprettOppgaveRequest(
-            aktoerId = aktoerId,
-            opprettetAvEnhetsnr = "9999",
-            journalpostId = journalpostId,
-            behandlesAvApplikasjon = "FS22",
-            beskrivelse = beskrivelse,
-            tema = "SYM",
-            oppgavetype = "JFR",
-            behandlingstype = behandlingstype,
-            aktivDato = LocalDate.now(),
-            fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
-            prioritet = "NORM",
-        )
+        val behandlingstype =
+            if (gjelderUtland) {
+                log.info("Gjelder utland, {}", fields(loggingMeta))
+                "ae0106"
+            } else {
+                null
+            }
+        val beskrivelse =
+            if (gjelderUtland) {
+                "Manuell registrering av utenlandsk sykmelding"
+            } else {
+                "Papirsykmelding som må legges inn i infotrygd manuelt"
+            }
+        val opprettOppgaveRequest =
+            OpprettOppgaveRequest(
+                aktoerId = aktoerId,
+                opprettetAvEnhetsnr = "9999",
+                journalpostId = journalpostId,
+                behandlesAvApplikasjon = "FS22",
+                beskrivelse = beskrivelse,
+                tema = "SYM",
+                oppgavetype = "JFR",
+                behandlingstype = behandlingstype,
+                aktivDato = LocalDate.now(),
+                fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
+                prioritet = "NORM",
+            )
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
 
-        // Når syk-dig er ute av pilot kan vi sette dette direkte ved oppretting av oppgaven hvis sykmeldingen gjelder utland
-        if (gjelderUtland && (opprettetOppgave.tildeltEnhetsnr == NAV_OSLO || cluster == "dev-gcp")) {
+        // Når syk-dig er ute av pilot kan vi sette dette direkte ved oppretting av oppgaven hvis
+        // sykmeldingen gjelder utland
+        if (
+            gjelderUtland && (opprettetOppgave.tildeltEnhetsnr == NAV_OSLO || cluster == "dev-gcp")
+        ) {
             log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
             oppdaterOppgave(
-                oppdaterOppgaveRequest = OppdaterOppgaveRequest(
-                    id = opprettetOppgave.id,
-                    versjon = opprettetOppgave.versjon,
-                    behandlesAvApplikasjon = "SMD",
-                ),
+                oppdaterOppgaveRequest =
+                    OppdaterOppgaveRequest(
+                        id = opprettetOppgave.id,
+                        versjon = opprettetOppgave.versjon,
+                        behandlesAvApplikasjon = "SMD",
+                    ),
                 msgId = sykmeldingId,
             )
         }
@@ -163,9 +197,13 @@ class OppgaveClient(
         sykmeldingId: String,
         loggingMeta: LoggingMeta,
     ): OppgaveResultat {
-        val oppgaveResponse = hentOppgave(oppgavetype = "FDR", journalpostId = journalpostId, msgId = sykmeldingId)
+        val oppgaveResponse =
+            hentOppgave(oppgavetype = "FDR", journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
-            log.info("Det finnes allerede fordelingsoppgave for journalpost $journalpostId, {}", fields(loggingMeta))
+            log.info(
+                "Det finnes allerede fordelingsoppgave for journalpost $journalpostId, {}",
+                fields(loggingMeta)
+            )
             return OppgaveResultat(
                 oppgaveId = oppgaveResponse.oppgaver.first().id,
                 duplikat = true,
@@ -177,18 +215,20 @@ class OppgaveClient(
             log.info("Gjelder utland, {}", fields(loggingMeta))
             behandlingstype = "ae0106"
         }
-        val opprettOppgaveRequest = OpprettOppgaveRequest(
-            opprettetAvEnhetsnr = "9999",
-            journalpostId = journalpostId,
-            behandlesAvApplikasjon = "FS22",
-            beskrivelse = "Fordelingsoppgave for mottatt papirsykmelding som må legges inn i infotrygd manuelt",
-            tema = "SYM",
-            oppgavetype = "FDR",
-            behandlingstype = behandlingstype,
-            aktivDato = LocalDate.now(),
-            fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
-            prioritet = "NORM",
-        )
+        val opprettOppgaveRequest =
+            OpprettOppgaveRequest(
+                opprettetAvEnhetsnr = "9999",
+                journalpostId = journalpostId,
+                behandlesAvApplikasjon = "FS22",
+                beskrivelse =
+                    "Fordelingsoppgave for mottatt papirsykmelding som må legges inn i infotrygd manuelt",
+                tema = "SYM",
+                oppgavetype = "FDR",
+                behandlingstype = behandlingstype,
+                aktivDato = LocalDate.now(),
+                fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
+                prioritet = "NORM",
+            )
         log.info("Oppretter fordelingsoppgave {}", fields(loggingMeta))
         val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
         return OppgaveResultat(

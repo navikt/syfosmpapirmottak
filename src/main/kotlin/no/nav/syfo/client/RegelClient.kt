@@ -24,14 +24,16 @@ class RegelClient(
             throw RuntimeException("Klarte ikke hente ut accesstoken for syfosmpapirregler")
         }
 
-        return client.post("$endpointUrl/api/v2/rules/validate") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
-            headers {
-                append("Authorization", "Bearer ${accessToken.accessToken}")
-                append("Nav-CallId", msgId)
+        return client
+            .post("$endpointUrl/api/v2/rules/validate") {
+                contentType(ContentType.Application.Json)
+                accept(ContentType.Application.Json)
+                headers {
+                    append("Authorization", "Bearer ${accessToken.accessToken}")
+                    append("Nav-CallId", msgId)
+                }
+                setBody(sykmelding)
             }
-            setBody(sykmelding)
-        }.body<ValidationResult>()
+            .body<ValidationResult>()
     }
 }

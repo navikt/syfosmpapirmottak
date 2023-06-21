@@ -1,12 +1,11 @@
 package no.nav.syfo.domain
 
-import no.nav.syfo.client.DokumentMedTittel
 import java.time.LocalDateTime
+import no.nav.syfo.client.DokumentMedTittel
 
 data class JournalpostMetadata(
     val bruker: Bruker,
-    @Deprecated("dokumenter skal ta over for denne")
-    val dokumentInfoId: String?,
+    @Deprecated("dokumenter skal ta over for denne") val dokumentInfoId: String?,
     val dokumenter: List<DokumentMedTittel>,
     val jpErIkkeJournalfort: Boolean,
     val gjelderUtland: Boolean,

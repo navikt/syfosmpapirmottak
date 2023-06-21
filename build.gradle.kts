@@ -33,6 +33,7 @@ val kotlinVersion = "1.8.22"
 val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.15"
 val caffeineVersion = "3.1.6"
+val ktfmtVersion = "0.44"
 
 
 plugins {
@@ -40,7 +41,7 @@ plugins {
     kotlin("jvm") version "1.8.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.apollographql.apollo") version "2.5.14"
-    id("org.jmailen.kotlinter") version "3.15.0"
+    id("com.diffplug.spotless") version "6.19.0"
     id("org.cyclonedx.bom") version "1.7.4"
 }
 
@@ -182,7 +183,10 @@ tasks {
     }
 
 
-    "check" {
-        dependsOn("formatKotlin")
+    spotless {
+        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
+        check {
+            dependsOn("spotlessApply")
+        }
     }
 }

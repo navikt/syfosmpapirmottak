@@ -23,13 +23,14 @@ class OppgaveService(
     ): OppgaveResultat? {
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
-        val oppgave = oppgaveClient.opprettOppgave(
-            journalpostId,
-            aktoerIdPasient,
-            gjelderUtland,
-            trackingId,
-            loggingMeta,
-        )
+        val oppgave =
+            oppgaveClient.opprettOppgave(
+                journalpostId,
+                aktoerIdPasient,
+                gjelderUtland,
+                trackingId,
+                loggingMeta,
+            )
 
         return if (!oppgave.duplikat) {
             log.info(
@@ -40,7 +41,11 @@ class OppgaveService(
             PAPIRSM_OPPGAVE.inc()
             oppgave
         } else {
-            log.info("duplikat oppgave med {}, {}", StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId), fields(loggingMeta))
+            log.info(
+                "duplikat oppgave med {}, {}",
+                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                fields(loggingMeta)
+            )
             null
         }
     }
@@ -49,7 +54,11 @@ class OppgaveService(
         journalpostId: String,
         sykmeldingId: String,
     ): OppgaveResponse {
-        return oppgaveClient.hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
+        return oppgaveClient.hentOppgave(
+            oppgavetype = "JFR",
+            journalpostId = journalpostId,
+            msgId = sykmeldingId
+        )
     }
 
     suspend fun opprettFordelingsOppgave(
@@ -59,9 +68,18 @@ class OppgaveService(
         loggingMeta: LoggingMeta,
     ) {
         PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
-        log.info("Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}", fields(loggingMeta))
+        log.info(
+            "Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}",
+            fields(loggingMeta)
+        )
 
-        val oppgave = oppgaveClient.opprettFordelingsOppgave(journalpostId, gjelderUtland, trackingId, loggingMeta)
+        val oppgave =
+            oppgaveClient.opprettFordelingsOppgave(
+                journalpostId,
+                gjelderUtland,
+                trackingId,
+                loggingMeta
+            )
 
         if (!oppgave.duplikat) {
             PAPIRSM_FORDELINGSOPPGAVE.inc()

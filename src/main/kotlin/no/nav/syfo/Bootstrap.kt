@@ -18,6 +18,10 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
+import java.net.SocketTimeoutException
+import java.time.Duration
+import java.util.Properties
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -58,29 +62,27 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.net.SocketTimeoutException
-import java.time.Duration
-import java.util.Properties
-import java.util.UUID
 
 val log: Logger = LoggerFactory.getLogger("nav.syfo.papirmottak")
 val securelog: Logger = LoggerFactory.getLogger("securelog")
 
-val objectMapper: ObjectMapper = ObjectMapper().apply {
-    registerKotlinModule()
-    registerModule(JavaTimeModule())
-    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-}
+val objectMapper: ObjectMapper =
+    ObjectMapper().apply {
+        registerKotlinModule()
+        registerModule(JavaTimeModule())
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
 
 @DelicateCoroutinesApi
 fun main() {
     val env = Environment()
 
     val applicationState = ApplicationState()
-    val applicationEngine = createApplicationEngine(
-        env,
-        applicationState,
-    )
+    val applicationEngine =
+        createApplicationEngine(
+            env,
+            applicationState,
+        )
 
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
 
@@ -90,24 +92,41 @@ fun main() {
 
     DefaultExports.initialize()
 
-    val consumerPropertiesAiven = KafkaUtils.getAivenKafkaConfig().apply {
-        setProperty(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, env.schemaRegistryUrl)
-        setProperty(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${env.kafkaSchemaRegistryUsername}:${env.kafkaSchemaRegistryPassword}")
-        setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
-    }.toConsumerConfig(
-        "${env.applicationName}-consumer",
-        valueDeserializer = KafkaAvroDeserializer::class,
-    ).also {
-        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-        it["specific.avro.reader"] = true
-    }
+    val consumerPropertiesAiven =
+        KafkaUtils.getAivenKafkaConfig()
+            .apply {
+                setProperty(
+                    KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
+                    env.schemaRegistryUrl
+                )
+                setProperty(
+                    KafkaAvroSerializerConfig.USER_INFO_CONFIG,
+                    "${env.kafkaSchemaRegistryUsername}:${env.kafkaSchemaRegistryPassword}"
+                )
+                setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
+            }
+            .toConsumerConfig(
+                "${env.applicationName}-consumer",
+                valueDeserializer = KafkaAvroDeserializer::class,
+            )
+            .also {
+                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                it["specific.avro.reader"] = true
+            }
 
-    val producerPropertiesAiven = KafkaUtils.getAivenKafkaConfig()
-        .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
+    val producerPropertiesAiven =
+        KafkaUtils.getAivenKafkaConfig()
+            .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
 
-    val kafkaProducerReceivedSykmelding = KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
-    val kafkaProducerPapirSmRegistering = KafkaProducer<String, PapirSmRegistering>(producerPropertiesAiven)
-    val sykDigProducer = SykDigProducer(KafkaProducer<String, DigitaliseringsoppgaveKafka>(producerPropertiesAiven), env.sykDigTopic)
+    val kafkaProducerReceivedSykmelding =
+        KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
+    val kafkaProducerPapirSmRegistering =
+        KafkaProducer<String, PapirSmRegistering>(producerPropertiesAiven)
+    val sykDigProducer =
+        SykDigProducer(
+            KafkaProducer<String, DigitaliseringsoppgaveKafka>(producerPropertiesAiven),
+            env.sykDigTopic
+        )
 
     val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         install(ContentNegotiation) {
@@ -121,7 +140,8 @@ fun main() {
         HttpResponseValidator {
             handleResponseExceptionWithRequest { exception, _ ->
                 when (exception) {
-                    is SocketTimeoutException -> throw ServiceUnavailableException(exception.message)
+                    is SocketTimeoutException ->
+                        throw ServiceUnavailableException(exception.message)
                 }
             }
         }
@@ -136,7 +156,9 @@ fun main() {
                 }
                 retryIf(maxRetries) { request, response ->
                     if (response.status.value.let { it in 500..599 }) {
-                        securelog.warn("Retrying for statuscode ${response.status.value}, for url ${request.url}")
+                        securelog.warn(
+                            "Retrying for statuscode ${response.status.value}, for url ${request.url}"
+                        )
                         true
                     } else {
                         false
@@ -155,36 +177,59 @@ fun main() {
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
-    val apolloClient: ApolloClient = ApolloClient.builder()
-        .serverUrl("${env.safV1Url}/graphql")
-        .build()
+    val apolloClient: ApolloClient =
+        ApolloClient.builder().serverUrl("${env.safV1Url}/graphql").build()
     val safJournalpostClient = SafJournalpostClient(apolloClient, azureAdV2Client, env.safScope)
-    val safDokumentClient = SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClient)
-    val oppgaveClient = OppgaveClient(env.oppgavebehandlingUrl, azureAdV2Client, httpClient, env.oppgaveScope, env.cluster)
+    val safDokumentClient =
+        SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClient)
+    val oppgaveClient =
+        OppgaveClient(
+            env.oppgavebehandlingUrl,
+            azureAdV2Client,
+            httpClient,
+            env.oppgaveScope,
+            env.cluster
+        )
 
     val smtssClient = SmtssClient(env.smtssApiUrl, azureAdV2Client, env.smtssApiScope, httpClient)
-    val dokArkivClient = DokArkivClient(env.dokArkivUrl, azureAdV2Client, env.dokArkivScope, httpClient)
+    val dokArkivClient =
+        DokArkivClient(env.dokArkivUrl, azureAdV2Client, env.dokArkivScope, httpClient)
 
     val oppgaveService = OppgaveService(oppgaveClient)
-    val norskHelsenettClient = NorskHelsenettClient(env.norskHelsenettEndpointURL, azureAdV2Client, env.helsenettproxyScope, httpClient)
-    val regelClient = RegelClient(env.syfosmpapirregelUrl, azureAdV2Client, env.syfosmpapirregelScope, httpClient)
+    val norskHelsenettClient =
+        NorskHelsenettClient(
+            env.norskHelsenettEndpointURL,
+            azureAdV2Client,
+            env.helsenettproxyScope,
+            httpClient
+        )
+    val regelClient =
+        RegelClient(env.syfosmpapirregelUrl, azureAdV2Client, env.syfosmpapirregelScope, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, azureAdV2Client, env.pdlScope)
 
-    val sykmeldingService = SykmeldingService(
-        oppgaveService = oppgaveService,
-        safDokumentClient = safDokumentClient,
-        norskHelsenettClient = norskHelsenettClient,
-        regelClient = regelClient,
-        smtssClient = smtssClient,
-        pdlPersonService = pdlPersonService,
-        okSykmeldingTopic = env.okSykmeldingTopic,
-        kafkaReceivedSykmeldingProducer = kafkaProducerReceivedSykmelding,
-        dokArkivClient = dokArkivClient,
-        kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
-        smregistreringTopic = env.smregistreringTopic,
-    )
-    val utenlandskSykmeldingService = UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
-    val behandlingService = BehandlingService(safJournalpostClient, sykmeldingService, utenlandskSykmeldingService, pdlPersonService)
+    val sykmeldingService =
+        SykmeldingService(
+            oppgaveService = oppgaveService,
+            safDokumentClient = safDokumentClient,
+            norskHelsenettClient = norskHelsenettClient,
+            regelClient = regelClient,
+            smtssClient = smtssClient,
+            pdlPersonService = pdlPersonService,
+            okSykmeldingTopic = env.okSykmeldingTopic,
+            kafkaReceivedSykmeldingProducer = kafkaProducerReceivedSykmelding,
+            dokArkivClient = dokArkivClient,
+            kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
+            smregistreringTopic = env.smregistreringTopic,
+        )
+    val utenlandskSykmeldingService =
+        UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
+    val behandlingService =
+        BehandlingService(
+            safJournalpostClient,
+            sykmeldingService,
+            utenlandskSykmeldingService,
+            pdlPersonService
+        )
 
     launchListeners(
         env,
@@ -197,12 +242,19 @@ fun main() {
 }
 
 @DelicateCoroutinesApi
-fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
+fun createListener(
+    applicationState: ApplicationState,
+    action: suspend CoroutineScope.() -> Unit
+): Job =
     GlobalScope.launch {
         try {
             action()
         } catch (e: TrackableException) {
-            log.error("En uhåndtert feil oppstod, applikasjonen restarter {}", StructuredArguments.fields(e.loggingMeta), e.cause)
+            log.error(
+                "En uhåndtert feil oppstod, applikasjonen restarter {}",
+                StructuredArguments.fields(e.loggingMeta),
+                e.cause
+            )
         } finally {
             applicationState.ready = false
             applicationState.alive = false
@@ -216,7 +268,8 @@ fun launchListeners(
     consumerPropertiesAiven: Properties,
     behandlingService: BehandlingService,
 ) {
-    val kafkaConsumerJournalfoeringHendelseAiven = KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
+    val kafkaConsumerJournalfoeringHendelseAiven =
+        KafkaConsumer<String, JournalfoeringHendelseRecord>(consumerPropertiesAiven)
     kafkaConsumerJournalfoeringHendelseAiven.subscribe(listOf(env.dokJournalfoeringAivenTopic))
 
     createListener(applicationState) {
@@ -237,11 +290,12 @@ suspend fun blockingApplicationLogic(
         aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
             val journalfoeringHendelseRecord = consumerRecord.value()
             val sykmeldingId = UUID.randomUUID().toString()
-            val loggingMeta = LoggingMeta(
-                sykmeldingId = sykmeldingId,
-                journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
-                hendelsesId = journalfoeringHendelseRecord.hendelsesId,
-            )
+            val loggingMeta =
+                LoggingMeta(
+                    sykmeldingId = sykmeldingId,
+                    journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
+                    hendelsesId = journalfoeringHendelseRecord.hendelsesId,
+                )
 
             behandlingService.handleJournalpost(
                 journalfoeringEvent = journalfoeringHendelseRecord,

@@ -25,39 +25,39 @@ class AzureAdV2Client(
     private val azureAppClientSecret = environment.clientSecretV2
     private val azureTokenEndpoint = environment.aadAccessTokenV2Url
 
-    /**
-     * Returns a non-obo access token authenticated using app specific client credentials
-     */
+    /** Returns a non-obo access token authenticated using app specific client credentials */
     suspend fun getAccessToken(
         scope: String,
     ): AzureAdV2Token? {
         return azureAdV2Cache.getAccessToken(scope)
-            ?: getClientSecretAccessToken(scope)?.let {
-                azureAdV2Cache.putValue(scope, it)
-            }
+            ?: getClientSecretAccessToken(scope)?.let { azureAdV2Cache.putValue(scope, it) }
     }
 
     private suspend fun getClientSecretAccessToken(
         scope: String,
     ): AzureAdV2Token? {
         return getAccessToken(
-            Parameters.build {
-                append("client_id", azureAppClientId)
-                append("client_secret", azureAppClientSecret)
-                append("scope", scope)
-                append("grant_type", "client_credentials")
-            },
-        )?.toAzureAdV2Token()
+                Parameters.build {
+                    append("client_id", azureAppClientId)
+                    append("client_secret", azureAppClientSecret)
+                    append("scope", scope)
+                    append("grant_type", "client_credentials")
+                },
+            )
+            ?.toAzureAdV2Token()
     }
 
     private suspend fun getAccessToken(
         formParameters: Parameters,
     ): AzureAdV2TokenResponse? {
         return try {
-            val response: HttpResponse = httpClient.post(azureTokenEndpoint) {
-                accept(ContentType.Application.Json)
-                setBody(FormDataContent(formParameters))
-            }.also { securelog.info("azure reponse status: ${it.status}") }
+            val response: HttpResponse =
+                httpClient
+                    .post(azureTokenEndpoint) {
+                        accept(ContentType.Application.Json)
+                        setBody(FormDataContent(formParameters))
+                    }
+                    .also { securelog.info("azure reponse status: ${it.status}") }
 
             response.body<AzureAdV2TokenResponse>()
         } catch (e: ClientRequestException) {

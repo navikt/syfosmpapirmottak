@@ -13,7 +13,8 @@ data class Environment(
     val oppgaveScope: String = getEnvVar("OPPGAVE_SCOPE"),
     val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL"),
     val helsenettproxyScope: String = getEnvVar("HELSENETT_SCOPE"),
-    val syfosmpapirregelUrl: String = getEnvVar("SYFOSMPAPIRREGLER_URL", "http://syfosmpapirregler"),
+    val syfosmpapirregelUrl: String =
+        getEnvVar("SYFOSMPAPIRREGLER_URL", "http://syfosmpapirregler"),
     val syfosmpapirregelScope: String = getEnvVar("SYFOSMPAPIRREGLER_SCOPE"),
     val dokArkivUrl: String = getEnvVar("DOK_ARKIV_URL"),
     val dokArkivScope: String = getEnvVar("DOK_ARKIV_SCOPE"),
@@ -31,4 +32,5 @@ data class Environment(
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
-    System.getenv(varName) ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")
+    System.getenv(varName)
+        ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")

@@ -29,12 +29,13 @@ class BehandlingService(
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
 
-            if (journalfoeringEvent.temaNytt.toString() == "SYM" &&
-                (journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" || journalfoeringEvent.mottaksKanal.toString() == "SKAN_IM") &&
-                (
-                    journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" ||
-                        journalfoeringEvent.hendelsesType.toString() == "JournalpostMottatt" || journalfoeringEvent.hendelsesType.toString() == "TemaEndret"
-                    )
+            if (
+                journalfoeringEvent.temaNytt.toString() == "SYM" &&
+                    (journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" ||
+                        journalfoeringEvent.mottaksKanal.toString() == "SKAN_IM") &&
+                    (journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" ||
+                        journalfoeringEvent.hendelsesType.toString() == "JournalpostMottatt" ||
+                        journalfoeringEvent.hendelsesType.toString() == "TemaEndret")
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
@@ -49,8 +50,11 @@ class BehandlingService(
                     log.info("Mottatt endret journalpost {}", fields(loggingMeta))
                 }
 
-                val journalpostMetadata = safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
-                    ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
+                val journalpostMetadata =
+                    safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
+                        ?: throw IllegalStateException(
+                            "Unable to find journalpost with id $journalpostId"
+                        )
 
                 if (journalpostMetadata.dokumentInfoId == null) {
                     PAPIRSM_MOTTATT_UTEN_OCR.inc()
@@ -61,16 +65,20 @@ class BehandlingService(
                 ocrDebugLog(journalpostId, journalpostMetadata, journalfoeringEvent)
 
                 if (journalpostMetadata.jpErIkkeJournalfort) {
-                    val pasient = journalpostMetadata.bruker.let {
-                        if (it.id.isNullOrEmpty() || it.type.isNullOrEmpty()) {
-                            log.info("Mottatt papirsykmelding der bruker mangler, {}", fields(loggingMeta))
-                            null
-                        } else {
-                            hentBrukerIdFraJournalpost(journalpostMetadata)?.let { ident ->
-                                pdlPersonService.getPdlPerson(ident, loggingMeta)
+                    val pasient =
+                        journalpostMetadata.bruker.let {
+                            if (it.id.isNullOrEmpty() || it.type.isNullOrEmpty()) {
+                                log.info(
+                                    "Mottatt papirsykmelding der bruker mangler, {}",
+                                    fields(loggingMeta)
+                                )
+                                null
+                            } else {
+                                hentBrukerIdFraJournalpost(journalpostMetadata)?.let { ident ->
+                                    pdlPersonService.getPdlPerson(ident, loggingMeta)
+                                }
                             }
                         }
-                    }
 
                     if (journalpostMetadata.gjelderUtland) {
                         utenlandskSykmeldingService.behandleUtenlandskSykmelding(
@@ -94,7 +102,11 @@ class BehandlingService(
                         )
                     }
                 } else {
-                    log.info("Journalpost med id {} er allerede journalført, {}", journalpostId, fields(loggingMeta))
+                    log.info(
+                        "Journalpost med id {} er allerede journalført, {}",
+                        journalpostId,
+                        fields(loggingMeta)
+                    )
                 }
                 val currentRequestLatency = requestLatency.observeDuration()
 
@@ -112,24 +124,31 @@ class BehandlingService(
         journalpostMetadata: JournalpostMetadata,
         journalfoeringEvent: JournalfoeringHendelseRecord,
     ) {
-        // Midlertidig logging for å lettere kunne grave i sykmeldinger som ikke blir OCR-tolket riktig
-        val harOcr = when (journalpostMetadata.dokumentInfoId != null) {
-            true -> "har OCR"
-            false -> "har ikke OCR"
-        }
-        val innlandUtland = when (journalpostMetadata.gjelderUtland) {
-            true -> "utland"
-            false -> "innland"
-        }
+        // Midlertidig logging for å lettere kunne grave i sykmeldinger som ikke blir OCR-tolket
+        // riktig
+        val harOcr =
+            when (journalpostMetadata.dokumentInfoId != null) {
+                true -> "har OCR"
+                false -> "har ikke OCR"
+            }
+        val innlandUtland =
+            when (journalpostMetadata.gjelderUtland) {
+                true -> "utland"
+                false -> "innland"
+            }
 
-        log.info("Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId")
+        log.info(
+            "Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId"
+        )
     }
 
     private fun hentBrukerIdFraJournalpost(
         journalpost: JournalpostMetadata,
     ): String? {
         val bruker = journalpost.bruker
-        val brukerId = bruker.id ?: throw IllegalStateException("Journalpost mangler brukerid, skal ikke kunne skje")
+        val brukerId =
+            bruker.id
+                ?: throw IllegalStateException("Journalpost mangler brukerid, skal ikke kunne skje")
         return if (bruker.type == "AKTOERID" || bruker.type == "FNR") {
             brukerId
         } else {

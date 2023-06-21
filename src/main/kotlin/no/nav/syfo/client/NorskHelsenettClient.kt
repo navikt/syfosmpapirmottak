@@ -9,9 +9,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.NotFound
+import java.io.IOException
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.log
-import java.io.IOException
 
 class NorskHelsenettClient(
     private val endpointUrl: String,
@@ -28,22 +28,28 @@ class NorskHelsenettClient(
             throw RuntimeException("Klarte ikke hente ut accesstoken for Saf")
         }
 
-        val httpResponse: HttpResponse = httpClient.get("$endpointUrl/api/v2/behandlerMedHprNummer") {
-            accept(ContentType.Application.Json)
+        val httpResponse: HttpResponse =
+            httpClient.get("$endpointUrl/api/v2/behandlerMedHprNummer") {
+                accept(ContentType.Application.Json)
 
-            headers {
-                append("Authorization", "Bearer ${accessToken.accessToken}")
-                append("Nav-CallId", sykmeldingId)
-                append("hprNummer", hprNummer)
+                headers {
+                    append("Authorization", "Bearer ${accessToken.accessToken}")
+                    append("Nav-CallId", sykmeldingId)
+                    append("hprNummer", hprNummer)
+                }
             }
-        }
         return when (httpResponse.status) {
             HttpStatusCode.InternalServerError -> {
-                log.error("Syfohelsenettproxy svarte med feilmelding for sykmeldingId {}", sykmeldingId)
+                log.error(
+                    "Syfohelsenettproxy svarte med feilmelding for sykmeldingId {}",
+                    sykmeldingId
+                )
                 throw IOException("Syfohelsenettproxy svarte med feilmelding for $sykmeldingId")
             }
             NotFound -> {
-                log.warn("Fant ikke behandler for HprNummer $hprNummer for sykmeldingId $sykmeldingId")
+                log.warn(
+                    "Fant ikke behandler for HprNummer $hprNummer for sykmeldingId $sykmeldingId"
+                )
                 null
             }
             else -> {

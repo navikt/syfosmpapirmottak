@@ -14,7 +14,18 @@ suspend fun handleOk(
     journalpostid: String,
     loggingMeta: LoggingMeta,
 ) {
-    dokArkivClient.oppdaterOgFerdigstillJournalpost(journalpostId = journalpostid, fnr = receivedSykmelding.personNrPasient, sykmeldingId = sykmeldingId, behandler = receivedSykmelding.sykmelding.behandler, loggingMeta = loggingMeta)
+    dokArkivClient.oppdaterOgFerdigstillJournalpost(
+        journalpostId = journalpostid,
+        fnr = receivedSykmelding.personNrPasient,
+        sykmeldingId = sykmeldingId,
+        behandler = receivedSykmelding.sykmelding.behandler,
+        loggingMeta = loggingMeta
+    )
 
-    sendReceivedSykmeldingToKafka(kafkaReceivedSykmeldingProducer, okSykmeldingTopic, receivedSykmelding, loggingMeta)
+    sendReceivedSykmeldingToKafka(
+        kafkaReceivedSykmeldingProducer,
+        okSykmeldingTopic,
+        receivedSykmelding,
+        loggingMeta
+    )
 }

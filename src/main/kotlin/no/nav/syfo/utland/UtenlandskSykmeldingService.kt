@@ -10,6 +10,7 @@ import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.util.LoggingMeta
 
 const val NAV_OSLO = "0393"
+
 class UtenlandskSykmeldingService(
     private val oppgaveService: OppgaveService,
     private val sykDigProducer: SykDigProducer,
@@ -27,22 +28,31 @@ class UtenlandskSykmeldingService(
         PAPIRSM_MOTTATT_UTLAND.inc()
 
         if (pasient?.aktorId == null || pasient.fnr == null) {
-            oppgaveService.opprettFordelingsOppgave(journalpostId = journalpostId, gjelderUtland = true, trackingId = sykmeldingId, loggingMeta = loggingMeta)
-        } else {
-            val oppgave = oppgaveService.opprettOppgave(
-                aktoerIdPasient = pasient.aktorId,
+            oppgaveService.opprettFordelingsOppgave(
                 journalpostId = journalpostId,
                 gjelderUtland = true,
                 trackingId = sykmeldingId,
-                loggingMeta = loggingMeta,
+                loggingMeta = loggingMeta
             )
+        } else {
+            val oppgave =
+                oppgaveService.opprettOppgave(
+                    aktoerIdPasient = pasient.aktorId,
+                    journalpostId = journalpostId,
+                    gjelderUtland = true,
+                    trackingId = sykmeldingId,
+                    loggingMeta = loggingMeta,
+                )
             oppgave?.let {
                 log.info(
                     "Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}, " +
                         "antall dokumenter: ${dokumenter.size}",
                 )
             }
-            if (oppgave?.oppgaveId != null && behandlesISykDig(oppgave.tildeltEnhetsnr, oppgave.oppgaveId, loggingMeta)) {
+            if (
+                oppgave?.oppgaveId != null &&
+                    behandlesISykDig(oppgave.tildeltEnhetsnr, oppgave.oppgaveId, loggingMeta)
+            ) {
                 sykDigProducer.send(
                     sykmeldingId,
                     DigitaliseringsoppgaveKafka(
@@ -60,13 +70,23 @@ class UtenlandskSykmeldingService(
         }
     }
 
-    fun behandlesISykDig(tildeltEnhetsnr: String?, oppgaveId: Int, loggingMeta: LoggingMeta): Boolean {
+    fun behandlesISykDig(
+        tildeltEnhetsnr: String?,
+        oppgaveId: Int,
+        loggingMeta: LoggingMeta
+    ): Boolean {
         return if (cluster == "dev-gcp") {
-            log.info("Sender utenlandsk sykmelding til syk-dig i dev med oppgaveId: $oppgaveId {}", fields(loggingMeta))
+            log.info(
+                "Sender utenlandsk sykmelding til syk-dig i dev med oppgaveId: $oppgaveId {}",
+                fields(loggingMeta)
+            )
             true
         } else {
             if (tildeltEnhetsnr == NAV_OSLO) {
-                log.info("Sender utenlandsk sykmelding til syk-dig med oppgaveId: $oppgaveId {}", fields(loggingMeta))
+                log.info(
+                    "Sender utenlandsk sykmelding til syk-dig med oppgaveId: $oppgaveId {}",
+                    fields(loggingMeta)
+                )
                 true
             } else {
                 false
