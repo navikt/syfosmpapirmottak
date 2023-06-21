@@ -41,6 +41,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.apollographql.apollo") version "2.5.14"
     id("org.jmailen.kotlinter") version "3.15.0"
+    id("org.cyclonedx.bom") version "1.7.4"
 }
 
 buildscript {
