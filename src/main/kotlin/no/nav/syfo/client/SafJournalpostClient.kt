@@ -3,12 +3,14 @@ package no.nav.syfo.client
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.time.LocalDateTime
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
+import no.nav.syfo.objectMapper
 import no.nav.syfo.util.LoggingMeta
 
 class SafJournalpostClient(
@@ -35,6 +37,21 @@ class SafJournalpostClient(
                         journalpostId = journalpostId,
                     ),
             )
+
+        // TMP debug
+        val response: HttpResponse =
+            httpClient
+                .post(basePath) {
+                    setBody(findJournalpostRequest)
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${accessToken.accessToken}")
+                        append("X-Correlation-ID", journalpostId)
+                        append(HttpHeaders.ContentType, "application/json")
+                    }
+                }
+                .body()
+
+        log.info(objectMapper.writeValueAsString("Response from saf: $response"))
 
         val findJournalpostResponse =
             httpClient
