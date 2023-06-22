@@ -71,8 +71,8 @@ class SafJournalpostClient(
             JournalpostMetadata(
                 bruker =
                     no.nav.syfo.domain.Bruker(
-                        it.bruker.id,
-                        it.bruker.type?.name,
+                        it.bruker?.id,
+                        it.bruker?.type?.name,
                     ),
                 dokumentInfoId = dokumentId,
                 jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus),
@@ -243,7 +243,7 @@ data class FindJournalpostResponse(
 
 data class Journalpost(
     val avsenderMottaker: AvsenderMottaker?,
-    val bruker: Bruker,
+    val bruker: Bruker?,
     val datoOpprettet: String?,
     val dokumenter: List<Dokument>,
     val journalposttype: String,
