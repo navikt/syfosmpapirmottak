@@ -177,7 +177,7 @@ fun main() {
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
     val safJournalpostClient =
-        SafJournalpostClient(httpClient, "${env.safV1Url}/graphql", azureAdV2Client, env.safScope)
+        SafJournalpostClient(httpClient, env.safV1Url, azureAdV2Client, env.safScope)
     val safDokumentClient =
         SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClient)
     val oppgaveClient =

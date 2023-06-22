@@ -54,7 +54,7 @@ class BehandlingService(
                     SafJournalpostClient::class
                         .java
                         .getResource("/graphql/findJournalpost.graphql")!!
-                        .readText()
+                        .readText().replace(Regex("[\n\t]"), "")
 
                 val journalpostMetadata =
                     safJournalpostClient.getJournalpostMetadata(
