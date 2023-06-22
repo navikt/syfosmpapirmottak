@@ -37,14 +37,33 @@ class SafJournalpostClient(
             )
 
         val findJournalpostResponse =
-            getGraphQLResponse(
-                findJournalpostRequest,
-                accessToken.accessToken,
-                journalpostId,
-            )
-                as FindJournalpostResponse
+            httpClient
+                .post(basePath) {
+                    setBody(findJournalpostRequest)
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${accessToken.accessToken}")
+                        append("X-Correlation-ID", journalpostId)
+                        append(HttpHeaders.ContentType, "application/json")
+                    }
+                }
+                .body<GraphQLResponse<FindJournalpostResponse>?>()
 
-        val journalpost = findJournalpostResponse.journalpost
+        if (findJournalpostResponse == null) {
+            log.error("Kall til SAF feilet for $journalpostId")
+            return null
+        }
+        if (findJournalpostResponse.errors != null) {
+            findJournalpostResponse.errors.forEach { log.error("Saf kastet error: {} ", it) }
+            return null
+        }
+
+        if (findJournalpostResponse.data.journalpost.journalstatus == null) {
+            log.error("Klarte ikke hente data fra SAF {}", journalpostId)
+            return null
+        }
+
+        val journalpost = findJournalpostResponse.data.journalpost
+
         val dokumentId: String? = finnDokumentIdForOcr(journalpost.dokumenter, loggingMeta)
         return journalpost.let {
             val dokumenter = finnDokumentIdForPdf(journalpost.dokumenter, loggingMeta)
@@ -71,22 +90,29 @@ class SafJournalpostClient(
         }
             ?: false
     }
-
-    private suspend inline fun <reified R> getGraphQLResponse(
-        graphQlBody: Any,
-        token: String,
-        correlationId: String
-    ): R {
-        return httpClient
-            .post(basePath) {
-                setBody(graphQlBody)
-                header(HttpHeaders.Authorization, "Bearer $token")
-                header(HttpHeaders.ContentType, "application/json")
-                header("X-Correlation-ID", correlationId)
-            }
-            .body()
-    }
 }
+
+data class GraphQLResponse<T>(
+    val data: T,
+    val errors: List<ResponseError>?,
+)
+
+data class ResponseError(
+    val message: String?,
+    val locations: List<ErrorLocation>?,
+    val path: List<String>?,
+    val extensions: ErrorExtension?,
+)
+
+data class ErrorLocation(
+    val line: String?,
+    val column: String?,
+)
+
+data class ErrorExtension(
+    val code: String?,
+    val classification: String?,
+)
 
 fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta): LocalDateTime? {
     dateTime?.let {
