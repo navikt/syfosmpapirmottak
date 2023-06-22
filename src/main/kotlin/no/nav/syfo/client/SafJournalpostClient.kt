@@ -38,21 +38,6 @@ class SafJournalpostClient(
                     ),
             )
 
-        // TMP debug
-        val response: HttpResponse =
-            httpClient
-                .post(basePath) {
-                    setBody(findJournalpostRequest)
-                    headers {
-                        append(HttpHeaders.Authorization, "Bearer ${accessToken.accessToken}")
-                        append("X-Correlation-ID", journalpostId)
-                        append(HttpHeaders.ContentType, "application/json")
-                    }
-                }
-                .body()
-
-        log.info(objectMapper.writeValueAsString("Response from saf: $response"))
-
         val findJournalpostResponse =
             httpClient
                 .post(basePath) {
