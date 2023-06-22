@@ -242,7 +242,7 @@ data class FindJournalpostResponse(
 )
 
 data class Journalpost(
-    val avsenderMottaker: AvsenderMottaker,
+    val avsenderMottaker: AvsenderMottaker?,
     val bruker: Bruker,
     val datoOpprettet: String?,
     val dokumenter: List<Dokument>,
