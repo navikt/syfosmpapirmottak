@@ -34,7 +34,7 @@ class SafJournalpostClient(
                 query = findJournalpostGraphQlQuery,
                 variables =
                     Variables(
-                        journalpostId = journalpostId,
+                        id = journalpostId,
                     ),
             )
 
@@ -252,7 +252,7 @@ fun sykmeldingGjelderUtland(
 
 data class FindJournalpostRequest(val query: String, val variables: Variables)
 
-data class Variables(val journalpostId: String)
+data class Variables(val id: String)
 
 data class FindJournalpostResponse(
     val journalpost: Journalpost,
