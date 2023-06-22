@@ -2,8 +2,6 @@ query FindJournalpost($id: String!) {
     journalpost(journalpostId: $id) {
         avsenderMottaker {
             id
-        }
-        avsenderMottaker {
             navn
         }
         bruker {

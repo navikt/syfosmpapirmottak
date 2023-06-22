@@ -1,12 +1,10 @@
 package no.nav.syfo.client
 
-import FindJournalpostQuery
 import io.kotest.core.spec.style.FunSpec
 import java.time.Month
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
-import type.Variantformat
 
 class SafJournalpostClientSpek :
     FunSpec({
@@ -14,34 +12,23 @@ class SafJournalpostClientSpek :
 
         context("finnDokumentIdForOcr fungerer som den skal") {
             test("Henter riktig dokumentId for happy-case") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> =
+                val dokumentListe: List<Dokument> =
                     listOf(
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
-                            "dokumentInfoIdArkiv",
+                            "dokumentinfo",
                             "brevkode",
                             listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ARKIV
-                                )
-                            ),
+                                Dokumentvarianter(Variantformat.ARKIV),
+                            )
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             "brevkode",
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ORIGINAL
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoId",
                             "brevkode",
@@ -55,7 +42,7 @@ class SafJournalpostClientSpek :
             }
 
             test("Returnerer null hvis dokumentListe er tom") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> = emptyList()
+                val dokumentListe: List<Dokument> = emptyList()
 
                 val dokumentId = finnDokumentIdForOcr(dokumentListe, loggingMetadata)
 
@@ -71,34 +58,21 @@ class SafJournalpostClientSpek :
 
         context("finnDokumentIdForPdf fungerer som den skal") {
             test("Henter riktig dokumentId for happy-case") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> =
+                val dokumentListe: List<Dokument> =
                     listOf(
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             "brevkode",
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ARKIV
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             "brevkode",
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ORIGINAL
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoId",
                             "brevkode",
@@ -112,7 +86,7 @@ class SafJournalpostClientSpek :
             }
 
             test("Kaster feil hvis dokumentListe er tom") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> = emptyList()
+                val dokumentListe: List<Dokument> = emptyList()
 
                 assertFailsWith<RuntimeException> {
                     finnDokumentIdForPdf(dokumentListe, loggingMetadata)
@@ -151,41 +125,27 @@ class SafJournalpostClientSpek :
 
         context("sykmeldingGjelderUtland gir riktig resultat") {
             test("Returnerer true hvis brevkoden er utland") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> =
+                val dokumentListe: List<Dokument> =
                     listOf(
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             BREVKODE_UTLAND,
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ARKIV
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             BREVKODE_UTLAND,
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ORIGINAL
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoId",
                             BREVKODE_UTLAND,
                             emptyList(),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "annenDokumentInfoId",
                             "brevkode",
@@ -204,41 +164,27 @@ class SafJournalpostClientSpek :
             }
 
             test("Returnerer true hvis brevkoden er gammel kode for utland") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> =
+                val dokumentListe: List<Dokument> =
                     listOf(
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             GAMMEL_BREVKODE_UTLAND,
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ARKIV
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             GAMMEL_BREVKODE_UTLAND,
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ORIGINAL
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoId",
                             GAMMEL_BREVKODE_UTLAND,
                             emptyList(),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "annenDokumentInfoId",
                             "brevkode",
@@ -257,41 +203,27 @@ class SafJournalpostClientSpek :
             }
 
             test("Returnerer false hvis brevkoden ikke er utland") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> =
+                val dokumentListe: List<Dokument> =
                     listOf(
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             BREVKODE_UTLAND,
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ARKIV
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             "NAV-skjema",
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ORIGINAL
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoId",
                             "annen brevkode",
                             emptyList(),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "annenDokumentInfoId",
                             "brevkode",
@@ -316,29 +248,21 @@ class SafJournalpostClientSpek :
             }
 
             test("Returnerer true hvis brevkoden er utland og OCR-dokument mangler") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> =
+                val dokumentListe: List<Dokument> =
                     listOf(
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             "annenBrevkode",
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ARKIV
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoId",
                             BREVKODE_UTLAND,
                             emptyList(),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "annenDokumentInfoId",
                             "brevkode",
@@ -353,29 +277,21 @@ class SafJournalpostClientSpek :
             }
 
             test("Returnerer false hvis brevkoden ikke er utland og OCR-dokument mangler") {
-                val dokumentListe: List<FindJournalpostQuery.Dokumenter> =
+                val dokumentListe: List<Dokument> =
                     listOf(
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             "annenBrevkode",
-                            listOf(
-                                FindJournalpostQuery.Dokumentvarianter(
-                                    "dokumentvariant",
-                                    Variantformat.ARKIV
-                                )
-                            ),
+                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "dokumentInfoId",
                             "brevkode",
                             emptyList(),
                         ),
-                        FindJournalpostQuery.Dokumenter(
-                            "dokumentinfo",
+                        Dokument(
                             "test-tittel",
                             "annenDokumentInfoId",
                             "brevkode",

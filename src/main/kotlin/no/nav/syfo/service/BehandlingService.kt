@@ -50,8 +50,19 @@ class BehandlingService(
                     log.info("Mottatt endret journalpost {}", fields(loggingMeta))
                 }
 
+                val findJournalpostGraphQlQuery =
+                    SafJournalpostClient::class
+                        .java
+                        .getResource("/graphql/findJournalpost.graphql")!!
+                        .readText()
+                        .replace(Regex("[\n\t]"), "")
+
                 val journalpostMetadata =
-                    safJournalpostClient.getJournalpostMetadata(journalpostId, loggingMeta)
+                    safJournalpostClient.getJournalpostMetadata(
+                        journalpostId,
+                        findJournalpostGraphQlQuery,
+                        loggingMeta
+                    )
                         ?: throw IllegalStateException(
                             "Unable to find journalpost with id $journalpostId"
                         )

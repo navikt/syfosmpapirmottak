@@ -9,6 +9,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.NotFound
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import javax.xml.bind.JAXBException
 import javax.xml.parsers.SAXParserFactory
@@ -22,7 +23,6 @@ import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.skanningMetadataUnmarshaller
 import org.xml.sax.InputSource
-import java.io.ByteArrayInputStream
 
 class SafDokumentClient(
     private val url: String,
@@ -88,7 +88,9 @@ class SafDokumentClient(
     }
 }
 
-private fun safeUnmarshalSkanningmetadata(inputMessageText: ByteArrayInputStream): Skanningmetadata {
+private fun safeUnmarshalSkanningmetadata(
+    inputMessageText: ByteArrayInputStream
+): Skanningmetadata {
     // Disable XXE
     val spf: SAXParserFactory = SAXParserFactory.newInstance()
     spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
