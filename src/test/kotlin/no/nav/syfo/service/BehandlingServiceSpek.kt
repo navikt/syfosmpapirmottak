@@ -46,7 +46,7 @@ class BehandlingServiceSpek :
 
             coEvery { pdlService.getPdlPerson(any(), any()) } returns
                 PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorid", null)
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any(), any()) } returns
                 JournalpostMetadata(
                     bruker = Bruker("fnr", "FNR"),
                     dokumentInfoId = null,
@@ -91,7 +91,9 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -126,7 +128,9 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -162,7 +166,9 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -191,7 +197,9 @@ class BehandlingServiceSpek :
             test("Ende-til-ende journalpost med aktorId") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
@@ -208,7 +216,9 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify { pdlService.getPdlPerson("aktorId", any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -237,7 +247,9 @@ class BehandlingServiceSpek :
             test("Ende-til-ende journalpost med fnr for utlandssykmelding") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker("fnr", "FNR"),
                         dokumentInfoId = null,
@@ -254,7 +266,9 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify(exactly = 0) {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -283,7 +297,9 @@ class BehandlingServiceSpek :
             test("Ende-til-ende journalpost med aktørid for utlandssykmelding") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
@@ -300,7 +316,9 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify { pdlService.getPdlPerson(eq("aktorId"), any()) }
                 coVerify(exactly = 0) {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -329,8 +347,9 @@ class BehandlingServiceSpek :
             test("Kaster feil hvis journalpost mangler") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
-                    null
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns null
 
                 assertFailsWith<TrackableException> {
                     runBlocking {
@@ -342,7 +361,9 @@ class BehandlingServiceSpek :
                     }
                 }
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify {
                     listOf(
                         pdlService,
@@ -355,7 +376,9 @@ class BehandlingServiceSpek :
             test("Sender null som fnr og aktørid hvis journalpost mangler brukerid") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker(null, "type"),
                         dokumentInfoId = null,
@@ -390,7 +413,9 @@ class BehandlingServiceSpek :
             test("Sender null som fnr og aktørid hvis journalpost mangler brukertype") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker("id", null),
                         dokumentInfoId = null,
@@ -451,7 +476,9 @@ class BehandlingServiceSpek :
             test("Sender fnr==null hvis ikke kan hente fnr fra PDL") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
@@ -494,7 +521,9 @@ class BehandlingServiceSpek :
             test("Feiler uten å opprette oppgave hvis PDL svarer med feilmelding") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
@@ -525,7 +554,9 @@ class BehandlingServiceSpek :
             test("Behandler ikke melding hvis journalpost allerede er journalført") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                coEvery {
+                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
+                } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
@@ -542,7 +573,9 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
+                coVerify {
+                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
+                }
                 coVerify {
                     listOf(
                         pdlService,

@@ -1,45 +1,25 @@
 package no.nav.syfo.client
 
-import FindJournalpostQuery
-import com.apollographql.apollo.ApolloCall
-import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.ApolloQueryCall
-import com.apollographql.apollo.api.Response
-import com.apollographql.apollo.exception.ApolloException
-import com.apollographql.apollo.request.RequestHeaders
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import java.time.LocalDateTime
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
-import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
 
-suspend fun <T> ApolloQueryCall<T>.execute() =
-    suspendCoroutine<Response<T>> { cont ->
-        enqueue(
-            object : ApolloCall.Callback<T>() {
-                override fun onResponse(response: Response<T>) {
-                    cont.resume(response)
-                }
-
-                override fun onFailure(e: ApolloException) {
-                    cont.resumeWithException(e)
-                }
-            }
-        )
-    }
-
 class SafJournalpostClient(
-    private val apolloClient: ApolloClient,
+    private val httpClient: HttpClient,
+    private val basePath: String,
     private val accessTokenClientV2: AzureAdV2Client,
     private val scope: String,
 ) {
     suspend fun getJournalpostMetadata(
         journalpostId: String,
+        findJournalpostGraphQlQuery: String,
         loggingMeta: LoggingMeta,
     ): JournalpostMetadata? {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
@@ -47,47 +27,64 @@ class SafJournalpostClient(
             throw RuntimeException("Klarte ikke hente ut accesstoken for Saf")
         }
 
-        val journalpost =
-            apolloClient
-                .query(
-                    FindJournalpostQuery.builder().id(journalpostId).build(),
-                )
-                .toBuilder()
-                .requestHeaders(
-                    RequestHeaders.builder()
-                        .addHeader("Authorization", "Bearer ${accessToken.accessToken}")
-                        .addHeader("X-Correlation-ID", journalpostId)
-                        .build(),
-                )
-                .build()
-                .execute()
-                .data
-                ?.journalpost()
-        val dokumentId: String? = finnDokumentIdForOcr(journalpost?.dokumenter(), loggingMeta)
-        return journalpost?.let {
-            val dokumenter = finnDokumentIdForPdf(journalpost.dokumenter(), loggingMeta)
+        val findJournalpostRequest =
+            FindJournalpostRequest(
+                query = findJournalpostGraphQlQuery,
+                variables =
+                    Variables(
+                        journalpostId = journalpostId,
+                    ),
+            )
+
+        val findJournalpostResponse =
+            getGraphQLResponse(
+                findJournalpostRequest,
+                accessToken.accessToken,
+                journalpostId,
+            )
+                as FindJournalpostResponse
+
+        val journalpost = findJournalpostResponse.journalpost
+        val dokumentId: String? = finnDokumentIdForOcr(journalpost.dokumenter, loggingMeta)
+        return journalpost.let {
+            val dokumenter = finnDokumentIdForPdf(journalpost.dokumenter, loggingMeta)
 
             JournalpostMetadata(
                 bruker =
-                    Bruker(
-                        it.bruker()?.id(),
-                        it.bruker()?.type()?.name,
+                    no.nav.syfo.domain.Bruker(
+                        it.bruker.id,
+                        it.bruker.type?.name,
                     ),
                 dokumentInfoId = dokumentId,
-                jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus()),
-                gjelderUtland = sykmeldingGjelderUtland(it.dokumenter(), dokumentId, loggingMeta),
-                datoOpprettet = dateTimeStringTilLocalDateTime(it.datoOpprettet(), loggingMeta),
+                jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus),
+                gjelderUtland = sykmeldingGjelderUtland(it.dokumenter, dokumentId, loggingMeta),
+                datoOpprettet = dateTimeStringTilLocalDateTime(it.datoOpprettet, loggingMeta),
                 dokumentInfoIdPdf = dokumenter.first().dokumentInfoId,
                 dokumenter = dokumenter,
             )
         }
     }
 
-    private fun erIkkeJournalfort(journalstatus: type.Journalstatus?): Boolean {
+    private fun erIkkeJournalfort(journalstatus: Journalstatus?): Boolean {
         return journalstatus?.name?.let {
             it.equals("MOTTATT", true) || it.equals("FEILREGISTRERT", true)
         }
             ?: false
+    }
+
+    private suspend inline fun <reified R> getGraphQLResponse(
+        graphQlBody: Any,
+        token: String,
+        correlationId: String
+    ): R {
+        return httpClient
+            .post(basePath) {
+                setBody(graphQlBody)
+                header(HttpHeaders.Authorization, "Bearer $token")
+                header(HttpHeaders.ContentType, "application/json")
+                header("X-Correlation-ID", correlationId)
+            }
+            .body()
     }
 }
 
@@ -99,7 +96,7 @@ fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta):
             log.error(
                 "Journalpost har ikke en gyldig datoOpprettet {}, {}",
                 e.message,
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             null
         }
@@ -108,15 +105,12 @@ fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta):
     return null
 }
 
-fun finnDokumentIdForOcr(
-    dokumentListe: List<FindJournalpostQuery.Dokumenter>?,
-    loggingMeta: LoggingMeta
-): String? {
+fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMeta): String? {
     dokumentListe?.forEach { dokument ->
-        dokument.dokumentvarianter().forEach {
-            if (it.variantformat().name == "ORIGINAL") {
+        dokument.dokumentvarianter.forEach {
+            if (it.variantformat.name == "ORIGINAL") {
                 log.info("Fant OCR-dokument {}", fields(loggingMeta))
-                return dokument.dokumentInfoId()
+                return dokument.dokumentInfoId
             }
         }
     }
@@ -130,25 +124,25 @@ data class DokumentMedTittel(
 )
 
 fun finnDokumentIdForPdf(
-    dokumentListe: List<FindJournalpostQuery.Dokumenter>?,
+    dokumentListe: List<Dokument>?,
     loggingMeta: LoggingMeta,
 ): List<DokumentMedTittel> {
     val dokumenter =
         dokumentListe
             ?.filter {
-                it.dokumentvarianter().any { variant -> variant.variantformat().name == "ARKIV" }
+                it.dokumentvarianter.any { variant -> variant.variantformat.name == "ARKIV" }
             }
             ?.map { dokument ->
                 DokumentMedTittel(
-                    tittel = dokument.tittel() ?: "Dokument uten tittel",
-                    dokumentInfoId = dokument.dokumentInfoId(),
+                    tittel = dokument.tittel ?: "Dokument uten tittel",
+                    dokumentInfoId = dokument.dokumentInfoId,
                 )
             }
 
     if (dokumenter.isNullOrEmpty()) {
         log.error("Fant ikke PDF-dokument {}", fields(loggingMeta))
         throw RuntimeException(
-            "Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}"
+            "Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}",
         )
     }
 
@@ -160,7 +154,7 @@ const val BREVKODE_UTLAND: String = "NAV 08-07.04 U"
 const val BREVKODE_NORSK: String = "NAV 08-07.04"
 
 fun sykmeldingGjelderUtland(
-    dokumentListe: List<FindJournalpostQuery.Dokumenter>?,
+    dokumentListe: List<Dokument>?,
     dokumentId: String?,
     loggingMeta: LoggingMeta,
 ): Boolean {
@@ -172,9 +166,9 @@ fun sykmeldingGjelderUtland(
     var brevkode: String? = null
 
     if (dokumentId != null) {
-        val dokumenterMedRiktigId = dokumentListe.filter { it.dokumentInfoId() == dokumentId }
+        val dokumenterMedRiktigId = dokumentListe.filter { it.dokumentInfoId == dokumentId }
         if (dokumenterMedRiktigId.isNotEmpty()) {
-            brevkode = dokumenterMedRiktigId[0].brevkode()
+            brevkode = dokumenterMedRiktigId[0].brevkode
             if (brevkode != BREVKODE_NORSK) {
                 log.warn("Fant OCR-fil med uventet brevkode: $brevkode {}", fields(loggingMeta))
             }
@@ -185,12 +179,12 @@ fun sykmeldingGjelderUtland(
             fields(loggingMeta),
         )
         val inneholderUtlandBrevkode: Boolean =
-            dokumentListe.any { dok -> dok.brevkode() == BREVKODE_UTLAND }
+            dokumentListe.any { dok -> dok.brevkode == BREVKODE_UTLAND }
         if (inneholderUtlandBrevkode) {
             brevkode = BREVKODE_UTLAND
         } else {
             val inneholderGammelUtlandBrevkode: Boolean =
-                dokumentListe.any { dok -> dok.brevkode() == GAMMEL_BREVKODE_UTLAND }
+                dokumentListe.any { dok -> dok.brevkode == GAMMEL_BREVKODE_UTLAND }
             if (inneholderGammelUtlandBrevkode) {
                 brevkode = GAMMEL_BREVKODE_UTLAND
             }
@@ -200,15 +194,97 @@ fun sykmeldingGjelderUtland(
         log.info(
             "Sykmelding gjelder utenlandsk sykmelding, brevkode: {}, {}",
             brevkode,
-            fields(loggingMeta)
+            fields(loggingMeta),
         )
         true
     } else {
         log.info(
             "Sykmelding gjelder innenlands-sykmelding, brevkode: {}, {}",
             brevkode,
-            fields(loggingMeta)
+            fields(loggingMeta),
         )
         false
     }
+}
+
+data class FindJournalpostRequest(val query: String, val variables: Variables)
+
+data class Variables(val journalpostId: String)
+
+data class FindJournalpostResponse(
+    val journalpost: Journalpost,
+)
+
+data class Journalpost(
+    val avsenderMottaker: AvsenderMottaker,
+    val bruker: Bruker,
+    val datoOpprettet: String?,
+    val dokumenter: List<Dokument>,
+    val journalposttype: String,
+    val journalstatus: Journalstatus?,
+    val kanal: String?,
+    val kanalnavn: String?,
+    val opprettetAvNavn: String?,
+    val sak: Sak?,
+    val skjerming: String?,
+    val tema: String?,
+    val temanavn: String?,
+    val tittel: String?,
+)
+
+enum class Journalstatus {
+    MOTTATT,
+    JOURNALFOERT,
+    FERDIGSTILT,
+    EKSPEDERT,
+    UNDER_ARBEID,
+    FEILREGISTRERT,
+    UTGAAR,
+    AVBRUTT,
+    UKJENT_BRUKER,
+    RESERVERT,
+    OPPLASTING_DOKUMENT,
+    UKJENT,
+}
+
+data class Sak(
+    val fagsakId: String?,
+    val fagsaksystem: String?,
+    val sakstype: String,
+)
+
+data class Dokument(
+    val tittel: String?,
+    val dokumentInfoId: String,
+    val brevkode: String,
+    val dokumentvarianter: List<Dokumentvarianter>,
+)
+
+data class Dokumentvarianter(
+    val variantformat: Variantformat,
+)
+
+enum class Variantformat {
+    ARKIV,
+    FULLVERSJON,
+    PRODUKSJON,
+    PRODUKSJON_DLF,
+    SLADDET,
+    ORIGINAL
+}
+
+data class AvsenderMottaker(
+    val id: String,
+    val navn: String,
+)
+
+data class Bruker(
+    val id: String?,
+    val type: BrukerIdType?,
+)
+
+enum class BrukerIdType {
+    AKTOERID,
+    FNR,
+    ORGNR,
 }

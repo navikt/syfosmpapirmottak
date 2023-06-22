@@ -1,6 +1,5 @@
 package no.nav.syfo
 
-import com.apollographql.apollo.ApolloClient
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -177,9 +176,8 @@ fun main() {
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
-    val apolloClient: ApolloClient =
-        ApolloClient.builder().serverUrl("${env.safV1Url}/graphql").build()
-    val safJournalpostClient = SafJournalpostClient(apolloClient, azureAdV2Client, env.safScope)
+    val safJournalpostClient =
+        SafJournalpostClient(httpClient, "${env.safV1Url}/graphql", azureAdV2Client, env.safScope)
     val safDokumentClient =
         SafDokumentClient(env.safV1Url, azureAdV2Client, env.safScope, httpClient)
     val oppgaveClient =
