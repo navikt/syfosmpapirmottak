@@ -3,7 +3,6 @@ package no.nav.syfo.client
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.time.LocalDateTime
 import net.logstash.logback.argument.StructuredArguments.fields
@@ -36,20 +35,6 @@ class SafJournalpostClient(
                         id = journalpostId,
                     ),
             )
-
-        val response =
-            httpClient
-                .post(basePath) {
-                    setBody(findJournalpostRequest)
-                    headers {
-                        append(HttpHeaders.Authorization, "Bearer ${accessToken.accessToken}")
-                        append("X-Correlation-ID", journalpostId)
-                        append(HttpHeaders.ContentType, "application/json")
-                    }
-                }
-                .bodyAsText()
-
-        log.info("Response from saf: $response")
 
         val findJournalpostResponse =
             httpClient
@@ -315,8 +300,8 @@ enum class Variantformat {
 }
 
 data class AvsenderMottaker(
-    val id: String,
-    val navn: String,
+    val id: String?,
+    val navn: String?,
 )
 
 data class Bruker(
