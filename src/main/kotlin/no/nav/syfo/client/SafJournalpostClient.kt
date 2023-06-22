@@ -276,7 +276,7 @@ enum class Journalstatus {
 data class Sak(
     val fagsakId: String?,
     val fagsaksystem: String?,
-    val sakstype: String,
+    val sakstype: String?,
 )
 
 data class Dokument(
