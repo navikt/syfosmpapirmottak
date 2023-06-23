@@ -282,7 +282,7 @@ data class Sak(
 data class Dokument(
     val tittel: String?,
     val dokumentInfoId: String,
-    val brevkode: String,
+    val brevkode: String?,
     val dokumentvarianter: List<Dokumentvarianter>,
 )
 
