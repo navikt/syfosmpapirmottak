@@ -31,7 +31,7 @@ val ioMockVersion = "1.13.5"
 val kotlinVersion = "1.9.0"
 val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.16.0"
-val caffeineVersion = "3.1.6"
+val caffeineVersion = "3.1.7"
 val ktfmtVersion = "0.44"
 
 
