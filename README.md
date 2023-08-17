@@ -77,4 +77,4 @@ This project is maintained by navikt/teamsykmelding
 Questions and/or feature requests? Please create an [issue](https://github.com/navikt/syfosmpapirmottak/issues).
 
 If you work in [@navikt](https://github.com/navikt) you can reach us at the Slack
-channel [#team-sykmelding](https://nav-it.slack.com/archives/CMA3XV997).
+channel [#team-sykmelding](https://nav-it.slack.com/archives/CMA3XV997)
