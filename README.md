@@ -14,6 +14,23 @@ This project contains the receiving a paper sykmelding2013 message
 
 * JDK 17
 
+## FlowChart
+This the high level flow of the application
+```mermaid
+  graph LR
+    papirsykmelding --> Skanner
+    Skanner --> id1(Filområde skannede dokumenter)
+    id1(Filområde skannede dokumenter) --> id2([Skanmot Helse])
+    id2([Skanmot Helse]) --> id3([joark])
+    id3([joark]) --> id4([syfosmpapirmottak])
+    id4([syfosmpapirmottak]) -->|Manuell journalføring| id15([gosys])
+    id15([gosys]) -->|Manuell journalføring| id5([smregistering])
+    id5([smregistering]) -->|Manuell journalført| C[\teamsykmelding.ok-sykmelding/]
+    id4([syfosmpapirmottak]) <--> id6([syfosmpapirregler])
+    id4([syfosmpapirmottak]) -->|Automatisk journalføring| C[\teamsykmelding.ok-sykmelding/]
+    C[\teamsykmelding.ok-sykmelding/] --> id7([syfosmregister]) 
+```
+
 ## Getting started
 ### Getting github-package-registry packages NAV-IT
 Some packages used in this repo is uploaded to the GitHub Package Registry which requires authentication. It can, for example, be solved like this in Gradle:
