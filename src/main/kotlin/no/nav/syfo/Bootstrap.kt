@@ -92,7 +92,7 @@ fun main() {
     DefaultExports.initialize()
 
     val consumerPropertiesAiven =
-        KafkaUtils.getAivenKafkaConfig()
+        KafkaUtils.getAivenKafkaConfig("journalforing-consumer")
             .apply {
                 setProperty(
                     KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
@@ -114,7 +114,7 @@ fun main() {
             }
 
     val producerPropertiesAiven =
-        KafkaUtils.getAivenKafkaConfig()
+        KafkaUtils.getAivenKafkaConfig("syfosmpapirmottak-producer")
             .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
 
     val kafkaProducerReceivedSykmelding =

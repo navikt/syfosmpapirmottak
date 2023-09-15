@@ -8,7 +8,7 @@ version = "1.0.0"
 val coroutinesVersion = "1.7.3"
 val kafkaVersion = "3.5.0"
 val kluentVersion = "1.73"
-val ktorVersion = "2.3.3"
+val ktorVersion = "2.3.4"
 val logbackVersion = "1.4.11"
 val logstashLogbackEncoderVersion = "7.4"
 val prometheusVersion = "0.16.0"
@@ -25,10 +25,10 @@ val commonsTextVersion = "1.10.0"
 val cxfVersion = "3.4.5"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
-val smCommonVersion = "1.0.10"
+val smCommonVersion = "1.0.19"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.7"
-val kotlinVersion = "1.9.0"
+val kotlinVersion = "1.9.10"
 val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.16.0"
 val caffeineVersion = "3.1.8"
@@ -36,10 +36,17 @@ val ktfmtVersion = "0.44"
 
 
 plugins {
-    kotlin("jvm") version "1.9.0"
+    id("application")
+    kotlin("jvm") version "1.9.10"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.diffplug.spotless") version "6.20.0"
-    id("org.cyclonedx.bom") version "1.7.4"
+    id("com.diffplug.spotless") version "6.21.0"
+}
+
+application {
+    mainClass.set("no.nav.syfo.BootstrapKt")
+
+    val isDevelopment: Boolean = project.ext.has("development")
+    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
 val githubUser: String by project
@@ -124,6 +131,7 @@ dependencies {
 
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     testImplementation("io.mockk:mockk:$ioMockVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
@@ -133,27 +141,21 @@ dependencies {
 
 
 tasks {
-    withType<Jar> {
-        manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
-    }
 
-    create("printVersion") {
-        doLast {
-            println(project.version)
-        }
-    }
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
-
-    withType<ShadowJar> {
-        transform(ServiceFileTransformer::class.java) {
-            setPath("META-INF/cxf")
-            include("bus-extensions.txt")
+    shadowJar {
+        archiveBaseName.set("app")
+        archiveClassifier.set("")
+        isZip64 = true
+        manifest {
+            attributes(
+                mapOf(
+                    "Main-Class" to "no.nav.syfo.BootstrapKt",
+                ),
+            )
         }
     }
 
-    withType<Test> {
+   test {
         useJUnitPlatform {
         }
         testLogging {
