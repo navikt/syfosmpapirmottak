@@ -11,6 +11,7 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_OCR
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.pdl.service.PdlPersonService
+import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import no.nav.syfo.utland.UtenlandskSykmeldingService
@@ -28,14 +29,20 @@ class BehandlingService(
     ) {
         wrapExceptions(loggingMeta) {
             val journalpostId = journalfoeringEvent.journalpostId.toString()
+            val temaNytt = journalfoeringEvent.temaNytt.toString()
+            val mottaksKanal = journalfoeringEvent.mottaksKanal.toString()
+            val hendelsesType = journalfoeringEvent.hendelsesType.toString()
+
+            securelog.info(
+                "Journalføring hendelse med journalpostId: $journalpostId og tema: $temaNytt"
+            )
 
             if (
-                journalfoeringEvent.temaNytt.toString() == "SYM" &&
-                    (journalfoeringEvent.mottaksKanal.toString() == "SKAN_NETS" ||
-                        journalfoeringEvent.mottaksKanal.toString() == "SKAN_IM") &&
-                    (journalfoeringEvent.hendelsesType.toString() == "MidlertidigJournalført" ||
-                        journalfoeringEvent.hendelsesType.toString() == "JournalpostMottatt" ||
-                        journalfoeringEvent.hendelsesType.toString() == "TemaEndret")
+                temaNytt == "SYM" &&
+                    (mottaksKanal == "SKAN_NETS" || mottaksKanal == "SKAN_IM") &&
+                    (hendelsesType == "MidlertidigJournalført" ||
+                        hendelsesType == "JournalpostMottatt" ||
+                        hendelsesType == "TemaEndret")
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
@@ -61,10 +68,10 @@ class BehandlingService(
                     safJournalpostClient.getJournalpostMetadata(
                         journalpostId,
                         findJournalpostGraphQlQuery,
-                        loggingMeta
+                        loggingMeta,
                     )
                         ?: throw IllegalStateException(
-                            "Unable to find journalpost with id $journalpostId"
+                            "Unable to find journalpost with id $journalpostId",
                         )
 
                 if (journalpostMetadata.dokumentInfoId == null) {
@@ -81,7 +88,7 @@ class BehandlingService(
                             if (it.id.isNullOrEmpty() || it.type.isNullOrEmpty()) {
                                 log.info(
                                     "Mottatt papirsykmelding der bruker mangler, {}",
-                                    fields(loggingMeta)
+                                    fields(loggingMeta),
                                 )
                                 null
                             } else {
@@ -116,7 +123,7 @@ class BehandlingService(
                     log.info(
                         "Journalpost med id {} er allerede journalført, {}",
                         journalpostId,
-                        fields(loggingMeta)
+                        fields(loggingMeta),
                     )
                 }
                 val currentRequestLatency = requestLatency.observeDuration()
@@ -149,7 +156,7 @@ class BehandlingService(
             }
 
         log.info(
-            "Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId"
+            "Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId",
         )
     }
 
