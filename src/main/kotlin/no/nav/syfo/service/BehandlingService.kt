@@ -52,7 +52,7 @@ class BehandlingService(
                     fields(loggingMeta),
                 )
 
-                if (journalfoeringEvent.hendelsesType.toString() == "TemaEndret") {
+                if (hendelsesType == "TemaEndret") {
                     ENDRET_PAPIRSM_MOTTATT.inc()
                     log.info("Mottatt endret journalpost {}", fields(loggingMeta))
                 }
