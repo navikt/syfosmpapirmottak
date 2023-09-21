@@ -7,11 +7,9 @@ updates:
     open-pull-requests-limit: 10
     ignore:
       - dependency-name: "org.glassfish.jaxb:jaxb-runtime"
-        update-types: ["version-update:semver-minor"]
       - dependency-name: "org.apache.kafka:kafka_2.12"
         update-types: ["version-update:semver-major"]
       - dependency-name: "javax.xml.bind:jaxb-api"
-        update-types: ["version-update:semver-minor"]
     groups:
       dependencies:
         patterns:
