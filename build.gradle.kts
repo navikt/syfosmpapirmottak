@@ -49,8 +49,6 @@ application {
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
-val githubUser: String by project
-val githubPassword: String by project
 
 repositories {
     gradlePluginPortal()
@@ -58,20 +56,7 @@ repositories {
     google()
     maven(url = "https://packages.confluent.io/maven/")
     maven {
-        name = "syfosm-common"
-        url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
-        credentials {
-            username = githubUser
-            password = githubPassword
-        }
-    }
-    maven {
-        name = "syfo-xml-codegen"
-        url = uri("https://maven.pkg.github.com/navikt/syfo-xml-codegen")
-        credentials {
-            username = githubUser
-            password = githubPassword
-        }
+        url = uri("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
     }
 }
 
