@@ -33,6 +33,7 @@ val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.16.0"
 val caffeineVersion = "3.1.8"
 val ktfmtVersion = "0.44"
+val snappyJavaVersion = "1.1.10.5"
 
 
 plugins {
@@ -76,6 +77,11 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
 
     implementation("org.apache.kafka:kafka_2.12:$kafkaVersion")
+    constraints {
+        implementation("org.xerial.snappy:snappy-java:$snappyJavaVersion") {
+            because("override transient from org.apache.kafka:kafka_2.12")
+        }
+    }
     implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
     implementation("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
 
