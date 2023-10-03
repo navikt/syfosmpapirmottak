@@ -11,7 +11,7 @@ data class Environment(
     val safScope: String = getEnvVar("SAF_SCOPE"),
     val oppgavebehandlingUrl: String = getEnvVar("OPPGAVE_URL"),
     val oppgaveScope: String = getEnvVar("OPPGAVE_SCOPE"),
-    val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL"),
+    val norskHelsenettEndpointURL: String = "http://syfohelsenettproxy",
     val helsenettproxyScope: String = getEnvVar("HELSENETT_SCOPE"),
     val syfosmpapirregelUrl: String =
         getEnvVar("SYFOSMPAPIRREGLER_URL", "http://syfosmpapirregler"),

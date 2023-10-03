@@ -46,9 +46,9 @@ spec:
           namespace: teamsykmelding
           cluster: dev-gcp
         - application: smtss
+        - application: syfohelsenettproxy
       external:
         - host: saf.dev-fss-pub.nais.io
-        - host: syfohelsenettproxy.dev-fss-pub.nais.io
         - host: dokarkiv.dev-fss-pub.nais.io
         - host: pdl-api.dev-fss-pub.nais.io
         - host: oppgave-q1.dev-fss-pub.nais.io
@@ -61,10 +61,8 @@ spec:
       value: api://dev-fss.teamdokumenthandtering.saf-q1/.default
     - name: DOK_JOURNALFOERING_AIVEN_TOPIC
       value: teamdokumenthandtering.aapen-dok-journalfoering-q1
-    - name: HELSENETT_ENDPOINT_URL
-      value: https://syfohelsenettproxy.dev-fss-pub.nais.io
     - name: HELSENETT_SCOPE
-      value: api://dev-fss.teamsykmelding.syfohelsenettproxy/.default
+      value: api://dev-gcp.teamsykmelding.syfohelsenettproxy/.default
     - name: SYFOSMPAPIRREGLER_SCOPE
       value: api://dev-gcp.teamsykmelding.syfosmpapirregler/.default
     - name: DOK_ARKIV_URL
