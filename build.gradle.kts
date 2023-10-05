@@ -34,7 +34,7 @@ val commonsCodecVersion = "1.16.0"
 val caffeineVersion = "3.1.8"
 val ktfmtVersion = "0.44"
 val snappyJavaVersion = "1.1.10.5"
-
+val avroVersion = "1.11.3"
 
 plugins {
     id("application")
@@ -83,6 +83,11 @@ dependencies {
         }
     }
     implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
+    constraints {
+        implementation("org.apache.avro:avro:$avroVersion") {
+            because("override transient from io.confluent:kafka-avro-serializer")
+        }
+    }
     implementation("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
 
     implementation("no.nav.helse.xml:xmlfellesformat:$syfoXmlCodegenVersion")
