@@ -28,7 +28,7 @@ val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val smCommonVersion = "2.0.4"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.8"
-val kotlinVersion = "1.9.10"
+val kotlinVersion = "1.9.20"
 val okhttp3Version = "4.11.0"
 val commonsCodecVersion = "1.16.0"
 val caffeineVersion = "3.1.8"
@@ -38,7 +38,7 @@ val avroVersion = "1.11.3"
 
 plugins {
     id("application")
-    kotlin("jvm") version "1.9.10"
+    kotlin("jvm") version "1.9.20"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.diffplug.spotless") version "6.22.0"
 }
