@@ -1,31 +1,27 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 group = "no.nav.syfo"
 version = "1.0.0"
 
 val coroutinesVersion = "1.7.3"
 val kafkaVersion = "3.6.0"
 val kluentVersion = "1.73"
-val ktorVersion = "2.3.5"
+val ktorVersion = "2.3.6"
 val logbackVersion = "1.4.11"
 val logstashLogbackEncoderVersion = "7.4"
 val prometheusVersion = "0.16.0"
-val kotestVersion = "5.7.2"
+val kotestVersion = "5.8.0"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val jacksonVersion = "2.15.3"
 val joarkHendelseVersion = "96ec5ebb"
-val confluentVersion = "7.5.1"
+val confluentVersion = "7.5.2"
 val jettyVersion = "11.0.6"
 val syfoXmlCodegenVersion = "2.0.1"
 val commonsTextVersion = "1.11.0"
 val cxfVersion = "3.4.5"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
-val smCommonVersion = "2.0.5"
+val smCommonVersion = "2.0.6"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.8"
 val kotlinVersion = "1.9.20"
@@ -101,11 +97,13 @@ dependencies {
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
-    implementation("commons-codec:commons-codec:$commonsCodecVersion")// override transient version 1.10
-
+    constraints {
+        implementation("commons-codec:commons-codec:$commonsCodecVersion") {
+            because("override transient from io.ktor:ktor-client-apache")
+        }
+    }
 
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
-
 
     implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
