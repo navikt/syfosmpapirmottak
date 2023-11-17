@@ -45,6 +45,7 @@ import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.toProducerConfig
 import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
@@ -234,6 +235,14 @@ fun main() {
         applicationState,
         consumerPropertiesAiven,
         behandlingService,
+    )
+
+    startOpprettSykmeldingConsumer(
+        env,
+        applicationState,
+        sykmeldingService,
+        safJournalpostClient,
+        pdlPersonService
     )
 
     applicationServer.start()
