@@ -23,6 +23,7 @@ import java.util.Properties
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -253,7 +254,7 @@ fun createListener(
     applicationState: ApplicationState,
     action: suspend CoroutineScope.() -> Unit
 ): Job =
-    GlobalScope.launch {
+    GlobalScope.launch(Dispatchers.IO) {
         try {
             action()
         } catch (e: TrackableException) {
