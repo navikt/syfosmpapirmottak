@@ -20,6 +20,7 @@ data class Environment(
     val dokArkivScope: String = getEnvVar("DOK_ARKIV_SCOPE"),
     val okSykmeldingTopic: String = "teamsykmelding.ok-sykmelding",
     val smregistreringTopic: String = "teamsykmelding.papir-sm-registering",
+    val opprettSykmeldingTopic: String = "teamsykmelding.opprett-sykmelding",
     val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
     val pdlScope: String = getEnvVar("PDL_SCOPE"),
     val aadAccessTokenV2Url: String = getEnvVar("AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"),

@@ -135,7 +135,10 @@ fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMet
     dokumentListe?.forEach { dokument ->
         dokument.dokumentvarianter.forEach {
             if (it.variantformat.name == "ORIGINAL") {
-                log.info("Fant OCR-dokument {}", fields(loggingMeta))
+                log.info(
+                    "Fant OCR-dokument dokumentInfoId: ${dokument.dokumentInfoId} {}",
+                    fields(loggingMeta)
+                )
                 return dokument.dokumentInfoId
             }
         }

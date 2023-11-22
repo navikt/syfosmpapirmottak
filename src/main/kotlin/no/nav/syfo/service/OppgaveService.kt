@@ -9,6 +9,8 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
+import no.nav.syfo.objectMapper
+import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 
 class OppgaveService(
@@ -83,6 +85,13 @@ class OppgaveService(
 
         if (!oppgave.duplikat) {
             PAPIRSM_FORDELINGSOPPGAVE.inc()
+            securelog.info(
+                "Opprettet fordelingsoppgave med {}, {} {} {}",
+                StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
+                StructuredArguments.keyValue("journalpostId", journalpostId),
+                StructuredArguments.keyValue("oppgave", objectMapper.writeValueAsString(oppgave)),
+                fields(loggingMeta),
+            )
             log.info(
                 "Opprettet fordelingsoppgave med {}, {} {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),

@@ -79,9 +79,13 @@ class SafDokumentClient(
     ): Skanningmetadata? {
         return try {
             val dokument = hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId, loggingMeta)
+            log.info("Got document with id: $dokumentInfoId")
             safeUnmarshalSkanningmetadata(dokument.byteInputStream(Charsets.UTF_8))
         } catch (ex: JAXBException) {
-            log.warn("Klarte ikke å tolke OCR-dokument, ${fields(loggingMeta)}", ex)
+            log.warn(
+                "Klarte ikke å tolke OCR-dokument for dokument $dokumentInfoId, ${fields(loggingMeta)}",
+                ex
+            )
             PAPIRSM_HENTDOK_FEIL.inc()
             null
         }
