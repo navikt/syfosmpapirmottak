@@ -134,7 +134,7 @@ fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta):
 fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMeta): String? {
     dokumentListe?.forEach { dokument ->
         dokument.dokumentvarianter.forEach {
-            if (it.variantformat?.name == "ORIGINAL") {
+            if (it.variantformat.name == "ORIGINAL") {
                 log.info(
                     "Fant OCR-dokument dokumentInfoId: ${dokument.dokumentInfoId} {}",
                     fields(loggingMeta)
@@ -159,7 +159,7 @@ fun finnDokumentIdForPdf(
     val dokumenter =
         dokumentListe
             ?.filter {
-                it.dokumentvarianter.any { variant -> variant.variantformat?.name == "ARKIV" }
+                it.dokumentvarianter.any { variant -> variant.variantformat.name == "ARKIV" }
             }
             ?.map { dokument ->
                 DokumentMedTittel(
@@ -290,7 +290,7 @@ data class Dokument(
 )
 
 data class Dokumentvarianter(
-    val variantformat: Variantformat?,
+    val variantformat: Variantformat,
 )
 
 enum class Variantformat {
