@@ -285,6 +285,7 @@ fun launchListeners(
             applicationState = applicationState,
             aivenConsumer = kafkaConsumerJournalfoeringHendelseAiven,
             behandlingService = behandlingService,
+            env = env,
         )
     }
 }
@@ -293,23 +294,32 @@ suspend fun blockingApplicationLogic(
     applicationState: ApplicationState,
     aivenConsumer: KafkaConsumer<String, JournalfoeringHendelseRecord>,
     behandlingService: BehandlingService,
+    env: Environment,
 ) {
     while (applicationState.ready) {
         aivenConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
-            val journalfoeringHendelseRecord = consumerRecord.value()
-            val sykmeldingId = UUID.randomUUID().toString()
-            val loggingMeta =
-                LoggingMeta(
-                    sykmeldingId = sykmeldingId,
-                    journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
-                    hendelsesId = journalfoeringHendelseRecord.hendelsesId,
-                )
+            try {
+                val journalfoeringHendelseRecord = consumerRecord.value()
+                val sykmeldingId = UUID.randomUUID().toString()
+                val loggingMeta =
+                    LoggingMeta(
+                        sykmeldingId = sykmeldingId,
+                        journalpostId = journalfoeringHendelseRecord.journalpostId.toString(),
+                        hendelsesId = journalfoeringHendelseRecord.hendelsesId,
+                    )
 
-            behandlingService.handleJournalpost(
-                journalfoeringEvent = journalfoeringHendelseRecord,
-                loggingMeta = loggingMeta,
-                sykmeldingId = sykmeldingId,
-            )
+                behandlingService.handleJournalpost(
+                    journalfoeringEvent = journalfoeringHendelseRecord,
+                    loggingMeta = loggingMeta,
+                    sykmeldingId = sykmeldingId,
+                )
+            } catch (e: Exception) {
+                if (env.cluster != "dev-gcp") {
+                    throw e
+                } else {
+                    log.warn("Skipping error in dev", e)
+                }
+            }
         }
     }
 }
