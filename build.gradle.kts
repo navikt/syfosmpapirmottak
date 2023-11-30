@@ -5,7 +5,7 @@ val coroutinesVersion = "1.7.3"
 val kafkaVersion = "3.6.0"
 val kluentVersion = "1.73"
 val ktorVersion = "2.3.6"
-val logbackVersion = "1.4.11"
+val logbackVersion = "1.4.13"
 val logstashLogbackEncoderVersion = "7.4"
 val prometheusVersion = "0.16.0"
 val kotestVersion = "5.8.0"
@@ -36,7 +36,7 @@ plugins {
     id("application")
     kotlin("jvm") version "1.9.21"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.diffplug.spotless") version "6.22.0"
+    id("com.diffplug.spotless") version "6.23.2"
 }
 
 application {
