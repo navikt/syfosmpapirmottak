@@ -81,19 +81,21 @@ class OpprettSykmeldingService(
             kafkaConsumer.poll(Duration.ofMillis(1000)).forEach { consumerRecord ->
                 try {
                     handleOpprettSykmelding(consumerRecord)
-                }catch (e: Exception) {
+                } catch (e: Exception) {
                     log.error("error in handeling message", e)
-                   if (env.cluster == "dev-gcp"){
-                       log.warn("skipping error in dev")
-                   } else {
-                       throw e
-                   }
+                    if (env.cluster == "dev-gcp") {
+                        log.warn("skipping error in dev")
+                    } else {
+                        throw e
+                    }
                 }
             }
         }
     }
 
-    private suspend fun handleOpprettSykmelding(consumerRecord: ConsumerRecord<String, OpprettSykmeldingRecord>) {
+    private suspend fun handleOpprettSykmelding(
+        consumerRecord: ConsumerRecord<String, OpprettSykmeldingRecord>
+    ) {
         val opprettSykmeldingRecord = consumerRecord.value()
         val sykmeldingId = UUID.randomUUID().toString()
         val loggingMeta =
