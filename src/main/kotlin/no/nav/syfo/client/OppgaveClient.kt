@@ -221,7 +221,8 @@ class OppgaveClient(
                 journalpostId = journalpostId,
                 behandlesAvApplikasjon = "FS22",
                 beskrivelse =
-                    "Fordelingsoppgave for mottatt papirsykmelding som må legges inn i syk-dig(https://syk-dig.intern.nav.no/registrer-sykmelding) manuelt",
+                    "Fordelingsoppgave for mottatt papirsykmelding som må legges inn i \n" +
+                        "syk-dig(https://syk-dig.intern.nav.no/registrer-sykmelding) manuelt for å digitalisere sykmeldingen",
                 tema = "SYM",
                 oppgavetype = "FDR",
                 behandlingstype = behandlingstype,
