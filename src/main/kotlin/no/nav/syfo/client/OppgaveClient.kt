@@ -221,10 +221,9 @@ class OppgaveClient(
                 journalpostId = journalpostId,
                 behandlesAvApplikasjon = "FS22",
                 beskrivelse =
-                    "Fordelingsoppgave for mottatt papirsykmelding som må registreres manuelt.\n" +
-                        "Når sykmeldingen er journalført på riktig fødselsnummer, gjøres følgende: " +
-                        "Åpne registreringsløsningen https://syk-dig.intern.nav.no/registrer-sykmelding i nettleseren, legg inn journalpost ID, trykk hent journalpost og opprett sykmelding." +
-                        "Sykmeldingen blir da digitalisert og legges inn i Infotrygd automatisk.",
+                    "Registrer manuelt mottatt papirsykmelding. \n" +
+                        "Når journalført på korrekt fødselsnummer: Åpne https://syk-dig.intern.dev.nav.no/registrer-sykmelding \n" +
+                        "tast inn journalpost-ID, hent og opprett sykmelding. Den digitaliseres og legges automatisk inn i Infotrygd.",
                 tema = "SYM",
                 oppgavetype = "FDR",
                 behandlingstype = behandlingstype,
