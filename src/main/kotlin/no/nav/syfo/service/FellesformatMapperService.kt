@@ -35,6 +35,7 @@ import no.nav.helse.sm2013.URL
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.pdl.model.PdlPerson
+import no.nav.syfo.securelog
 import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 
@@ -53,6 +54,13 @@ fun mapOcrFilTilFellesformat(
         )
     }
 
+    securelog.info(
+        "aktivitetIkkeMulig gradertSykmelding: {} {}",
+        skanningmetadata.sykemeldinger.aktivitet.toString(),
+        fields(loggingMeta),
+    )
+
+
     return XMLEIFellesformat().apply {
         any.add(
             XMLMsgHead().apply {
@@ -67,7 +75,7 @@ fun mapOcrFilTilFellesformat(
                         genDate =
                             velgRiktigKontaktOgSignaturDato(
                                     skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato,
-                                    tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet)
+                                    tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet, loggingMeta)
                                 )
                                 .toString()
                         msgId = sykmeldingId
@@ -174,7 +182,8 @@ fun mapOcrFilTilFellesformat(
                                                             .kontaktMedPasient
                                                             ?.behandletDato,
                                                         tilPeriodeListe(
-                                                            skanningmetadata.sykemeldinger.aktivitet
+                                                            skanningmetadata.sykemeldinger.aktivitet,
+                                                            loggingMeta
                                                         ),
                                                     )
                                                 pasient =
@@ -217,7 +226,8 @@ fun mapOcrFilTilFellesformat(
                                                             periode.addAll(
                                                                 tilPeriodeListe(
                                                                     skanningmetadata.sykemeldinger
-                                                                        .aktivitet
+                                                                        .aktivitet,
+                                                                    loggingMeta
                                                                 )
                                                             )
                                                         }
@@ -286,7 +296,8 @@ fun mapOcrFilTilFellesformat(
                                                                     tilPeriodeListe(
                                                                         skanningmetadata
                                                                             .sykemeldinger
-                                                                            .aktivitet
+                                                                            .aktivitet,
+                                                                        loggingMeta
                                                                     )
                                                                 )
                                                         }
@@ -498,11 +509,15 @@ fun tilPrognose(prognoseType: PrognoseType): HelseOpplysningerArbeidsuforhet.Pro
     }
 
 fun tilPeriodeListe(
-    aktivitetType: AktivitetType
+    aktivitetType: AktivitetType,
+    loggingMeta: LoggingMeta? = null
 ): List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode> {
     val periodeListe = ArrayList<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>()
 
     if (aktivitetType.aktivitetIkkeMulig != null) {
+        if (loggingMeta != null) {
+            securelog.info("aktivitetIkkeMulig != null {}", fields(loggingMeta))
+        }
         periodeListe.add(
             HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
                 periodeFOMDato = aktivitetType.aktivitetIkkeMulig.periodeFOMDato
@@ -541,6 +556,9 @@ fun tilPeriodeListe(
     }
 
     if (aktivitetType.gradertSykmelding != null) {
+        if (loggingMeta != null) {
+            securelog.info("gradertSykmelding != null {}", fields(loggingMeta))
+        }
         periodeListe.add(
             HelseOpplysningerArbeidsuforhet.Aktivitet.Periode().apply {
                 periodeFOMDato = aktivitetType.gradertSykmelding.periodeFOMDato
