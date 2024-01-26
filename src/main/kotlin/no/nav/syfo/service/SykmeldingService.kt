@@ -1,5 +1,7 @@
 package no.nav.syfo.service
 
+import com.migesok.jaxb.adapter.javatime.LocalDateTimeXmlAdapter
+import com.migesok.jaxb.adapter.javatime.LocalDateXmlAdapter
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -29,13 +31,17 @@ import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.Status
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
+import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.XMLDateAdapter
+import no.nav.syfo.util.XMLDateTimeAdapter
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.getLocalDateTime
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
+import javax.xml.bind.Marshaller
 
 class SykmeldingService(
     private val oppgaveService: OppgaveService,
@@ -157,6 +163,13 @@ class SykmeldingService(
                     log.info(
                         "Sykmelding mappet til internt format uten feil {}",
                         fields(loggingMeta)
+                    )
+
+                    val fellesformatText = fellesformatMarshaller.toString(fellesformat)
+
+                    securelog.info("Fellesformat: {} {}",
+                        fellesformatText,
+                        fields(loggingMeta),
                     )
                     PAPIRSM_MAPPET.labels("ok").inc()
 
