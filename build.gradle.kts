@@ -1,11 +1,11 @@
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val coroutinesVersion = "1.7.3"
+val coroutinesVersion = "1.8.0"
 val kafkaVersion = "3.6.1"
 val kluentVersion = "1.73"
 val ktorVersion = "2.3.8"
-val logbackVersion = "1.4.14"
+val logbackVersion = "1.5.0"
 val logstashLogbackEncoderVersion = "7.4"
 val prometheusVersion = "0.16.0"
 val kotestVersion = "5.8.0"
