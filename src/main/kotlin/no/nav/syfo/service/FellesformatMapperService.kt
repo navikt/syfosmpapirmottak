@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import net.logstash.logback.argument.StructuredArguments.fields
+import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.eiFellesformat.XMLEIFellesformat
 import no.nav.helse.msgHead.XMLCS
 import no.nav.helse.msgHead.XMLCV
@@ -35,7 +36,6 @@ import no.nav.helse.sm2013.URL
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.pdl.model.PdlPerson
-import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 
 fun mapOcrFilTilFellesformat(

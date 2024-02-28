@@ -21,7 +21,6 @@ val commonsTextVersion = "1.11.0"
 val cxfVersion = "3.4.5"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
-val smCommonVersion = "2.0.8"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.9"
 val kotlinVersion = "1.9.22"
@@ -31,6 +30,7 @@ val caffeineVersion = "3.1.8"
 val ktfmtVersion = "0.44"
 val snappyJavaVersion = "1.1.10.5"
 val avroVersion = "1.11.3"
+val diagnosekoderVersion = "1.2024.0"
 
 plugins {
     id("application")
@@ -105,10 +105,7 @@ dependencies {
 
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 
-    implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
-    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
-    implementation("no.nav.helse:syfosm-common-diagnosis-codes:$smCommonVersion")
-
+    implementation("no.nav.helse:diagnosekoder:$diagnosekoderVersion")
     implementation("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
     implementation("javax.activation:activation:$javaxActivationVersion")

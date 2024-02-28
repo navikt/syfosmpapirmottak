@@ -1,6 +1,7 @@
 package no.nav.syfo.service
 
 import java.time.OffsetDateTime
+import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.papirsykemelding.AktivitetType
 import no.nav.helse.papirsykemelding.ArbeidsgiverType
 import no.nav.helse.papirsykemelding.BehandlerType
@@ -31,7 +32,6 @@ import no.nav.syfo.model.Periode
 import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
-import no.nav.syfo.sm.Diagnosekoder
 
 fun mapOcrFilTilPapirSmRegistrering(
     journalpostId: String,

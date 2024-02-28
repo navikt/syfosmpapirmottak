@@ -26,6 +26,7 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
 import no.nav.syfo.model.Periode
 import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.model.ReceivedSykmeldingWithValidation
 import no.nav.syfo.model.Status
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
@@ -45,7 +46,8 @@ class SykmeldingService(
     private val smtssClient: SmtssClient,
     private val pdlPersonService: PdlPersonService,
     private val okSykmeldingTopic: String,
-    private val kafkaReceivedSykmeldingProducer: KafkaProducer<String, ReceivedSykmelding>,
+    private val kafkaReceivedSykmeldingProducer:
+        KafkaProducer<String, ReceivedSykmeldingWithValidation>,
     private val dokArkivClient: DokArkivClient,
     private val kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
     private val smregistreringTopic: String,

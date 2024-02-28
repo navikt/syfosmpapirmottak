@@ -29,7 +29,7 @@ import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.domain.PapirSmRegistering
-import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.model.ReceivedSykmeldingWithValidation
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
 import no.nav.syfo.pdl.model.Navn
@@ -59,7 +59,7 @@ class SykmeldingServiceSpek :
         val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
         val regelClientMock = mockk<RegelClient>()
         val kafkaproducerreceivedSykmeldingMock =
-            mockk<KafkaProducer<String, ReceivedSykmelding>>(relaxed = true)
+            mockk<KafkaProducer<String, ReceivedSykmeldingWithValidation>>(relaxed = true)
         val smtssClientMock = mockk<SmtssClient>()
         val dokArkivClientMock = mockk<DokArkivClient>()
         val kafkaproducerPapirSmRegistering =
