@@ -5,11 +5,11 @@ import java.io.StringReader
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.SvarRestriksjon
-import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.skanningMetadataUnmarshaller
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEqualTo

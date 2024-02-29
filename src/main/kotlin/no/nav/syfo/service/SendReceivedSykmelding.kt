@@ -2,15 +2,15 @@ package no.nav.syfo.service
 
 import net.logstash.logback.argument.StructuredArguments
 import no.nav.syfo.log
-import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.model.ReceivedSykmeldingWithValidation
 import no.nav.syfo.util.LoggingMeta
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 
 fun sendReceivedSykmeldingToKafka(
-    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmelding>,
+    kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmeldingWithValidation>,
     okSykmeldingTopic: String,
-    receivedSykmelding: ReceivedSykmelding,
+    receivedSykmelding: ReceivedSykmeldingWithValidation,
     loggingMeta: LoggingMeta
 ) {
     try {

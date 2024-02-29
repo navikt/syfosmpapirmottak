@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Month
 import java.util.UUID
+import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.papirsykemelding.AktivitetIkkeMuligType
 import no.nav.helse.papirsykemelding.AktivitetType
@@ -44,7 +45,6 @@ import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.objectMapper
 import no.nav.syfo.pdl.model.Navn
 import no.nav.syfo.pdl.model.PdlPerson
-import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.get

@@ -28,6 +28,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.logstash.logback.argument.StructuredArguments
+import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.application.ApplicationServer
 import no.nav.syfo.application.ApplicationState
@@ -43,15 +44,14 @@ import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.kafka.aiven.KafkaUtils
-import no.nav.syfo.kafka.toConsumerConfig
-import no.nav.syfo.kafka.toProducerConfig
-import no.nav.syfo.model.ReceivedSykmelding
+import no.nav.syfo.kafka.aiven.toConsumerConfig
+import no.nav.syfo.kafka.aiven.toProducerConfig
+import no.nav.syfo.model.ReceivedSykmeldingWithValidation
 import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
-import no.nav.syfo.sm.Diagnosekoder
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.TrackableException
@@ -120,7 +120,7 @@ fun main() {
             .toProducerConfig(env.applicationName, valueSerializer = JacksonKafkaSerializer::class)
 
     val kafkaProducerReceivedSykmelding =
-        KafkaProducer<String, ReceivedSykmelding>(producerPropertiesAiven)
+        KafkaProducer<String, ReceivedSykmeldingWithValidation>(producerPropertiesAiven)
     val kafkaProducerPapirSmRegistering =
         KafkaProducer<String, PapirSmRegistering>(producerPropertiesAiven)
     val sykDigProducer =

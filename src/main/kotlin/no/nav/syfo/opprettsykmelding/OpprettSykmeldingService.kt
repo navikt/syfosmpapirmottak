@@ -9,7 +9,7 @@ import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.createListener
 import no.nav.syfo.kafka.aiven.KafkaUtils
-import no.nav.syfo.kafka.toConsumerConfig
+import no.nav.syfo.kafka.aiven.toConsumerConfig
 import no.nav.syfo.opprettsykmelding.model.OpprettSykmeldingRecord
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.securelog
