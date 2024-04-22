@@ -32,6 +32,7 @@ class PdlClient(
             .post(basePath) {
                 setBody(graphQlBody)
                 header(HttpHeaders.Authorization, "Bearer $stsToken")
+                header("Behandlingsnummer", "B229")
                 header(temaHeader, tema)
                 header(HttpHeaders.ContentType, "application/json")
             }
