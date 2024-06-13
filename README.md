@@ -10,9 +10,12 @@ This project contains the receiving a paper sykmelding2013 message
 * Kotest
 * Jackson
 
-#### Requirements
-
-* JDK 17
+### Prerequisites
+Make sure you have the Java JDK 21 installed
+You can check which version you have installed using this command:
+``` bash
+java -version
+```
 
 ## FlowChart
 This the high level flow of the application

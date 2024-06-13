@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 group = "no.nav.syfo"
 version = "1.0.0"
 
@@ -31,6 +33,8 @@ val ktfmtVersion = "0.44"
 val snappyJavaVersion = "1.1.10.5"
 val avroVersion = "1.11.3"
 val diagnosekoderVersion = "1.2024.0"
+val javaVersion = JvmTarget.JVM_21
+val commonsCompressVersion = "1.26.2"
 
 plugins {
     id("application")
@@ -84,6 +88,11 @@ dependencies {
             because("override transient from io.confluent:kafka-avro-serializer")
         }
     }
+    constraints {
+        implementation("org.apache.commons:commons-compress:$commonsCompressVersion") {
+            because("override transient from io.confluent:kafka-avro-serializer")
+        }
+    }
     implementation("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
 
     implementation("no.nav.helse.xml:xmlfellesformat:$syfoXmlCodegenVersion")
@@ -127,6 +136,13 @@ dependencies {
     testImplementation("io.mockk:mockk:$ioMockVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty")
+    }
+}
+
+
+kotlin {
+    compilerOptions {
+        jvmTarget = javaVersion
     }
 }
 
