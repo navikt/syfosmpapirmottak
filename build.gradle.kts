@@ -34,7 +34,7 @@ val snappyJavaVersion = "1.1.10.6"
 val avroVersion = "1.12.0"
 val diagnosekoderVersion = "1.2024.0"
 val javaVersion = JvmTarget.JVM_21
-val commonsCompressVersion = "1.26.2"
+val commonsCompressVersion = "1.27.0"
 
 plugins {
     id("application")
