@@ -98,7 +98,7 @@ fun mapOcrFilTilFellesformat(
                                                                 XMLCV().apply {
                                                                     dn = "HPR-nummer"
                                                                     s =
-                                                                        "6.87.654.3.21.9.8.7.6543.2198"
+                                                                        "2.16.578.1.12.4.1.1.8116"
                                                                     v = "HPR"
                                                                 }
                                                         },
@@ -107,7 +107,7 @@ fun mapOcrFilTilFellesformat(
                                                             typeId =
                                                                 XMLCV().apply {
                                                                     dn = "Fødselsnummer"
-                                                                    s = "2.16.578.1.12.4.1.1.8327"
+                                                                    s = "2.16.578.1.12.4.1.1.8116"
                                                                     v = "FNR"
                                                                 }
                                                         },
