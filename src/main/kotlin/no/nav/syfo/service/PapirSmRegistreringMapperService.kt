@@ -378,25 +378,28 @@ private fun toMedisinskVurderingDiagnose(
     diagnoseTekst: String?
 ): Diagnose {
     if (diagnoseKode != null) {
-        val sanitisertDiagnoseKode =
-            when {
-                diagnoseKode.contains(".") -> {
-                    diagnoseKode.replace(".", "").uppercase().replace(" ", "")
-                }
-                else -> diagnoseKode.uppercase().replace(" ", "")
-            }
+        val sanitisertDiagnoseKode = diagnoseKode.replace(".", "").replace(" ", "")
 
-        if (Diagnosekoder.icd10.containsKey(sanitisertDiagnoseKode)) {
+        val icd10Entry =
+            Diagnosekoder.icd10.entries.firstOrNull {
+                it.key.uppercase() == sanitisertDiagnoseKode.uppercase()
+            }
+        if (icd10Entry != null) {
             return Diagnose(
-                kode = sanitisertDiagnoseKode,
+                kode = icd10Entry.value.code,
                 system = Diagnosekoder.ICD10_CODE,
-                tekst = Diagnosekoder.icd10[sanitisertDiagnoseKode]?.text ?: "",
+                tekst = icd10Entry.value.text,
             )
-        } else if (Diagnosekoder.icpc2.containsKey(sanitisertDiagnoseKode)) {
+        }
+        val icpc2Entry =
+            Diagnosekoder.icpc2.entries.firstOrNull {
+                it.key.uppercase() == sanitisertDiagnoseKode.uppercase()
+            }
+        if (icpc2Entry != null) {
             return Diagnose(
-                kode = sanitisertDiagnoseKode,
+                kode = icpc2Entry.value.code,
                 system = Diagnosekoder.ICPC2_CODE,
-                tekst = Diagnosekoder.icpc2[sanitisertDiagnoseKode]?.text ?: "",
+                tekst = icpc2Entry.value.text,
             )
         }
     }
