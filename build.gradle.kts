@@ -4,7 +4,7 @@ group = "no.nav.syfo"
 version = "1.0.0"
 
 val coroutinesVersion = "1.9.0"
-val kafkaVersion = "3.8.1"
+val kafkaVersion = "3.9.0"
 val kluentVersion = "1.73"
 val ktorVersion = "3.0.1"
 val logbackVersion = "1.5.12"
@@ -39,7 +39,7 @@ val javaVersion = JvmTarget.JVM_21
 plugins {
     id("application")
     kotlin("jvm") version "2.0.21"
-    id("com.gradleup.shadow") version "8.3.3"
+    id("com.gradleup.shadow") version "8.3.5"
     id("com.diffplug.spotless") version "6.25.0"
 }
 
