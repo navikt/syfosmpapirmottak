@@ -4,7 +4,7 @@ group = "no.nav.syfo"
 version = "1.0.0"
 
 val coroutinesVersion = "1.9.0"
-val kafkaVersion = "3.8.1"
+val kafkaVersion = "3.9.0"
 val kluentVersion = "1.73"
 val ktorVersion = "3.0.1"
 val logbackVersion = "1.5.12"
@@ -16,14 +16,14 @@ val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val jacksonVersion = "2.18.1"
 val joarkHendelseVersion = "96ec5ebb"
-val confluentVersion = "7.7.1"
+val confluentVersion = "7.7.2"
 val syfoXmlCodegenVersion = "2.0.1"
 val commonsTextVersion = "1.12.0"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.13"
-val kotlinVersion = "2.0.21"
+val kotlinVersion = "2.1.0"
 val caffeineVersion = "3.1.8"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
@@ -38,8 +38,8 @@ val javaVersion = JvmTarget.JVM_21
 
 plugins {
     id("application")
-    kotlin("jvm") version "2.0.21"
-    id("com.gradleup.shadow") version "8.3.3"
+    kotlin("jvm") version "2.1.0"
+    id("com.gradleup.shadow") version "8.3.5"
     id("com.diffplug.spotless") version "6.25.0"
 }
 
