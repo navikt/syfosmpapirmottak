@@ -46,7 +46,6 @@ see https://teamsykmelding.intern.nav.no/docs/testing/registrering-av-papirsykme
 #### Creating a docker image
 Creating a docker image should be as simple as `docker build -t syfosmpapirmottak .`
 
-
 ### Upgrading the gradle wrapper
 Find the newest version of gradle here: https://gradle.org/releases/ Then run this command:
 

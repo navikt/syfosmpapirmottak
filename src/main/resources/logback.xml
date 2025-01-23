@@ -27,6 +27,7 @@
     <logger name="org.apache.kafka" level="WARN" />
     <logger name="org.apache.cxf.services" level="WARN"/>
     <logger name="org.apache.cxf.ws.addressing" level="ERROR" />
+    <logger name="io.opentelemetry.sdk.metrics.internal.state.AsynchronousMetricStorage" level="ERROR"/>
 
     <root level="INFO">
         <appender-ref ref="stdout_json"/>
