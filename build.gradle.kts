@@ -23,7 +23,7 @@ val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.13.16"
-val kotlinVersion = "2.1.0"
+val kotlinVersion = "2.1.10"
 val caffeineVersion = "3.2.0"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
@@ -38,7 +38,7 @@ val javaVersion = JvmTarget.JVM_21
 
 plugins {
     id("application")
-    kotlin("jvm") version "2.1.0"
+    kotlin("jvm") version "2.1.10"
     id("com.gradleup.shadow") version "8.3.5"
     id("com.diffplug.spotless") version "7.0.2"
 }
