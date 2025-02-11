@@ -31,7 +31,7 @@ val diagnosekoderVersion = "1.2025.0"
 
 ///Due to vulnerabilities
 val commonsCodecVersion = "1.18.0"
-val nettyCommonVersion= "4.1.117.Final"
+val nettyCommonVersion= "4.1.118.Final"
 val commonsCompressVersion = "1.27.1"
 
 val javaVersion = JvmTarget.JVM_21
