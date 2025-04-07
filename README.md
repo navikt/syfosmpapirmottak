@@ -20,7 +20,7 @@ java -version
 ## FlowChart
 This the high level flow of the application
 ```mermaid
-  graph LR
+  graph TD
     papirsykmelding --> Skanner
     Skanner --> id1(Filområde skannede dokumenter)
     id1(Filområde skannede dokumenter) --> id2([Skanmot Helse])

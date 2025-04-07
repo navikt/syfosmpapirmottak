@@ -37,6 +37,7 @@ import no.nav.syfo.application.exception.ServiceUnavailableException
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
+import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
@@ -98,11 +99,11 @@ fun main() {
             .apply {
                 setProperty(
                     KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                    env.schemaRegistryUrl
+                    env.schemaRegistryUrl,
                 )
                 setProperty(
                     KafkaAvroSerializerConfig.USER_INFO_CONFIG,
-                    "${env.kafkaSchemaRegistryUsername}:${env.kafkaSchemaRegistryPassword}"
+                    "${env.kafkaSchemaRegistryUsername}:${env.kafkaSchemaRegistryPassword}",
                 )
                 setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
             }
@@ -126,7 +127,7 @@ fun main() {
     val sykDigProducer =
         SykDigProducer(
             KafkaProducer<String, DigitaliseringsoppgaveKafka>(producerPropertiesAiven),
-            env.sykDigTopic
+            env.sykDigTopic,
         )
 
     val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
@@ -158,7 +159,7 @@ fun main() {
                 retryIf(maxRetries) { request, response ->
                     if (response.status.value.let { it in 500..599 }) {
                         securelog.warn(
-                            "Retrying for statuscode ${response.status.value}, for url ${request.url}"
+                            "Retrying for statuscode ${response.status.value}, for url ${request.url}",
                         )
                         true
                     } else {
@@ -188,7 +189,7 @@ fun main() {
             azureAdV2Client,
             httpClient,
             env.oppgaveScope,
-            env.cluster
+            env.cluster,
         )
 
     val smtssClient = SmtssClient(env.smtssApiUrl, azureAdV2Client, env.smtssApiScope, httpClient)
@@ -201,10 +202,10 @@ fun main() {
             env.norskHelsenettEndpointURL,
             azureAdV2Client,
             env.helsenettproxyScope,
-            httpClient
+            httpClient,
         )
-    val regelClient =
-        RegelClient(env.syfosmpapirregelUrl, azureAdV2Client, env.syfosmpapirregelScope, httpClient)
+    val regelClient = RegelClient(azureAdV2Client, env.syfosmpapirregelScope, httpClient)
+    val nyRegelClient = NyRegelClient(azureAdV2Client, env.syfosmreglerScope, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, azureAdV2Client, env.pdlScope)
 
     val sykmeldingService =
@@ -213,6 +214,7 @@ fun main() {
             safDokumentClient = safDokumentClient,
             norskHelsenettClient = norskHelsenettClient,
             regelClient = regelClient,
+            nyRegelClient = nyRegelClient,
             smtssClient = smtssClient,
             pdlPersonService = pdlPersonService,
             okSykmeldingTopic = env.okSykmeldingTopic,
@@ -228,7 +230,7 @@ fun main() {
             safJournalpostClient,
             sykmeldingService,
             utenlandskSykmeldingService,
-            pdlPersonService
+            pdlPersonService,
         )
 
     launchListeners(
@@ -243,7 +245,7 @@ fun main() {
         applicationState,
         sykmeldingService,
         safJournalpostClient,
-        pdlPersonService
+        pdlPersonService,
     )
 
     applicationServer.start()
@@ -261,7 +263,7 @@ fun createListener(
             log.error(
                 "En uhåndtert feil oppstod, applikasjonen restarter {}",
                 StructuredArguments.fields(e.loggingMeta),
-                e.cause
+                e.cause,
             )
         } finally {
             applicationState.ready = false

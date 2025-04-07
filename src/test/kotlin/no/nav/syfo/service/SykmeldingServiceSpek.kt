@@ -23,6 +23,7 @@ import no.nav.helse.papirsykemelding.SykemeldingerType
 import no.nav.syfo.client.Behandler
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
+import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.OppgaveResponse
 import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
@@ -58,6 +59,7 @@ class SykmeldingServiceSpek :
         val safDokumentClientMock = mockk<SafDokumentClient>()
         val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
         val regelClientMock = mockk<RegelClient>()
+        val nyRegelClientMock = mockk<NyRegelClient>()
         val kafkaproducerreceivedSykmeldingMock =
             mockk<KafkaProducer<String, ReceivedSykmeldingWithValidation>>(relaxed = true)
         val smtssClientMock = mockk<SmtssClient>()
@@ -71,6 +73,7 @@ class SykmeldingServiceSpek :
                 safDokumentClientMock,
                 norskHelsenettClientMock,
                 regelClientMock,
+                nyRegelClientMock,
                 smtssClientMock,
                 pdlService,
                 "ok",

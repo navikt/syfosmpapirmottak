@@ -12,7 +12,7 @@ import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.ValidationResult
 
-class RegelClient(
+class NyRegelClient(
     private val accessTokenClient: AzureAdV2Client,
     private val resourceId: String,
     private val client: HttpClient,
@@ -20,11 +20,11 @@ class RegelClient(
     suspend fun valider(sykmelding: ReceivedSykmelding, msgId: String): ValidationResult {
         val accessToken = accessTokenClient.getAccessToken(resourceId)
         if (accessToken?.accessToken == null) {
-            throw RuntimeException("Klarte ikke hente ut accesstoken for syfosmpapirregler")
+            throw RuntimeException("Klarte ikke hente ut accesstoken for syfosmregler")
         }
 
         return client
-            .post("http://syfosmpapirregler/api/v2/rules/validate") {
+            .post("http://syfosmregler/v1/rules/validate/papir") {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Application.Json)
                 headers {
@@ -32,6 +32,13 @@ class RegelClient(
                     append("Nav-CallId", msgId)
                 }
                 setBody(sykmelding)
+            }
+            .also {
+                if (it.status.value != 200) {
+                    throw IllegalStateException("Feil ved kall til syfosmregler: ${it.status}")
+                } else {
+                    println("Kall til syfosmregler var vellykket ${it.status}")
+                }
             }
             .body<ValidationResult>()
     }
