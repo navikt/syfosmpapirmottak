@@ -56,6 +56,9 @@ spec:
         - application: syfosmpapirregler
           namespace: teamsykmelding
           cluster: dev-gcp
+        - application: syfosmregler
+          namespace: teamsykmelding
+          cluster: dev-gcp
         - application: smtss
         - application: syfohelsenettproxy
       external:
@@ -76,6 +79,9 @@ spec:
       value: http://syfohelsenettproxy
     - name: HELSENETT_SCOPE
       value: api://dev-gcp.teamsykmelding.syfohelsenettproxy/.default
+    - name: SYFOSMREGLER_SCOPE
+      value: api://dev-gcp.teamsykmelding.syfosmregler/.default
+    # TODO: Soft deprecated
     - name: SYFOSMPAPIRREGLER_SCOPE
       value: api://dev-gcp.teamsykmelding.syfosmpapirregler/.default
     - name: DOK_ARKIV_URL
