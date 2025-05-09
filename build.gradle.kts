@@ -3,27 +3,27 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val coroutinesVersion = "1.10.1"
+val coroutinesVersion = "1.10.2"
 val kafkaVersion = "3.9.0"
 val kluentVersion = "1.73"
-val ktorVersion = "3.1.1"
-val logbackVersion = "1.5.17"
-val logstashLogbackEncoderVersion = "8.0"
+val ktorVersion = "3.1.3"
+val logbackVersion = "1.5.18"
+val logstashLogbackEncoderVersion = "8.1"
 val prometheusVersion = "0.16.0"
 val kotestVersion = "5.9.1"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
-val jacksonVersion = "2.18.3"
+val jacksonVersion = "2.19.0"
 val joarkHendelseVersion = "96ec5ebb"
-val confluentVersion = "7.9.0"
+val confluentVersion = "7.9.1"
 val syfoXmlCodegenVersion = "2.0.1"
-val commonsTextVersion = "1.13.0"
+val commonsTextVersion = "1.13.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val javaTimeAdapterVersion = "1.1.3"
-val ioMockVersion = "1.13.17"
-val kotlinVersion = "2.1.10"
+val ioMockVersion = "1.14.2"
+val kotlinVersion = "2.1.20"
 val caffeineVersion = "3.2.0"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
@@ -31,16 +31,16 @@ val diagnosekoderVersion = "1.2025.0"
 
 ///Due to vulnerabilities
 val commonsCodecVersion = "1.18.0"
-val nettyCommonVersion= "4.1.119.Final"
+val nettyCommonVersion= "4.2.1.Final"
 val commonsCompressVersion = "1.27.1"
 
 val javaVersion = JvmTarget.JVM_21
 
 plugins {
     id("application")
-    kotlin("jvm") version "2.1.10"
+    kotlin("jvm") version "2.1.20"
     id("com.gradleup.shadow") version "8.3.6"
-    id("com.diffplug.spotless") version "7.0.2"
+    id("com.diffplug.spotless") version "7.0.3"
 }
 
 application {
