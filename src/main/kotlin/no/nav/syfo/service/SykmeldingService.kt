@@ -179,16 +179,20 @@ class SykmeldingService(
                     // SHADOW TEST: Prøv ut regelvalidering i syfosmregler og sammenlign:
                     try {
                         log.info("Validerer sykmelding mot syfosmregler, {}", fields(loggingMeta))
-                        val nyValidationResult = nyRegelClient.valider(receivedSykmelding, sykmeldingId)
+                        val nyValidationResult =
+                            nyRegelClient.valider(receivedSykmelding, sykmeldingId)
 
-                        log.info("""${if (validationResult == nyValidationResult) "✅ SHADOW TEST OK ✅" else "❌ SHADOW TEST DIVERGENCE ❌"}
+                        log.info(
+                            """${if (validationResult == nyValidationResult) "✅ SHADOW TEST OK ✅" else "❌ SHADOW TEST DIVERGENCE ❌"}
                             |
                             | Gammel: ${validationResult.status}
                             | Ny: ${nyValidationResult.status}
                             | 
                             | Gammel regler: ${validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }}
                             | Ny regler: ${nyValidationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }}
-                        """.trimMargin())
+                        """
+                                .trimMargin()
+                        )
                     } catch (e: Exception) {
                         log.error("Feil ved skuggetest mot syfosmregler {}", fields(loggingMeta))
                         log.error("Skuggetestfeil", e)

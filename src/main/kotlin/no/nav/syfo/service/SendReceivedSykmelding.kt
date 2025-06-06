@@ -7,6 +7,9 @@ import no.nav.syfo.util.LoggingMeta
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 
+const val PROCESSING_TARGET_HEADER = "processing-target"
+const val TSM_PROCESSING_TARGET_VALUE = "tsm"
+
 fun sendReceivedSykmeldingToKafka(
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmeldingWithValidation>,
     okSykmeldingTopic: String,
@@ -14,19 +17,12 @@ fun sendReceivedSykmeldingToKafka(
     loggingMeta: LoggingMeta
 ) {
     try {
-        kafkaproducerreceivedSykmelding
-            .send(
-                ProducerRecord(
-                    okSykmeldingTopic,
-                    receivedSykmelding.sykmelding.id,
-                    receivedSykmelding
-                )
-            )
-            .get()
+        val record =
+            ProducerRecord(okSykmeldingTopic, receivedSykmelding.sykmelding.id, receivedSykmelding)
+        record.headers().add(PROCESSING_TARGET_HEADER, TSM_PROCESSING_TARGET_VALUE.toByteArray())
+        kafkaproducerreceivedSykmelding.send(record).get()
         log.info(
-            "Message send to kafka {}, {}",
-            okSykmeldingTopic,
-            StructuredArguments.fields(loggingMeta)
+            "Message send to kafka $okSykmeldingTopic, ${StructuredArguments.fields(loggingMeta)}",
         )
     } catch (ex: Exception) {
         log.error(
