@@ -53,9 +53,6 @@ spec:
   accessPolicy:
     outbound:
       rules:
-        - application: syfosmpapirregler
-          namespace: teamsykmelding
-          cluster: dev-gcp
         - application: syfosmregler
           namespace: teamsykmelding
           cluster: dev-gcp
@@ -81,9 +78,6 @@ spec:
       value: api://dev-gcp.teamsykmelding.syfohelsenettproxy/.default
     - name: SYFOSMREGLER_SCOPE
       value: api://dev-gcp.teamsykmelding.syfosmregler/.default
-    # TODO: Soft deprecated
-    - name: SYFOSMPAPIRREGLER_SCOPE
-      value: api://dev-gcp.teamsykmelding.syfosmpapirregler/.default
     - name: DOK_ARKIV_URL
       value: https://dokarkiv.dev-fss-pub.nais.io/rest/journalpostapi/v1/journalpost
     - name: DOK_ARKIV_SCOPE
