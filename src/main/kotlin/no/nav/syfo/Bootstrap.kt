@@ -39,7 +39,6 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.OppgaveClient
-import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SmtssClient
@@ -204,7 +203,6 @@ fun main() {
             env.helsenettproxyScope,
             httpClient,
         )
-    val regelClient = RegelClient(azureAdV2Client, env.syfosmpapirregelScope, httpClient)
     val nyRegelClient = NyRegelClient(azureAdV2Client, env.syfosmreglerScope, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, azureAdV2Client, env.pdlScope)
 
@@ -213,7 +211,6 @@ fun main() {
             oppgaveService = oppgaveService,
             safDokumentClient = safDokumentClient,
             norskHelsenettClient = norskHelsenettClient,
-            regelClient = regelClient,
             nyRegelClient = nyRegelClient,
             smtssClient = smtssClient,
             pdlPersonService = pdlPersonService,

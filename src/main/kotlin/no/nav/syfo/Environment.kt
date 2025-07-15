@@ -14,8 +14,6 @@ data class Environment(
     val norskHelsenettEndpointURL: String = getEnvVar("HELSENETT_ENDPOINT_URL"),
     val helsenettproxyScope: String = getEnvVar("HELSENETT_SCOPE"),
     val syfosmreglerScope: String = getEnvVar("SYFOSMREGLER_SCOPE"),
-    // TODO: Soft deprecated
-    val syfosmpapirregelScope: String = getEnvVar("SYFOSMPAPIRREGLER_SCOPE"),
     val dokArkivUrl: String = getEnvVar("DOK_ARKIV_URL"),
     val dokArkivScope: String = getEnvVar("DOK_ARKIV_SCOPE"),
     val okSykmeldingTopic: String = "teamsykmelding.ok-sykmelding",
