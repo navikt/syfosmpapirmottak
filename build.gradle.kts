@@ -6,7 +6,7 @@ version = "1.0.0"
 val coroutinesVersion = "1.10.2"
 val kafkaVersion = "3.9.1"
 val kluentVersion = "1.73"
-val ktorVersion = "3.2.1"
+val ktorVersion = "3.2.3"
 val logbackVersion = "1.5.18"
 val logstashLogbackEncoderVersion = "8.1"
 val prometheusVersion = "0.16.0"
@@ -14,33 +14,33 @@ val kotestVersion = "5.9.1"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
-val jacksonVersion = "2.19.1"
+val jacksonVersion = "2.19.2"
 val joarkHendelseVersion = "96ec5ebb"
 val confluentVersion = "8.0.0"
 val syfoXmlCodegenVersion = "2.0.1"
-val commonsTextVersion = "1.13.1"
+val commonsTextVersion = "1.14.0"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val javaTimeAdapterVersion = "1.1.3"
-val ioMockVersion = "1.14.4"
-val kotlinVersion = "2.2.0"
-val caffeineVersion = "3.2.1"
+val ioMockVersion = "1.14.5"
+val kotlinVersion = "2.2.10"
+val caffeineVersion = "3.2.2"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
 val diagnosekoderVersion = "1.2025.0"
 
 ///Due to vulnerabilities
-val commonsCodecVersion = "1.18.0"
-val nettyCommonVersion= "4.2.2.Final"
-val commonsCompressVersion = "1.27.1"
+val commonsCodecVersion = "1.19.0"
+val nettyCommonVersion= "4.2.4.Final"
+val commonsCompressVersion = "1.28.0"
 
 val javaVersion = JvmTarget.JVM_21
 
 plugins {
     id("application")
-    kotlin("jvm") version "2.2.0"
-    id("com.gradleup.shadow") version "8.3.8"
-    id("com.diffplug.spotless") version "7.0.4"
+    kotlin("jvm") version "2.2.10"
+    id("com.gradleup.shadow") version "9.0.1"
+    id("com.diffplug.spotless") version "7.2.1"
 }
 
 application {
