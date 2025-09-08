@@ -1,10 +1,14 @@
 package no.nav.syfo.client
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.headers
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.HttpHeaders
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.domain.JournalpostMetadata
@@ -118,11 +122,13 @@ fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta):
     dateTime?.let {
         return try {
             LocalDateTime.parse(dateTime)
+                .atZone(ZoneId.of("Europe/Oslo"))
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime()
         } catch (e: Exception) {
             log.error(
-                "Journalpost har ikke en gyldig datoOpprettet {}, {}",
-                e.message,
-                fields(loggingMeta),
+                "Journalpost har ikke en gyldig datoOpprettet ${fields(loggingMeta)}",
+                e,
             )
             null
         }
@@ -137,7 +143,7 @@ fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMet
             if (it.variantformat.name == "ORIGINAL") {
                 log.info(
                     "Fant OCR-dokument dokumentInfoId: ${dokument.dokumentInfoId} {}",
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 return dokument.dokumentInfoId
             }

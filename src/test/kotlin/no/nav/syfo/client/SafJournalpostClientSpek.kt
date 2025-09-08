@@ -103,7 +103,7 @@ class SafJournalpostClientSpek :
                 dato?.year shouldBeEqualTo 2019
                 dato?.month shouldBeEqualTo Month.SEPTEMBER
                 dato?.dayOfMonth shouldBeEqualTo 24
-                dato?.hour shouldBeEqualTo 11
+                dato?.hour shouldBeEqualTo 9
                 dato?.minute shouldBeEqualTo 27
                 dato?.second shouldBeEqualTo 23
             }

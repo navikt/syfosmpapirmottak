@@ -2,7 +2,6 @@ package no.nav.syfo.service
 
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import net.logstash.logback.argument.StructuredArguments
@@ -101,7 +100,7 @@ class SykmeldingService(
 
                     val tssId =
                         smtssClient.findBestTssInfotrygdId(
-                            sykmelder!!.fnr,
+                            sykmelder.fnr,
                             "ukjent",
                             loggingMeta,
                             sykmeldingId
@@ -112,7 +111,7 @@ class SykmeldingService(
                     val fellesformat =
                         mapOcrFilTilFellesformat(
                             skanningmetadata = ocr,
-                            sykmelder = sykmelder!!,
+                            sykmelder = sykmelder,
                             sykmeldingId = sykmeldingId,
                             loggingMeta = loggingMeta,
                             pdlPerson = pasient,
@@ -126,7 +125,7 @@ class SykmeldingService(
                         healthInformation.toSykmelding(
                             sykmeldingId = sykmeldingId,
                             pasientAktoerId = pasient.aktorId,
-                            legeAktoerId = sykmelder!!.aktorId,
+                            legeAktoerId = sykmelder.aktorId,
                             msgId = sykmeldingId,
                             signaturDato = getLocalDateTime(msgHead.msgInfo.genDate),
                         )
@@ -137,10 +136,10 @@ class SykmeldingService(
                             personNrPasient = pasient.fnr,
                             tlfPasient =
                                 healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
-                            personNrLege = sykmelder!!.fnr,
-                            legeHprNr = sykmelder!!.hprNummer,
+                            personNrLege = sykmelder.fnr,
+                            legeHprNr = sykmelder.hprNummer,
                             legeHelsepersonellkategori =
-                                sykmelder?.godkjenninger?.getHelsepersonellKategori(),
+                                sykmelder.godkjenninger.getHelsepersonellKategori(),
                             navLogId = sykmeldingId,
                             msgId = sykmeldingId,
                             legekontorOrgNr = null,
@@ -245,14 +244,9 @@ class SykmeldingService(
                 tellFeilArsak(e.message)
                 PAPIRSM_MAPPET.labels("feil").inc()
                 log.warn(
-                    "Noe gikk galt ved mapping fra OCR til sykmeldingsformat: ${e.message}, {}",
-                    fields(loggingMeta)
+                    "Noe gikk galt ved mapping fra OCR til sykmeldingsformat, ${fields(loggingMeta)}",
+                    e
                 )
-                try {
-                    log.warn(e.stackTraceToString())
-                } catch (exception: Exception) {
-                    log.info("Failed to log stackTrace")
-                }
             }
 
             // Fallback hvis OCR er null ELLER parsing av OCR til sykmeldingformat mislykkes
@@ -298,11 +292,7 @@ class SykmeldingService(
                     fnr = fnr,
                     aktorId = aktorId,
                     dokumentInfoId = dokumentInfoId,
-                    datoOpprettet =
-                        datoOpprettet
-                            ?.atZone(ZoneId.systemDefault())
-                            ?.withZoneSameInstant(ZoneOffset.UTC)
-                            ?.toOffsetDateTime(),
+                    datoOpprettet = datoOpprettet?.atOffset(ZoneOffset.UTC),
                     sykmeldingId = sykmeldingId,
                     sykmelder = sykmelder,
                     ocrFil = ocrFil,
@@ -314,7 +304,7 @@ class SykmeldingService(
                 loggingMeta
             )
         } else {
-            log.info("duplikat oppgave {}", fields(loggingMeta))
+            log.info("duplikat oppgave ${fields(loggingMeta)}")
         }
     }
 
