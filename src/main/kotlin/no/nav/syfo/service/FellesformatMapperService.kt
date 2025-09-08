@@ -46,10 +46,12 @@ fun mapOcrFilTilFellesformat(
     pdlPerson: PdlPerson,
     journalpostId: String,
 ): XMLEIFellesformat {
-    if (skanningmetadata.sykemeldinger.pasient.fnr != pdlPerson.fnr) {
+    val pasientFnrFromOcr = skanningmetadata.sykemeldinger?.pasient?.fnr
+    if (pasientFnrFromOcr == null) {
+        log.warn("Mangler pasient fnr fra ocr ${fields(loggingMeta)}")
+    } else if (pasientFnrFromOcr != pdlPerson.fnr) {
         log.warn(
-            "Fnr fra sykmelding matcher ikke fnr fra journalpost/PDL, bruker fnr fra PDL {}",
-            fields(loggingMeta)
+            "Fnr fra ocr matcher ikke fnr fra journalpost/PDL, bruker fnr fra PDL ${fields(loggingMeta)}"
         )
     }
 
