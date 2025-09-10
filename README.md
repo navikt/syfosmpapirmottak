@@ -37,8 +37,8 @@ This the high level flow of the application
 ## Getting started
 ### Building the application
 #### Compile and package application
-To build locally and run the integration tests you can simply run `./gradlew shadowJar` or on windows 
-`gradlew.bat shadowJar`
+To build locally and run the integration tests you can simply run `./gradlew installDist` or on windows 
+`gradlew.bat installDist`
 
 ## Testing the whole flow for handling paper sykmelding in preprod
 see https://teamsykmelding.intern.nav.no/docs/testing/registrering-av-papirsykmelding
