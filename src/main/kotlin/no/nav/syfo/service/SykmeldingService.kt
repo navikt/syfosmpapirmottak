@@ -12,7 +12,6 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.Godkjenning
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
-import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
@@ -42,7 +41,6 @@ class SykmeldingService(
     private val oppgaveService: OppgaveService,
     private val safDokumentClient: SafDokumentClient,
     private val norskHelsenettClient: NorskHelsenettClient,
-    private val regelClient: RegelClient,
     private val nyRegelClient: NyRegelClient,
     private val smtssClient: SmtssClient,
     private val pdlPersonService: PdlPersonService,
@@ -164,7 +162,7 @@ class SykmeldingService(
                     PAPIRSM_MAPPET.labels("ok").inc()
 
                     log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
-                    val validationResult = regelClient.valider(receivedSykmelding, sykmeldingId)
+                    val validationResult = nyRegelClient.valider(receivedSykmelding, sykmeldingId)
                     log.info(
                         "Resultat: {}, {}, {}",
                         StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
@@ -174,28 +172,6 @@ class SykmeldingService(
                         ),
                         fields(loggingMeta),
                     )
-
-                    // SHADOW TEST: Prøv ut regelvalidering i syfosmregler og sammenlign:
-                    try {
-                        log.info("Validerer sykmelding mot syfosmregler, {}", fields(loggingMeta))
-                        val nyValidationResult =
-                            nyRegelClient.valider(receivedSykmelding, sykmeldingId)
-
-                        log.info(
-                            """${if (validationResult == nyValidationResult) "✅ SHADOW TEST OK ✅" else "❌ SHADOW TEST DIVERGENCE ❌"}
-                            |
-                            | Gammel: ${validationResult.status}
-                            | Ny: ${nyValidationResult.status}
-                            | 
-                            | Gammel regler: ${validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }}
-                            | Ny regler: ${nyValidationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }}
-                        """
-                                .trimMargin()
-                        )
-                    } catch (e: Exception) {
-                        log.error("Feil ved skuggetest mot syfosmregler {}", fields(loggingMeta))
-                        log.error("Skuggetestfeil", e)
-                    }
 
                     if (
                         validationResult.status == Status.MANUAL_PROCESSING ||

@@ -25,7 +25,6 @@ import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.OppgaveResponse
-import no.nav.syfo.client.RegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
@@ -58,8 +57,7 @@ class SykmeldingServiceSpek :
         val oppgaveserviceMock = mockk<OppgaveService>()
         val safDokumentClientMock = mockk<SafDokumentClient>()
         val norskHelsenettClientMock = mockk<NorskHelsenettClient>()
-        val regelClientMock = mockk<RegelClient>()
-        val nyRegelClientMock = mockk<NyRegelClient>()
+        val regelClientMock = mockk<NyRegelClient>()
         val kafkaproducerreceivedSykmeldingMock =
             mockk<KafkaProducer<String, ReceivedSykmeldingWithValidation>>(relaxed = true)
         val smtssClientMock = mockk<SmtssClient>()
@@ -73,7 +71,6 @@ class SykmeldingServiceSpek :
                 safDokumentClientMock,
                 norskHelsenettClientMock,
                 regelClientMock,
-                nyRegelClientMock,
                 smtssClientMock,
                 pdlService,
                 "ok",
