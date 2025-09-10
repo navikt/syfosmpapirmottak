@@ -39,7 +39,6 @@ val javaVersion = JvmTarget.JVM_21
 plugins {
     id("application")
     kotlin("jvm") version "2.2.0"
-    id("com.gradleup.shadow") version "8.3.8"
     id("com.diffplug.spotless") version "7.0.4"
 }
 
@@ -148,19 +147,6 @@ kotlin {
 
 
 tasks {
-
-    shadowJar {
-        archiveBaseName.set("app")
-        archiveClassifier.set("")
-        isZip64 = true
-        manifest {
-            attributes(
-                mapOf(
-                    "Main-Class" to "no.nav.syfo.BootstrapKt",
-                ),
-            )
-        }
-    }
 
    test {
         useJUnitPlatform {
