@@ -3,14 +3,13 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     open-pull-requests-limit: 10
     ignore:
       - dependency-name: "org.glassfish.jaxb:jaxb-runtime"
       - dependency-name: "org.apache.kafka:kafka_2.12"
         update-types: ["version-update:semver-major"]
       - dependency-name: "javax.xml.bind:jaxb-api"
-      - dependency-name: "no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas"
     groups:
       dependencies:
         patterns:
