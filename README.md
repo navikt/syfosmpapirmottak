@@ -27,8 +27,8 @@ This the high level flow of the application
     id2([Skanmot Helse]) --> id3([joark])
     id3([joark]) --> id4([syfosmpapirmottak])
     id4([syfosmpapirmottak]) -->|Manuell journalføring| id15([gosys])
-    id15([gosys]) -->|Manuell journalføring| id5([smregistering])
-    id5([smregistering]) -->|Manuell journalført| C[\teamsykmelding.ok-sykmelding/]
+    id15([gosys]) -->|Manuell journalføring| id5([syk-dig])
+    id5([syk-dig]) -->|Manuell journalført| C[\teamsykmelding.ok-sykmelding/]
     id4([syfosmpapirmottak]) <--> id6(["syfosmregler (papir-mode)"])
     id4([syfosmpapirmottak]) -->|Automatisk journalføring| C[\teamsykmelding.ok-sykmelding/]
     C[\teamsykmelding.ok-sykmelding/] --> id7([syfosmregister]) 
