@@ -78,6 +78,7 @@ class SykmeldingServiceSpek :
                 dokArkivClientMock,
                 kafkaproducerPapirSmRegistering,
                 "smregistrering",
+                emptyMap()
             )
 
         beforeTest {

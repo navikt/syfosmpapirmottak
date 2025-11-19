@@ -30,6 +30,7 @@ import no.nav.helse.papirsykemelding.UtdypendeOpplysningerType
 import no.nav.helse.papirsykemelding.UtenArbeidsgiverType
 import no.nav.helse.sm2013.HelseOpplysningerArbeidsuforhet
 import no.nav.syfo.client.Godkjenning
+import no.nav.syfo.client.Icpc2BDiagnoser
 import no.nav.syfo.client.Kode
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.domain.Sykmelder
@@ -67,8 +68,55 @@ class FellesformatMapperServiceSpek :
         val datoOpprettet = LocalDateTime.now()
         val loggingMetadata = LoggingMeta(sykmeldingId, journalpostId, "hendelsesId")
         val godkjenninger = listOf(Godkjenning(helsepersonellkategori = Kode(true, 1, "LE")))
+        val icpc2BDiagnoser =
+            mapOf(
+                "R75" to
+                    listOf(
+                        Icpc2BDiagnoser(
+                            tekst = null,
+                            kode = "R75.0001",
+                            langTekst = "Bihulebetennelse akutt",
+                            parentCode = "R75"
+                        )
+                    ),
+                "L84" to
+                    listOf(
+                        Icpc2BDiagnoser(
+                            kode = "L84.0005",
+                            parentCode = "L84",
+                            tekst = "Lumbago",
+                            langTekst = null
+                        )
+                    )
+            )
 
         context("MappingService ende-til-ende") {
+            test("Diagnosekode mapping L84") {
+                val diagnosekode =
+                    toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
+                        originalDiagnosekode = "L84",
+                        originalSystem = null,
+                        diagnose = "Lumbago",
+                        loggingMeta = loggingMetadata
+                    )
+                diagnosekode.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                diagnosekode.v shouldBeEqualTo "L84"
+                diagnosekode.dn shouldBeEqualTo "Ryggsyndrom uten smerteutstråling"
+            }
+            test("Diagnosekode mapping R75") {
+                val diagnose =
+                    toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
+                        originalDiagnosekode = "R75",
+                        originalSystem = null,
+                        diagnose = "Bihulebetennelse akutt",
+                        loggingMeta = loggingMetadata
+                    )
+
+                diagnose.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                diagnose.v shouldBeEqualTo "R75"
+            }
             test("Realistisk case ende-til-ende") {
                 val skanningMetadata =
                     skanningMetadataUnmarshaller.unmarshal(
@@ -101,6 +149,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata,
                         pdlPerson = pdlPerson,
                         journalpostId = journalpostId,
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                     )
 
                 val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -207,6 +256,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata,
                         pdlPerson = pdlPerson,
                         journalpostId = journalpostId,
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                     )
 
                 val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -339,6 +389,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata,
                         pdlPerson = pdlPerson,
                         journalpostId = journalpostId,
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                     )
 
                 val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
@@ -395,6 +446,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata,
                         pdlPerson = pdlPerson,
                         journalpostId = journalpostId,
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                     )
                 }
 
@@ -437,6 +489,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata,
                         pdlPerson = pdlPerson,
                         journalpostId = journalpostId,
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                     )
                 }
 
@@ -472,6 +525,7 @@ class FellesformatMapperServiceSpek :
 
                 val fellesformat =
                     mapOcrFilTilFellesformat(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         skanningmetadata = skanningMetadata,
                         sykmelder = sykmelder,
                         sykmeldingId = sykmeldingId,
@@ -509,7 +563,7 @@ class FellesformatMapperServiceSpek :
                     }
 
                 val medisinskVurdering =
-                    tilMedisinskVurdering(medisinskVurderingType, loggingMetadata)
+                    tilMedisinskVurdering(medisinskVurderingType, icpc2BDiagnoser, loggingMetadata)
 
                 medisinskVurdering.hovedDiagnose?.diagnosekode?.v shouldBeEqualTo "S525"
                 medisinskVurdering.hovedDiagnose?.diagnosekode?.s shouldBeEqualTo
@@ -530,6 +584,7 @@ class FellesformatMapperServiceSpek :
             test("diagnoseFraDiagnosekode ICD10") {
                 val diagnose =
                     toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         originalDiagnosekode = "S52.5",
                         originalSystem = "ICD-10",
                         diagnose = "foo Bar",
@@ -543,6 +598,7 @@ class FellesformatMapperServiceSpek :
             test("diagnoseFraDiagnosekode ICPC2") {
                 val diagnose =
                     toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         originalDiagnosekode = "L72",
                         originalSystem = "ICPC2",
                         diagnose = "foo Bar",
@@ -558,6 +614,7 @@ class FellesformatMapperServiceSpek :
             ) {
                 val diagnose =
                     toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         originalDiagnosekode = "L72",
                         originalSystem = null,
                         diagnose = "foo Bar",
@@ -573,6 +630,7 @@ class FellesformatMapperServiceSpek :
             ) {
                 val diagnose =
                     toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         originalDiagnosekode = "S52.5",
                         originalSystem = null,
                         diagnose = "foo Bar",
@@ -588,6 +646,7 @@ class FellesformatMapperServiceSpek :
             ) {
                 val func = {
                     toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         originalDiagnosekode = "L72",
                         originalSystem = "ICD-10",
                         diagnose = "foo Bar",
@@ -602,6 +661,7 @@ class FellesformatMapperServiceSpek :
             ) {
                 val func = {
                     toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         originalDiagnosekode = "S52.5",
                         originalSystem = "ICPC2",
                         diagnose = "foo Bar",
@@ -615,6 +675,7 @@ class FellesformatMapperServiceSpek :
             ) {
                 val func = {
                     toMedisinskVurderingDiagnose(
+                        icpc2BDiagnoser = icpc2BDiagnoser,
                         originalDiagnosekode = "L60",
                         originalSystem = "ICD-10",
                         diagnose = "foo Bar",
@@ -1064,8 +1125,13 @@ class FellesformatMapperServiceSpek :
                     )
 
                 val hoveddiagnose =
-                    toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
-
+                    toMedisinskVurderingDiagnose(
+                        gyldigdiagnose,
+                        null,
+                        "foo Bar",
+                        icpc2BDiagnoser,
+                        loggingmetea
+                    )
                 hoveddiagnose.v shouldBeEqualTo "T819"
             }
 
@@ -1079,7 +1145,13 @@ class FellesformatMapperServiceSpek :
                     )
 
                 val func = {
-                    toMedisinskVurderingDiagnose(gyldigdiagnose, "IC", "foo Bar", loggingmetea)
+                    toMedisinskVurderingDiagnose(
+                        gyldigdiagnose,
+                        "IC",
+                        "foo Bar",
+                        icpc2BDiagnoser = icpc2BDiagnoser,
+                        loggingmetea
+                    )
                 }
                 func shouldThrow IllegalStateException::class
             }
@@ -1094,7 +1166,13 @@ class FellesformatMapperServiceSpek :
                     )
 
                 val hoveddiagnose =
-                    toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
+                    toMedisinskVurderingDiagnose(
+                        gyldigdiagnose,
+                        null,
+                        "foo Bar",
+                        icpc2BDiagnoser = icpc2BDiagnoser,
+                        loggingmetea
+                    )
 
                 hoveddiagnose.v shouldBeEqualTo "T819"
             }
@@ -1109,7 +1187,13 @@ class FellesformatMapperServiceSpek :
                     )
 
                 val hoveddiagnose =
-                    toMedisinskVurderingDiagnose(gyldigdiagnose, null, "foo Bar", loggingmetea)
+                    toMedisinskVurderingDiagnose(
+                        gyldigdiagnose,
+                        null,
+                        "foo Bar",
+                        icpc2BDiagnoser = icpc2BDiagnoser,
+                        loggingmetea
+                    )
 
                 hoveddiagnose.v shouldBeEqualTo "T819"
             }

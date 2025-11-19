@@ -63,6 +63,7 @@ spec:
         - host: dokarkiv.dev-fss-pub.nais.io
         - host: pdl-api.dev-fss-pub.nais.io
         - host: oppgave-q1.dev-fss-pub.nais.io
+        - host: fat.kote.helsedirektoratet.no
   secureLogs:
     enabled: true
   env:

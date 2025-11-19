@@ -119,3 +119,11 @@ val SYK_DIG_OPPGAVER: Counter =
         .name("syk_dig_count")
         .help("Antall sykmeldinger som er sendt til syk-dig")
         .register()
+
+val DIAGNOSEKODE_ICPC2B_COUNTER: Counter =
+    Counter.build()
+        .namespace(NAMESPACE)
+        .name("icpc2b_count")
+        .help("Antall sykmeldinger som har ICPC2B-diagnosetekst")
+        .labelNames("code", "diagnose")
+        .register()

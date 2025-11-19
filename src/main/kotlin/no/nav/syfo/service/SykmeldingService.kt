@@ -10,6 +10,7 @@ import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.Godkjenning
+import no.nav.syfo.client.Icpc2BDiagnoser
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.SafDokumentClient
@@ -50,6 +51,7 @@ class SykmeldingService(
     private val dokArkivClient: DokArkivClient,
     private val kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
     private val smregistreringTopic: String,
+    private val icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>,
 ) {
     suspend fun behandleSykmelding(
         journalpostId: String,
@@ -114,6 +116,7 @@ class SykmeldingService(
                             loggingMeta = loggingMeta,
                             pdlPerson = pasient,
                             journalpostId = journalpostId,
+                            icpc2BDiagnoser = icpc2BDiagnoser,
                         )
 
                     val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)

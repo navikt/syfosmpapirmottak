@@ -33,8 +33,10 @@ import no.nav.helse.sm2013.Ident
 import no.nav.helse.sm2013.NavnType
 import no.nav.helse.sm2013.TeleCom
 import no.nav.helse.sm2013.URL
+import no.nav.syfo.client.Icpc2BDiagnoser
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
+import no.nav.syfo.metrics.DIAGNOSEKODE_ICPC2B_COUNTER
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
 
@@ -45,6 +47,7 @@ fun mapOcrFilTilFellesformat(
     loggingMeta: LoggingMeta,
     pdlPerson: PdlPerson,
     journalpostId: String,
+    icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>
 ): XMLEIFellesformat {
     val pasientFnrFromOcr = skanningmetadata.sykemeldinger?.pasient?.fnr
     if (pasientFnrFromOcr == null) {
@@ -210,7 +213,8 @@ fun mapOcrFilTilFellesformat(
                                                     tilMedisinskVurdering(
                                                         skanningmetadata.sykemeldinger
                                                             .medisinskVurdering,
-                                                        loggingMeta
+                                                        icpc2BDiagnoser,
+                                                        loggingMeta,
                                                     )
                                                 aktivitet =
                                                     HelseOpplysningerArbeidsuforhet.Aktivitet()
@@ -668,6 +672,7 @@ fun tilArbeidsgiver(
 
 fun tilMedisinskVurdering(
     medisinskVurderingType: MedisinskVurderingType,
+    icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>,
     loggingMeta: LoggingMeta
 ): HelseOpplysningerArbeidsuforhet.MedisinskVurdering {
     if (
@@ -684,6 +689,7 @@ fun tilMedisinskVurdering(
                 it.diagnosekode,
                 it.diagnosekodeSystem,
                 it.diagnose,
+                icpc2BDiagnoser = icpc2BDiagnoser,
                 loggingMeta
             )
         }
@@ -697,6 +703,7 @@ fun tilMedisinskVurdering(
                             medisinskVurderingType.hovedDiagnose[0].diagnosekode,
                             medisinskVurderingType.hovedDiagnose[0].diagnosekodeSystem,
                             medisinskVurderingType.hovedDiagnose[0].diagnose,
+                            icpc2BDiagnoser = icpc2BDiagnoser,
                             loggingMeta
                         )
                 }
@@ -748,7 +755,8 @@ fun toMedisinskVurderingDiagnose(
     originalDiagnosekode: String,
     originalSystem: String?,
     diagnose: String?,
-    loggingMeta: LoggingMeta
+    icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>,
+    loggingMeta: LoggingMeta,
 ): CV {
     val diagnosekode =
         if (originalDiagnosekode.contains(".")) {
@@ -792,24 +800,57 @@ fun toMedisinskVurderingDiagnose(
                 "Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode (kodeverk ikke angitt)",
                 fields(loggingMeta)
             )
+            Diagnosekoder.icpc2.values.firstOrNull { it.text == diagnose }?.let {}
             return CV().apply {
                 s = Diagnosekoder.ICD10_CODE
                 v = diagnosekode
                 dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
             }
         }
-        identifisertKodeverk.isEmpty() &&
-            Diagnosekoder.icpc2.containsKey(diagnosekode) &&
-            !Diagnosekoder.icd10.containsKey(diagnosekode) -> {
-            log.info(
-                "Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode (kodeverk ikke angitt)",
-                fields(loggingMeta)
-            )
-            return CV().apply {
-                s = Diagnosekoder.ICPC2_CODE
-                v = diagnosekode
-                dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: ""
+        identifisertKodeverk.isEmpty() -> {
+            val icpc2Diagnose = Diagnosekoder.icpc2[diagnosekode]
+            val icd10Diagnose = Diagnosekoder.icd10[diagnosekode]
+            if (icpc2Diagnose != null && icd10Diagnose == null) {
+                return CV().apply {
+                    s = Diagnosekoder.ICPC2_CODE
+                    v = diagnosekode
+                    dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: diagnose ?: ""
+                }
+            } else if (icd10Diagnose != null && icpc2Diagnose == null) {
+                return CV().apply {
+                    s = Diagnosekoder.ICD10_CODE
+                    v = diagnosekode
+                    dn = Diagnosekoder.icd10[diagnosekode]?.text ?: diagnose ?: ""
+                }
+            } else if (icpc2Diagnose == null) {
+                throw IllegalStateException(
+                    "Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk"
+                )
             }
+
+            if (diagnose.isNullOrBlank()) {
+                throw IllegalStateException(
+                    "Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk"
+                )
+            }
+
+            val icpc2BDiagnose =
+                icpc2BDiagnoser[diagnosekode]?.firstOrNull {
+                    it.tekst == diagnose || it.langTekst == diagnose
+                }
+
+            if (icpc2BDiagnose != null) {
+                DIAGNOSEKODE_ICPC2B_COUNTER.labels(diagnosekode, diagnose).inc()
+                return CV().apply {
+                    s = Diagnosekoder.ICPC2_CODE
+                    v = diagnosekode
+                    dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: diagnose
+                }
+            }
+
+            throw IllegalStateException(
+                "Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk"
+            )
         }
         else -> {
             log.warn(

@@ -16,6 +16,10 @@ import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.routing.routing
 import io.prometheus.client.hotspot.DefaultExports
 import java.net.SocketTimeoutException
 import java.time.Duration
@@ -24,14 +28,13 @@ import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.logstash.logback.argument.StructuredArguments
 import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
-import no.nav.syfo.application.ApplicationServer
 import no.nav.syfo.application.ApplicationState
+import no.nav.syfo.application.api.registerNaisApi
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.application.exception.ServiceUnavailableException
 import no.nav.syfo.azure.v2.AzureAdV2Client
@@ -42,6 +45,7 @@ import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
 import no.nav.syfo.client.SmtssClient
+import no.nav.syfo.client.getIcpc2Bdiagnoser
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.aiven.toConsumerConfig
@@ -74,19 +78,11 @@ val objectMapper: ObjectMapper =
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-@DelicateCoroutinesApi
-fun main() {
+suspend fun Application.module() {
+
     val env = Environment()
-
     val applicationState = ApplicationState()
-    val applicationEngine =
-        createApplicationEngine(
-            env,
-            applicationState,
-        )
-
-    val applicationServer = ApplicationServer(applicationEngine, applicationState)
-
+    routing { registerNaisApi(applicationState) }
     if (Diagnosekoder.icd10.isEmpty() || Diagnosekoder.icpc2.isEmpty()) {
         throw RuntimeException("Kunne ikke laste ICD10/ICPC2-diagnosekoder.")
     }
@@ -219,6 +215,7 @@ fun main() {
             dokArkivClient = dokArkivClient,
             kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
             smregistreringTopic = env.smregistreringTopic,
+            icpc2BDiagnoser = getIcpc2Bdiagnoser(),
         )
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
@@ -245,15 +242,25 @@ fun main() {
         pdlPersonService,
     )
 
-    applicationServer.start()
+    monitor.subscribe(ApplicationStarted) { applicationState.ready = true }
+
+    monitor.subscribe(ApplicationStopping) {
+        applicationState.ready = false
+        applicationState.alive = false
+        httpClient.close()
+    }
 }
 
 @DelicateCoroutinesApi
-fun createListener(
+fun main() {
+    createApplicationEngine().start(wait = true)
+}
+
+fun Application.createListener(
     applicationState: ApplicationState,
     action: suspend CoroutineScope.() -> Unit
 ): Job =
-    GlobalScope.launch(Dispatchers.IO) {
+    launch(Dispatchers.IO) {
         try {
             action()
         } catch (e: TrackableException) {
@@ -268,8 +275,7 @@ fun createListener(
         }
     }
 
-@DelicateCoroutinesApi
-fun launchListeners(
+fun Application.launchListeners(
     env: Environment,
     applicationState: ApplicationState,
     consumerPropertiesAiven: Properties,

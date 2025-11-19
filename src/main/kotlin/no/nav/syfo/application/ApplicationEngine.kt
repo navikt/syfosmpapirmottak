@@ -1,13 +1,17 @@
 package no.nav.syfo.application
 
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import io.ktor.server.routing.routing
-import no.nav.syfo.Environment
-import no.nav.syfo.application.api.registerNaisApi
+import io.ktor.server.application.Application
+import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import io.ktor.server.netty.NettyApplicationEngine
+import no.nav.syfo.getEnvVar
+import no.nav.syfo.module
 
-fun createApplicationEngine(
-    env: Environment,
-    applicationState: ApplicationState,
-): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> =
-    embeddedServer(Netty, env.applicationPort) { routing { registerNaisApi(applicationState) } }
+fun createApplicationEngine():
+    EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> =
+    embeddedServer(
+        factory = Netty,
+        port = getEnvVar("APPLICATION_PORT", "8080").toInt(),
+        module = Application::module
+    )

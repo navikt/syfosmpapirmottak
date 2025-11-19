@@ -1,8 +1,8 @@
 package no.nav.syfo.opprettsykmelding
 
+import io.ktor.server.application.Application
 import java.time.Duration
-import java.util.*
-import kotlinx.coroutines.DelicateCoroutinesApi
+import java.util.UUID
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.Environment
 import no.nav.syfo.application.ApplicationState
@@ -20,8 +20,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 
-@OptIn(DelicateCoroutinesApi::class)
-fun startOpprettSykmeldingConsumer(
+fun Application.startOpprettSykmeldingConsumer(
     environment: Environment,
     applicationState: ApplicationState,
     sykmeldingService: SykmeldingService,
@@ -40,7 +39,8 @@ fun startOpprettSykmeldingConsumer(
     val kafkaConsumer =
         KafkaConsumer(consumerProperties, StringDeserializer(), OpprettSykmeldingDeserializer())
 
-    OpprettSykmeldingService(
+    val opprettSykmeldingService =
+        OpprettSykmeldingService(
             kafkaConsumer = kafkaConsumer,
             sykmeldingService = sykmeldingService,
             env = environment,
@@ -48,7 +48,7 @@ fun startOpprettSykmeldingConsumer(
             safJournalpostClient = safJournalpostClient,
             pdlPersonService = pdlPersonService,
         )
-        .start()
+    createListener(applicationState) { opprettSykmeldingService.consumeTopic() }
 }
 
 class OpprettSykmeldingService(
@@ -69,11 +69,6 @@ class OpprettSykmeldingService(
             .getResource("/graphql/findJournalpost.graphql")!!
             .readText()
             .replace(Regex("[\n\t]"), "")
-
-    @DelicateCoroutinesApi
-    fun start() {
-        createListener(applicationState) { consumeTopic() }
-    }
 
     suspend fun consumeTopic() {
         kafkaConsumer.subscribe(listOf(env.opprettSykmeldingTopic))
