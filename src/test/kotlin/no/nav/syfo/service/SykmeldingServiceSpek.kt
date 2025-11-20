@@ -11,6 +11,7 @@ import java.io.IOException
 import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.papirsykemelding.AktivitetIkkeMuligType
 import no.nav.helse.papirsykemelding.AktivitetType
@@ -22,6 +23,7 @@ import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.helse.papirsykemelding.SykemeldingerType
 import no.nav.syfo.client.Behandler
 import no.nav.syfo.client.DokArkivClient
+import no.nav.syfo.client.Icpc2BDiagnoser
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.OppgaveResponse
@@ -65,6 +67,8 @@ class SykmeldingServiceSpek :
         val kafkaproducerPapirSmRegistering =
             mockk<KafkaProducer<String, PapirSmRegistering>>(relaxed = true)
         val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
+        val icpc2BDiagnoserDeferred =
+            CompletableDeferred<Map<String, List<Icpc2BDiagnoser>>>(emptyMap())
         val sykmeldingService =
             SykmeldingService(
                 oppgaveserviceMock,
@@ -78,7 +82,7 @@ class SykmeldingServiceSpek :
                 dokArkivClientMock,
                 kafkaproducerPapirSmRegistering,
                 "smregistrering",
-                emptyMap()
+                icpc2BDiagnoserDeferred
             )
 
         beforeTest {

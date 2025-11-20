@@ -4,6 +4,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import net.logstash.logback.argument.StructuredArguments
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
@@ -38,6 +40,7 @@ import no.nav.syfo.util.getLocalDateTime
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SykmeldingService(
     private val oppgaveService: OppgaveService,
     private val safDokumentClient: SafDokumentClient,
@@ -51,8 +54,21 @@ class SykmeldingService(
     private val dokArkivClient: DokArkivClient,
     private val kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
     private val smregistreringTopic: String,
-    private val icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>,
+    icpc2BDiagnoserDeffered: Deferred<Map<String, List<Icpc2BDiagnoser>>>,
 ) {
+
+    private var icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>> = emptyMap()
+
+    init {
+        icpc2BDiagnoserDeffered.invokeOnCompletion { cause ->
+            if (cause != null) {
+                log.error("Failed to load icpc2Bdiagnoser from api", cause)
+            } else {
+                icpc2BDiagnoser = icpc2BDiagnoserDeffered.getCompleted()
+            }
+        }
+    }
+
     suspend fun behandleSykmelding(
         journalpostId: String,
         pasient: PdlPerson?,

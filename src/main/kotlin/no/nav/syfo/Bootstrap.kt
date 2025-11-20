@@ -17,7 +17,6 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.routing.routing
 import io.prometheus.client.hotspot.DefaultExports
@@ -78,8 +77,12 @@ val objectMapper: ObjectMapper =
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-suspend fun Application.module() {
+@DelicateCoroutinesApi
+fun main() {
+    createApplicationEngine().start(wait = true)
+}
 
+fun Application.module() {
     val env = Environment()
     val applicationState = ApplicationState()
     routing { registerNaisApi(applicationState) }
@@ -215,7 +218,7 @@ suspend fun Application.module() {
             dokArkivClient = dokArkivClient,
             kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
             smregistreringTopic = env.smregistreringTopic,
-            icpc2BDiagnoser = getIcpc2Bdiagnoser(),
+            icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
         )
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
@@ -242,18 +245,11 @@ suspend fun Application.module() {
         pdlPersonService,
     )
 
-    monitor.subscribe(ApplicationStarted) { applicationState.ready = true }
-
     monitor.subscribe(ApplicationStopping) {
         applicationState.ready = false
         applicationState.alive = false
         httpClient.close()
     }
-}
-
-@DelicateCoroutinesApi
-fun main() {
-    createApplicationEngine().start(wait = true)
 }
 
 fun Application.createListener(
