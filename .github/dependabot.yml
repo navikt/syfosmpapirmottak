@@ -4,7 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 1
+    cooldown:
+      default-days: 7
     ignore:
       - dependency-name: "org.glassfish.jaxb:jaxb-runtime"
       - dependency-name: "org.apache.kafka:kafka_2.12"
@@ -17,5 +18,6 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "weekly"
+    cooldown:
+      default-days: 7
