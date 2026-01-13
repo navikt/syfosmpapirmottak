@@ -53,6 +53,8 @@ spec:
   accessPolicy:
     outbound:
       rules:
+        - application: logging
+          namespace: nais-system
         - application: syfosmregler
           namespace: teamsykmelding
           cluster: prod-gcp
@@ -64,8 +66,6 @@ spec:
         - host: pdl-api.prod-fss-pub.nais.io
         - host: oppgave.prod-fss-pub.nais.io
         - host: fat.kote.helsedirektoratet.no
-  secureLogs:
-    enabled: true
   env:
     - name: SAF_URL
       value: https://saf.prod-fss-pub.nais.io
