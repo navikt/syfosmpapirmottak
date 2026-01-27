@@ -1,16 +1,15 @@
 package no.nav.syfo.client
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.get
-import io.ktor.client.statement.readRawBytes
+import io.ktor.client.statement.*
 import io.ktor.http.headers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import no.nav.syfo.log
 import no.nav.syfo.objectMapper
 
@@ -53,6 +52,7 @@ fun getIcpc2Bdiagnoser(
             val diagnosekoder = response.readRawBytes()
             val codes = objectMapper.readValue<List<Diagnosekode>>(diagnosekoder)
             codes
+                .asSequence()
                 .filter { it.Tilhørighet_i_ICPC_2B == "TERM" }
                 .filter { it.Gyldig_til == null }
                 .filter { it.Kodeverk == "ICPC-2B" }
