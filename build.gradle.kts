@@ -6,7 +6,7 @@ version = "1.0.0"
 val coroutinesVersion = "1.10.2"
 val kafkaVersion = "3.9.1"
 val kluentVersion = "1.73"
-val ktorVersion = "3.3.3"
+val ktorVersion = "3.4.0"
 val logbackVersion = "1.5.26"
 val logstashLogbackEncoderVersion = "8.1"
 val prometheusVersion = "0.16.0"
@@ -14,7 +14,7 @@ val kotestVersion = "5.9.1"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
-val jacksonVersion = "2.19.1"
+val jacksonVersion = "2.20.2"
 val joarkHendelseVersion = "1.1.6"
 val confluentVersion = "8.1.1"
 val syfoXmlCodegenVersion = "2.0.1"
@@ -27,10 +27,6 @@ val kotlinVersion = "2.2.0"
 val caffeineVersion = "3.2.1"
 val ktfmtVersion = "0.44"
 val diagnosekoderVersion = "1.2025.0"
-
-///Due to vulnerabilities
-
-val nettyCommonVersion = "4.2.9.Final"
 
 val javaVersion = JvmTarget.JVM_21
 
@@ -84,11 +80,6 @@ dependencies {
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    constraints {
-        implementation("io.netty:netty-codec-http:$nettyCommonVersion") {
-            because("override transient from io.ktor:ktor-server-netty")
-        }
-    }
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
