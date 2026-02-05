@@ -187,6 +187,8 @@ fun finnDokumentIdForPdf(
 const val GAMMEL_BREVKODE_UTLAND: String = "900023"
 const val BREVKODE_UTLAND: String = "NAV 08-07.04 U"
 const val BREVKODE_NORSK: String = "NAV 08-07.04"
+const val BREVKODE_EGENERKLARING_FOR_UTENLENDSK_SYKMELDING: String = "NAV 08-09.06"
+const val BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING: String = "CH"
 
 fun sykmeldingGjelderUtland(
     dokumentListe: List<Dokument>?,
@@ -213,19 +215,29 @@ fun sykmeldingGjelderUtland(
             "Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}",
             fields(loggingMeta),
         )
-        val inneholderUtlandBrevkode: Boolean =
-            dokumentListe.any { dok -> dok.brevkode == BREVKODE_UTLAND }
-        if (inneholderUtlandBrevkode) {
-            brevkode = BREVKODE_UTLAND
-        } else {
-            val inneholderGammelUtlandBrevkode: Boolean =
-                dokumentListe.any { dok -> dok.brevkode == GAMMEL_BREVKODE_UTLAND }
-            if (inneholderGammelUtlandBrevkode) {
-                brevkode = GAMMEL_BREVKODE_UTLAND
+
+        if (
+            dokumentListe.any { dok ->
+                dok.brevkode == BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING
             }
+        ) {
+            log.info(
+                "Found brevkode $BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING, fortsetter med utenlandsk sykmelding {}",
+                fields(loggingMeta)
+            )
+            brevkode = BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING
+        } else if (dokumentListe.any { dok -> dok.brevkode == BREVKODE_UTLAND }) {
+            brevkode = BREVKODE_UTLAND
+        } else if (dokumentListe.any { dok -> dok.brevkode == GAMMEL_BREVKODE_UTLAND }) {
+            brevkode = GAMMEL_BREVKODE_UTLAND
         }
     }
-    return if (brevkode == BREVKODE_UTLAND || brevkode == GAMMEL_BREVKODE_UTLAND) {
+
+    return if (
+        brevkode == BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING ||
+            brevkode == BREVKODE_UTLAND ||
+            brevkode == GAMMEL_BREVKODE_UTLAND
+    ) {
         log.info(
             "Sykmelding gjelder utenlandsk sykmelding, brevkode: {}, {}",
             brevkode,

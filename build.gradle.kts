@@ -27,6 +27,7 @@ val kotlinVersion = "2.2.0"
 val caffeineVersion = "3.2.1"
 val ktfmtVersion = "0.44"
 val diagnosekoderVersion = "1.2025.0"
+val tsmDiagnoserVersion = "2026.1.13"
 
 val javaVersion = JvmTarget.JVM_21
 
@@ -77,6 +78,7 @@ dependencies {
     implementation("no.nav.helse.xml:kith-hodemelding:$syfoXmlCodegenVersion")
     implementation("no.nav.helse.xml:papirsykemelding:$syfoXmlCodegenVersion")
     implementation("no.nav.helse.xml:sm2013:$syfoXmlCodegenVersion")
+    implementation("no.nav.tsm:diagnoser:$tsmDiagnoserVersion")
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
@@ -87,7 +89,6 @@ dependencies {
 
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 
-    implementation("no.nav.helse:diagnosekoder:$diagnosekoderVersion")
     implementation("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
     implementation("javax.activation:activation:$javaxActivationVersion")
