@@ -8,7 +8,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Month
 import java.util.UUID
-import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.papirsykemelding.AktivitetIkkeMuligType
 import no.nav.helse.papirsykemelding.AktivitetType
@@ -51,6 +50,8 @@ import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.get
 import no.nav.syfo.util.getLocalDateTime
 import no.nav.syfo.util.skanningMetadataUnmarshaller
+import no.nav.tsm.diagnoser.ICD10
+import no.nav.tsm.diagnoser.ICPC2
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEqualTo
 import org.amshove.kluent.shouldNotThrow
@@ -100,7 +101,7 @@ class FellesformatMapperServiceSpek :
                         diagnose = "Lumbago",
                         loggingMeta = loggingMetadata
                     )
-                diagnosekode.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                diagnosekode.s shouldBeEqualTo ICPC2.OID
                 diagnosekode.v shouldBeEqualTo "L84"
                 diagnosekode.dn shouldBeEqualTo "Ryggsyndrom uten smerteutstråling"
             }
@@ -114,7 +115,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata
                     )
 
-                diagnose.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                diagnose.s shouldBeEqualTo ICPC2.OID
                 diagnose.v shouldBeEqualTo "R75"
             }
             test("Realistisk case ende-til-ende") {
@@ -305,7 +306,7 @@ class FellesformatMapperServiceSpek :
                 receivedSykmelding.tssid shouldBeEqualTo null
                 receivedSykmelding.sykmelding.pasientAktoerId shouldBeEqualTo aktorId
                 receivedSykmelding.sykmelding.medisinskVurdering.hovedDiagnose shouldBeEqualTo
-                    Diagnose(Diagnosekoder.ICD10_CODE, "S525", "Brudd i distal ende av radius")
+                    Diagnose(ICD10.OID, "S525", "Brudd i distal ende av radius")
                 receivedSykmelding.sykmelding.medisinskVurdering.biDiagnoser shouldBeEqualTo
                     emptyList()
                 receivedSykmelding.sykmelding.medisinskVurdering.svangerskap shouldBeEqualTo false
@@ -566,14 +567,12 @@ class FellesformatMapperServiceSpek :
                     tilMedisinskVurdering(medisinskVurderingType, icpc2BDiagnoser, loggingMetadata)
 
                 medisinskVurdering.hovedDiagnose?.diagnosekode?.v shouldBeEqualTo "S525"
-                medisinskVurdering.hovedDiagnose?.diagnosekode?.s shouldBeEqualTo
-                    Diagnosekoder.ICD10_CODE
+                medisinskVurdering.hovedDiagnose?.diagnosekode?.s shouldBeEqualTo ICD10.OID
                 medisinskVurdering.biDiagnoser.diagnosekode.size shouldBeEqualTo 1
                 medisinskVurdering.biDiagnoser.diagnosekode[0].v shouldBeEqualTo "S697"
-                medisinskVurdering.biDiagnoser.diagnosekode[0].s shouldBeEqualTo
-                    Diagnosekoder.ICD10_CODE
+                medisinskVurdering.biDiagnoser.diagnosekode[0].s shouldBeEqualTo ICD10.OID
                 medisinskVurdering.biDiagnoser.diagnosekode[0].dn shouldBeEqualTo
-                    "Flere skader i håndledd og hånd"
+                    "Flere skader i håndledd eller hånd"
                 medisinskVurdering.isSvangerskap shouldBeEqualTo false
                 medisinskVurdering.isYrkesskade shouldBeEqualTo true
                 medisinskVurdering.yrkesskadeDato shouldBeEqualTo dato
@@ -591,7 +590,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata
                     )
 
-                diagnose.s shouldBeEqualTo Diagnosekoder.ICD10_CODE
+                diagnose.s shouldBeEqualTo ICD10.OID
                 diagnose.v shouldBeEqualTo "S525"
             }
 
@@ -605,7 +604,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata
                     )
 
-                diagnose.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                diagnose.s shouldBeEqualTo ICPC2.OID
                 diagnose.v shouldBeEqualTo "L72"
             }
 
@@ -621,7 +620,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata
                     )
 
-                diagnose.s shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                diagnose.s shouldBeEqualTo ICPC2.OID
                 diagnose.v shouldBeEqualTo "L72"
             }
 
@@ -637,7 +636,7 @@ class FellesformatMapperServiceSpek :
                         loggingMeta = loggingMetadata
                     )
 
-                diagnose.s shouldBeEqualTo Diagnosekoder.ICD10_CODE
+                diagnose.s shouldBeEqualTo ICD10.OID
                 diagnose.v shouldBeEqualTo "S525"
             }
 
@@ -692,7 +691,7 @@ class FellesformatMapperServiceSpek :
                         system = "ICD-10",
                         diagnose = "foo bar"
                     )
-                system shouldBeEqualTo Diagnosekoder.ICD10_CODE
+                system shouldBeEqualTo ICD10.OID
             }
 
             test("diagnoseFraDiagnosekode ICD10, gyldig kode") {
@@ -702,7 +701,7 @@ class FellesformatMapperServiceSpek :
                         system = "ICD-10",
                         diagnose = "foo bar"
                     )
-                system shouldBeEqualTo Diagnosekoder.ICD10_CODE
+                system shouldBeEqualTo ICD10.OID
             }
 
             test("diagnoseFraDiagnosekode ICD10, gyldig kode, gyldig diagnose, ugyldig system") {
@@ -712,7 +711,7 @@ class FellesformatMapperServiceSpek :
                         system = "foo bar",
                         diagnose = "Brudd i distal ende av radius"
                     )
-                system shouldBeEqualTo Diagnosekoder.ICD10_CODE
+                system shouldBeEqualTo ICD10.OID
             }
 
             test("diagnoseFraDiagnosekode ICPC-2, gyldig kode") {
@@ -722,7 +721,7 @@ class FellesformatMapperServiceSpek :
                         system = "ICPC-2",
                         diagnose = "foo bar"
                     )
-                system shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                system shouldBeEqualTo ICPC2.OID
             }
 
             test(
@@ -734,7 +733,7 @@ class FellesformatMapperServiceSpek :
                         system = "",
                         diagnose = "Brudd underarm"
                     )
-                system shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                system shouldBeEqualTo ICPC2.OID
             }
 
             test("Skal ikke endre system hvis det er satt korrekt, ICPC-2") {
@@ -744,7 +743,7 @@ class FellesformatMapperServiceSpek :
                         system = "ICPC-2",
                         diagnose = "foo bar"
                     )
-                system shouldBeEqualTo Diagnosekoder.ICPC2_CODE
+                system shouldBeEqualTo ICPC2.OID
             }
 
             test("Skal ikke endre system hvis det er satt korrekt, ICD-10") {
@@ -754,7 +753,7 @@ class FellesformatMapperServiceSpek :
                         system = "ICD-10",
                         diagnose = "Inngrodd tånegl , bilateralt"
                     )
-                system shouldBeEqualTo Diagnosekoder.ICD10_CODE
+                system shouldBeEqualTo ICD10.OID
             }
 
             test("tilArbeidsgiver en arbeidsgiver") {

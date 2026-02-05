@@ -4,7 +4,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import net.logstash.logback.argument.StructuredArguments.fields
-import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.eiFellesformat.XMLEIFellesformat
 import no.nav.helse.msgHead.XMLCS
 import no.nav.helse.msgHead.XMLCV
@@ -39,6 +38,8 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.DIAGNOSEKODE_ICPC2B_COUNTER
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.util.LoggingMeta
+import no.nav.tsm.diagnoser.ICD10
+import no.nav.tsm.diagnoser.ICPC2
 
 fun mapOcrFilTilFellesformat(
     skanningmetadata: Skanningmetadata,
@@ -733,19 +734,13 @@ fun identifiserDiagnoseKodeverk(diagnoseKode: String, system: String?, diagnose:
     val sanitisertKode = diagnoseKode.replace(".", "").replace(" ", "").uppercase()
 
     return if (sanitisertSystem == "ICD10") {
-        Diagnosekoder.ICD10_CODE
+        ICD10.OID
     } else if (sanitisertSystem == "ICPC2") {
-        Diagnosekoder.ICPC2_CODE
-    } else if (
-        Diagnosekoder.icd10.containsKey(sanitisertKode) &&
-            Diagnosekoder.icd10[sanitisertKode]?.text == diagnose
-    ) {
-        Diagnosekoder.ICD10_CODE
-    } else if (
-        Diagnosekoder.icpc2.containsKey(sanitisertKode) &&
-            Diagnosekoder.icpc2[sanitisertKode]?.text == diagnose
-    ) {
-        Diagnosekoder.ICPC2_CODE
+        ICPC2.OID
+    } else if (ICD10[sanitisertKode] != null && ICD10[sanitisertKode]?.text == diagnose) {
+        ICD10.OID
+    } else if (ICPC2[sanitisertKode] != null && ICPC2[sanitisertKode]?.text == diagnose) {
+        ICPC2.OID
     } else {
         ""
     }
@@ -769,58 +764,55 @@ fun toMedisinskVurderingDiagnose(
         identifiserDiagnoseKodeverk(originalDiagnosekode, originalSystem, diagnose)
 
     when {
-        identifisertKodeverk == Diagnosekoder.ICD10_CODE &&
-            Diagnosekoder.icd10.containsKey(diagnosekode) -> {
+        identifisertKodeverk == ICD10.OID && ICD10[diagnosekode] != null -> {
             log.info(
                 "Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode og kodeverk/diagnosetekst",
                 fields(loggingMeta)
             )
             return CV().apply {
-                s = Diagnosekoder.ICD10_CODE
+                s = ICD10.OID
                 v = diagnosekode
-                dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
+                dn = ICD10[diagnosekode]?.text ?: ""
             }
         }
-        identifisertKodeverk == Diagnosekoder.ICPC2_CODE &&
-            Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
+        identifisertKodeverk == ICPC2.OID && ICPC2[diagnosekode] != null -> {
             log.info(
                 "Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode og kodeverk/diagnosetekst",
                 fields(loggingMeta)
             )
             return CV().apply {
-                s = Diagnosekoder.ICPC2_CODE
+                s = ICPC2.OID
                 v = diagnosekode
-                dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: ""
+                dn = ICPC2[diagnosekode]?.text ?: ""
             }
         }
         identifisertKodeverk.isEmpty() &&
-            Diagnosekoder.icd10.containsKey(diagnosekode) &&
-            !Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
+            ICD10[diagnosekode] != null &&
+            ICPC2[diagnosekode] == null -> {
             log.info(
                 "Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode (kodeverk ikke angitt)",
                 fields(loggingMeta)
             )
-            Diagnosekoder.icpc2.values.firstOrNull { it.text == diagnose }?.let {}
             return CV().apply {
-                s = Diagnosekoder.ICD10_CODE
+                s = ICD10.OID
                 v = diagnosekode
-                dn = Diagnosekoder.icd10[diagnosekode]?.text ?: ""
+                dn = ICD10[diagnosekode]?.text ?: ""
             }
         }
         identifisertKodeverk.isEmpty() -> {
-            val icpc2Diagnose = Diagnosekoder.icpc2[diagnosekode]
-            val icd10Diagnose = Diagnosekoder.icd10[diagnosekode]
+            val icpc2Diagnose = ICPC2[diagnosekode]
+            val icd10Diagnose = ICD10[diagnosekode]
             if (icpc2Diagnose != null && icd10Diagnose == null) {
                 return CV().apply {
-                    s = Diagnosekoder.ICPC2_CODE
+                    s = ICPC2.OID
                     v = diagnosekode
-                    dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: diagnose ?: ""
+                    dn = ICPC2[diagnosekode]?.text ?: diagnose ?: ""
                 }
             } else if (icd10Diagnose != null && icpc2Diagnose == null) {
                 return CV().apply {
-                    s = Diagnosekoder.ICD10_CODE
+                    s = ICD10.OID
                     v = diagnosekode
-                    dn = Diagnosekoder.icd10[diagnosekode]?.text ?: diagnose ?: ""
+                    dn = ICD10[diagnosekode]?.text ?: diagnose ?: ""
                 }
             } else if (icpc2Diagnose == null) {
                 throw IllegalStateException(
@@ -842,9 +834,9 @@ fun toMedisinskVurderingDiagnose(
             if (icpc2BDiagnose != null) {
                 DIAGNOSEKODE_ICPC2B_COUNTER.labels(diagnosekode, diagnose).inc()
                 return CV().apply {
-                    s = Diagnosekoder.ICPC2_CODE
+                    s = ICPC2.OID
                     v = diagnosekode
-                    dn = Diagnosekoder.icpc2[diagnosekode]?.text ?: diagnose
+                    dn = ICPC2[diagnosekode]?.text ?: diagnose
                 }
             }
 

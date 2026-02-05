@@ -1,7 +1,6 @@
 package no.nav.syfo.service
 
 import java.time.OffsetDateTime
-import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.papirsykemelding.AktivitetType
 import no.nav.helse.papirsykemelding.ArbeidsgiverType
 import no.nav.helse.papirsykemelding.BehandlerType
@@ -32,6 +31,10 @@ import no.nav.syfo.model.Periode
 import no.nav.syfo.model.Prognose
 import no.nav.syfo.model.SporsmalSvar
 import no.nav.syfo.model.SvarRestriksjon
+import no.nav.tsm.diagnoser.ICD10
+import no.nav.tsm.diagnoser.ICPC2
+
+fun String.sanitizedDiagnose(): String = replace(".", "").replace(" ", "")
 
 fun mapOcrFilTilPapirSmRegistrering(
     journalpostId: String,
@@ -378,28 +381,28 @@ private fun toMedisinskVurderingDiagnose(
     diagnoseTekst: String?
 ): Diagnose {
     if (diagnoseKode != null) {
-        val sanitisertDiagnoseKode = diagnoseKode.replace(".", "").replace(" ", "")
+        val sanitisertDiagnoseKode = diagnoseKode.sanitizedDiagnose()
 
         val icd10Entry =
-            Diagnosekoder.icd10.entries.firstOrNull {
-                it.key.uppercase() == sanitisertDiagnoseKode.uppercase()
+            ICD10().firstOrNull() {
+                it.code.sanitizedDiagnose().equals(sanitisertDiagnoseKode, ignoreCase = true)
             }
         if (icd10Entry != null) {
             return Diagnose(
-                kode = icd10Entry.value.code,
-                system = Diagnosekoder.ICD10_CODE,
-                tekst = icd10Entry.value.text,
+                kode = icd10Entry.code,
+                system = ICD10.OID,
+                tekst = icd10Entry.text,
             )
         }
         val icpc2Entry =
-            Diagnosekoder.icpc2.entries.firstOrNull {
-                it.key.uppercase() == sanitisertDiagnoseKode.uppercase()
+            ICPC2().firstOrNull {
+                it.code.sanitizedDiagnose().equals(sanitisertDiagnoseKode, ignoreCase = true)
             }
         if (icpc2Entry != null) {
             return Diagnose(
-                kode = icpc2Entry.value.code,
-                system = Diagnosekoder.ICPC2_CODE,
-                tekst = icpc2Entry.value.text,
+                kode = icpc2Entry.code,
+                system = ICPC2.OID,
+                tekst = icpc2Entry.text,
             )
         }
     }
