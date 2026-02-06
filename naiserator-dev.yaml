@@ -60,7 +60,7 @@ spec:
         - application: smtss
         - application: syfohelsenettproxy
       external:
-        - host: saf.dev-fss-pub.nais.io
+        - host: saf-q2.dev-fss-pub.nais.io
         - host: dokarkiv.dev-fss-pub.nais.io
         - host: pdl-api.dev-fss-pub.nais.io
         - host: oppgave.dev-fss-pub.nais.io
