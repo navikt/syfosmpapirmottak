@@ -67,9 +67,9 @@ spec:
         - host: fat.kote.helsedirektoratet.no
   env:
     - name: SAF_URL
-      value: https://saf.dev-fss-pub.nais.io
+      value: https://saf-q2.dev-fss-pub.nais.io
     - name: SAF_SCOPE
-      value: api://dev-fss.teamdokumenthandtering.saf-/.default
+      value: api://dev-fss.teamdokumenthandtering.saf/.default
     - name: DOK_JOURNALFOERING_AIVEN_TOPIC
       value: teamdokumenthandtering.aapen-dok-journalfoering
     - name: HELSENETT_ENDPOINT_URL

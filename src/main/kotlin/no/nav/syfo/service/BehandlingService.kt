@@ -10,6 +10,7 @@ import no.nav.syfo.metrics.ENDRET_PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_OCR
 import no.nav.syfo.metrics.REQUEST_TIME
+import no.nav.syfo.objectMapper
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
@@ -37,12 +38,18 @@ class BehandlingService(
                 "Journalføring hendelse med journalpostId: $journalpostId og tema: $temaNytt"
             )
 
+            val isProbablyEgenerklaringsskjemaSykmelding =
+                temaNytt == "SYK" && mottaksKanal == "NAV_NO"
+
             if (
-                temaNytt == "SYM" &&
-                    (mottaksKanal == "SKAN_NETS" || mottaksKanal == "SKAN_IM") &&
-                    (hendelsesType == "MidlertidigJournalført" ||
-                        hendelsesType == "JournalpostMottatt" ||
-                        hendelsesType == "TemaEndret")
+                isProbablyEgenerklaringsskjemaSykmelding ||
+                    temaNytt == "SYM" &&
+                        (mottaksKanal == "SKAN_NETS" ||
+                            mottaksKanal == "SKAN_IM" ||
+                            mottaksKanal == "NAV_NO") &&
+                        (hendelsesType == "MidlertidigJournalført" ||
+                            hendelsesType == "JournalpostMottatt" ||
+                            hendelsesType == "TemaEndret")
             ) {
                 val requestLatency = REQUEST_TIME.startTimer()
                 PAPIRSM_MOTTATT.inc()
@@ -78,7 +85,10 @@ class BehandlingService(
                     PAPIRSM_MOTTATT_UTEN_OCR.inc()
                 }
 
-                log.debug("Response from saf graphql, {}", fields(loggingMeta))
+                securelog.info(
+                    "Response from saf graphql, ${objectMapper.writeValueAsString(journalpostMetadata)}",
+                    fields(loggingMeta)
+                )
 
                 ocrDebugLog(journalpostId, journalpostMetadata, journalfoeringEvent)
 
