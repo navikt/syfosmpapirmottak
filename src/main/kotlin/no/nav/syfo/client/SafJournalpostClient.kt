@@ -140,7 +140,7 @@ fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta):
 fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMeta): String? {
     dokumentListe?.forEach { dokument ->
         dokument.dokumentvarianter.forEach {
-            if (it.variantformat.name == "ORIGINAL") {
+            if (it.variantformat.name == "ORIGINAL" && dokument.brevkode != BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING) {
                 log.info(
                     "Fant OCR-dokument dokumentInfoId: ${dokument.dokumentInfoId} {}",
                     fields(loggingMeta),
