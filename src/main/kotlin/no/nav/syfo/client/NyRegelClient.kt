@@ -36,8 +36,6 @@ class NyRegelClient(
             .also {
                 if (it.status.value != 200) {
                     throw IllegalStateException("Feil ved kall til syfosmregler: ${it.status}")
-                } else {
-                    println("Kall til syfosmregler var vellykket ${it.status}")
                 }
             }
             .body<ValidationResult>()
