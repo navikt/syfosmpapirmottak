@@ -69,7 +69,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
 
-    implementation("org.apache.kafka:kafka_2.12:$kafkaVersion")
+    implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
     implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
     implementation("no.nav.teamdokumenthandtering:teamdokumenthandtering-avro-schemas:$joarkHendelseVersion")
 
