@@ -29,8 +29,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import net.logstash.logback.argument.StructuredArguments
-import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.api.registerNaisApi
@@ -57,7 +55,6 @@ import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
-import no.nav.syfo.util.TrackableException
 import no.nav.syfo.utland.DigitaliseringsoppgaveKafka
 import no.nav.syfo.utland.SykDigProducer
 import no.nav.syfo.utland.UtenlandskSykmeldingService
@@ -86,9 +83,6 @@ fun Application.module() {
     val env = Environment()
     val applicationState = ApplicationState()
     routing { registerNaisApi(applicationState) }
-    if (Diagnosekoder.icd10.isEmpty() || Diagnosekoder.icpc2.isEmpty()) {
-        throw RuntimeException("Kunne ikke laste ICD10/ICPC2-diagnosekoder.")
-    }
 
     DefaultExports.initialize()
 
@@ -110,7 +104,7 @@ fun Application.module() {
                 valueDeserializer = KafkaAvroDeserializer::class,
             )
             .also {
-                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
                 it["specific.avro.reader"] = true
             }
 
@@ -259,11 +253,10 @@ fun Application.createListener(
     launch(Dispatchers.IO) {
         try {
             action()
-        } catch (e: TrackableException) {
+        } catch (e: Exception) {
             log.error(
-                "En uhåndtert feil oppstod, applikasjonen restarter {}",
-                StructuredArguments.fields(e.loggingMeta),
-                e.cause,
+                "En uhåndtert feil oppstod, applikasjonen restarter",
+                e,
             )
         } finally {
             applicationState.ready = false

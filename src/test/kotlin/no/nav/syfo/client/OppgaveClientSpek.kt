@@ -5,28 +5,24 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.kotest.core.spec.style.FunSpec
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpResponseValidator
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.jackson
-import io.ktor.server.application.call
-import io.ktor.server.application.install
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
+import io.ktor.client.*
+import io.ktor.client.engine.apache5.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.http.*
+import io.ktor.serialization.jackson.*
+import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.net.ServerSocket
 import java.net.SocketTimeoutException
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.TimeUnit
 import no.nav.syfo.application.exception.ServiceUnavailableException
 import no.nav.syfo.azure.v2.AzureAdV2Client
@@ -38,7 +34,7 @@ class OppgaveClientSpek :
     FunSpec({
         val accessTokenClient = mockk<AzureAdV2Client>()
         val httpClient =
-            HttpClient(Apache) {
+            HttpClient(Apache5) {
                 install(ContentNegotiation) {
                     jackson {
                         registerKotlinModule()

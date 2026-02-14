@@ -5,9 +5,11 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import no.nav.syfo.client.DokumentMedTittel
 import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.pdl.model.Navn
 import no.nav.syfo.pdl.model.PdlPerson
+import no.nav.syfo.service.BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.util.LoggingMeta
 
@@ -28,6 +30,20 @@ class UtenlandskSykmeldingServiceSpek :
         val utenlandskSykmeldingServiceDev =
             UtenlandskSykmeldingService(oppgaveserviceMock, sykDigProducer, "dev-gcp")
 
+        val dokumenter: List<DokumentMedTittel> =
+            listOf(
+                DokumentMedTittel(
+                    dokumentInfoId = dokumentInfoId,
+                    tittel = "Tittel",
+                    brevkode = "NAV 08-09.06",
+                ),
+                DokumentMedTittel(
+                    dokumentInfoId = "id2",
+                    tittel = "Tittel",
+                    brevkode = BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING,
+                )
+            )
+
         beforeTest {
             clearAllMocks()
 
@@ -46,7 +62,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasient,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = dokumenter
                 )
 
                 coVerify(exactly = 0) {
@@ -67,7 +83,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasientCopy,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = dokumenter
                 )
 
                 coVerify {
@@ -104,7 +120,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasient,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = dokumenter
                 )
 
                 coVerify(exactly = 0) {
@@ -122,9 +138,15 @@ class UtenlandskSykmeldingServiceSpek :
                                     oppgaveId = "1",
                                     fnr = fnr,
                                     journalpostId = journalpostId,
-                                    dokumentInfoId = dokumentInfoId,
+                                    dokumentInfoId = "id2",
                                     type = "UTLAND",
-                                    dokumenter = emptyList()
+                                    dokumenter =
+                                        dokumenter.map {
+                                            DokumentKafka(
+                                                dokumentInfoId = it.dokumentInfoId,
+                                                tittel = it.tittel,
+                                            )
+                                        }
                                 )
                         },
                         any()
@@ -142,7 +164,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasient,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = dokumenter
                 )
 
                 coVerify(exactly = 0) {

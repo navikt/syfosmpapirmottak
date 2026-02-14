@@ -5,12 +5,12 @@ import java.io.StringReader
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.getFileAsString
 import no.nav.syfo.model.HarArbeidsgiver
 import no.nav.syfo.model.SvarRestriksjon
 import no.nav.syfo.util.skanningMetadataUnmarshaller
+import no.nav.tsm.diagnoser.ICD10
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeEqualTo
 
@@ -118,12 +118,10 @@ class PapirSmMapperServiceSpek :
 
                 papirSm.medisinskVurdering?.hovedDiagnose?.kode shouldBeEqualTo
                     ocrFil.sykemeldinger.medisinskVurdering.hovedDiagnose.first().diagnosekode
-                papirSm.medisinskVurdering?.hovedDiagnose?.system shouldBeEqualTo
-                    Diagnosekoder.ICD10_CODE
+                papirSm.medisinskVurdering?.hovedDiagnose?.system shouldBeEqualTo ICD10.OID
                 papirSm.medisinskVurdering?.hovedDiagnose?.tekst shouldBeEqualTo
                     ocrFil.sykemeldinger.medisinskVurdering.hovedDiagnose.first().diagnose
-                papirSm.medisinskVurdering?.biDiagnoser?.first()?.system shouldBeEqualTo
-                    Diagnosekoder.ICD10_CODE
+                papirSm.medisinskVurdering?.biDiagnoser?.first()?.system shouldBeEqualTo ICD10.OID
                 papirSm.medisinskVurdering?.svangerskap shouldBeEqualTo
                     ocrFil.sykemeldinger.medisinskVurdering.isSvangerskap
                 papirSm.medisinskVurdering?.yrkesskade shouldBeEqualTo

@@ -108,7 +108,6 @@ class OpprettSykmeldingService(
         val journalpostMetadata =
             safJournalpostClient.getJournalpostMetadata(
                 journalpostId,
-                journalPostQuery,
                 loggingMeta,
             )
                 ?: throw IllegalStateException(
