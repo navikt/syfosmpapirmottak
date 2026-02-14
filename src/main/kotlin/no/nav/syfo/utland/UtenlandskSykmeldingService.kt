@@ -6,6 +6,7 @@ import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTLAND
 import no.nav.syfo.metrics.SYK_DIG_OPPGAVER
 import no.nav.syfo.pdl.model.PdlPerson
+import no.nav.syfo.service.BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.util.LoggingMeta
 
@@ -25,6 +26,7 @@ class UtenlandskSykmeldingService(
         sykmeldingId: String,
     ) {
         log.info("Mottatt utenlandsk papirsykmelding, {}", fields(loggingMeta))
+
         PAPIRSM_MOTTATT_UTLAND.inc()
 
         if (pasient?.aktorId == null || pasient.fnr == null) {
@@ -35,6 +37,17 @@ class UtenlandskSykmeldingService(
                 loggingMeta = loggingMeta
             )
         } else {
+
+            val sykmeldingsdokument =
+                dokumenter.firstOrNull {
+                    it.brevkode == BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING
+                }
+
+            if (sykmeldingsdokument == null) {
+                log.info("journalpost $journalpostId har ikke utenlandsk sykmelding includert")
+                return
+            }
+
             val oppgave =
                 oppgaveService.opprettOppgave(
                     aktoerIdPasient = pasient.aktorId,
@@ -59,7 +72,7 @@ class UtenlandskSykmeldingService(
                         oppgaveId = oppgave.oppgaveId.toString(),
                         fnr = pasient.fnr,
                         journalpostId = journalpostId,
-                        dokumentInfoId = dokumentInfoId,
+                        dokumentInfoId = sykmeldingsdokument.dokumentInfoId,
                         dokumenter = dokumenter.map { DokumentKafka(it.tittel, it.dokumentInfoId) },
                         type = "UTLAND",
                     ),

@@ -29,7 +29,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import net.logstash.logback.argument.StructuredArguments
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.api.registerNaisApi
@@ -56,7 +55,6 @@ import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
-import no.nav.syfo.util.TrackableException
 import no.nav.syfo.utland.DigitaliseringsoppgaveKafka
 import no.nav.syfo.utland.SykDigProducer
 import no.nav.syfo.utland.UtenlandskSykmeldingService
@@ -255,11 +253,10 @@ fun Application.createListener(
     launch(Dispatchers.IO) {
         try {
             action()
-        } catch (e: TrackableException) {
+        } catch (e: Exception) {
             log.error(
-                "En uhåndtert feil oppstod, applikasjonen restarter {}",
-                StructuredArguments.fields(e.loggingMeta),
-                e.cause,
+                "En uhåndtert feil oppstod, applikasjonen restarter",
+                e,
             )
         } finally {
             applicationState.ready = false

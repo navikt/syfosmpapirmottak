@@ -12,14 +12,21 @@ import io.mockk.mockkClass
 import java.time.LocalDateTime
 import kotlinx.coroutines.runBlocking
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
+import no.nav.syfo.client.AvsenderMottaker
+import no.nav.syfo.client.BrukerIdType
+import no.nav.syfo.client.Dokument
+import no.nav.syfo.client.DokumentMedTittel
+import no.nav.syfo.client.Dokumentvarianter
+import no.nav.syfo.client.Journalpost
+import no.nav.syfo.client.Journalstatus
 import no.nav.syfo.client.SafJournalpostClient
+import no.nav.syfo.client.Variantformat
 import no.nav.syfo.domain.Bruker
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.pdl.model.Navn
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
-import no.nav.syfo.util.TrackableException
 import no.nav.syfo.utland.UtenlandskSykmeldingService
 import org.amshove.kluent.internal.assertFailsWith
 
@@ -32,6 +39,74 @@ class BehandlingServiceSpek :
         val safJournalpostClientMock = mockk<SafJournalpostClient>()
         val sykmeldingServiceMock = mockk<SykmeldingService>()
         val utenlandskSykmeldingServiceMock = mockk<UtenlandskSykmeldingService>()
+        val dokumenter =
+            listOf<Dokument>(
+                Dokument(
+                    dokumentInfoId = "1234",
+                    tittel = "Tittel",
+                    brevkode = "NAV 08-07.04P",
+                    dokumentvarianter =
+                        listOf(
+                            Dokumentvarianter(
+                                Variantformat.ARKIV,
+                            )
+                        )
+                )
+            )
+        val utenlandskeDokumenter =
+            listOf(
+                Dokument(
+                    tittel = "Egenerklæring",
+                    dokumentInfoId = "1",
+                    brevkode = BREVKODE_EGENERKLARING_FOR_UTENLENDSK_SYKMELDING,
+                    dokumentvarianter =
+                        listOf(
+                            Dokumentvarianter(Variantformat.ARKIV),
+                            Dokumentvarianter(Variantformat.ORIGINAL),
+                        )
+                ),
+                Dokument(
+                    tittel = "vedlegg sykmelding",
+                    dokumentInfoId = "1",
+                    brevkode = BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING,
+                    dokumentvarianter =
+                        listOf(
+                            Dokumentvarianter(Variantformat.ARKIV),
+                            Dokumentvarianter(Variantformat.ORIGINAL)
+                        ),
+                )
+            )
+
+        val journalpost =
+            Journalpost(
+                avsenderMottaker =
+                    AvsenderMottaker(
+                        id = "123",
+                        navn = null,
+                    ),
+                bruker = no.nav.syfo.client.Bruker(id = "id", type = BrukerIdType.FNR),
+                datoOpprettet = null,
+                dokumenter = dokumenter,
+                journalposttype = "INNGAAENDE",
+                journalstatus = Journalstatus.MOTTATT,
+                kanal = "NAV_NO",
+                kanalnavn = null,
+                opprettetAvNavn = null,
+                sak = null,
+                skjerming = null,
+                tema = "SYK",
+                temanavn = "temanavn",
+                tittel = "Tittel",
+            )
+
+        val dokumenterMedTittel =
+            dokumenter.map {
+                DokumentMedTittel(
+                    dokumentInfoId = it.dokumentInfoId,
+                    tittel = it.tittel ?: "Ingen tittel",
+                    brevkode = it.brevkode,
+                )
+            }
         val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
         val behandlingService =
             BehandlingService(
@@ -46,15 +121,15 @@ class BehandlingServiceSpek :
 
             coEvery { pdlService.getPdlPerson(any(), any()) } returns
                 PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "fnr", "aktorid", null)
-            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any(), any()) } returns
+            coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                 JournalpostMetadata(
                     bruker = Bruker("fnr", "FNR"),
                     dokumentInfoId = null,
-                    dokumenter = emptyList(),
+                    dokumenter = dokumenterMedTittel,
                     jpErIkkeJournalfort = true,
-                    gjelderUtland = false,
                     datoOpprettet = datoOpprettet,
                     dokumentInfoIdPdf = "",
+                    journalpost = journalpost,
                 )
             coEvery {
                 sykmeldingServiceMock.behandleSykmelding(
@@ -91,9 +166,7 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -128,9 +201,7 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -166,9 +237,7 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -197,17 +266,15 @@ class BehandlingServiceSpek :
             test("Ende-til-ende journalpost med aktorId") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = true,
-                        gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost.copy(dokumenter = utenlandskeDokumenter),
                     )
 
                 behandlingService.handleJournalpost(
@@ -216,9 +283,7 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify { pdlService.getPdlPerson("aktorId", any()) }
                 coVerify {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -247,17 +312,15 @@ class BehandlingServiceSpek :
             test("Ende-til-ende journalpost med fnr for utlandssykmelding") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker("fnr", "FNR"),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = true,
-                        gjelderUtland = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost,
                     )
 
                 behandlingService.handleJournalpost(
@@ -266,9 +329,7 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify { pdlService.getPdlPerson(eq("fnr"), any()) }
                 coVerify(exactly = 0) {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -297,17 +358,15 @@ class BehandlingServiceSpek :
             test("Ende-til-ende journalpost med aktørid for utlandssykmelding") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = true,
-                        gjelderUtland = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost.copy(dokumenter = utenlandskeDokumenter),
                     )
 
                 behandlingService.handleJournalpost(
@@ -316,9 +375,7 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify { pdlService.getPdlPerson(eq("aktorId"), any()) }
                 coVerify(exactly = 0) {
                     sykmeldingServiceMock.behandleSykmelding(
@@ -347,11 +404,10 @@ class BehandlingServiceSpek :
             test("Kaster feil hvis journalpost mangler") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns null
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
+                    null
 
-                assertFailsWith<TrackableException> {
+                assertFailsWith<Exception> {
                     runBlocking {
                         behandlingService.handleJournalpost(
                             journalfoeringEvent,
@@ -361,9 +417,7 @@ class BehandlingServiceSpek :
                     }
                 }
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify {
                     listOf(
                         pdlService,
@@ -376,17 +430,15 @@ class BehandlingServiceSpek :
             test("Sender null som fnr og aktørid hvis journalpost mangler brukerid") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker(null, "type"),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = true,
-                        gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost,
                     )
 
                 behandlingService.handleJournalpost(
@@ -413,17 +465,15 @@ class BehandlingServiceSpek :
             test("Sender null som fnr og aktørid hvis journalpost mangler brukertype") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker("id", null),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = true,
-                        gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost,
                     )
 
                 behandlingService.handleJournalpost(
@@ -476,17 +526,15 @@ class BehandlingServiceSpek :
             test("Sender fnr==null hvis ikke kan hente fnr fra PDL") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = true,
-                        gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost,
                     )
                 val pasient =
                     PdlPerson(
@@ -521,22 +569,20 @@ class BehandlingServiceSpek :
             test("Feiler uten å opprette oppgave hvis PDL svarer med feilmelding") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = true,
-                        gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost,
                     )
                 coEvery { pdlService.getPdlPerson(any(), any()) } throws
                     IllegalStateException("feilmelding")
 
-                assertFailsWith<TrackableException> {
+                assertFailsWith<Exception> {
                     runBlocking {
                         behandlingService.handleJournalpost(
                             journalfoeringEvent,
@@ -554,17 +600,15 @@ class BehandlingServiceSpek :
             test("Behandler ikke melding hvis journalpost allerede er journalført") {
                 val journalfoeringEvent =
                     lagJournalfoeringEvent("MidlertidigJournalført", "SYM", "SKAN_NETS")
-                coEvery {
-                    safJournalpostClientMock.getJournalpostMetadata(any(), any(), any())
-                } returns
+                coEvery { safJournalpostClientMock.getJournalpostMetadata(any(), any()) } returns
                     JournalpostMetadata(
                         bruker = Bruker("aktorId", "AKTOERID"),
                         dokumentInfoId = null,
-                        dokumenter = emptyList(),
+                        dokumenter = dokumenterMedTittel,
                         jpErIkkeJournalfort = false,
-                        gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        journalpost = journalpost,
                     )
 
                 behandlingService.handleJournalpost(
@@ -573,9 +617,7 @@ class BehandlingServiceSpek :
                     sykmeldingId,
                 )
 
-                coVerify {
-                    safJournalpostClientMock.getJournalpostMetadata(eq("123"), any(), any())
-                }
+                coVerify { safJournalpostClientMock.getJournalpostMetadata(eq("123"), any()) }
                 coVerify {
                     listOf(
                         pdlService,
