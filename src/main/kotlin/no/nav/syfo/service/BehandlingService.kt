@@ -36,7 +36,7 @@ class BehandlingService(
 
     private val temaer = setOf<String>("SYK", "SYM")
 
-    private val mottaksKanaler = setOf<String>("SKAN_NETS", "NAV_NO", "SKAN_NETS")
+    private val mottaksKanaler = setOf<String>("SKAN_NETS", "NAV_NO", "SKAN_IM")
 
     private val sykmeldingBrevkodeOgType =
         mapOf<String, SYKMELDING_TYPE>(
@@ -72,8 +72,8 @@ class BehandlingService(
 
         if (
             !(temaer.contains(temaNytt) &&
-                hendelsesTyper.contains(mottaksKanal) &&
-                mottaksKanaler.contains(hendelsesType))
+                mottaksKanaler.contains(mottaksKanal) &&
+                hendelsesTyper.contains(hendelsesType))
         ) {
             log.info("dokument er ikke sykmelding: $journalpostId")
             return
