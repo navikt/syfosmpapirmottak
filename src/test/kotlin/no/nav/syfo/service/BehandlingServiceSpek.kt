@@ -274,7 +274,7 @@ class BehandlingServiceSpek :
                         jpErIkkeJournalfort = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        journalpost = journalpost.copy(dokumenter = utenlandskeDokumenter),
+                        journalpost = journalpost
                     )
 
                 behandlingService.handleJournalpost(
@@ -320,7 +320,7 @@ class BehandlingServiceSpek :
                         jpErIkkeJournalfort = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        journalpost = journalpost,
+                        journalpost = journalpost.copy(dokumenter = utenlandskeDokumenter),
                     )
 
                 behandlingService.handleJournalpost(
