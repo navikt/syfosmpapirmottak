@@ -1,3 +1,18 @@
+apiVersion: unleash.nais.io/v1
+kind: ApiToken
+metadata:
+  name: syfosmpapirmottak
+  namespace: teamsykmelding
+  labels:
+    team: teamsykmelding
+spec:
+  unleashInstance:
+    apiVersion: unleash.nais.io/v1
+    kind: RemoteUnleash
+    name: teamsykmelding
+  secretName: syfosmpapirmottak-unleash-api-token
+  environment: production
+---
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
@@ -65,6 +80,8 @@ spec:
         - host: pdl-api.prod-fss-pub.nais.io
         - host: oppgave.prod-fss-pub.nais.io
         - host: fat.kote.helsedirektoratet.no
+  envFrom:
+    - secret: syfosmpapirmottak-unleash-api-token
   env:
     - name: SAF_URL
       value: https://saf.prod-fss-pub.nais.io
