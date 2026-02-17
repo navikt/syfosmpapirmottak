@@ -47,7 +47,7 @@ class UtenlandskSykmeldingServiceSpek :
         beforeTest {
             clearAllMocks()
 
-            coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any()) } returns
+            coEvery { oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),) } returns
                 OppgaveResultat(1, false, "2990")
             coEvery {
                 oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any())
@@ -69,7 +69,7 @@ class UtenlandskSykmeldingServiceSpek :
                     oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any())
                 }
                 coVerify {
-                    oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any())
+                    oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any(),)
                 }
                 coVerify(exactly = 0) { sykDigProducer.send(any(), any(), any()) }
             }
@@ -90,7 +90,7 @@ class UtenlandskSykmeldingServiceSpek :
                     oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any())
                 }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
             }
 
@@ -110,7 +110,7 @@ class UtenlandskSykmeldingServiceSpek :
                     oppgaveserviceMock.opprettFordelingsOppgave(journalpostId, true, any(), any())
                 }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
             }
             test("Sender digitaliseringsoppgave i dev-gcp") {
@@ -127,7 +127,7 @@ class UtenlandskSykmeldingServiceSpek :
                     oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any())
                 }
                 coVerify {
-                    oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any())
+                    oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any(),)
                 }
                 coVerify {
                     sykDigProducer.send(
@@ -155,7 +155,7 @@ class UtenlandskSykmeldingServiceSpek :
             }
             test("Sender ikke digitaliseringsoppgave i dev-gcp for duplikat oppgave") {
                 coEvery {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 } returns null
 
                 utenlandskSykmeldingServiceDev.behandleUtenlandskSykmelding(
@@ -171,7 +171,7 @@ class UtenlandskSykmeldingServiceSpek :
                     oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any())
                 }
                 coVerify {
-                    oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any())
+                    oppgaveserviceMock.opprettOppgave(aktorId, journalpostId, true, any(), any(),)
                 }
                 coVerify(exactly = 0) { sykDigProducer.send(any(), any(), any()) }
             }

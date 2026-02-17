@@ -55,6 +55,7 @@ class UtenlandskSykmeldingService(
                     gjelderUtland = true,
                     trackingId = sykmeldingId,
                     loggingMeta = loggingMeta,
+                    type = "BEH_EL_SYM"
                 )
             oppgave?.let {
                 log.info(

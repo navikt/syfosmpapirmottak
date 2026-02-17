@@ -40,7 +40,7 @@ class OppgaveServiceSpek :
                             journalpostId,
                             false,
                             sykmeldingId,
-                            loggingMetadata
+                            loggingMetadata,
                         )
                         ?.oppgaveId
 
@@ -61,7 +61,7 @@ class OppgaveServiceSpek :
                     journalpostId,
                     true,
                     sykmeldingId,
-                    loggingMetadata
+                    loggingMetadata,
                 )
 
                 coVerify {
@@ -85,7 +85,7 @@ class OppgaveServiceSpek :
                         journalpostId,
                         true,
                         sykmeldingId,
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 oppgaveId shouldBeEqualTo null
@@ -101,7 +101,7 @@ class OppgaveServiceSpek :
                         journalpostId,
                         true,
                         sykmeldingId,
-                        loggingMetadata
+                        loggingMetadata,
                     )
                 }
             }

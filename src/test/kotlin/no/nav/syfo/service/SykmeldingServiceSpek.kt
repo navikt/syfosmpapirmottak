@@ -154,7 +154,7 @@ class SykmeldingServiceSpek :
                 }
                 coVerify(exactly = 1) { kafkaproducerPapirSmRegistering.send(any()) }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
                 coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
             }
@@ -177,7 +177,7 @@ class SykmeldingServiceSpek :
                     safDokumentClientMock.hentDokument(any(), any(), any(), any())
                 }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
                 coVerify(exactly = 0) {
                     oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any())
@@ -223,7 +223,7 @@ class SykmeldingServiceSpek :
                     safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any())
                 }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
                 coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
                 coVerify(exactly = 1) { kafkaproducerPapirSmRegistering.send(any()) }
@@ -282,7 +282,7 @@ class SykmeldingServiceSpek :
                 coVerify { regelClientMock.valider(any(), any()) }
                 coVerify(exactly = 0) { kafkaproducerPapirSmRegistering.send(any()) }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
                 coVerify { kafkaproducerreceivedSykmeldingMock.send(any()) }
             }
@@ -338,7 +338,7 @@ class SykmeldingServiceSpek :
                 coVerify { pdlService.getPdlPerson(fnrLege, any()) }
                 coVerify { regelClientMock.valider(any(), any()) }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
                 coVerify { kafkaproducerPapirSmRegistering.send(any()) }
                 coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
@@ -394,7 +394,7 @@ class SykmeldingServiceSpek :
                 coVerify { pdlService.getPdlPerson(fnrLege, any()) }
                 coVerify { regelClientMock.valider(any(), any()) }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
                 coVerify { kafkaproducerPapirSmRegistering.send(any()) }
                 coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
@@ -428,7 +428,7 @@ class SykmeldingServiceSpek :
                 coVerify { pdlService.getPdlPerson(fnrLege, any()) }
                 coVerify(exactly = 0) { regelClientMock.valider(any(), any()) }
                 coVerify(exactly = 0) {
-                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
+                    oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any(),)
                 }
                 coVerify { kafkaproducerPapirSmRegistering.send(any()) }
                 coVerify(exactly = 0) { kafkaproducerreceivedSykmeldingMock.send(any()) }
