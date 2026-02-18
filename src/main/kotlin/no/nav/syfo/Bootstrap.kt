@@ -7,6 +7,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
+import io.getunleash.UnleashContext
+import io.getunleash.util.UnleashConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.apache.Apache
@@ -53,6 +55,7 @@ import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
+import no.nav.syfo.unleash.Unleash
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.utland.DigitaliseringsoppgaveKafka
@@ -214,8 +217,24 @@ fun Application.module() {
             smregistreringTopic = env.smregistreringTopic,
             icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
         )
+
+    val unleashContext = UnleashContext.builder().environment(env.unleashEnvironment).build()
+    val unleash =
+        Unleash(
+            unleashConfig =
+                UnleashConfig.builder()
+                    .appName(env.applicationName)
+                    .apiKey(env.unleashApiKey)
+                    .instanceId(env.instanceId)
+                    .projectName(env.unleashProjectName)
+                    .unleashAPI(env.unleashApi)
+                    .build(),
+            unleashContext,
+        )
+
     val utenlandskSykmeldingService =
-        UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
+        UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster, unleash)
+
     val behandlingService =
         BehandlingService(
             safJournalpostClient,

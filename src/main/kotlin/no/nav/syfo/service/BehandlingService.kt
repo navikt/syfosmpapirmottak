@@ -131,6 +131,7 @@ class BehandlingService(
                 pasient = pasient,
                 loggingMeta = loggingMeta,
                 sykmeldingId = sykmeldingId,
+                type = sykmeldingsType,
             )
         } else if (sykmeldingsType == SYKMELDING_TYPE.NORSK) {
             sykmeldingService.behandleSykmelding(

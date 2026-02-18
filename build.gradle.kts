@@ -28,6 +28,7 @@ val caffeineVersion = "3.2.1"
 val ktfmtVersion = "0.44"
 val diagnosekoderVersion = "1.2025.0"
 val tsmDiagnoserVersion = "2026.1.13"
+val unleashedVersion = "12.1.1"
 
 val javaVersion = JvmTarget.JVM_21
 
@@ -92,7 +93,7 @@ dependencies {
     implementation("javax.xml.bind:jaxb-api:$jaxbApiVersion")
     implementation("org.glassfish.jaxb:jaxb-runtime:$jaxbVersion")
     implementation("javax.activation:activation:$javaxActivationVersion")
-
+    implementation("io.getunleash:unleash-client-java:$unleashedVersion")
     implementation("org.apache.commons:commons-text:$commonsTextVersion")
 
     implementation("javax.annotation:javax.annotation-api:$javaxAnnotationApiVersion")

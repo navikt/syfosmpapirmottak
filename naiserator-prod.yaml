@@ -80,6 +80,8 @@ spec:
         - host: pdl-api.prod-fss-pub.nais.io
         - host: oppgave.prod-fss-pub.nais.io
         - host: fat.kote.helsedirektoratet.no
+        - host: teamsykmelding-unleash-api.nav.cloud.nais.io
+
   envFrom:
     - secret: syfosmpapirmottak-unleash-api-token
   env:

@@ -113,7 +113,7 @@ class BehandlingServiceSpek :
                 safJournalpostClientMock,
                 sykmeldingServiceMock,
                 utenlandskSykmeldingServiceMock,
-                pdlService
+                pdlService,
             )
 
         beforeTest {
@@ -145,6 +145,7 @@ class BehandlingServiceSpek :
             } just Runs
             coEvery {
                 utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(
+                    any(),
                     any(),
                     any(),
                     any(),
@@ -187,6 +188,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
+                        any(),
                         any()
                     )
                 }
@@ -217,6 +219,7 @@ class BehandlingServiceSpek :
                 }
                 coVerify(exactly = 0) {
                     utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(
+                        any(),
                         any(),
                         any(),
                         any(),
@@ -253,6 +256,7 @@ class BehandlingServiceSpek :
                 }
                 coVerify(exactly = 0) {
                     utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(
+                        any(),
                         any(),
                         any(),
                         any(),
@@ -304,6 +308,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
+                        any(),
                         any()
                     )
                 }
@@ -350,6 +355,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
+                        any(),
                         any()
                     )
                 }
@@ -392,6 +398,7 @@ class BehandlingServiceSpek :
                 coVerify {
                     utenlandskSykmeldingServiceMock.behandleUtenlandskSykmelding(
                         eq("123"),
+                        any(),
                         any(),
                         any(),
                         any(),
