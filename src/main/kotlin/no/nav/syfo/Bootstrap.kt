@@ -231,7 +231,6 @@ fun Application.module() {
                     .build(),
             unleashContext,
         )
-
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster, unleash)
 

@@ -14,7 +14,7 @@ class Unleash(unleashConfig: UnleashConfig, private val unleashContext: UnleashC
         private const val OPPRETT_EGENERKLARING_OPPGAVE = "OPPRETT_EGENERKLARING_OPPGAVE"
     }
 
-    fun shouldOpprettOppgaveFromEgenerklaring(): Boolean {
-        return unleash.isEnabled(OPPRETT_EGENERKLARING_OPPGAVE, unleashContext, false)
+    fun shouldOpprettOppgave(): Boolean {
+        return !unleash.isEnabled(OPPRETT_EGENERKLARING_OPPGAVE, unleashContext)
     }
 }
