@@ -124,9 +124,10 @@ class OppgaveClient(
         gjelderUtland: Boolean,
         sykmeldingId: String,
         loggingMeta: LoggingMeta,
+        type: String = "JFR"
     ): OppgaveResultat {
         val oppgaveResponse =
-            hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
+            hentOppgave(oppgavetype = type, journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info(
                 "Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}",

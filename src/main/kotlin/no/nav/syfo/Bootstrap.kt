@@ -7,6 +7,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
+import io.getunleash.UnleashContext
+import io.getunleash.util.UnleashConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.apache.Apache
@@ -29,8 +31,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import net.logstash.logback.argument.StructuredArguments
-import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.api.registerNaisApi
@@ -55,9 +55,9 @@ import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
+import no.nav.syfo.unleash.Unleash
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
-import no.nav.syfo.util.TrackableException
 import no.nav.syfo.utland.DigitaliseringsoppgaveKafka
 import no.nav.syfo.utland.SykDigProducer
 import no.nav.syfo.utland.UtenlandskSykmeldingService
@@ -86,9 +86,6 @@ fun Application.module() {
     val env = Environment()
     val applicationState = ApplicationState()
     routing { registerNaisApi(applicationState) }
-    if (Diagnosekoder.icd10.isEmpty() || Diagnosekoder.icpc2.isEmpty()) {
-        throw RuntimeException("Kunne ikke laste ICD10/ICPC2-diagnosekoder.")
-    }
 
     DefaultExports.initialize()
 
@@ -110,7 +107,7 @@ fun Application.module() {
                 valueDeserializer = KafkaAvroDeserializer::class,
             )
             .also {
-                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
                 it["specific.avro.reader"] = true
             }
 
@@ -220,8 +217,23 @@ fun Application.module() {
             smregistreringTopic = env.smregistreringTopic,
             icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
         )
+
+    val unleashContext = UnleashContext.builder().environment(env.unleashEnvironment).build()
+    val unleash =
+        Unleash(
+            unleashConfig =
+                UnleashConfig.builder()
+                    .appName(env.applicationName)
+                    .apiKey(env.unleashApiKey)
+                    .instanceId(env.instanceId)
+                    .projectName(env.unleashProjectName)
+                    .unleashAPI(env.unleashApi)
+                    .build(),
+            unleashContext,
+        )
     val utenlandskSykmeldingService =
-        UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
+        UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster, unleash)
+
     val behandlingService =
         BehandlingService(
             safJournalpostClient,
@@ -259,11 +271,10 @@ fun Application.createListener(
     launch(Dispatchers.IO) {
         try {
             action()
-        } catch (e: TrackableException) {
+        } catch (e: Exception) {
             log.error(
-                "En uhåndtert feil oppstod, applikasjonen restarter {}",
-                StructuredArguments.fields(e.loggingMeta),
-                e.cause,
+                "En uhåndtert feil oppstod, applikasjonen restarter",
+                e,
             )
         } finally {
             applicationState.ready = false

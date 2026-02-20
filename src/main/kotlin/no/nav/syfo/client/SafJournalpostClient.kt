@@ -13,6 +13,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
+import no.nav.syfo.service.BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING
 import no.nav.syfo.util.LoggingMeta
 
 class SafJournalpostClient(
@@ -21,9 +22,17 @@ class SafJournalpostClient(
     private val accessTokenClientV2: AzureAdV2Client,
     private val scope: String,
 ) {
+    companion object {
+        private var query: String =
+            SafJournalpostClient::class
+                .java
+                .getResource("/graphql/findJournalpost.graphql")!!
+                .readText()
+                .replace(Regex("[\n\t]"), "")
+    }
+
     suspend fun getJournalpostMetadata(
         journalpostId: String,
-        findJournalpostGraphQlQuery: String,
         loggingMeta: LoggingMeta,
     ): JournalpostMetadata? {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
@@ -33,7 +42,7 @@ class SafJournalpostClient(
 
         val findJournalpostRequest =
             FindJournalpostRequest(
-                query = findJournalpostGraphQlQuery,
+                query = query,
                 variables =
                     Variables(
                         id = journalpostId,
@@ -80,10 +89,10 @@ class SafJournalpostClient(
                     ),
                 dokumentInfoId = dokumentId,
                 jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus),
-                gjelderUtland = sykmeldingGjelderUtland(it.dokumenter, dokumentId, loggingMeta),
                 datoOpprettet = dateTimeStringTilLocalDateTime(it.datoOpprettet, loggingMeta),
                 dokumentInfoIdPdf = dokumenter.first().dokumentInfoId,
                 dokumenter = dokumenter,
+                journalpost = journalpost,
             )
         }
     }
@@ -140,7 +149,10 @@ fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta):
 fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMeta): String? {
     dokumentListe?.forEach { dokument ->
         dokument.dokumentvarianter.forEach {
-            if (it.variantformat.name == "ORIGINAL") {
+            if (
+                it.variantformat.name == "ORIGINAL" &&
+                    dokument.brevkode != BREVKODE_EGENERKLARING_UTENLANDSK_SYKMELDING
+            ) {
                 log.info(
                     "Fant OCR-dokument dokumentInfoId: ${dokument.dokumentInfoId} {}",
                     fields(loggingMeta),
@@ -156,6 +168,7 @@ fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMet
 data class DokumentMedTittel(
     val tittel: String,
     val dokumentInfoId: String,
+    val brevkode: String?,
 )
 
 fun finnDokumentIdForPdf(
@@ -171,6 +184,7 @@ fun finnDokumentIdForPdf(
                 DokumentMedTittel(
                     tittel = dokument.tittel ?: "Dokument uten tittel",
                     dokumentInfoId = dokument.dokumentInfoId,
+                    brevkode = dokument.brevkode,
                 )
             }
 
@@ -182,64 +196,6 @@ fun finnDokumentIdForPdf(
     }
 
     return dokumenter
-}
-
-const val GAMMEL_BREVKODE_UTLAND: String = "900023"
-const val BREVKODE_UTLAND: String = "NAV 08-07.04 U"
-const val BREVKODE_NORSK: String = "NAV 08-07.04"
-
-fun sykmeldingGjelderUtland(
-    dokumentListe: List<Dokument>?,
-    dokumentId: String?,
-    loggingMeta: LoggingMeta,
-): Boolean {
-    if (dokumentListe.isNullOrEmpty()) {
-        log.warn("Mangler info om brevkode, antar utenlandsk sykmelding {}", fields(loggingMeta))
-        return true
-    }
-
-    var brevkode: String? = null
-
-    if (dokumentId != null) {
-        val dokumenterMedRiktigId = dokumentListe.filter { it.dokumentInfoId == dokumentId }
-        if (dokumenterMedRiktigId.isNotEmpty()) {
-            brevkode = dokumenterMedRiktigId[0].brevkode
-            if (brevkode != BREVKODE_NORSK) {
-                log.warn("Fant OCR-fil med uventet brevkode: $brevkode {}", fields(loggingMeta))
-            }
-        }
-    } else {
-        log.info(
-            "Mangler dokumentid for OCR, prøver å finne brevkode fra resterende dokumenter {}",
-            fields(loggingMeta),
-        )
-        val inneholderUtlandBrevkode: Boolean =
-            dokumentListe.any { dok -> dok.brevkode == BREVKODE_UTLAND }
-        if (inneholderUtlandBrevkode) {
-            brevkode = BREVKODE_UTLAND
-        } else {
-            val inneholderGammelUtlandBrevkode: Boolean =
-                dokumentListe.any { dok -> dok.brevkode == GAMMEL_BREVKODE_UTLAND }
-            if (inneholderGammelUtlandBrevkode) {
-                brevkode = GAMMEL_BREVKODE_UTLAND
-            }
-        }
-    }
-    return if (brevkode == BREVKODE_UTLAND || brevkode == GAMMEL_BREVKODE_UTLAND) {
-        log.info(
-            "Sykmelding gjelder utenlandsk sykmelding, brevkode: {}, {}",
-            brevkode,
-            fields(loggingMeta),
-        )
-        true
-    } else {
-        log.info(
-            "Sykmelding gjelder innenlands-sykmelding, brevkode: {}, {}",
-            brevkode,
-            fields(loggingMeta),
-        )
-        false
-    }
 }
 
 data class FindJournalpostRequest(val query: String, val variables: Variables)
