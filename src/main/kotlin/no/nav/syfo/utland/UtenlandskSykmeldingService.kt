@@ -120,7 +120,7 @@ class UtenlandskSykmeldingService(
             return null
         }
 
-        if (unleash.shouldOpprettOppgaveFromEgenerklaring()) {
+        if (unleash.shouldOpprettOppgave()) {
 
             log.info(
                 "Oppretter utenlandsk oppgave for egenerklæring med sykmelding vedlegg med id $sykmeldingId"
@@ -131,7 +131,6 @@ class UtenlandskSykmeldingService(
                 gjelderUtland = true,
                 trackingId = sykmeldingId,
                 loggingMeta = loggingMeta,
-                type = "BEH_EL_SYM"
             )
         } else {
             log.info(

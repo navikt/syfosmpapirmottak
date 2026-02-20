@@ -29,7 +29,7 @@ class UtenlandskSykmeldingServiceSpek :
         val sykDigProducer = mockk<SykDigProducer>(relaxed = true)
         val pasient = PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), fnr, aktorId, null)
         val unleash = mockk<Unleash>()
-        every { unleash.shouldOpprettOppgaveFromEgenerklaring() } returns true
+        every { unleash.shouldOpprettOppgave() } returns true
         val utenlandskSykmeldingService =
             UtenlandskSykmeldingService(oppgaveserviceMock, sykDigProducer, "prod-gcp", unleash)
         val utenlandskSykmeldingServiceDev =
@@ -65,7 +65,7 @@ class UtenlandskSykmeldingServiceSpek :
             coEvery {
                 oppgaveserviceMock.opprettFordelingsOppgave(any(), any(), any(), any())
             } returns Unit
-            every { unleash.shouldOpprettOppgaveFromEgenerklaring() } returns true
+            every { unleash.shouldOpprettOppgave() } returns true
         }
 
         context("UtenlandskSykmeldingService ende-til-ende") {
@@ -145,7 +145,6 @@ class UtenlandskSykmeldingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        "BEH_EL_SYM",
                     )
                 }
             }
@@ -256,7 +255,7 @@ class UtenlandskSykmeldingServiceSpek :
                         true,
                         any(),
                         any(),
-                        "BEH_EL_SYM",
+                        any()
                     )
                 }
                 coVerify(exactly = 0) { sykDigProducer.send(any(), any(), any()) }
