@@ -10,11 +10,10 @@ class Unleash(unleashConfig: UnleashConfig, private val unleashContext: UnleashC
     private val unleash: Unleash = DefaultUnleash(unleashConfig)
 
     companion object {
-        private val log = LoggerFactory.getLogger(Unleash::class.java)
         private const val OPPRETT_EGENERKLARING_OPPGAVE = "OPPRETT_EGENERKLARING_OPPGAVE"
     }
 
     fun shouldOpprettOppgave(): Boolean {
-        return !unleash.isEnabled(OPPRETT_EGENERKLARING_OPPGAVE, unleashContext)
+        return unleash.isEnabled(OPPRETT_EGENERKLARING_OPPGAVE, unleashContext)
     }
 }
