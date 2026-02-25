@@ -227,7 +227,7 @@ fun Application.module() {
                     .apiKey(env.unleashApiKey)
                     .instanceId(env.instanceId)
                     .projectName(env.unleashProjectName)
-                    .unleashAPI(env.unleashApi)
+                    .unleashAPI("${env.unleashApi}/api")
                     .build(),
             unleashContext,
         )
