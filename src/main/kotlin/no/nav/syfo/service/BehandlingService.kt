@@ -52,7 +52,7 @@ class BehandlingService(
             "NAV 08-07.04R" to SYKMELDING_TYPE.NORSK,
             "NAV 08-07.04 U" to SYKMELDING_TYPE.UTENLANDSK,
             "NAV 08-09.06" to SYKMELDING_TYPE.EGENERKLARING_UTLAND,
-            "NAVe 08-09.08" to SYKMELDING_TYPE.EGENERKLARING_UTLAND
+            "NAVe 08-09.06" to SYKMELDING_TYPE.EGENERKLARING_UTLAND
         )
 
     suspend fun handleJournalpost(

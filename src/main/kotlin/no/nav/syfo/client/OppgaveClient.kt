@@ -66,35 +66,6 @@ class OppgaveClient(
         }
     }
 
-    private suspend fun oppdaterOppgave(
-        oppdaterOppgaveRequest: OppdaterOppgaveRequest,
-        msgId: String
-    ): OpprettOppgaveResponse {
-        val accessToken = accessTokenClientV2.getAccessToken(scope)
-        if (accessToken?.accessToken == null) {
-            throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
-        }
-
-        val httpResponse: HttpResponse =
-            httpClient.patch("$url/${oppdaterOppgaveRequest.id}") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer ${accessToken.accessToken}")
-                header("X-Correlation-ID", msgId)
-                setBody(oppdaterOppgaveRequest)
-            }
-        return when (httpResponse.status) {
-            HttpStatusCode.OK -> httpResponse.body<OpprettOppgaveResponse>()
-            else -> {
-                log.error(
-                    "Noe gikk galt ved oppdatering av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}"
-                )
-                throw RuntimeException(
-                    "Noe gikk galt ved oppdatering av oppgave, responskode ${httpResponse.status}"
-                )
-            }
-        }
-    }
-
     suspend fun hentOppgave(
         oppgavetype: String,
         journalpostId: String,
