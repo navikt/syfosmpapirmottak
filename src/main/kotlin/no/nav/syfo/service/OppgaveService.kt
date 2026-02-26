@@ -22,6 +22,7 @@ class OppgaveService(
         gjelderUtland: Boolean,
         trackingId: String,
         loggingMeta: LoggingMeta,
+        type: String = "JFR",
     ): OppgaveResultat? {
         log.info("Oppretter oppgave for {}", fields(loggingMeta))
 
@@ -32,6 +33,7 @@ class OppgaveService(
                 gjelderUtland,
                 trackingId,
                 loggingMeta,
+                type
             )
 
         return if (!oppgave.duplikat) {
@@ -55,6 +57,7 @@ class OppgaveService(
     suspend fun hentOppgave(
         journalpostId: String,
         sykmeldingId: String,
+        type: String = "JFR",
     ): OppgaveResponse {
         return oppgaveClient.hentOppgave(
             oppgavetype = "JFR",

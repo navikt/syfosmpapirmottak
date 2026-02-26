@@ -21,7 +21,14 @@ import no.nav.syfo.domain.OppgaveResultat
 import no.nav.syfo.log
 import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
-import no.nav.syfo.utland.NAV_OSLO
+import no.nav.syfo.utland.NAV_UTLAND
+
+data class OppgaveValues(
+    val tildeltEnhetsnr: String?,
+    val behandlesAvApplikasjon: String?,
+    val behandlingsType: String?,
+    val beskrivelse: String,
+)
 
 class OppgaveClient(
     private val url: String,
@@ -59,35 +66,6 @@ class OppgaveClient(
         }
     }
 
-    private suspend fun oppdaterOppgave(
-        oppdaterOppgaveRequest: OppdaterOppgaveRequest,
-        msgId: String
-    ): OpprettOppgaveResponse {
-        val accessToken = accessTokenClientV2.getAccessToken(scope)
-        if (accessToken?.accessToken == null) {
-            throw RuntimeException("Klarte ikke hente ut accesstoken for Oppgave")
-        }
-
-        val httpResponse: HttpResponse =
-            httpClient.patch("$url/${oppdaterOppgaveRequest.id}") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer ${accessToken.accessToken}")
-                header("X-Correlation-ID", msgId)
-                setBody(oppdaterOppgaveRequest)
-            }
-        return when (httpResponse.status) {
-            HttpStatusCode.OK -> httpResponse.body<OpprettOppgaveResponse>()
-            else -> {
-                log.error(
-                    "Noe gikk galt ved oppdatering av oppgave for sykmeldingId $msgId: ${httpResponse.status}, ${httpResponse.body<String>()}"
-                )
-                throw RuntimeException(
-                    "Noe gikk galt ved oppdatering av oppgave, responskode ${httpResponse.status}"
-                )
-            }
-        }
-    }
-
     suspend fun hentOppgave(
         oppgavetype: String,
         journalpostId: String,
@@ -118,15 +96,34 @@ class OppgaveClient(
         return response.body<OppgaveResponse>()
     }
 
+    suspend fun getOppgaveValues(gjelderUtland: Boolean): OppgaveValues {
+        if (gjelderUtland) {
+            return OppgaveValues(
+                tildeltEnhetsnr = NAV_UTLAND,
+                behandlesAvApplikasjon = "SMD",
+                behandlingsType = "ae0106",
+                beskrivelse = "Manuell registrering av utenlandsk sykmelding"
+            )
+        } else {
+            return OppgaveValues(
+                tildeltEnhetsnr = null,
+                behandlesAvApplikasjon = "FS22",
+                behandlingsType = null,
+                beskrivelse = "Manuell registrering av sykmelding"
+            )
+        }
+    }
+
     suspend fun opprettOppgave(
         journalpostId: String,
         aktoerId: String,
         gjelderUtland: Boolean,
         sykmeldingId: String,
         loggingMeta: LoggingMeta,
+        type: String = "JFR"
     ): OppgaveResultat {
         val oppgaveResponse =
-            hentOppgave(oppgavetype = "JFR", journalpostId = journalpostId, msgId = sykmeldingId)
+            hentOppgave(oppgavetype = type, journalpostId = journalpostId, msgId = sykmeldingId)
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info(
                 "Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}",
@@ -138,29 +135,20 @@ class OppgaveClient(
                 tildeltEnhetsnr = oppgaveResponse.oppgaver.first().tildeltEnhetsnr,
             )
         }
-        val behandlingstype =
-            if (gjelderUtland) {
-                log.info("Gjelder utland, {}", fields(loggingMeta))
-                "ae0106"
-            } else {
-                null
-            }
-        val beskrivelse =
-            if (gjelderUtland) {
-                "Manuell registrering av utenlandsk sykmelding"
-            } else {
-                "Papirsykmelding som må legges inn i infotrygd manuelt"
-            }
+
+        val oppgaveValues = getOppgaveValues(gjelderUtland)
+
         val opprettOppgaveRequest =
             OpprettOppgaveRequest(
+                tildeltEnhetsnr = oppgaveValues.tildeltEnhetsnr,
                 aktoerId = aktoerId,
                 opprettetAvEnhetsnr = "9999",
                 journalpostId = journalpostId,
-                behandlesAvApplikasjon = "FS22",
-                beskrivelse = beskrivelse,
+                behandlesAvApplikasjon = oppgaveValues.behandlesAvApplikasjon,
+                beskrivelse = oppgaveValues.tildeltEnhetsnr,
                 tema = "SYM",
                 oppgavetype = "JFR",
-                behandlingstype = behandlingstype,
+                behandlingstype = oppgaveValues.behandlingsType,
                 aktivDato = LocalDate.now(),
                 fristFerdigstillelse = finnFristForFerdigstillingAvOppgave(LocalDate.now()),
                 prioritet = "NORM",
@@ -168,22 +156,6 @@ class OppgaveClient(
         log.info("Oppretter journalføringsoppgave {}", fields(loggingMeta))
         val opprettetOppgave = opprettOppgave(opprettOppgaveRequest, sykmeldingId)
 
-        // Når syk-dig er ute av pilot kan vi sette dette direkte ved oppretting av oppgaven hvis
-        // sykmeldingen gjelder utland
-        if (
-            gjelderUtland && (opprettetOppgave.tildeltEnhetsnr == NAV_OSLO || cluster == "dev-gcp")
-        ) {
-            log.info("Oppgave skal behandles i syk-dig, {}", fields(loggingMeta))
-            oppdaterOppgave(
-                oppdaterOppgaveRequest =
-                    OppdaterOppgaveRequest(
-                        id = opprettetOppgave.id,
-                        versjon = opprettetOppgave.versjon,
-                        behandlesAvApplikasjon = "SMD",
-                    ),
-                msgId = sykmeldingId,
-            )
-        }
         return OppgaveResultat(
             oppgaveId = opprettetOppgave.id,
             duplikat = false,

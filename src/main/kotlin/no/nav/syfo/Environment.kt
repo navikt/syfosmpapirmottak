@@ -28,6 +28,11 @@ data class Environment(
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
     val smtssApiUrl: String = "http://smtss",
     val smtssApiScope: String = getEnvVar("SMTSS_API_SCOPE"),
+    val unleashApi: String = getEnvVar("UNLEASH_SERVER_API_URL"),
+    val unleashApiKey: String = getEnvVar("UNLEASH_SERVER_API_TOKEN"),
+    val unleashEnvironment: String = getEnvVar("UNLEASH_SERVER_API_ENV"),
+    val unleashProjectName: String = getEnvVar("UNLEASH_SERVER_API_PROJECTS"),
+    val instanceId: String = getEnvVar("NAIS_POD_NAME"),
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
