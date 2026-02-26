@@ -2,11 +2,9 @@ package no.nav.syfo.unleash
 
 import io.getunleash.DefaultUnleash
 import io.getunleash.Unleash
-import io.getunleash.UnleashContext
 import io.getunleash.util.UnleashConfig
-import org.slf4j.LoggerFactory
 
-class Unleash(unleashConfig: UnleashConfig, private val unleashContext: UnleashContext) {
+class Unleash(unleashConfig: UnleashConfig) {
     private val unleash: Unleash = DefaultUnleash(unleashConfig)
 
     companion object {
@@ -14,6 +12,6 @@ class Unleash(unleashConfig: UnleashConfig, private val unleashContext: UnleashC
     }
 
     fun shouldOpprettOppgave(): Boolean {
-        return unleash.isEnabled(OPPRETT_EGENERKLARING_OPPGAVE, unleashContext)
+        return unleash.isEnabled(OPPRETT_EGENERKLARING_OPPGAVE)
     }
 }

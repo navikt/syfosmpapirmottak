@@ -12,7 +12,7 @@ import no.nav.syfo.service.SYKMELDING_TYPE
 import no.nav.syfo.unleash.Unleash
 import no.nav.syfo.util.LoggingMeta
 
-const val NAV_OSLO = "0393"
+const val NAV_UTLAND = "0393"
 
 class UtenlandskSykmeldingService(
     private val oppgaveService: OppgaveService,
@@ -152,7 +152,7 @@ class UtenlandskSykmeldingService(
             )
             true
         } else {
-            if (tildeltEnhetsnr == NAV_OSLO) {
+            if (tildeltEnhetsnr == NAV_UTLAND) {
                 log.info(
                     "Sender utenlandsk sykmelding til syk-dig med oppgaveId: $oppgaveId {}",
                     fields(loggingMeta)

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
-import io.getunleash.UnleashContext
 import io.getunleash.util.UnleashConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -218,7 +217,6 @@ fun Application.module() {
             icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
         )
 
-    val unleashContext = UnleashContext.builder().environment(env.unleashEnvironment).build()
     val unleash =
         Unleash(
             unleashConfig =
@@ -228,8 +226,7 @@ fun Application.module() {
                     .instanceId(env.instanceId)
                     .projectName(env.unleashProjectName)
                     .unleashAPI("${env.unleashApi}/api")
-                    .build(),
-            unleashContext,
+                    .build()
         )
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster, unleash)
