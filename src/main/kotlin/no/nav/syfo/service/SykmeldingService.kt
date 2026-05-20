@@ -421,11 +421,16 @@ class SykmeldingService(
 
 fun List<Godkjenning>.getHelsepersonellKategori(): String? =
     when {
-        find { it.helsepersonellkategori?.verdi == "LE" } != null -> "LE"
-        find { it.helsepersonellkategori?.verdi == "TL" } != null -> "TL"
-        find { it.helsepersonellkategori?.verdi == "MT" } != null -> "MT"
-        find { it.helsepersonellkategori?.verdi == "FT" } != null -> "FT"
-        find { it.helsepersonellkategori?.verdi == "KI" } != null -> "KI"
+        find { it.helsepersonellkategori?.verdi == "LE" && it.helsepersonellkategori.aktiv } !=
+            null -> "LE"
+        find { it.helsepersonellkategori?.verdi == "TL" && it.helsepersonellkategori.aktiv } !=
+            null -> "TL"
+        find { it.helsepersonellkategori?.verdi == "MT" && it.helsepersonellkategori.aktiv } !=
+            null -> "MT"
+        find { it.helsepersonellkategori?.verdi == "KI" && it.helsepersonellkategori.aktiv } !=
+            null -> "KI"
+        find { it.helsepersonellkategori?.verdi == "FT" && it.helsepersonellkategori.aktiv } !=
+            null -> "FT"
         else -> {
             val verdi = firstOrNull()?.helsepersonellkategori?.verdi
             log.warn(
