@@ -31,11 +31,12 @@ class SafDokumentClient(
     private val httpClient: HttpClient,
 ) {
 
-    private suspend fun hentDokumentFraSaf(
+    private suspend fun getXmlDokumentFraSaf(
         journalpostId: String,
         dokumentInfoId: String,
         msgId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
+        xmlDokumentVariant: XmlDokumentVariant
     ): String {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
@@ -43,7 +44,9 @@ class SafDokumentClient(
         }
 
         val httpResponse: HttpResponse =
-            httpClient.get("$url/rest/hentdokument/$journalpostId/$dokumentInfoId/ORIGINAL") {
+            httpClient.get(
+                "$url/rest/hentdokument/$journalpostId/$dokumentInfoId/$xmlDokumentVariant"
+            ) {
                 accept(ContentType.Application.Xml)
                 header("Authorization", "Bearer ${accessToken.accessToken}")
                 header("Nav-Callid", msgId)
@@ -71,14 +74,26 @@ class SafDokumentClient(
         }
     }
 
-    suspend fun hentDokument(
+    private suspend fun getPdfDokumentFraSaf() {
+        TODO("implement")
+    }
+
+    suspend fun getDokument(
         journalpostId: String,
         dokumentInfoId: String,
         msgId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
+        xmlDokumentVariant: XmlDokumentVariant
     ): Skanningmetadata? {
         return try {
-            val dokument = hentDokumentFraSaf(journalpostId, dokumentInfoId, msgId, loggingMeta)
+            val dokument =
+                getXmlDokumentFraSaf(
+                    journalpostId,
+                    dokumentInfoId,
+                    msgId,
+                    loggingMeta,
+                    xmlDokumentVariant
+                )
             log.info("Got document with id: $dokumentInfoId")
             safeUnmarshalSkanningmetadata(dokument.byteInputStream(Charsets.UTF_8))
         } catch (ex: JAXBException) {
@@ -107,6 +122,11 @@ private fun safeUnmarshalSkanningmetadata(
         )
 
     return skanningMetadataUnmarshaller.unmarshal(xmlSource) as Skanningmetadata
+}
+
+enum class XmlDokumentVariant {
+    ORIGINAL,
+    FULLVERSJON,
 }
 
 class SafNotFoundException(override val message: String) : Exception()
