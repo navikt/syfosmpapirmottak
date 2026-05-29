@@ -92,12 +92,12 @@ class SafDokumentClientSpek :
         context("SafDokumentClient håndterer respons korrekt") {
             test("Mapper mottatt dokument korrekt") {
                 val skanningmetadata =
-                    safDokumentClient.getDokument(
+                    safDokumentClient.getXmlDokument(
                         "journalpostId",
                         "dokumentInfoId",
                         "sykmeldingId",
                         loggingMetadata,
-                        XmlDokumentVariant.ORIGINAL,
+                        DokumentVariant.ORIGINAL,
                     )
 
                 skanningmetadata shouldNotBeEqualTo null
@@ -142,12 +142,12 @@ class SafDokumentClientSpek :
                 "Returnerer null hvis dokumentet ikke er i henhold til skjema (det skal ikke kastes feil)"
             ) {
                 val skanningmetadata =
-                    safDokumentClient.getDokument(
+                    safDokumentClient.getXmlDokument(
                         "journalpostId",
                         "dokumentInfoIdUgyldigDok",
                         "sykmeldingId",
                         loggingMetadata,
-                        XmlDokumentVariant.ORIGINAL,
+                        DokumentVariant.ORIGINAL,
                     )
 
                 skanningmetadata shouldBeEqualTo null
@@ -158,12 +158,12 @@ class SafDokumentClientSpek :
                 assertFailsWith<SafNotFoundException> {
                     runBlocking {
                         skanningmetadata =
-                            safDokumentClient.getDokument(
+                            safDokumentClient.getXmlDokument(
                                 "journalpostId",
                                 "dokumentInfoIdFinnesIkke",
                                 "sykmeldingId",
                                 loggingMetadata,
-                                XmlDokumentVariant.ORIGINAL,
+                                DokumentVariant.ORIGINAL,
                             )
                     }
                 }
