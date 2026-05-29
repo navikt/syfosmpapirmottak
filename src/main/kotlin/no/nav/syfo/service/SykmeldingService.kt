@@ -19,6 +19,7 @@ import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.client.TssException
+import no.nav.syfo.client.DokumentVariant
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
@@ -96,16 +97,18 @@ class SykmeldingService(
             try {
                 ocrFil =
                     if (!dokumentInfoId.isNullOrEmpty()) {
-                        safDokumentClient.hentDokument(
+                        safDokumentClient.getXmlDokument(
                             journalpostId = journalpostId,
                             dokumentInfoId = dokumentInfoId,
                             msgId = sykmeldingId,
                             loggingMeta = loggingMeta,
+                            dokumentVariant = DokumentVariant.ORIGINAL,
                         )
                     } else {
                         null
                     }
 
+                //                uploadOcrToBucket(ocrFil)
                 ocrFil?.let { ocr ->
                     sykmelder =
                         hentSykmelder(
@@ -261,6 +264,10 @@ class SykmeldingService(
             )
         }
     }
+
+    //    private fun uploadOcrToBucket(ocrFil: Skanningmetadata?) {
+    //        TODO("Not yet implemented")
+    //    }
 
     suspend fun manuellBehandling(
         journalpostId: String,

@@ -11,7 +11,6 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -93,11 +92,12 @@ class SafDokumentClientSpek :
         context("SafDokumentClient håndterer respons korrekt") {
             test("Mapper mottatt dokument korrekt") {
                 val skanningmetadata =
-                    safDokumentClient.hentDokument(
+                    safDokumentClient.getXmlDokument(
                         "journalpostId",
                         "dokumentInfoId",
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
+                        DokumentVariant.ORIGINAL,
                     )
 
                 skanningmetadata shouldNotBeEqualTo null
@@ -142,11 +142,12 @@ class SafDokumentClientSpek :
                 "Returnerer null hvis dokumentet ikke er i henhold til skjema (det skal ikke kastes feil)"
             ) {
                 val skanningmetadata =
-                    safDokumentClient.hentDokument(
+                    safDokumentClient.getXmlDokument(
                         "journalpostId",
                         "dokumentInfoIdUgyldigDok",
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
+                        DokumentVariant.ORIGINAL,
                     )
 
                 skanningmetadata shouldBeEqualTo null
@@ -157,11 +158,12 @@ class SafDokumentClientSpek :
                 assertFailsWith<SafNotFoundException> {
                     runBlocking {
                         skanningmetadata =
-                            safDokumentClient.hentDokument(
+                            safDokumentClient.getXmlDokument(
                                 "journalpostId",
                                 "dokumentInfoIdFinnesIkke",
                                 "sykmeldingId",
-                                loggingMetadata
+                                loggingMetadata,
+                                DokumentVariant.ORIGINAL,
                             )
                     }
                 }

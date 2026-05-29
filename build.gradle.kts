@@ -27,6 +27,7 @@ val kotlinVersion = "2.2.0"
 val caffeineVersion = "3.2.1"
 val ktfmtVersion = "0.44"
 val diagnosekoderVersion = "1.2025.0"
+val googleCloudStorageVersion = "2.50.0"
 
 val javaVersion = JvmTarget.JVM_21
 
@@ -86,6 +87,8 @@ dependencies {
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
 
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+
+    implementation("com.google.cloud:google-cloud-storage:$googleCloudStorageVersion")
 
     implementation("no.nav.helse:diagnosekoder:$diagnosekoderVersion")
     implementation("javax.xml.bind:jaxb-api:$jaxbApiVersion")
