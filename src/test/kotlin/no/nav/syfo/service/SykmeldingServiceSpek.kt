@@ -69,6 +69,7 @@ class SykmeldingServiceSpek :
         val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
         val icpc2BDiagnoserDeferred =
             CompletableDeferred<Map<String, List<Icpc2BDiagnoser>>>(emptyMap())
+        val bucketUploadService = mockk<BucketUploadService>()
         val sykmeldingService =
             SykmeldingService(
                 oppgaveserviceMock,
@@ -82,7 +83,8 @@ class SykmeldingServiceSpek :
                 dokArkivClientMock,
                 kafkaproducerPapirSmRegistering,
                 "smregistrering",
-                icpc2BDiagnoserDeferred
+                icpc2BDiagnoserDeferred,
+                bucketUploadService,
             )
 
         beforeTest {
@@ -102,8 +104,12 @@ class SykmeldingServiceSpek :
                     any()
                 )
             } returns Unit
-            coEvery { safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any()) } returns
-                null
+            coEvery {
+                safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+            } returns null
+            coEvery {
+                bucketUploadService.uploadDocuments(any(), any(), any(), any(), any())
+            } returns Unit
             coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns
                 Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
             coEvery { regelClientMock.valider(any(), any()) } returns

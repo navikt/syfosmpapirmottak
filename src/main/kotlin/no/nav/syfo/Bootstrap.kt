@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.google.cloud.storage.StorageOptions
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.ktor.client.HttpClient
@@ -53,6 +54,7 @@ import no.nav.syfo.model.ReceivedSykmeldingWithValidation
 import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
+import no.nav.syfo.service.BucketUploadService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.util.JacksonKafkaSerializer
@@ -205,6 +207,9 @@ fun Application.module() {
     val nyRegelClient = NyRegelClient(azureAdV2Client, env.syfosmreglerScope, httpClient)
     val pdlPersonService = PdlFactory.getPdlService(env, httpClient, azureAdV2Client, env.pdlScope)
 
+    val storage = StorageOptions.newBuilder().build().service
+    val bucketUploadService = BucketUploadService(safDokumentClient, storage, env.bucketName)
+
     val sykmeldingService =
         SykmeldingService(
             oppgaveService = oppgaveService,
@@ -219,6 +224,7 @@ fun Application.module() {
             kafkaproducerPapirSmRegistering = kafkaProducerPapirSmRegistering,
             smregistreringTopic = env.smregistreringTopic,
             icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
+            bucketUploadService = bucketUploadService,
         )
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)

@@ -113,7 +113,22 @@ class SafDokumentClient(
         }
     }
 
-
+    suspend fun getXmlDokumentAsXml(
+        journalpostId: String,
+        dokumentInfoId: String,
+        msgId: String,
+        loggingMeta: LoggingMeta,
+        dokumentVariant: DokumentVariant
+    ): String {
+        return getDokumentFraSaf(
+            journalpostId,
+            dokumentInfoId,
+            msgId,
+            loggingMeta,
+            dokumentVariant,
+            ContentType.Application.Xml
+        )
+    }
 
     suspend fun getXmlDokument(
         journalpostId: String,
@@ -165,7 +180,6 @@ class SafDokumentClient(
             )
             throw ioex
         }
-
     }
 
     private suspend fun getAccessToken(): AzureAdV2Token {
@@ -175,7 +189,6 @@ class SafDokumentClient(
         }
         return accessToken
     }
-
 }
 
 private fun safeUnmarshalSkanningmetadata(
