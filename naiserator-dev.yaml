@@ -45,6 +45,8 @@ spec:
       memory: 256Mi
   kafka:
     pool: nav-dev
+  envFrom:
+    - secret: tsm-ocr-bucket
   azure:
     application:
       enabled: true

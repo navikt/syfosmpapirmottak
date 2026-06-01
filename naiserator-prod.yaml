@@ -15,6 +15,8 @@ spec:
         consumerGroup: syfosmpapirmottak-consumer
         threshold: 300
         topic: teamdokumenthandtering.aapen-dok-journalfoering
+  envFrom:
+    - secret: tsm-ocr-bucket
   port: 8080
   liveness:
     path: /internal/is_alive
