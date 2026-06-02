@@ -37,7 +37,7 @@ class SafDokumentClient(
         dokumentInfoId: String,
         msgId: String,
         loggingMeta: LoggingMeta,
-        dokumentVariant: DokumentVariant,
+        dokumentVariant: DokumentVariantFormat,
         contentType: ContentType,
     ): String {
         val accessToken = getAccessToken()
@@ -78,7 +78,7 @@ class SafDokumentClient(
         dokumentInfoId: String,
         msgId: String,
         loggingMeta: LoggingMeta,
-        dokumentVariant: DokumentVariant,
+        dokumentVariant: DokumentVariantFormat,
     ): ByteArray {
         val accessToken = getAccessToken()
 
@@ -118,7 +118,7 @@ class SafDokumentClient(
         dokumentInfoId: String,
         msgId: String,
         loggingMeta: LoggingMeta,
-        dokumentVariant: DokumentVariant
+        dokumentVariant: DokumentVariantFormat
     ): String {
         return getDokumentFraSaf(
             journalpostId,
@@ -135,7 +135,7 @@ class SafDokumentClient(
         dokumentInfoId: String,
         msgId: String,
         loggingMeta: LoggingMeta,
-        dokumentVariant: DokumentVariant
+        dokumentVariant: DokumentVariantFormat
     ): Skanningmetadata? {
         return try {
             val dokument =
@@ -171,7 +171,7 @@ class SafDokumentClient(
                 dokumentInfoId,
                 msgId,
                 loggingMeta,
-                DokumentVariant.ARKIV
+                DokumentVariantFormat.ARKIV
             )
         } catch (ioex: IOException) {
             log.warn(
@@ -206,12 +206,6 @@ private fun safeUnmarshalSkanningmetadata(
         )
 
     return skanningMetadataUnmarshaller.unmarshal(xmlSource) as Skanningmetadata
-}
-
-enum class DokumentVariant {
-    ORIGINAL,
-    FULLVERSJON,
-    ARKIV,
 }
 
 class SafNotFoundException(override val message: String) : Exception()

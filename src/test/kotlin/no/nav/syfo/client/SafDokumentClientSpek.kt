@@ -97,7 +97,7 @@ class SafDokumentClientSpek :
                         "dokumentInfoId",
                         "sykmeldingId",
                         loggingMetadata,
-                        DokumentVariant.ORIGINAL,
+                        DokumentVariantFormat.ORIGINAL,
                     )
 
                 skanningmetadata shouldNotBeEqualTo null
@@ -147,7 +147,7 @@ class SafDokumentClientSpek :
                         "dokumentInfoIdUgyldigDok",
                         "sykmeldingId",
                         loggingMetadata,
-                        DokumentVariant.ORIGINAL,
+                        DokumentVariantFormat.ORIGINAL,
                     )
 
                 skanningmetadata shouldBeEqualTo null
@@ -163,7 +163,7 @@ class SafDokumentClientSpek :
                                 "dokumentInfoIdFinnesIkke",
                                 "sykmeldingId",
                                 loggingMetadata,
-                                DokumentVariant.ORIGINAL,
+                                DokumentVariantFormat.ORIGINAL,
                             )
                     }
                 }

@@ -11,6 +11,7 @@ data class JournalpostMetadata(
     val gjelderUtland: Boolean,
     val datoOpprettet: LocalDateTime?,
     val dokumentInfoIdPdf: String,
+    val alleDokumenter: Map<String, List<String>>?,
 )
 
 data class Bruker(

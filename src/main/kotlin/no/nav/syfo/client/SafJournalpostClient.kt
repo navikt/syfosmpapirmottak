@@ -68,6 +68,12 @@ class SafJournalpostClient(
 
         val journalpost = findJournalpostResponse.data.journalpost
 
+        val alleDokumenter =
+            findJournalpostResponse.data.journalpost.dokumenter?.associate {
+                it.dokumentInfoId to
+                    it.dokumentvarianter.map { variant -> variant.variantformat.name }
+            }
+
         val dokumentId: String? = finnDokumentIdForOcr(journalpost.dokumenter, loggingMeta)
         return journalpost.let {
             val dokumenter = finnDokumentIdForPdf(journalpost.dokumenter, loggingMeta)
@@ -84,6 +90,7 @@ class SafJournalpostClient(
                 datoOpprettet = dateTimeStringTilLocalDateTime(it.datoOpprettet, loggingMeta),
                 dokumentInfoIdPdf = dokumenter.first().dokumentInfoId,
                 dokumenter = dokumenter,
+                alleDokumenter = alleDokumenter,
             )
         }
     }
@@ -156,6 +163,7 @@ fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMet
 data class DokumentMedTittel(
     val tittel: String,
     val dokumentInfoId: String,
+    val variantformat: DokumentVariantFormat,
 )
 
 fun finnDokumentIdForPdf(
@@ -171,6 +179,7 @@ fun finnDokumentIdForPdf(
                 DokumentMedTittel(
                     tittel = dokument.tittel ?: "Dokument uten tittel",
                     dokumentInfoId = dokument.dokumentInfoId,
+                    variantformat = DokumentVariantFormat.ARKIV,
                 )
             }
 
@@ -296,10 +305,10 @@ data class Dokument(
 )
 
 data class Dokumentvarianter(
-    val variantformat: Variantformat,
+    val variantformat: DokumentVariantFormat,
 )
 
-enum class Variantformat {
+enum class DokumentVariantFormat {
     ARKIV,
     FULLVERSJON,
     PRODUKSJON,

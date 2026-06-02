@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import no.nav.syfo.client.DokumentVariant
+import no.nav.syfo.client.DokumentVariantFormat
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.util.LoggingMeta
 
@@ -19,55 +19,61 @@ class BucketUploadService(
 ) {
     suspend fun uploadDocuments(
         journalpostId: String,
-        dokumentInfoId: String?,
-        dokumentInfoIdPdf: String,
+        alleDokumenter: Map<String, List<String>>,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
     ) {
         coroutineScope {
             val jobs = mutableListOf<Deferred<Unit>>()
+            alleDokumenter.forEach { dokument ->
+                dokument.value.forEach { dokumentVariant ->
+                    if (dokumentVariant == DokumentVariantFormat.ORIGINAL.name) {
+                        jobs +=
+                            async(Dispatchers.IO) {
+                                val ocrFilMedDokumentVariantOriginal =
+                                    safDokumentClient.getXmlDokumentAsXml(
+                                        journalpostId = journalpostId,
+                                        dokumentInfoId = dokument.key,
+                                        msgId = sykmeldingId,
+                                        loggingMeta = loggingMeta,
+                                        dokumentVariant = DokumentVariantFormat.ORIGINAL,
+                                    )
 
-            if (dokumentInfoId != null) {
-                jobs +=
-                    async(Dispatchers.IO) {
-                        val ocrFilMedDokumentVariantOriginal =
-                            safDokumentClient.getXmlDokumentAsXml(
-                                journalpostId = journalpostId,
-                                dokumentInfoId = dokumentInfoId,
-                                msgId = sykmeldingId,
-                                loggingMeta = loggingMeta,
-                                dokumentVariant = DokumentVariant.ORIGINAL,
-                            )
-
-                        bucketUploadXml(ocrFilMedDokumentVariantOriginal, sykmeldingId)
+                                bucketUploadXml(ocrFilMedDokumentVariantOriginal, sykmeldingId)
+                            }
+                    }
+                    if (dokumentVariant == DokumentVariantFormat.FULLVERSJON.name) {
+                        jobs +=
+                            async(Dispatchers.IO) {
+                                val ocrFilMedDokumentVariantFullversjon =
+                                    safDokumentClient.getXmlDokumentAsXml(
+                                        journalpostId = journalpostId,
+                                        dokumentInfoId = dokument.key,
+                                        msgId = sykmeldingId,
+                                        loggingMeta = loggingMeta,
+                                        dokumentVariant = DokumentVariantFormat.FULLVERSJON,
+                                    )
+                                bucketUploadXml(ocrFilMedDokumentVariantFullversjon, sykmeldingId)
+                            }
                     }
 
-                jobs +=
-                    async(Dispatchers.IO) {
-                        val ocrFilMedDokumentVariantFullversjon =
-                            safDokumentClient.getXmlDokumentAsXml(
-                                journalpostId = journalpostId,
-                                dokumentInfoId = dokumentInfoId,
-                                msgId = sykmeldingId,
-                                loggingMeta = loggingMeta,
-                                dokumentVariant = DokumentVariant.FULLVERSJON,
-                            )
-                        bucketUploadXml(ocrFilMedDokumentVariantFullversjon, sykmeldingId)
-                    }
-            }
-            jobs +=
-                async(Dispatchers.IO) {
-                    // er rett bruk av dokumentinfoid? kan jo ligge ein pdf på den andre også ?
-                    val pdf =
-                        safDokumentClient.getPdfDokument(
-                            journalpostId = journalpostId,
-                            dokumentInfoId = dokumentInfoIdPdf,
-                            msgId = sykmeldingId,
-                            loggingMeta = loggingMeta,
-                        )
+                    if (dokumentVariant == DokumentVariantFormat.ARKIV.name) {
+                        jobs +=
+                            async(Dispatchers.IO) {
+                                val pdf =
+                                    safDokumentClient.getPdfDokument(
+                                        journalpostId = journalpostId,
+                                        dokumentInfoId = dokument.key,
+                                        msgId = sykmeldingId,
+                                        loggingMeta = loggingMeta,
+                                    )
 
-                    bucketUploadPdf(pdf, sykmeldingId)
+                                bucketUploadPdf(pdf, sykmeldingId)
+                            }
+                    }
                 }
+            }
+
             jobs.awaitAll()
         }
     }

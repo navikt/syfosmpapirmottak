@@ -107,9 +107,7 @@ class SykmeldingServiceSpek :
             coEvery {
                 safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
             } returns null
-            coEvery {
-                bucketUploadService.uploadDocuments(any(), any(), any(), any(), any())
-            } returns Unit
+            coEvery { bucketUploadService.uploadDocuments(any(), any(), any(), any()) } returns Unit
             coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns
                 Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
             coEvery { regelClientMock.valider(any(), any()) } returns
@@ -139,6 +137,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coEvery {
@@ -185,6 +184,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify(exactly = 0) {
@@ -232,6 +232,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
@@ -295,6 +296,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
@@ -360,6 +362,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
@@ -424,6 +427,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
@@ -466,6 +470,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {

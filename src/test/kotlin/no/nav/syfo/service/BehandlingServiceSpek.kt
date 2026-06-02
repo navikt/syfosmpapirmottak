@@ -55,9 +55,11 @@ class BehandlingServiceSpek :
                     gjelderUtland = false,
                     datoOpprettet = datoOpprettet,
                     dokumentInfoIdPdf = "",
+                    alleDokumenter = null,
                 )
             coEvery {
                 sykmeldingServiceMock.behandleSykmelding(
+                    any(),
                     any(),
                     any(),
                     any(),
@@ -104,6 +106,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
+                        any(),
                         any()
                     )
                 }
@@ -138,6 +141,7 @@ class BehandlingServiceSpek :
                         any(),
                         null,
                         datoOpprettet,
+                        any(),
                         any(),
                         any(),
                         any(),
@@ -179,7 +183,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify(exactly = 0) {
@@ -208,6 +213,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
 
                 behandlingService.handleJournalpost(
@@ -229,7 +235,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify(exactly = 0) {
@@ -258,6 +265,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
 
                 behandlingService.handleJournalpost(
@@ -279,7 +287,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify {
@@ -308,6 +317,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
 
                 behandlingService.handleJournalpost(
@@ -329,7 +339,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify {
@@ -387,6 +398,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
 
                 behandlingService.handleJournalpost(
@@ -404,7 +416,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify { listOf(pdlService, utenlandskSykmeldingServiceMock) wasNot Called }
@@ -424,6 +437,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
 
                 behandlingService.handleJournalpost(
@@ -441,7 +455,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify { listOf(pdlService, utenlandskSykmeldingServiceMock) wasNot Called }
@@ -467,7 +482,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify { utenlandskSykmeldingServiceMock wasNot Called }
@@ -487,6 +503,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
                 val pasient =
                     PdlPerson(
@@ -512,7 +529,8 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
+                        any(),
                     )
                 }
                 coVerify { utenlandskSykmeldingServiceMock wasNot Called }
@@ -532,6 +550,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
                 coEvery { pdlService.getPdlPerson(any(), any()) } throws
                     IllegalStateException("feilmelding")
@@ -565,6 +584,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
+                        alleDokumenter = null,
                     )
 
                 behandlingService.handleJournalpost(

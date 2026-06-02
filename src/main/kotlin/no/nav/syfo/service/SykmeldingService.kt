@@ -11,7 +11,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.DokArkivClient
-import no.nav.syfo.client.DokumentVariant
+import no.nav.syfo.client.DokumentVariantFormat
 import no.nav.syfo.client.Godkjenning
 import no.nav.syfo.client.Icpc2BDiagnoser
 import no.nav.syfo.client.NorskHelsenettClient
@@ -80,6 +80,7 @@ class SykmeldingService(
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
+        alleDokumenter: Map<String, List<String>>?,
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -103,19 +104,20 @@ class SykmeldingService(
                             dokumentInfoId = dokumentInfoId,
                             msgId = sykmeldingId,
                             loggingMeta = loggingMeta,
-                            dokumentVariant = DokumentVariant.ORIGINAL,
+                            dokumentVariant = DokumentVariantFormat.ORIGINAL,
                         )
                     } else {
                         null
                     }
 
-                bucketUploadService.uploadDocuments(
-                    journalpostId = journalpostId,
-                    dokumentInfoId = dokumentInfoId,
-                    dokumentInfoIdPdf = dokumentInfoIdPdf,
-                    loggingMeta = loggingMeta,
-                    sykmeldingId = sykmeldingId,
-                )
+                if (alleDokumenter != null) {
+                    bucketUploadService.uploadDocuments(
+                        journalpostId = journalpostId,
+                        alleDokumenter = alleDokumenter,
+                        loggingMeta = loggingMeta,
+                        sykmeldingId = sykmeldingId,
+                    )
+                }
 
                 ocrFil?.let { ocr ->
                     sykmelder =
