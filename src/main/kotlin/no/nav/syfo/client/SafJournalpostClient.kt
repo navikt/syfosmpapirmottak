@@ -11,6 +11,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
+import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
@@ -71,7 +72,14 @@ class SafJournalpostClient(
         val alleDokumenter =
             findJournalpostResponse.data.journalpost.dokumenter?.associate {
                 it.dokumentInfoId to
-                    it.dokumentvarianter.map { variant -> variant.variantformat.name }
+                    it.dokumentvarianter.map { variant ->
+                        DokumentFilInfo(
+                            filNamn = variant.filnavn,
+                            filUUID = variant.filuuid,
+                            filType = variant.filtype,
+                            variantFormat = variant.variantformat
+                        )
+                    }
             }
 
         val dokumentId: String? = finnDokumentIdForOcr(journalpost.dokumenter, loggingMeta)
@@ -306,6 +314,9 @@ data class Dokument(
 
 data class Dokumentvarianter(
     val variantformat: DokumentVariantFormat,
+    val filnavn: String,
+    val filtype: String,
+    val filuuid: String,
 )
 
 enum class DokumentVariantFormat {

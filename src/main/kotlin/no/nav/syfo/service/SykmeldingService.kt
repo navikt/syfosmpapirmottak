@@ -20,6 +20,7 @@ import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.client.TssException
+import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
@@ -80,7 +81,7 @@ class SykmeldingService(
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
-        alleDokumenter: Map<String, List<String>>?,
+        alleDokumenter: Map<String, List<DokumentFilInfo>>?,
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
