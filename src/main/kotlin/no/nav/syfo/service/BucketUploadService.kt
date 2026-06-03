@@ -10,6 +10,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.domain.DokumentFilInfo
+import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
 
 class BucketUploadService(
@@ -57,14 +58,20 @@ class BucketUploadService(
         dokumentVariant: DokumentFilInfo,
         hentetDokument: ByteArray
     ) {
+        log.info("Preparing to save document in bucket, journalpostId: $journalpostId, dokumentinfoId: $dokumentInfoId , fil UUID: ${dokumentVariant.filUUID},  dokumentVariant: ${dokumentVariant.variantFormat.name}")
         val blobName =
             "${journalpostId}_${dokumentInfoId}_${dokumentVariant.filUUID}.${dokumentVariant.filType}"
-        storage.get(bucketName, blobName)?.let {
+        val existing = storage.get(bucketName, blobName)
+        if(existing == null) {
             val blob =
                 BlobInfo.newBuilder(BlobId.of(bucketName, blobName))
                     .setContentType("application/${dokumentVariant.filType}")
                     .build()
             storage.create(blob, hentetDokument)
+            log.info("Lagrer dokument i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}")
+        }
+        else {
+            log.info("Dokument finnes allerede i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}")
         }
     }
 }
