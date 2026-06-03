@@ -58,20 +58,40 @@ class BucketUploadService(
         dokumentVariant: DokumentFilInfo,
         hentetDokument: ByteArray
     ) {
-        log.info("Preparing to save document in bucket, journalpostId: $journalpostId, dokumentinfoId: $dokumentInfoId , fil UUID: ${dokumentVariant.filUUID},  dokumentVariant: ${dokumentVariant.variantFormat.name}")
-        val blobName =
-            "${journalpostId}_${dokumentInfoId}_${dokumentVariant.filUUID}.${dokumentVariant.filType}"
+        log.info(
+            "Preparing to save document in bucket, journalpostId: $journalpostId, dokumentinfoId: $dokumentInfoId , fil UUID: ${dokumentVariant.filUUID},  dokumentVariant: ${dokumentVariant.variantFormat.name}"
+        )
+        val filType = dokumentVariant.filType.lowercase()
+        val blobName = "${journalpostId}_${dokumentInfoId}_${dokumentVariant.filUUID}.$filType"
         val existing = storage.get(bucketName, blobName)
-        if(existing == null) {
+        if (existing == null) {
             val blob =
                 BlobInfo.newBuilder(BlobId.of(bucketName, blobName))
-                    .setContentType("application/${dokumentVariant.filType}")
+                    .setContentType(contentTypeForFilType(filType))
                     .build()
             storage.create(blob, hentetDokument)
-            log.info("Lagrer dokument i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}")
+            log.info(
+                "Lagrer dokument i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}"
+            )
+        } else {
+            log.info(
+                "Dokument finnes allerede i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}"
+            )
         }
-        else {
-            log.info("Dokument finnes allerede i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}")
+    }
+
+    private fun contentTypeForFilType(filType: String): String {
+        return when (filType) {
+            "pdf" -> "application/pdf"
+            "xml" -> "application/xml"
+            "json" -> "application/json"
+            "txt" -> "text/plain"
+            "jpg",
+            "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "tif",
+            "tiff" -> "image/tiff"
+            else -> "application/octet-stream"
         }
     }
 }

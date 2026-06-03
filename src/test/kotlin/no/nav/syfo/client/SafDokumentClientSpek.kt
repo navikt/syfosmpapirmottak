@@ -15,6 +15,7 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.mockk.coEvery
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.azure.v2.AzureAdV2Client
+import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
@@ -75,6 +77,9 @@ class SafDokumentClientSpek :
                             "/saf/rest/hentdokument/journalpostId/dokumentInfoIdFinnesIkke/ORIGINAL"
                         ) {
                             call.respond(HttpStatusCode.NotFound)
+                        }
+                        get("/saf/rest/hentdokument/journalpostId/dokumentInfoIdPdf/ARKIV") {
+                            call.respondBytes(byteArrayOf(0x25, 0x50, 0x44, 0x46, 0x0A, 0x00, 0x7F))
                         }
                     }
                 }
@@ -168,6 +173,28 @@ class SafDokumentClientSpek :
                     }
                 }
                 skanningmetadata shouldBeEqualTo null
+            }
+
+            test("getDocument returnerer binære bytes uten tegnkonvertering") {
+                val dokument = runBlocking {
+                    safDokumentClient.getDocument(
+                        journalpostId = "journalpostId",
+                        dokumentInfoId = "dokumentInfoIdPdf",
+                        dokumentVariant =
+                            DokumentFilInfo(
+                                filNamn = "dok.pdf",
+                                filUUID = "uuid",
+                                filType = "pdf",
+                                variantFormat = DokumentVariantFormat.ARKIV,
+                            ),
+                        loggingMeta = loggingMetadata,
+                        msgId = "sykmeldingId",
+                    )
+                }
+
+                dokument.contentEquals(
+                    byteArrayOf(0x25, 0x50, 0x44, 0x46, 0x0A, 0x00, 0x7F)
+                ) shouldBeEqualTo true
             }
         }
     })

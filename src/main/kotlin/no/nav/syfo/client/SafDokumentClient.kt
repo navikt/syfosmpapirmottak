@@ -122,7 +122,7 @@ class SafDokumentClient(
             httpClient.get(
                 "$url/rest/hentdokument/$journalpostId/$dokumentInfoId/${dokumentVariant.variantFormat.name}",
             ) {
-                accept(ContentType.Application.Pdf)
+                accept(contentTypeForFilType(dokumentFilType))
                 header("Authorization", "Bearer ${accessToken.accessToken}")
                 header("Nav-Callid", msgId)
                 header("Nav-Consumer-Id", "syfosmpapirmottak")
@@ -154,8 +154,18 @@ class SafDokumentClient(
                     msgId,
                     fields(loggingMeta)
                 )
-                return httpResponse.body<String>().toByteArray(Charsets.UTF_8)
+                return httpResponse.body<ByteArray>()
             }
+        }
+    }
+
+    private fun contentTypeForFilType(filType: String): ContentType {
+        return when (filType.lowercase()) {
+            "pdf" -> ContentType.Application.Pdf
+            "xml" -> ContentType.Application.Xml
+            "json" -> ContentType.Application.Json
+            "txt" -> ContentType.Text.Plain
+            else -> ContentType.Application.OctetStream
         }
     }
 
