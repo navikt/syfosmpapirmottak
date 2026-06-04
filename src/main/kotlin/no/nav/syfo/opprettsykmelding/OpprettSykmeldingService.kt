@@ -132,6 +132,7 @@ class OpprettSykmeldingService(
             temaEndret = false,
             loggingMeta = loggingMeta,
             sykmeldingId = sykmeldingId,
+            alleDokumenter = journalpostMetadata.alleDokumenter
         )
     }
 }

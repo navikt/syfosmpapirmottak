@@ -11,11 +11,11 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.mockk.coEvery
@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.azure.v2.AzureAdV2Client
+import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
@@ -77,6 +78,9 @@ class SafDokumentClientSpek :
                         ) {
                             call.respond(HttpStatusCode.NotFound)
                         }
+                        get("/saf/rest/hentdokument/journalpostId/dokumentInfoIdPdf/ARKIV") {
+                            call.respondBytes(byteArrayOf(0x25, 0x50, 0x44, 0x46, 0x0A, 0x00, 0x7F))
+                        }
                     }
                 }
                 .start()
@@ -93,11 +97,12 @@ class SafDokumentClientSpek :
         context("SafDokumentClient håndterer respons korrekt") {
             test("Mapper mottatt dokument korrekt") {
                 val skanningmetadata =
-                    safDokumentClient.hentDokument(
+                    safDokumentClient.getXmlDokument(
                         "journalpostId",
                         "dokumentInfoId",
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
+                        DokumentVariantFormat.ORIGINAL,
                     )
 
                 skanningmetadata shouldNotBeEqualTo null
@@ -142,11 +147,12 @@ class SafDokumentClientSpek :
                 "Returnerer null hvis dokumentet ikke er i henhold til skjema (det skal ikke kastes feil)"
             ) {
                 val skanningmetadata =
-                    safDokumentClient.hentDokument(
+                    safDokumentClient.getXmlDokument(
                         "journalpostId",
                         "dokumentInfoIdUgyldigDok",
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
+                        DokumentVariantFormat.ORIGINAL,
                     )
 
                 skanningmetadata shouldBeEqualTo null
@@ -157,15 +163,38 @@ class SafDokumentClientSpek :
                 assertFailsWith<SafNotFoundException> {
                     runBlocking {
                         skanningmetadata =
-                            safDokumentClient.hentDokument(
+                            safDokumentClient.getXmlDokument(
                                 "journalpostId",
                                 "dokumentInfoIdFinnesIkke",
                                 "sykmeldingId",
-                                loggingMetadata
+                                loggingMetadata,
+                                DokumentVariantFormat.ORIGINAL,
                             )
                     }
                 }
                 skanningmetadata shouldBeEqualTo null
+            }
+
+            test("getDocument returnerer binære bytes uten tegnkonvertering") {
+                val dokument = runBlocking {
+                    safDokumentClient.getDocument(
+                        journalpostId = "journalpostId",
+                        dokumentInfoId = "dokumentInfoIdPdf",
+                        dokumentVariant =
+                            DokumentFilInfo(
+                                filNamn = "dok.pdf",
+                                filUUID = "uuid",
+                                filType = "pdf",
+                                variantFormat = DokumentVariantFormat.ARKIV,
+                            ),
+                        loggingMeta = loggingMetadata,
+                        msgId = "sykmeldingId",
+                    )
+                }
+
+                dokument.contentEquals(
+                    byteArrayOf(0x25, 0x50, 0x44, 0x46, 0x0A, 0x00, 0x7F)
+                ) shouldBeEqualTo true
             }
         }
     })

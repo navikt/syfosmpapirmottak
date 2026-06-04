@@ -11,6 +11,7 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.msgHead.XMLMsgHead
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.DokArkivClient
+import no.nav.syfo.client.DokumentVariantFormat
 import no.nav.syfo.client.Godkjenning
 import no.nav.syfo.client.Icpc2BDiagnoser
 import no.nav.syfo.client.NorskHelsenettClient
@@ -19,6 +20,7 @@ import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.client.TssException
+import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
@@ -55,6 +57,7 @@ class SykmeldingService(
     private val kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
     private val smregistreringTopic: String,
     icpc2BDiagnoserDeffered: Deferred<Map<String, List<Icpc2BDiagnoser>>>,
+    private val bucketUploadService: BucketUploadService,
 ) {
 
     private var icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>> = emptyMap()
@@ -78,6 +81,7 @@ class SykmeldingService(
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
+        alleDokumenter: Map<String, List<DokumentFilInfo>>?,
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
@@ -89,29 +93,39 @@ class SykmeldingService(
                 journalpostId = journalpostId,
                 gjelderUtland = false,
                 trackingId = sykmeldingId,
-                loggingMeta = loggingMeta
+                loggingMeta = loggingMeta,
             )
             return
         } else {
             try {
                 ocrFil =
                     if (!dokumentInfoId.isNullOrEmpty()) {
-                        safDokumentClient.hentDokument(
+                        safDokumentClient.getXmlDokument(
                             journalpostId = journalpostId,
                             dokumentInfoId = dokumentInfoId,
                             msgId = sykmeldingId,
                             loggingMeta = loggingMeta,
+                            dokumentVariant = DokumentVariantFormat.ORIGINAL,
                         )
                     } else {
                         null
                     }
+
+                if (alleDokumenter != null) {
+                    bucketUploadService.uploadDocuments(
+                        journalpostId = journalpostId,
+                        alleDokumenter = alleDokumenter,
+                        loggingMeta = loggingMeta,
+                        sykmeldingId = sykmeldingId,
+                    )
+                }
 
                 ocrFil?.let { ocr ->
                     sykmelder =
                         hentSykmelder(
                             ocrFil = ocr,
                             sykmeldingId = sykmeldingId,
-                            loggingMeta = loggingMeta
+                            loggingMeta = loggingMeta,
                         )
 
                     val tssId =
@@ -119,7 +133,7 @@ class SykmeldingService(
                             sykmelder.fnr,
                             "ukjent",
                             loggingMeta,
-                            sykmeldingId
+                            sykmeldingId,
                         )
 
                     tellOcrInnhold(ocr, loggingMeta)
@@ -176,7 +190,7 @@ class SykmeldingService(
 
                     log.info(
                         "Sykmelding mappet til internt format uten feil {}",
-                        fields(loggingMeta)
+                        fields(loggingMeta),
                     )
                     PAPIRSM_MAPPET.labels("ok").inc()
 
@@ -187,7 +201,7 @@ class SykmeldingService(
                         StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
                         StructuredArguments.keyValue(
                             "ruleHits",
-                            validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName }
+                            validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName },
                         ),
                         fields(loggingMeta),
                     )
@@ -223,7 +237,7 @@ class SykmeldingService(
                         )
                     } else {
                         throw IllegalStateException(
-                            "Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING"
+                            "Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING",
                         )
                     }
 
@@ -240,7 +254,7 @@ class SykmeldingService(
                 PAPIRSM_MAPPET.labels("feil").inc()
                 log.warn(
                     "Noe gikk galt ved mapping fra OCR til sykmeldingsformat, ${fields(loggingMeta)}",
-                    e
+                    e,
                 )
             }
 
@@ -296,7 +310,7 @@ class SykmeldingService(
                 kafkaproducerPapirSmRegistering,
                 smregistreringTopic,
                 papirSmRegistering,
-                loggingMeta
+                loggingMeta,
             )
         } else {
             log.info("duplikat oppgave ${fields(loggingMeta)}")
@@ -316,12 +330,12 @@ class SykmeldingService(
 
         if (ChronoUnit.DAYS.between(minFom, maxTom) > limit) {
             log.info(
-                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og tom er større enn $limit"
+                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og tom er større enn $limit",
             )
             return true
         } else if (ChronoUnit.DAYS.between(minFom, today) > limit) {
             log.info(
-                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og dagens dato er større enn $limit"
+                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og dagens dato er større enn $limit",
             )
             return true
         }
@@ -356,7 +370,7 @@ class SykmeldingService(
             log.warn(
                 "Fant ikke aktorId til behandler for HPR {} {}",
                 hprNummer,
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             throw IllegalStateException("Kunne ikke hente aktorId for hpr $hprNummer")
         }
@@ -381,7 +395,7 @@ class SykmeldingService(
         ) {
             log.info(
                 "Papirsykmelding inneholder ikke hovedDiagnose, biDiagnose eller annenFraversArsak {}",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
         }
@@ -434,7 +448,7 @@ fun List<Godkjenning>.getHelsepersonellKategori(): String? =
         else -> {
             val verdi = firstOrNull()?.helsepersonellkategori?.verdi
             log.warn(
-                "Signerende behandler har ikke en helsepersonellkategori($verdi) vi kjenner igjen"
+                "Signerende behandler har ikke en helsepersonellkategori($verdi) vi kjenner igjen",
             )
             verdi
         }

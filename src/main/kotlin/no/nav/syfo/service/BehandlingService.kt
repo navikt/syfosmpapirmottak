@@ -111,12 +111,13 @@ class BehandlingService(
                         sykmeldingService.behandleSykmelding(
                             journalpostId = journalpostId,
                             pasient = pasient,
+                            dokumentInfoId = journalpostMetadata.dokumentInfoId,
                             datoOpprettet = journalpostMetadata.datoOpprettet,
                             dokumentInfoIdPdf = journalpostMetadata.dokumentInfoIdPdf,
-                            dokumentInfoId = journalpostMetadata.dokumentInfoId,
                             temaEndret = journalfoeringEvent.hendelsesType == "TemaEndret",
                             loggingMeta = loggingMeta,
                             sykmeldingId = sykmeldingId,
+                            alleDokumenter = journalpostMetadata.alleDokumenter,
                         )
                     }
                 } else {

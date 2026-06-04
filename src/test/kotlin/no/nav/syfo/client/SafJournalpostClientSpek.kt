@@ -19,14 +19,26 @@ class SafJournalpostClientSpek :
                             "dokumentinfo",
                             "brevkode",
                             listOf(
-                                Dokumentvarianter(Variantformat.ARKIV),
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ARKIV,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
                             )
                         ),
                         Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             "brevkode",
-                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ORIGINAL,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
@@ -64,13 +76,27 @@ class SafJournalpostClientSpek :
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             "brevkode",
-                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ARKIV,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             "brevkode",
-                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ORIGINAL,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
@@ -131,13 +157,27 @@ class SafJournalpostClientSpek :
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             BREVKODE_UTLAND,
-                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ARKIV,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             BREVKODE_UTLAND,
-                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ORIGINAL,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
@@ -170,13 +210,27 @@ class SafJournalpostClientSpek :
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             GAMMEL_BREVKODE_UTLAND,
-                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ARKIV,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             GAMMEL_BREVKODE_UTLAND,
-                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ORIGINAL,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
@@ -209,13 +263,27 @@ class SafJournalpostClientSpek :
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             BREVKODE_UTLAND,
-                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ARKIV,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
                             "dokumentInfoIdOriginal",
                             "NAV-skjema",
-                            listOf(Dokumentvarianter(Variantformat.ORIGINAL)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ORIGINAL,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
@@ -254,7 +322,14 @@ class SafJournalpostClientSpek :
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             "annenBrevkode",
-                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ARKIV,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
@@ -283,7 +358,14 @@ class SafJournalpostClientSpek :
                             "test-tittel",
                             "dokumentInfoIdArkiv",
                             "annenBrevkode",
-                            listOf(Dokumentvarianter(Variantformat.ARKIV)),
+                            listOf(
+                                Dokumentvarianter(
+                                    DokumentVariantFormat.ARKIV,
+                                    "filnavn",
+                                    "filtype",
+                                    "uuid"
+                                )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",

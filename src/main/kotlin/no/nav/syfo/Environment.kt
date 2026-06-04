@@ -28,6 +28,7 @@ data class Environment(
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
     val smtssApiUrl: String = "http://smtss",
     val smtssApiScope: String = getEnvVar("SMTSS_API_SCOPE"),
+    val bucketName: String = getEnvVar("TSM_OCR_BUCKET"),
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =

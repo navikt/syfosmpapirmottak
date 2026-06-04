@@ -11,6 +11,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.azure.v2.AzureAdV2Client
+import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.domain.JournalpostMetadata
 import no.nav.syfo.log
 import no.nav.syfo.util.LoggingMeta
@@ -68,6 +69,19 @@ class SafJournalpostClient(
 
         val journalpost = findJournalpostResponse.data.journalpost
 
+        val alleDokumenter =
+            findJournalpostResponse.data.journalpost.dokumenter?.associate {
+                it.dokumentInfoId to
+                    it.dokumentvarianter.map { variant ->
+                        DokumentFilInfo(
+                            filNamn = variant.filnavn,
+                            filUUID = variant.filuuid,
+                            filType = variant.filtype,
+                            variantFormat = variant.variantformat
+                        )
+                    }
+            }
+
         val dokumentId: String? = finnDokumentIdForOcr(journalpost.dokumenter, loggingMeta)
         return journalpost.let {
             val dokumenter = finnDokumentIdForPdf(journalpost.dokumenter, loggingMeta)
@@ -84,6 +98,7 @@ class SafJournalpostClient(
                 datoOpprettet = dateTimeStringTilLocalDateTime(it.datoOpprettet, loggingMeta),
                 dokumentInfoIdPdf = dokumenter.first().dokumentInfoId,
                 dokumenter = dokumenter,
+                alleDokumenter = alleDokumenter,
             )
         }
     }
@@ -156,6 +171,7 @@ fun finnDokumentIdForOcr(dokumentListe: List<Dokument>?, loggingMeta: LoggingMet
 data class DokumentMedTittel(
     val tittel: String,
     val dokumentInfoId: String,
+    val variantformat: DokumentVariantFormat,
 )
 
 fun finnDokumentIdForPdf(
@@ -171,6 +187,7 @@ fun finnDokumentIdForPdf(
                 DokumentMedTittel(
                     tittel = dokument.tittel ?: "Dokument uten tittel",
                     dokumentInfoId = dokument.dokumentInfoId,
+                    variantformat = DokumentVariantFormat.ARKIV,
                 )
             }
 
@@ -296,10 +313,13 @@ data class Dokument(
 )
 
 data class Dokumentvarianter(
-    val variantformat: Variantformat,
+    val variantformat: DokumentVariantFormat,
+    val filnavn: String,
+    val filtype: String,
+    val filuuid: String,
 )
 
-enum class Variantformat {
+enum class DokumentVariantFormat {
     ARKIV,
     FULLVERSJON,
     PRODUKSJON,

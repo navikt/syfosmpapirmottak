@@ -15,6 +15,9 @@ query FindJournalpost($id: String!) {
             brevkode
             dokumentvarianter {
                 variantformat
+                filnavn
+                filuuid
+                filtype
             }
         }
         journalposttype

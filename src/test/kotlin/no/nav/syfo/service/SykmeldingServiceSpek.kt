@@ -69,6 +69,7 @@ class SykmeldingServiceSpek :
         val pdlService = mockkClass(type = PdlPersonService::class, relaxed = false)
         val icpc2BDiagnoserDeferred =
             CompletableDeferred<Map<String, List<Icpc2BDiagnoser>>>(emptyMap())
+        val bucketUploadService = mockk<BucketUploadService>()
         val sykmeldingService =
             SykmeldingService(
                 oppgaveserviceMock,
@@ -82,7 +83,8 @@ class SykmeldingServiceSpek :
                 dokArkivClientMock,
                 kafkaproducerPapirSmRegistering,
                 "smregistrering",
-                icpc2BDiagnoserDeferred
+                icpc2BDiagnoserDeferred,
+                bucketUploadService,
             )
 
         beforeTest {
@@ -102,7 +104,10 @@ class SykmeldingServiceSpek :
                     any()
                 )
             } returns Unit
-            coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns null
+            coEvery {
+                safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+            } returns null
+            coEvery { bucketUploadService.uploadDocuments(any(), any(), any(), any()) } returns Unit
             coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns
                 Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
             coEvery { regelClientMock.valider(any(), any()) } returns
@@ -119,8 +124,9 @@ class SykmeldingServiceSpek :
         context("SykmeldingService ende-til-ende") {
             test("Send til smregistrering hvis SAF svarer 500 ved henting av skanningMetadata") {
                 val sykmeldingServiceSpy = spyk(sykmeldingService)
-                coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws
-                    IOException()
+                coEvery {
+                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                } throws IOException()
 
                 sykmeldingServiceSpy.behandleSykmelding(
                     journalpostId = journalpostId,
@@ -131,10 +137,17 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coEvery {
-                    safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any())
+                    safDokumentClientMock.getXmlDokument(
+                        journalpostId,
+                        dokumentInfoId,
+                        any(),
+                        any(),
+                        any()
+                    )
                 }
                 coVerify(exactly = 1) {
                     sykmeldingServiceSpy.manuellBehandling(
@@ -171,10 +184,11 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify(exactly = 0) {
-                    safDokumentClientMock.hentDokument(any(), any(), any(), any())
+                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
                 }
                 coVerify(exactly = 0) {
                     oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
@@ -205,8 +219,9 @@ class SykmeldingServiceSpek :
             test(
                 "Send til smregistrering hvis SAF returnerer 404 ved henting av skanningMetadata"
             ) {
-                coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } throws
-                    SafNotFoundException("Fant ikke dokumentet for msgId 1234 i SAF")
+                coEvery {
+                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                } throws SafNotFoundException("Fant ikke dokumentet for msgId 1234 i SAF")
 
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId,
@@ -217,10 +232,17 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
-                    safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any())
+                    safDokumentClientMock.getXmlDokument(
+                        journalpostId,
+                        dokumentInfoId,
+                        any(),
+                        any(),
+                        any()
+                    )
                 }
                 coVerify(exactly = 0) {
                     oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
@@ -233,7 +255,9 @@ class SykmeldingServiceSpek :
             test(
                 "Skanningmetadata mappes riktig til receivedSykmelding (Happy case, ordinær flyt uten feil)"
             ) {
-                coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns
+                coEvery {
+                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                } returns
                     Skanningmetadata().apply {
                         sykemeldinger =
                             SykemeldingerType().apply {
@@ -272,10 +296,17 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
-                    safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any())
+                    safDokumentClientMock.getXmlDokument(
+                        journalpostId,
+                        dokumentInfoId,
+                        any(),
+                        any(),
+                        any()
+                    )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
                 coVerify { pdlService.getPdlPerson(fnrLege, any()) }
@@ -290,7 +321,9 @@ class SykmeldingServiceSpek :
             test("Går til smregistrering hvis behandlingsutfall er MANUELL") {
                 coEvery { regelClientMock.valider(any(), any()) } returns
                     ValidationResult(Status.MANUAL_PROCESSING, emptyList())
-                coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns
+                coEvery {
+                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                } returns
                     Skanningmetadata().apply {
                         sykemeldinger =
                             SykemeldingerType().apply {
@@ -329,10 +362,17 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
-                    safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any())
+                    safDokumentClientMock.getXmlDokument(
+                        journalpostId,
+                        dokumentInfoId,
+                        any(),
+                        any(),
+                        any()
+                    )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
                 coVerify { pdlService.getPdlPerson(fnrLege, any()) }
@@ -347,7 +387,9 @@ class SykmeldingServiceSpek :
             test("Går til smregistrering hvis requireManuellBehandling == true") {
                 coEvery { regelClientMock.valider(any(), any()) } returns
                     ValidationResult(Status.MANUAL_PROCESSING, emptyList())
-                coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns
+                coEvery {
+                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                } returns
                     Skanningmetadata().apply {
                         sykemeldinger =
                             SykemeldingerType().apply {
@@ -385,10 +427,17 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
-                    safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any())
+                    safDokumentClientMock.getXmlDokument(
+                        journalpostId,
+                        dokumentInfoId,
+                        any(),
+                        any(),
+                        any()
+                    )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
                 coVerify { pdlService.getPdlPerson(fnrLege, any()) }
@@ -401,7 +450,9 @@ class SykmeldingServiceSpek :
             }
 
             test("Går til smregistrering hvis mapping feiler") {
-                coEvery { safDokumentClientMock.hentDokument(any(), any(), any(), any()) } returns
+                coEvery {
+                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                } returns
                     Skanningmetadata().apply {
                         sykemeldinger =
                             SykemeldingerType().apply {
@@ -419,10 +470,17 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
+                    alleDokumenter = null
                 )
 
                 coVerify {
-                    safDokumentClientMock.hentDokument(journalpostId, dokumentInfoId, any(), any())
+                    safDokumentClientMock.getXmlDokument(
+                        journalpostId,
+                        dokumentInfoId,
+                        any(),
+                        any(),
+                        any()
+                    )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
                 coVerify { pdlService.getPdlPerson(fnrLege, any()) }

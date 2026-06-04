@@ -2,6 +2,7 @@ package no.nav.syfo.domain
 
 import java.time.LocalDateTime
 import no.nav.syfo.client.DokumentMedTittel
+import no.nav.syfo.client.DokumentVariantFormat
 
 data class JournalpostMetadata(
     val bruker: Bruker,
@@ -11,9 +12,17 @@ data class JournalpostMetadata(
     val gjelderUtland: Boolean,
     val datoOpprettet: LocalDateTime?,
     val dokumentInfoIdPdf: String,
+    val alleDokumenter: Map<String, List<DokumentFilInfo>>?,
 )
 
 data class Bruker(
     val id: String?,
     val type: String?,
+)
+
+data class DokumentFilInfo(
+    val filNamn: String,
+    val filUUID: String,
+    val filType: String,
+    val variantFormat: DokumentVariantFormat,
 )
