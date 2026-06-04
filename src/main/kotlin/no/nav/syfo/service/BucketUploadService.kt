@@ -58,9 +58,6 @@ class BucketUploadService(
         dokumentVariant: DokumentFilInfo,
         hentetDokument: ByteArray
     ) {
-        log.info(
-            "Preparing to save document in bucket, journalpostId: $journalpostId, dokumentinfoId: $dokumentInfoId , fil UUID: ${dokumentVariant.filUUID},  dokumentVariant: ${dokumentVariant.variantFormat.name}"
-        )
         val filType = dokumentVariant.filType.lowercase()
         val blobName = "${journalpostId}_${dokumentInfoId}_${dokumentVariant.filUUID}.$filType"
         val existing = storage.get(bucketName, blobName)
@@ -71,7 +68,7 @@ class BucketUploadService(
                     .build()
             storage.create(blob, hentetDokument)
             log.info(
-                "Lagrer dokument i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}"
+                "Lagrer dokument i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}. Namn på dokument er: $blobName"
             )
         } else {
             log.info(
@@ -89,8 +86,6 @@ class BucketUploadService(
             "jpg",
             "jpeg" -> "image/jpeg"
             "png" -> "image/png"
-            "tif",
-            "tiff" -> "image/tiff"
             else -> "application/octet-stream"
         }
     }
