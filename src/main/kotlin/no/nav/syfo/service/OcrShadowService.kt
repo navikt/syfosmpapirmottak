@@ -67,9 +67,13 @@ class OcrShadowService(
                         msgId = sykmeldingId,
                     )
 
-                val token =
-                    azureAdV2Client.getAccessToken(ocrServiceScope)?.accessToken
-                        ?: error("Klarte ikke hente token for OCR-tjenesten")
+
+                val token: String =
+                azureAdV2Client.getAccessToken(ocrServiceScope)?.accessToken
+                ?: run {
+                    log.warn("OcrShadow: klarte ikke hente token for sykmeldingId={}, hopper over", sykmeldingId)
+                    return@launch
+                }
 
                 val nyttOcrResultat =
                     httpClient
