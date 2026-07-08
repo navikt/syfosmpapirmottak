@@ -71,7 +71,7 @@ class OcrShadowService(
                     azureAdV2Client.getAccessToken(ocrServiceScope)?.accessToken
                         ?: error("Klarte ikke hente token for OCR-tjenesten")
 
-                val nyResultat =
+                val nyttOcrResultat =
                     httpClient
                         .post("$ocrServiceUrl/api/parse") {
                             header("Authorization", "Bearer $token")
@@ -85,7 +85,7 @@ class OcrShadowService(
                     sykmeldingId,
                     journalpostId,
                     gammelOcr,
-                    nyResultat,
+                    nyttOcrResultat,
                 )
             } catch (e: Exception) {
                 log.warn(
