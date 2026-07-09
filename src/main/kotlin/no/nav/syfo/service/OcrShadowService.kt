@@ -85,9 +85,10 @@ class OcrShadowService(
                         .bodyAsText()
 
                 securelog.info(
-                    "ocr-shadow sykmeldingId={} journalpostId={} gammelOcr=[{}] nyOcr={}",
+                    "ocr-shadow sykmeldingId={} journalpostId={} dokumentInfoId={} gammelOcr=[{}] nyOcr={}",
                     sykmeldingId,
                     journalpostId,
+                    dokumentInfoIdPdf,
                     gammelOcr,
                     nyttOcrResultat,
                 )
