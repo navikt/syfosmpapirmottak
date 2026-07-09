@@ -18,6 +18,7 @@ import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
+import no.nav.syfo.service.OcrShadowService
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.client.TssException
 import no.nav.syfo.domain.DokumentFilInfo
@@ -58,6 +59,7 @@ class SykmeldingService(
     private val smregistreringTopic: String,
     icpc2BDiagnoserDeffered: Deferred<Map<String, List<Icpc2BDiagnoser>>>,
     private val bucketUploadService: BucketUploadService,
+    private val ocrShadowService: OcrShadowService? = null,
 ) {
 
     private var icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>> = emptyMap()
@@ -119,6 +121,15 @@ class SykmeldingService(
                         sykmeldingId = sykmeldingId,
                     )
                 }
+
+                ocrShadowService?.compareAsync(
+                    journalpostId = journalpostId,
+                    dokumentInfoIdPdf = dokumentInfoIdPdf,
+                    alleDokumenter = alleDokumenter,
+                    gammelOcr = ocrFil,
+                    sykmeldingId = sykmeldingId,
+                    loggingMeta = loggingMeta,
+                )
 
                 ocrFil?.let { ocr ->
                     sykmelder =

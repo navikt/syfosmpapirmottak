@@ -59,6 +59,9 @@ spec:
         - application: syfosmregler
           namespace: teamsykmelding
           cluster: prod-gcp
+        - application: sykmelding-ocr-service
+          namespace: tsm
+          cluster: prod-gcp
         - application: smtss
         - application: syfohelsenettproxy
       external:
@@ -92,5 +95,9 @@ spec:
       value: https://oppgave.prod-fss-pub.nais.io/api/v1/oppgaver
     - name: OPPGAVE_SCOPE
       value: api://prod-fss.oppgavehandtering.oppgave/.default
+    - name: OCR_SERVICE_URL
+      value: http://sykmelding-ocr-service.tsm
+    - name: OCR_SERVICE_SCOPE
+      value: api://prod-gcp.tsm.sykmelding-ocr-service/.default
     - name: SMTSS_API_SCOPE
       value: api://prod-gcp.teamsykmelding.smtss/.default

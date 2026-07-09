@@ -29,6 +29,8 @@ data class Environment(
     val smtssApiUrl: String = "http://smtss",
     val smtssApiScope: String = getEnvVar("SMTSS_API_SCOPE"),
     val bucketName: String = getEnvVar("TSM_OCR_BUCKET"),
+    val ocrServiceUrl: String = getEnvVar("OCR_SERVICE_URL"),
+    val ocrServiceScope: String = getEnvVar("OCR_SERVICE_SCOPE"),
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =

@@ -56,6 +56,7 @@ import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.BucketUploadService
 import no.nav.syfo.service.OppgaveService
+import no.nav.syfo.service.OcrShadowService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta
@@ -209,6 +210,14 @@ fun Application.module() {
 
     val storage = StorageOptions.newBuilder().build().service
     val bucketUploadService = BucketUploadService(safDokumentClient, storage, env.bucketName)
+    val ocrShadowService =
+        OcrShadowService(
+            safDokumentClient = safDokumentClient,
+            httpClient = httpClient,
+            ocrServiceUrl = env.ocrServiceUrl,
+            ocrServiceScope = env.ocrServiceScope,
+            azureAdV2Client = azureAdV2Client,
+        )
 
     val sykmeldingService =
         SykmeldingService(
@@ -225,6 +234,7 @@ fun Application.module() {
             smregistreringTopic = env.smregistreringTopic,
             icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
             bucketUploadService = bucketUploadService,
+            ocrShadowService = ocrShadowService,
         )
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
