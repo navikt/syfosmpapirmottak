@@ -27,7 +27,7 @@ val kotlinVersion = "2.2.0"
 val caffeineVersion = "3.2.1"
 val ktfmtVersion = "0.44"
 val diagnosekoderVersion = "1.2025.0"
-val googleCloudStorageVersion = "2.50.0"
+val googleCloudStorageVersion = "2.70.0"
 
 val javaVersion = JvmTarget.JVM_21
 
