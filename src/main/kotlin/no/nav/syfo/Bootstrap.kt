@@ -55,8 +55,8 @@ import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.BucketUploadService
-import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.OcrShadowService
+import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.util.JacksonKafkaSerializer
 import no.nav.syfo.util.LoggingMeta

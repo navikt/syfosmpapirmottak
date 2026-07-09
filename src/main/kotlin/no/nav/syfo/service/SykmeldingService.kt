@@ -18,7 +18,6 @@ import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
-import no.nav.syfo.service.OcrShadowService
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.client.TssException
 import no.nav.syfo.domain.DokumentFilInfo

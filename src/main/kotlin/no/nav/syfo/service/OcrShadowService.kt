@@ -21,8 +21,8 @@ import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 
 /**
- * Kjører ny OCR-tjeneste parallelt med eksisterende OCR-flyt og logger resultater til securelog
- * for sammenligning. Påvirker aldri produksjonsflyten — alle feil svelges og logges som warn.
+ * Kjører ny OCR-tjeneste parallelt med eksisterende OCR-flyt og logger resultater til securelog for
+ * sammenligning. Påvirker aldri produksjonsflyten — alle feil svelges og logges som warn.
  *
  * Fjernes etter at sammenligningstrial er ferdig og ny OCR er tatt i bruk.
  */
@@ -44,9 +44,9 @@ class OcrShadowService(
         loggingMeta: LoggingMeta,
     ) {
         val pdfFilInfo =
-            alleDokumenter
-                ?.get(dokumentInfoIdPdf)
-                ?.firstOrNull { it.variantFormat == DokumentVariantFormat.ARKIV }
+            alleDokumenter?.get(dokumentInfoIdPdf)?.firstOrNull {
+                it.variantFormat == DokumentVariantFormat.ARKIV
+            }
                 ?: run {
                     log.warn(
                         "OcrShadow: fant ikke ARKIV-variant for dokumentInfoIdPdf={} sykmeldingId={}",
@@ -67,13 +67,15 @@ class OcrShadowService(
                         msgId = sykmeldingId,
                     )
 
-
                 val token: String =
-                azureAdV2Client.getAccessToken(ocrServiceScope)?.accessToken
-                ?: run {
-                    log.warn("OcrShadow: klarte ikke hente token for sykmeldingId={}, hopper over", sykmeldingId)
-                    return@launch
-                }
+                    azureAdV2Client.getAccessToken(ocrServiceScope)?.accessToken
+                        ?: run {
+                            log.warn(
+                                "OcrShadow: klarte ikke hente token for sykmeldingId={}, hopper over",
+                                sykmeldingId
+                            )
+                            return@launch
+                        }
 
                 val nyttOcrResultat =
                     httpClient
