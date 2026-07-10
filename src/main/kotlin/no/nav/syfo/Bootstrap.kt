@@ -175,6 +175,18 @@ fun Application.module() {
             }
         }
     }
+    // Dedicated client for the OCR shadow trial: the new OCR service can take longer to
+    // respond than our other dependencies, so it gets its own (longer) timeout instead of
+    // affecting the shared httpClient used by everything else. No retry — OcrShadowService
+    // already swallows failures and just skips the comparison for that sykmelding.
+    val ocrShadowHttpClient =
+        HttpClient(Apache) {
+            install(HttpTimeout) {
+                socketTimeoutMillis = 90_000
+                connectTimeoutMillis = 90_000
+                requestTimeoutMillis = 90_000
+            }
+        }
 
     val httpClient = HttpClient(Apache, retryConfig)
 
@@ -213,7 +225,7 @@ fun Application.module() {
     val ocrShadowService =
         OcrShadowService(
             safDokumentClient = safDokumentClient,
-            httpClient = httpClient,
+            httpClient = ocrShadowHttpClient,
             ocrServiceUrl = env.ocrServiceUrl,
             ocrServiceScope = env.ocrServiceScope,
             azureAdV2Client = azureAdV2Client,
@@ -265,6 +277,7 @@ fun Application.module() {
         applicationState.ready = false
         applicationState.alive = false
         httpClient.close()
+        ocrShadowHttpClient.close()
     }
 }
 

@@ -28,6 +28,8 @@ import no.nav.syfo.util.LoggingMeta
  */
 class OcrShadowService(
     private val safDokumentClient: SafDokumentClient,
+    // Dedicated HttpClient with a 90s timeout — the new OCR service can be slower than our
+    // other dependencies, so it must not share the shorter timeout used elsewhere.
     private val httpClient: HttpClient,
     private val ocrServiceUrl: String,
     private val ocrServiceScope: String,
