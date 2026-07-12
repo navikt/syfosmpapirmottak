@@ -21,6 +21,27 @@ import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 
 /**
+ * Identifiserer det konkrete PDF-dokumentet en shadow-sammenligning gjelder.
+ */
+data class OcrShadowDokumentInfo(
+    val sykmeldingId: String,
+    val journalpostId: String,
+    val dokumentInfoId: String,
+    val filUuid: String,
+    val filType: String,
+    val filNamn: String,
+) {
+    /**
+     * Opaque correlation token for shadow-service's `X-Document-Reference` header (see
+     * navikt/sykmelding-ocr-parser OcrRoutes.kt). Built to be identical to the bucket blob name
+     * BucketUploadService.saveToBucket() generates (`${journalpostId}_${dokumentInfoId}_${filUUID}.${filType}`)
+     * so it can be pasted straight into the bucket to find the document — never the
+     * human-readable filNamn, which must stay in securelog only.
+     */
+    fun asDocumentReference(): String = "${journalpostId}_${dokumentInfoId}_${filUuid}.${filType.lowercase()}"
+}
+
+/**
  * Kjører ny OCR-tjeneste parallelt med eksisterende OCR-flyt og logger resultater til securelog for
  * sammenligning. Påvirker aldri produksjonsflyten — alle feil svelges og logges som warn.
  *
@@ -60,6 +81,24 @@ class OcrShadowService(
 
         shadowScope.launch {
             try {
+                val dokumentInfo =
+                    OcrShadowDokumentInfo(
+                        sykmeldingId = sykmeldingId,
+                        journalpostId = journalpostId,
+                        dokumentInfoId = dokumentInfoIdPdf,
+                        filUuid = pdfFilInfo.filUUID,
+                        filType = pdfFilInfo.filType,
+                        filNamn = pdfFilInfo.filNamn,
+                    )
+                securelog.info(
+                    "OcrShadow: sender pdf til shadow-service sykmeldingId={} journalpostId={} dokumentInfoId={} filUuid={} filNamn={}",
+                    dokumentInfo.sykmeldingId,
+                    dokumentInfo.journalpostId,
+                    dokumentInfo.dokumentInfoId,
+                    dokumentInfo.filUuid,
+                    dokumentInfo.filNamn,
+                )
+
                 val pdfBytes =
                     safDokumentClient.getDocument(
                         journalpostId = journalpostId,
@@ -83,6 +122,7 @@ class OcrShadowService(
                     httpClient
                         .post("$ocrServiceUrl/api/parse") {
                             header("Authorization", "Bearer $token")
+                            header("X-Document-Reference", dokumentInfo.asDocumentReference())
                             contentType(ContentType.Application.OctetStream)
                             setBody(pdfBytes)
                         }
