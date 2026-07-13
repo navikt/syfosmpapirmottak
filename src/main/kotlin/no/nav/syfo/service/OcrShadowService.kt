@@ -49,7 +49,7 @@ data class OcrShadowDokumentInfo(
  */
 class OcrShadowService(
     private val safDokumentClient: SafDokumentClient,
-    // Dedicated HttpClient with a 90s timeout — the new OCR service can be slower than our
+    // Dedicated HttpClient with a timeout — the new OCR service can be slower than our
     // other dependencies, so it must not share the shorter timeout used elsewhere.
     private val httpClient: HttpClient,
     private val ocrServiceUrl: String,
@@ -122,7 +122,9 @@ class OcrShadowService(
                     httpClient
                         .post("$ocrServiceUrl/api/parse") {
                             header("Authorization", "Bearer $token")
+                            // Bucket-blob reference for locating the source PDF (see asDocumentReference kdoc).
                             header("X-Document-Reference", dokumentInfo.asDocumentReference())
+                            header("X-Sykmelding-Id", dokumentInfo.sykmeldingId)
                             contentType(ContentType.Application.OctetStream)
                             setBody(pdfBytes)
                         }
