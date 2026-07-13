@@ -182,9 +182,9 @@ fun Application.module() {
     val ocrShadowHttpClient =
         HttpClient(Apache) {
             install(HttpTimeout) {
-                socketTimeoutMillis = 90_000
-                connectTimeoutMillis = 90_000
-                requestTimeoutMillis = 90_000
+                socketTimeoutMillis = 180_000
+                connectTimeoutMillis = 180_000
+                requestTimeoutMillis = 180_000
             }
         }
 
