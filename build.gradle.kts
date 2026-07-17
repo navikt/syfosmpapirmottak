@@ -3,38 +3,38 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 group = "no.nav.syfo"
 version = "1.0.0"
 
-val coroutinesVersion = "1.10.2"
-val kafkaVersion = "3.9.1"
+val coroutinesVersion = "1.11.0"
+val kafkaVersion = "4.3.1"
 val kluentVersion = "1.73"
 val ktorVersion = "3.5.1"
-val logbackVersion = "1.5.26"
-val logstashLogbackEncoderVersion = "8.1"
+val logbackVersion = "1.5.38"
+val logstashLogbackEncoderVersion = "9.0"
 val prometheusVersion = "0.16.0"
-val kotestVersion = "5.9.1"
+val kotestVersion = "6.2.2"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
 val jacksonVersion = "2.22.1"
-val joarkHendelseVersion = "1.1.6"
+val joarkHendelseVersion = "1.1.11"
 val confluentVersion = "8.1.4"
 val syfoXmlCodegenVersion = "2.0.1"
-val commonsTextVersion = "1.13.1"
+val commonsTextVersion = "1.15.0"
 val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val javaTimeAdapterVersion = "1.1.3"
-val ioMockVersion = "1.14.4"
-val kotlinVersion = "2.2.0"
-val caffeineVersion = "3.2.1"
+val ioMockVersion = "1.14.11"
+val kotlinVersion = "2.4.0"
+val caffeineVersion = "3.2.4"
 val ktfmtVersion = "0.44"
-val diagnosekoderVersion = "1.2025.0"
+val diagnosekoderVersion = "1.2026.0"
 val googleCloudStorageVersion = "2.70.0"
 
 val javaVersion = JvmTarget.JVM_21
 
 plugins {
     id("application")
-    kotlin("jvm") version "2.2.21"
-    id("com.diffplug.spotless") version "7.0.4"
+    kotlin("jvm") version "2.4.0"
+    id("com.diffplug.spotless") version "8.8.0"
 }
 
 application {
