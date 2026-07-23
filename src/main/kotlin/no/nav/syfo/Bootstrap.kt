@@ -179,12 +179,13 @@ fun Application.module() {
     // respond than our other dependencies, so it gets its own (longer) timeout instead of
     // affecting the shared httpClient used by everything else. No retry — OcrShadowService
     // already swallows failures and just skips the comparison for that sykmelding.
+    // 20 min timeout
     val ocrShadowHttpClient =
         HttpClient(Apache) {
             install(HttpTimeout) {
-                socketTimeoutMillis = 180_000
-                connectTimeoutMillis = 180_000
-                requestTimeoutMillis = 180_000
+                socketTimeoutMillis = 1_200_000
+                connectTimeoutMillis = 1_200_000
+                requestTimeoutMillis = 1_200_000
             }
         }
 
