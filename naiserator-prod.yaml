@@ -41,10 +41,10 @@ spec:
         - id: loki
   resources:
     limits:
-      memory: 1Gi
+      memory: 2Gi
     requests:
-      cpu: 50m
-      memory: 750Mi
+      cpu: 70m
+      memory: 950Mi
   kafka:
     pool: nav-prod
   azure:
