@@ -14,7 +14,7 @@ fun sendReceivedSykmeldingToKafka(
     kafkaproducerreceivedSykmelding: KafkaProducer<String, ReceivedSykmeldingWithValidation>,
     okSykmeldingTopic: String,
     receivedSykmelding: ReceivedSykmeldingWithValidation,
-    loggingMeta: LoggingMeta
+    loggingMeta: LoggingMeta,
 ) {
     try {
         val record =
@@ -22,12 +22,12 @@ fun sendReceivedSykmeldingToKafka(
         record.headers().add(PROCESSING_TARGET_HEADER, TSM_PROCESSING_TARGET_VALUE.toByteArray())
         kafkaproducerreceivedSykmelding.send(record).get()
         log.info(
-            "Message send to kafka $okSykmeldingTopic, ${StructuredArguments.fields(loggingMeta)}",
+            "Message send to kafka $okSykmeldingTopic, ${StructuredArguments.fields(loggingMeta)}"
         )
     } catch (ex: Exception) {
         log.error(
             "Failed to send ReceivedSykmelding to kafka {}",
-            StructuredArguments.fields(loggingMeta)
+            StructuredArguments.fields(loggingMeta),
         )
         throw ex
     }

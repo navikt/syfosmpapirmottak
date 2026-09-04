@@ -61,6 +61,4 @@ class SmtssClient(
     }
 }
 
-data class TSSident(
-    val tssid: String,
-)
+data class TSSident(val tssid: String)

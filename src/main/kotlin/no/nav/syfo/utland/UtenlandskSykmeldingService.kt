@@ -32,7 +32,7 @@ class UtenlandskSykmeldingService(
                 journalpostId = journalpostId,
                 gjelderUtland = true,
                 trackingId = sykmeldingId,
-                loggingMeta = loggingMeta
+                loggingMeta = loggingMeta,
             )
         } else {
             val oppgave =
@@ -46,7 +46,7 @@ class UtenlandskSykmeldingService(
             oppgave?.let {
                 log.info(
                     "Oppgave med id ${it.oppgaveId} sendt til enhet ${it.tildeltEnhetsnr}, " +
-                        "antall dokumenter: ${dokumenter.size}",
+                        "antall dokumenter: ${dokumenter.size}"
                 )
             }
             if (
@@ -73,19 +73,19 @@ class UtenlandskSykmeldingService(
     fun behandlesISykDig(
         tildeltEnhetsnr: String?,
         oppgaveId: Int,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ): Boolean {
         return if (cluster == "dev-gcp") {
             log.info(
                 "Sender utenlandsk sykmelding til syk-dig i dev med oppgaveId: $oppgaveId {}",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             true
         } else {
             if (tildeltEnhetsnr == NAV_OSLO) {
                 log.info(
                     "Sender utenlandsk sykmelding til syk-dig med oppgaveId: $oppgaveId {}",
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 true
             } else {

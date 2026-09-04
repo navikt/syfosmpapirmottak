@@ -42,7 +42,7 @@ class SafDokumentClient(
 
         val httpResponse: HttpResponse =
             httpClient.get(
-                "$url/rest/hentdokument/$journalpostId/$dokumentInfoId/$dokumentVariant",
+                "$url/rest/hentdokument/$journalpostId/$dokumentInfoId/$dokumentVariant"
             ) {
                 accept(contentType)
                 header("Authorization", "Bearer ${accessToken.accessToken}")
@@ -57,7 +57,7 @@ class SafDokumentClient(
                     fields(loggingMeta),
                 )
                 throw IOException(
-                    "Saf svarte med feilmelding ved henting av dokument for msgId $msgId",
+                    "Saf svarte med feilmelding ved henting av dokument for msgId $msgId"
                 )
             }
             NotFound -> {
@@ -76,7 +76,7 @@ class SafDokumentClient(
         dokumentInfoId: String,
         msgId: String,
         loggingMeta: LoggingMeta,
-        dokumentVariant: DokumentVariantFormat
+        dokumentVariant: DokumentVariantFormat,
     ): Skanningmetadata? {
         return try {
             val dokument =
@@ -113,14 +113,14 @@ class SafDokumentClient(
         dokumentInfoId: String,
         dokumentVariant: DokumentFilInfo,
         loggingMeta: LoggingMeta,
-        msgId: String
+        msgId: String,
     ): ByteArray {
         val accessToken = getAccessToken()
         val dokumentFilType = dokumentVariant.filType
 
         val httpResponse: HttpResponse =
             httpClient.get(
-                "$url/rest/hentdokument/$journalpostId/$dokumentInfoId/${dokumentVariant.variantFormat.name}",
+                "$url/rest/hentdokument/$journalpostId/$dokumentInfoId/${dokumentVariant.variantFormat.name}"
             ) {
                 accept(contentTypeForFilType(dokumentFilType))
                 header("Authorization", "Bearer ${accessToken.accessToken}")
@@ -135,14 +135,14 @@ class SafDokumentClient(
                     fields(loggingMeta),
                 )
                 throw IOException(
-                    "Saf svarte med feilmelding ved henting av ${dokumentFilType}-dokument for msgId $msgId",
+                    "Saf svarte med feilmelding ved henting av ${dokumentFilType}-dokument for msgId $msgId"
                 )
             }
             NotFound -> {
                 log.error(
                     "${dokumentFilType}-dokumentet finnes ikke for msgId {}, {}",
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw SafNotFoundException(
                     "Fant ikke ${dokumentFilType}-dokumentet for msgId $msgId i SAF"
@@ -152,7 +152,7 @@ class SafDokumentClient(
                 log.info(
                     "Hentet ${dokumentFilType}-dokument for msgId {}, {}",
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 return httpResponse.body<ByteArray>()
             }
@@ -178,10 +178,7 @@ class SafDokumentClient(
         spf.isNamespaceAware = true
 
         val xmlSource: Source =
-            SAXSource(
-                spf.newSAXParser().xmlReader,
-                InputSource(inputMessageText),
-            )
+            SAXSource(spf.newSAXParser().xmlReader, InputSource(inputMessageText))
 
         return skanningMetadataUnmarshaller.unmarshal(xmlSource) as Skanningmetadata
     }

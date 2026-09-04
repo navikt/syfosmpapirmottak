@@ -101,7 +101,7 @@ class SykmeldingServiceSpek :
                     any(),
                     any(),
                     any(),
-                    any()
+                    any(),
                 )
             } returns Unit
             coEvery {
@@ -137,7 +137,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null
+                    alleDokumenter = null,
                 )
 
                 coEvery {
@@ -146,7 +146,7 @@ class SykmeldingServiceSpek :
                         dokumentInfoId,
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify(exactly = 1) {
@@ -184,7 +184,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null
+                    alleDokumenter = null,
                 )
 
                 coVerify(exactly = 0) {
@@ -232,7 +232,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null
+                    alleDokumenter = null,
                 )
 
                 coVerify {
@@ -241,7 +241,7 @@ class SykmeldingServiceSpek :
                         dokumentInfoId,
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify(exactly = 0) {
@@ -280,7 +280,7 @@ class SykmeldingServiceSpek :
                                                 hovedDiagnose.add(
                                                     HovedDiagnoseType().apply {
                                                         diagnosekode = "S52.5"
-                                                    },
+                                                    }
                                                 )
                                             }
                                     }
@@ -296,7 +296,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null
+                    alleDokumenter = null,
                 )
 
                 coVerify {
@@ -305,7 +305,7 @@ class SykmeldingServiceSpek :
                         dokumentInfoId,
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
@@ -346,7 +346,7 @@ class SykmeldingServiceSpek :
                                                 hovedDiagnose.add(
                                                     HovedDiagnoseType().apply {
                                                         diagnosekode = "S52.5"
-                                                    },
+                                                    }
                                                 )
                                             }
                                     }
@@ -362,7 +362,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null
+                    alleDokumenter = null,
                 )
 
                 coVerify {
@@ -371,7 +371,7 @@ class SykmeldingServiceSpek :
                         dokumentInfoId,
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
@@ -411,7 +411,7 @@ class SykmeldingServiceSpek :
                                                 hovedDiagnose.add(
                                                     HovedDiagnoseType().apply {
                                                         diagnosekode = "S52.5"
-                                                    },
+                                                    }
                                                 )
                                             }
                                     }
@@ -427,7 +427,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null
+                    alleDokumenter = null,
                 )
 
                 coVerify {
@@ -436,7 +436,7 @@ class SykmeldingServiceSpek :
                         dokumentInfoId,
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
@@ -470,7 +470,7 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null
+                    alleDokumenter = null,
                 )
 
                 coVerify {
@@ -479,7 +479,7 @@ class SykmeldingServiceSpek :
                         dokumentInfoId,
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify { norskHelsenettClientMock.finnBehandler(eq("123456"), any()) }
@@ -507,7 +507,7 @@ class SykmeldingServiceSpek :
                     sykmeldingService.hentSykmelder(
                         ocrFil = ocrFil,
                         loggingMeta = loggingMetadata,
-                        sykmeldingId = sykmeldingId
+                        sykmeldingId = sykmeldingId,
                     )
 
                 sykmelder.hprNummer shouldBeEqualTo "123456"
@@ -534,7 +534,7 @@ class SykmeldingServiceSpek :
                         sykmeldingService.hentSykmelder(
                             ocrFil = ocrFil,
                             loggingMeta = loggingMetadata,
-                            sykmeldingId = sykmeldingId
+                            sykmeldingId = sykmeldingId,
                         )
                     }
                 }
@@ -556,7 +556,7 @@ class SykmeldingServiceSpek :
                         sykmeldingService.hentSykmelder(
                             ocrFil = ocrFil,
                             loggingMeta = loggingMetadata,
-                            sykmeldingId = sykmeldingId
+                            sykmeldingId = sykmeldingId,
                         )
                     }
                 }

@@ -1,22 +1,17 @@
 package no.nav.syfo
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.cloud.storage.StorageOptions
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.apache.Apache
-import io.ktor.client.engine.apache.ApacheEngineConfig
+import io.ktor.client.engine.apache5.Apache5
+import io.ktor.client.engine.apache5.Apache5EngineConfig
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.jackson3.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.routing.routing
@@ -69,16 +64,13 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 
 val log: Logger = LoggerFactory.getLogger("nav.syfo.papirmottak")
 val securelog: Logger = LoggerFactory.getLogger("securelog")
 
-val objectMapper: ObjectMapper =
-    ObjectMapper().apply {
-        registerKotlinModule()
-        registerModule(JavaTimeModule())
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
+val jsonMapper: JsonMapper = jacksonMapperBuilder().build()
 
 @DelicateCoroutinesApi
 fun main() {
@@ -131,15 +123,9 @@ fun Application.module() {
             env.sykDigTopic,
         )
 
-    val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
-        install(ContentNegotiation) {
-            jackson {
-                registerKotlinModule()
-                registerModule(JavaTimeModule())
-                configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            }
-        }
+    val config: HttpClientConfig<Apache5EngineConfig>.() -> Unit = {
+        install(ContentNegotiation) { jackson {} }
+
         HttpResponseValidator {
             handleResponseExceptionWithRequest { exception, _ ->
                 when (exception) {
@@ -149,7 +135,7 @@ fun Application.module() {
             }
         }
     }
-    val retryConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
+    val retryConfig: HttpClientConfig<Apache5EngineConfig>.() -> Unit = {
         config().apply {
             install(HttpRequestRetry) {
                 constantDelay(50, 0, false)
@@ -160,7 +146,7 @@ fun Application.module() {
                 retryIf(maxRetries) { request, response ->
                     if (response.status.value.let { it in 500..599 }) {
                         securelog.warn(
-                            "Retrying for statuscode ${response.status.value}, for url ${request.url}",
+                            "Retrying for statuscode ${response.status.value}, for url ${request.url}"
                         )
                         true
                     } else {
@@ -181,7 +167,7 @@ fun Application.module() {
     // already swallows failures and just skips the comparison for that sykmelding.
     // 20 min timeout
     val ocrShadowHttpClient =
-        HttpClient(Apache) {
+        HttpClient(Apache5) {
             install(HttpTimeout) {
                 socketTimeoutMillis = 1_200_000
                 connectTimeoutMillis = 1_200_000
@@ -189,7 +175,7 @@ fun Application.module() {
             }
         }
 
-    val httpClient = HttpClient(Apache, retryConfig)
+    val httpClient = HttpClient(Apache5, retryConfig)
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
@@ -259,12 +245,7 @@ fun Application.module() {
             pdlPersonService,
         )
 
-    launchListeners(
-        env,
-        applicationState,
-        consumerPropertiesAiven,
-        behandlingService,
-    )
+    launchListeners(env, applicationState, consumerPropertiesAiven, behandlingService)
 
     startOpprettSykmeldingConsumer(
         env,
@@ -284,7 +265,7 @@ fun Application.module() {
 
 fun Application.createListener(
     applicationState: ApplicationState,
-    action: suspend CoroutineScope.() -> Unit
+    action: suspend CoroutineScope.() -> Unit,
 ): Job =
     launch(Dispatchers.IO) {
         try {

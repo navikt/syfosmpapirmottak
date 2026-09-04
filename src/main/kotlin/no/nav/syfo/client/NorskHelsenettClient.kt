@@ -42,7 +42,7 @@ class NorskHelsenettClient(
             HttpStatusCode.InternalServerError -> {
                 log.error(
                     "Syfohelsenettproxy svarte med feilmelding for sykmeldingId {}",
-                    sykmeldingId
+                    sykmeldingId,
                 )
                 throw IOException("Syfohelsenettproxy svarte med feilmelding for $sykmeldingId")
             }
@@ -68,13 +68,6 @@ data class Behandler(
     val etternavn: String?,
 )
 
-data class Godkjenning(
-    val helsepersonellkategori: Kode? = null,
-    val autorisasjon: Kode? = null,
-)
+data class Godkjenning(val helsepersonellkategori: Kode? = null, val autorisasjon: Kode? = null)
 
-data class Kode(
-    val aktiv: Boolean,
-    val oid: Int,
-    val verdi: String?,
-)
+data class Kode(val aktiv: Boolean, val oid: Int, val verdi: String?)

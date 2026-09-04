@@ -23,9 +23,9 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ARKIV,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
-                            )
+                            ),
                         ),
                         Dokument(
                             "test-tittel",
@@ -36,16 +36,11 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ORIGINAL,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
-                        Dokument(
-                            "test-tittel",
-                            "dokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
+                        Dokument("test-tittel", "dokumentInfoId", "brevkode", emptyList()),
                     )
 
                 val dokumentId = finnDokumentIdForOcr(dokumentListe, loggingMetadata)
@@ -81,7 +76,7 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ARKIV,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
@@ -94,16 +89,11 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ORIGINAL,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
-                        Dokument(
-                            "test-tittel",
-                            "dokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
+                        Dokument("test-tittel", "dokumentInfoId", "brevkode", emptyList()),
                     )
 
                 val dokumentId = finnDokumentIdForPdf(dokumentListe, loggingMetadata)
@@ -162,7 +152,7 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ARKIV,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
@@ -175,29 +165,19 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ORIGINAL,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
-                        Dokument(
-                            "test-tittel",
-                            "dokumentInfoId",
-                            BREVKODE_UTLAND,
-                            emptyList(),
-                        ),
-                        Dokument(
-                            "test-tittel",
-                            "annenDokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
+                        Dokument("test-tittel", "dokumentInfoId", BREVKODE_UTLAND, emptyList()),
+                        Dokument("test-tittel", "annenDokumentInfoId", "brevkode", emptyList()),
                     )
 
                 val utenlandskSykmelding =
                     sykmeldingGjelderUtland(
                         dokumentListe,
                         "dokumentInfoIdOriginal",
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 utenlandskSykmelding shouldBeEqualTo true
@@ -215,7 +195,7 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ARKIV,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
@@ -228,7 +208,7 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ORIGINAL,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
@@ -238,19 +218,14 @@ class SafJournalpostClientSpek :
                             GAMMEL_BREVKODE_UTLAND,
                             emptyList(),
                         ),
-                        Dokument(
-                            "test-tittel",
-                            "annenDokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
+                        Dokument("test-tittel", "annenDokumentInfoId", "brevkode", emptyList()),
                     )
 
                 val utenlandskSykmelding =
                     sykmeldingGjelderUtland(
                         dokumentListe,
                         "dokumentInfoIdOriginal",
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 utenlandskSykmelding shouldBeEqualTo true
@@ -268,7 +243,7 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ARKIV,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
@@ -281,29 +256,19 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ORIGINAL,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
-                        Dokument(
-                            "test-tittel",
-                            "dokumentInfoId",
-                            "annen brevkode",
-                            emptyList(),
-                        ),
-                        Dokument(
-                            "test-tittel",
-                            "annenDokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
+                        Dokument("test-tittel", "dokumentInfoId", "annen brevkode", emptyList()),
+                        Dokument("test-tittel", "annenDokumentInfoId", "brevkode", emptyList()),
                     )
 
                 val utenlandskSykmelding =
                     sykmeldingGjelderUtland(
                         dokumentListe,
                         "dokumentInfoIdOriginal",
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 utenlandskSykmelding shouldBeEqualTo false
@@ -327,22 +292,12 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ARKIV,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
-                        Dokument(
-                            "test-tittel",
-                            "dokumentInfoId",
-                            BREVKODE_UTLAND,
-                            emptyList(),
-                        ),
-                        Dokument(
-                            "test-tittel",
-                            "annenDokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
+                        Dokument("test-tittel", "dokumentInfoId", BREVKODE_UTLAND, emptyList()),
+                        Dokument("test-tittel", "annenDokumentInfoId", "brevkode", emptyList()),
                     )
 
                 val utenlandskSykmelding =
@@ -363,22 +318,12 @@ class SafJournalpostClientSpek :
                                     DokumentVariantFormat.ARKIV,
                                     "filnavn",
                                     "filtype",
-                                    "uuid"
+                                    "uuid",
                                 )
                             ),
                         ),
-                        Dokument(
-                            "test-tittel",
-                            "dokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
-                        Dokument(
-                            "test-tittel",
-                            "annenDokumentInfoId",
-                            "brevkode",
-                            emptyList(),
-                        ),
+                        Dokument("test-tittel", "dokumentInfoId", "brevkode", emptyList()),
+                        Dokument("test-tittel", "annenDokumentInfoId", "brevkode", emptyList()),
                     )
 
                 val utenlandskSykmelding =

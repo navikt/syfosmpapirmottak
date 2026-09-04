@@ -11,8 +11,5 @@ data class AzureAdV2TokenResponse(
 
 fun AzureAdV2TokenResponse.toAzureAdV2Token(): AzureAdV2Token {
     val expiresOn = OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(this.expires_in)
-    return AzureAdV2Token(
-        accessToken = this.access_token,
-        expires = expiresOn,
-    )
+    return AzureAdV2Token(accessToken = this.access_token, expires = expiresOn)
 }

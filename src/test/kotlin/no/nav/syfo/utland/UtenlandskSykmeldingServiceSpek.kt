@@ -46,7 +46,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasient,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = emptyList(),
                 )
 
                 coVerify(exactly = 0) {
@@ -67,7 +67,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasientCopy,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = emptyList(),
                 )
 
                 coVerify {
@@ -87,7 +87,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasientCopy,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = emptyList(),
                 )
 
                 coVerify {
@@ -104,7 +104,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasient,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = emptyList(),
                 )
 
                 coVerify(exactly = 0) {
@@ -124,10 +124,10 @@ class UtenlandskSykmeldingServiceSpek :
                                     journalpostId = journalpostId,
                                     dokumentInfoId = dokumentInfoId,
                                     type = "UTLAND",
-                                    dokumenter = emptyList()
+                                    dokumenter = emptyList(),
                                 )
                         },
-                        any()
+                        any(),
                     )
                 }
             }
@@ -142,7 +142,7 @@ class UtenlandskSykmeldingServiceSpek :
                     pasient = pasient,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    dokumenter = emptyList()
+                    dokumenter = emptyList(),
                 )
 
                 coVerify(exactly = 0) {

@@ -35,10 +35,7 @@ class SafJournalpostClient(
         val findJournalpostRequest =
             FindJournalpostRequest(
                 query = findJournalpostGraphQlQuery,
-                variables =
-                    Variables(
-                        id = journalpostId,
-                    ),
+                variables = Variables(id = journalpostId),
             )
 
         val findJournalpostResponse =
@@ -77,7 +74,7 @@ class SafJournalpostClient(
                             filNamn = variant.filnavn,
                             filUUID = variant.filuuid,
                             filType = variant.filtype,
-                            variantFormat = variant.variantformat
+                            variantFormat = variant.variantformat,
                         )
                     }
             }
@@ -87,11 +84,7 @@ class SafJournalpostClient(
             val dokumenter = finnDokumentIdForPdf(journalpost.dokumenter, loggingMeta)
 
             JournalpostMetadata(
-                bruker =
-                    no.nav.syfo.domain.Bruker(
-                        it.bruker?.id,
-                        it.bruker?.type?.name,
-                    ),
+                bruker = no.nav.syfo.domain.Bruker(it.bruker?.id, it.bruker?.type?.name),
                 dokumentInfoId = dokumentId,
                 jpErIkkeJournalfort = erIkkeJournalfort(it.journalstatus),
                 gjelderUtland = sykmeldingGjelderUtland(it.dokumenter, dokumentId, loggingMeta),
@@ -106,15 +99,11 @@ class SafJournalpostClient(
     private fun erIkkeJournalfort(journalstatus: Journalstatus?): Boolean {
         return journalstatus?.name?.let {
             it.equals("MOTTATT", true) || it.equals("FEILREGISTRERT", true)
-        }
-            ?: false
+        } ?: false
     }
 }
 
-data class GraphQLResponse<T>(
-    val data: T,
-    val errors: List<ResponseError>?,
-)
+data class GraphQLResponse<T>(val data: T, val errors: List<ResponseError>?)
 
 data class ResponseError(
     val message: String?,
@@ -123,15 +112,9 @@ data class ResponseError(
     val extensions: ErrorExtension?,
 )
 
-data class ErrorLocation(
-    val line: String?,
-    val column: String?,
-)
+data class ErrorLocation(val line: String?, val column: String?)
 
-data class ErrorExtension(
-    val code: String?,
-    val classification: String?,
-)
+data class ErrorExtension(val code: String?, val classification: String?)
 
 fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta): LocalDateTime? {
     dateTime?.let {
@@ -141,10 +124,7 @@ fun dateTimeStringTilLocalDateTime(dateTime: String?, loggingMeta: LoggingMeta):
                 .withZoneSameInstant(ZoneOffset.UTC)
                 .toLocalDateTime()
         } catch (e: Exception) {
-            log.error(
-                "Journalpost har ikke en gyldig datoOpprettet ${fields(loggingMeta)}",
-                e,
-            )
+            log.error("Journalpost har ikke en gyldig datoOpprettet ${fields(loggingMeta)}", e)
             null
         }
     }
@@ -194,7 +174,7 @@ fun finnDokumentIdForPdf(
     if (dokumenter.isNullOrEmpty()) {
         log.error("Fant ikke PDF-dokument {}", fields(loggingMeta))
         throw RuntimeException(
-            "Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}",
+            "Har mottatt papirsykmelding uten PDF, journalpostId: ${loggingMeta.journalpostId}"
         )
     }
 
@@ -263,9 +243,7 @@ data class FindJournalpostRequest(val query: String, val variables: Variables)
 
 data class Variables(val id: String)
 
-data class FindJournalpostResponse(
-    val journalpost: Journalpost,
-)
+data class FindJournalpostResponse(val journalpost: Journalpost)
 
 data class Journalpost(
     val avsenderMottaker: AvsenderMottaker?,
@@ -299,11 +277,7 @@ enum class Journalstatus {
     UKJENT,
 }
 
-data class Sak(
-    val fagsakId: String?,
-    val fagsaksystem: String?,
-    val sakstype: String?,
-)
+data class Sak(val fagsakId: String?, val fagsaksystem: String?, val sakstype: String?)
 
 data class Dokument(
     val tittel: String?,
@@ -325,18 +299,12 @@ enum class DokumentVariantFormat {
     PRODUKSJON,
     PRODUKSJON_DLF,
     SLADDET,
-    ORIGINAL
+    ORIGINAL,
 }
 
-data class AvsenderMottaker(
-    val id: String?,
-    val navn: String?,
-)
+data class AvsenderMottaker(val id: String?, val navn: String?)
 
-data class Bruker(
-    val id: String?,
-    val type: BrukerIdType?,
-)
+data class Bruker(val id: String?, val type: BrukerIdType?)
 
 enum class BrukerIdType {
     AKTOERID,

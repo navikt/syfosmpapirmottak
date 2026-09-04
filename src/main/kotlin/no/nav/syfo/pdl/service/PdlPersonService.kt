@@ -26,7 +26,7 @@ class PdlPersonService(
                 log.error(
                     "PDL returnerte error {}, {}",
                     it,
-                    StructuredArguments.fields(loggingMeta)
+                    StructuredArguments.fields(loggingMeta),
                 )
             }
         }
@@ -65,7 +65,7 @@ class PdlPersonService(
         return Navn(
             fornavn = navn.fornavn,
             mellomnavn = navn.mellomnavn,
-            etternavn = navn.etternavn
+            etternavn = navn.etternavn,
         )
     }
 

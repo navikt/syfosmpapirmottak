@@ -35,12 +35,12 @@ class DokArkivClient(
             fnr = fnr,
             behandler = behandler,
             msgId = sykmeldingId,
-            loggingMeta = loggingMeta
+            loggingMeta = loggingMeta,
         )
         return ferdigstillJournalpost(
             journalpostId = journalpostId,
             msgId = sykmeldingId,
-            loggingMeta = loggingMeta
+            loggingMeta = loggingMeta,
         )
     }
 
@@ -60,16 +60,14 @@ class DokArkivClient(
                 accept(ContentType.Application.Json)
                 header("Authorization", "Bearer ${accessToken.accessToken}")
                 header("Nav-Callid", msgId)
-                setBody(
-                    FerdigstillJournal("9999"),
-                )
+                setBody(FerdigstillJournal("9999"))
             }
         when (httpResponse.status) {
             HttpStatusCode.InternalServerError -> {
                 log.error(
                     "Dokarkiv svarte med feilmelding ved ferdigstilling av journalpost for msgId {}, {}",
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw IOException(
                     "Dokarkiv svarte med feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId"
@@ -80,7 +78,7 @@ class DokArkivClient(
                     "Journalposten finnes ikke for journalpostid {}, msgId {}, {}",
                     journalpostId,
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw RuntimeException(
                     "Ferdigstilling: Journalposten finnes ikke for journalpostid $journalpostId msgid $msgId"
@@ -90,7 +88,7 @@ class DokArkivClient(
                 log.error(
                     "Dokarkiv svarte med uautorisert feilmelding ved ferdigstilling av journalpost for msgId {}, {}",
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw IOException(
                     "Dokarkiv svarte med uautorisert feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId\""
@@ -100,7 +98,7 @@ class DokArkivClient(
                 log.error(
                     "Dokarkiv svarte med ingen tilgang feilmelding ved ferdigstilling av journalpost for msgId {}, {}",
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw IOException(
                     "Dokarkiv svarte med ingen tilgang feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId\""
@@ -110,7 +108,7 @@ class DokArkivClient(
                 log.error(
                     "Dokarkiv svarte med dårlig forespørsel feilmelding ved ferdigstilling av journalpost for msgId {}, {}",
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw IOException(
                     "Dokarkiv svarte med dårlig forespørsel feilmelding ved ferdigstilling av journalpost for $journalpostId msgid $msgId\""
@@ -122,7 +120,7 @@ class DokArkivClient(
                     "ferdigstilling av journalpost ok for journalpostid {}, msgId {}, {}",
                     journalpostId,
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
             }
             else -> {
@@ -162,7 +160,7 @@ class DokArkivClient(
                             ),
                         bruker = Bruker(id = fnr),
                         sak = Sak(),
-                    ),
+                    )
                 )
             }
         when (httpResponse.status) {
@@ -170,7 +168,7 @@ class DokArkivClient(
                 log.error(
                     "Dokarkiv svarte med feilmelding ved oppdatering av journalpost for msgId {}, {}",
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw IOException(
                     "Dokarkiv svarte med feilmelding ved oppdatering av journalpost for $journalpostId msgid $msgId"
@@ -181,7 +179,7 @@ class DokArkivClient(
                     "Oppdatering: Journalposten finnes ikke for journalpostid {}, msgId {}, {}",
                     journalpostId,
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
                 throw RuntimeException(
                     "Oppdatering: Journalposten finnes ikke for journalpostid $journalpostId msgid $msgId"
@@ -192,7 +190,7 @@ class DokArkivClient(
                     "Oppdatering av journalpost ok for journalpostid {}, msgId {}, {}",
                     journalpostId,
                     msgId,
-                    fields(loggingMeta)
+                    fields(loggingMeta),
                 )
             }
         }
@@ -209,9 +207,7 @@ class DokArkivClient(
         return "${behandler.fornavn} ${behandler.etternavn}"
     }
 
-    data class FerdigstillJournal(
-        val journalfoerendeEnhet: String,
-    )
+    data class FerdigstillJournal(val journalfoerendeEnhet: String)
 
     data class OppdaterJournalpost(
         val tema: String = "SYM",
@@ -220,18 +216,9 @@ class DokArkivClient(
         val sak: Sak,
     )
 
-    data class AvsenderMottaker(
-        val id: String,
-        val idType: String = "HPRNR",
-        val navn: String,
-    )
+    data class AvsenderMottaker(val id: String, val idType: String = "HPRNR", val navn: String)
 
-    data class Bruker(
-        val id: String,
-        val idType: String = "FNR",
-    )
+    data class Bruker(val id: String, val idType: String = "FNR")
 
-    data class Sak(
-        val sakstype: String = "GENERELL_SAK",
-    )
+    data class Sak(val sakstype: String = "GENERELL_SAK")
 }

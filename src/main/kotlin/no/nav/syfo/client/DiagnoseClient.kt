@@ -1,6 +1,5 @@
 package no.nav.syfo.client
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.get
@@ -10,8 +9,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import no.nav.syfo.jsonMapper
 import no.nav.syfo.log
-import no.nav.syfo.objectMapper
+import tools.jackson.module.kotlin.readValue
 
 private data class Diagnosekode(
     val Kode: String,
@@ -22,7 +22,7 @@ private data class Diagnosekode(
     val Kodeverk: String?,
     val Tilhørighet_i_ICPC_2B: String?,
     val Foreldrekode: String?,
-    val Foreldrekodetekst: String?
+    val Foreldrekodetekst: String?,
 )
 
 data class Icpc2BDiagnoser(
@@ -34,7 +34,7 @@ data class Icpc2BDiagnoser(
 
 fun getIcpc2Bdiagnoser(
     scope: CoroutineScope,
-    path: String = "https://fat.kote.helsedirektoratet.no/api/code-systems/ICPC2/download/JSON"
+    path: String = "https://fat.kote.helsedirektoratet.no/api/code-systems/ICPC2/download/JSON",
 ): Deferred<Map<String, List<Icpc2BDiagnoser>>> {
     return scope.async(Dispatchers.IO) {
         try {
@@ -50,7 +50,7 @@ fun getIcpc2Bdiagnoser(
                 httpClient.get(path) { headers { append("Accept", "application/octet-stream") } }
 
             val diagnosekoder = response.readRawBytes()
-            val codes = objectMapper.readValue<List<Diagnosekode>>(diagnosekoder)
+            val codes = jsonMapper.readValue<List<Diagnosekode>>(diagnosekoder)
             codes
                 .asSequence()
                 .filter { it.Tilhørighet_i_ICPC_2B == "TERM" }
@@ -63,11 +63,11 @@ fun getIcpc2Bdiagnoser(
                         Icpc2BDiagnoser(
                             tekst = it.Tekst_med_maksimalt_60_tegn,
                             langTekst = it.Tekst_uten_lengdebegrensning,
-                            parentCode = it.Foreldrekode
-                                    ?: throw RuntimeException("Foreldrekode is null"),
+                            parentCode =
+                                it.Foreldrekode ?: throw RuntimeException("Foreldrekode is null"),
                             kode = it.Kode,
                         )
-                    }
+                    },
                 )
         } catch (e: Exception) {
             log.error("Could not get diagnosekoder", e)

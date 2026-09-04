@@ -13,17 +13,11 @@ class SykDigProducer(
     fun send(
         sykmeldingId: String,
         digitaliseringsoppgave: DigitaliseringsoppgaveKafka,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ) {
         try {
             kafkaProducer
-                .send(
-                    ProducerRecord(
-                        topicName,
-                        sykmeldingId,
-                        digitaliseringsoppgave,
-                    ),
-                )
+                .send(ProducerRecord(topicName, sykmeldingId, digitaliseringsoppgave))
                 .get()
         } catch (ex: Exception) {
             log.error(

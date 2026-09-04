@@ -13,5 +13,5 @@ fun createApplicationEngine():
     embeddedServer(
         factory = Netty,
         port = getEnvVar("APPLICATION_PORT", "8080").toInt(),
-        module = Application::module
+        module = Application::module,
     )

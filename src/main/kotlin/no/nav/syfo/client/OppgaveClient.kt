@@ -32,7 +32,7 @@ class OppgaveClient(
 ) {
     private suspend fun opprettOppgave(
         opprettOppgaveRequest: OpprettOppgaveRequest,
-        msgId: String
+        msgId: String,
     ): OpprettOppgaveResponse {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
@@ -61,7 +61,7 @@ class OppgaveClient(
 
     private suspend fun oppdaterOppgave(
         oppdaterOppgaveRequest: OppdaterOppgaveRequest,
-        msgId: String
+        msgId: String,
     ): OpprettOppgaveResponse {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
@@ -91,7 +91,7 @@ class OppgaveClient(
     suspend fun hentOppgave(
         oppgavetype: String,
         journalpostId: String,
-        msgId: String
+        msgId: String,
     ): OppgaveResponse {
         val accessToken = accessTokenClientV2.getAccessToken(scope)
         if (accessToken?.accessToken == null) {
@@ -130,7 +130,7 @@ class OppgaveClient(
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info(
                 "Det finnes allerede journalføringsoppgave for journalpost $journalpostId, {}",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             return OppgaveResultat(
                 oppgaveId = oppgaveResponse.oppgaver.first().id,
@@ -202,7 +202,7 @@ class OppgaveClient(
         if (oppgaveResponse.antallTreffTotalt > 0) {
             log.info(
                 "Det finnes allerede fordelingsoppgave for journalpost $journalpostId, {}",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             return OppgaveResultat(
                 oppgaveId = oppgaveResponse.oppgaver.first().id,
@@ -269,10 +269,7 @@ data class OpprettOppgaveResponse(
     val tildeltEnhetsnr: String? = null,
 )
 
-data class OppgaveResponse(
-    val antallTreffTotalt: Int,
-    val oppgaver: List<Oppgave>,
-)
+data class OppgaveResponse(val antallTreffTotalt: Int, val oppgaver: List<Oppgave>)
 
 data class Oppgave(
     val id: Int,

@@ -5,17 +5,15 @@ import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.OppgaveResponse
 import no.nav.syfo.domain.OppgaveResultat
+import no.nav.syfo.jsonMapper
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_FORDELINGSOPPGAVE
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_BRUKER
 import no.nav.syfo.metrics.PAPIRSM_OPPGAVE
-import no.nav.syfo.objectMapper
 import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 
-class OppgaveService(
-    private val oppgaveClient: OppgaveClient,
-) {
+class OppgaveService(private val oppgaveClient: OppgaveClient) {
     suspend fun opprettOppgave(
         aktoerIdPasient: String,
         journalpostId: String,
@@ -46,20 +44,17 @@ class OppgaveService(
             log.info(
                 "duplikat oppgave med {}, {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             null
         }
     }
 
-    suspend fun hentOppgave(
-        journalpostId: String,
-        sykmeldingId: String,
-    ): OppgaveResponse {
+    suspend fun hentOppgave(journalpostId: String, sykmeldingId: String): OppgaveResponse {
         return oppgaveClient.hentOppgave(
             oppgavetype = "JFR",
             journalpostId = journalpostId,
-            msgId = sykmeldingId
+            msgId = sykmeldingId,
         )
     }
 
@@ -72,7 +67,7 @@ class OppgaveService(
         PAPIRSM_MOTTATT_UTEN_BRUKER.inc()
         log.info(
             "Papirsykmelding mangler bruker, oppretter fordelingsoppgave: {}",
-            fields(loggingMeta)
+            fields(loggingMeta),
         )
 
         val oppgave =
@@ -80,7 +75,7 @@ class OppgaveService(
                 journalpostId,
                 gjelderUtland,
                 trackingId,
-                loggingMeta
+                loggingMeta,
             )
 
         if (!oppgave.duplikat) {
@@ -89,7 +84,7 @@ class OppgaveService(
                 "Opprettet fordelingsoppgave med {}, {} {} {}",
                 StructuredArguments.keyValue("oppgaveId", oppgave.oppgaveId),
                 StructuredArguments.keyValue("journalpostId", journalpostId),
-                StructuredArguments.keyValue("oppgave", objectMapper.writeValueAsString(oppgave)),
+                StructuredArguments.keyValue("oppgave", jsonMapper.writeValueAsString(oppgave)),
                 fields(loggingMeta),
             )
             log.info(

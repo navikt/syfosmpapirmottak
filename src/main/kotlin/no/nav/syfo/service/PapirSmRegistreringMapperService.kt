@@ -121,7 +121,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = false
-            },
+            }
         )
     }
 
@@ -144,7 +144,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                     }
                 behandlingsdager = null
                 isReisetilskudd = false
-            },
+            }
         )
     }
     if (
@@ -163,7 +163,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = false
-            },
+            }
         )
     }
     if (aktivitetType?.behandlingsdager != null) {
@@ -180,7 +180,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                             aktivitetType.behandlingsdager?.antallBehandlingsdager?.toInt() ?: 1
                     }
                 isReisetilskudd = false
-            },
+            }
         )
     }
     if (aktivitetType?.reisetilskudd != null) {
@@ -193,7 +193,7 @@ private fun toPerioder(aktivitetType: AktivitetType?): List<Periode> {
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = true
-            },
+            }
         )
     }
     if (periodeListe.isEmpty()) {
@@ -349,7 +349,8 @@ private fun toMedisinskVurdering(
             medisinskVurderingType?.hovedDiagnose?.firstOrNull()?.let {
                 toMedisinskVurderingDiagnose(it)
             },
-        biDiagnoser = medisinskVurderingType?.bidiagnose?.map { toMedisinskVurderingDiagnose(it)!! }
+        biDiagnoser =
+            medisinskVurderingType?.bidiagnose?.map { toMedisinskVurderingDiagnose(it)!! }
                 ?: ArrayList(),
         svangerskap = medisinskVurderingType?.isSvangerskap ?: false,
         yrkesskade = medisinskVurderingType?.isYrkesskade ?: false,
@@ -375,7 +376,7 @@ private fun toMedisinskVurderingDiagnose(bidiagnoseType: BidiagnoseType?): Diagn
 private fun toMedisinskVurderingDiagnose(
     diagnoseKodeSystem: String?,
     diagnoseKode: String?,
-    diagnoseTekst: String?
+    diagnoseTekst: String?,
 ): Diagnose {
     if (diagnoseKode != null) {
         val sanitisertDiagnoseKode = diagnoseKode.replace(".", "").replace(" ", "")
@@ -407,6 +408,6 @@ private fun toMedisinskVurderingDiagnose(
     return Diagnose(
         kode = diagnoseKode ?: "",
         system = diagnoseKodeSystem ?: "",
-        tekst = diagnoseTekst ?: ""
+        tekst = diagnoseTekst ?: "",
     )
 }

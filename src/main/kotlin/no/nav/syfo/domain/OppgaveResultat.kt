@@ -1,7 +1,3 @@
 package no.nav.syfo.domain
 
-data class OppgaveResultat(
-    val oppgaveId: Int,
-    val duplikat: Boolean,
-    val tildeltEnhetsnr: String?,
-)
+data class OppgaveResultat(val oppgaveId: Int, val duplikat: Boolean, val tildeltEnhetsnr: String?)

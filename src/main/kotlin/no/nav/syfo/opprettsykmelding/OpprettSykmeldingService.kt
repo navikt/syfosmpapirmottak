@@ -25,7 +25,7 @@ fun Application.startOpprettSykmeldingConsumer(
     applicationState: ApplicationState,
     sykmeldingService: SykmeldingService,
     safJournalpostClient: SafJournalpostClient,
-    pdlPersonService: PdlPersonService
+    pdlPersonService: PdlPersonService,
 ) {
 
     val consumer = "opprett-sykmelding-consumer"
@@ -33,7 +33,7 @@ fun Application.startOpprettSykmeldingConsumer(
         KafkaUtils.getAivenKafkaConfig(consumer)
             .toConsumerConfig(
                 groupId = consumer,
-                valueDeserializer = OpprettSykmeldingDeserializer::class
+                valueDeserializer = OpprettSykmeldingDeserializer::class,
             )
 
     val kafkaConsumer =
@@ -57,7 +57,7 @@ class OpprettSykmeldingService(
     private val env: Environment,
     private val applicationState: ApplicationState,
     private val safJournalpostClient: SafJournalpostClient,
-    private val pdlPersonService: PdlPersonService
+    private val pdlPersonService: PdlPersonService,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(OpprettSykmeldingService::class.java)
@@ -103,24 +103,20 @@ class OpprettSykmeldingService(
         log.info("received opprett sykmelding for $journalpostId {}", fields(loggingMeta))
         securelog.info(
             "received opprett sykmelding message $opprettSykmeldingRecord {}",
-            fields(loggingMeta)
+            fields(loggingMeta),
         )
         val journalpostMetadata =
             safJournalpostClient.getJournalpostMetadata(
                 journalpostId,
                 journalPostQuery,
                 loggingMeta,
-            )
-                ?: throw IllegalStateException(
-                    "Unable to find journalpost with id $journalpostId",
-                )
+            ) ?: throw IllegalStateException("Unable to find journalpost with id $journalpostId")
 
         val fnrEllerAktorId =
             when (journalpostMetadata.bruker.type) {
                 "ORGNR" -> throw IllegalStateException("Bruker id is ORGNR")
                 else -> journalpostMetadata.bruker.id
-            }
-                ?: throw IllegalStateException("Bruker id is null")
+            } ?: throw IllegalStateException("Bruker id is null")
 
         val pasient = pdlPersonService.getPdlPerson(fnrEllerAktorId, loggingMeta)
         sykmeldingService.behandleSykmelding(
@@ -132,7 +128,7 @@ class OpprettSykmeldingService(
             temaEndret = false,
             loggingMeta = loggingMeta,
             sykmeldingId = sykmeldingId,
-            alleDokumenter = journalpostMetadata.alleDokumenter
+            alleDokumenter = journalpostMetadata.alleDokumenter,
         )
     }
 }

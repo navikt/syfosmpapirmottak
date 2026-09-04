@@ -26,30 +26,24 @@ class AzureAdV2Client(
     private val azureTokenEndpoint = environment.aadAccessTokenV2Url
 
     /** Returns a non-obo access token authenticated using app specific client credentials */
-    suspend fun getAccessToken(
-        scope: String,
-    ): AzureAdV2Token? {
+    suspend fun getAccessToken(scope: String): AzureAdV2Token? {
         return azureAdV2Cache.getAccessToken(scope)
             ?: getClientSecretAccessToken(scope)?.let { azureAdV2Cache.putValue(scope, it) }
     }
 
-    private suspend fun getClientSecretAccessToken(
-        scope: String,
-    ): AzureAdV2Token? {
+    private suspend fun getClientSecretAccessToken(scope: String): AzureAdV2Token? {
         return getAccessToken(
                 Parameters.build {
                     append("client_id", azureAppClientId)
                     append("client_secret", azureAppClientSecret)
                     append("scope", scope)
                     append("grant_type", "client_credentials")
-                },
+                }
             )
             ?.toAzureAdV2Token()
     }
 
-    private suspend fun getAccessToken(
-        formParameters: Parameters,
-    ): AzureAdV2TokenResponse? {
+    private suspend fun getAccessToken(formParameters: Parameters): AzureAdV2TokenResponse? {
         return try {
             val response: HttpResponse =
                 httpClient
@@ -68,7 +62,7 @@ class AzureAdV2Client(
     }
 
     private fun handleUnexpectedResponseException(
-        responseException: ResponseException,
+        responseException: ResponseException
     ): AzureAdV2TokenResponse? {
         log.error(
             "Error while requesting AzureAdAccessToken with statusCode=${responseException.response.status.value}",

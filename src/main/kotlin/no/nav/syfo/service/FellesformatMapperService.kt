@@ -47,7 +47,7 @@ fun mapOcrFilTilFellesformat(
     loggingMeta: LoggingMeta,
     pdlPerson: PdlPerson,
     journalpostId: String,
-    icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>
+    icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>,
 ): XMLEIFellesformat {
     val pasientFnrFromOcr = skanningmetadata.sykemeldinger?.pasient?.fnr
     if (pasientFnrFromOcr == null) {
@@ -72,7 +72,7 @@ fun mapOcrFilTilFellesformat(
                         genDate =
                             velgRiktigKontaktOgSignaturDato(
                                     skanningmetadata.sykemeldinger.kontaktMedPasient?.behandletDato,
-                                    tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet)
+                                    tilPeriodeListe(skanningmetadata.sykemeldinger.aktivitet),
                                 )
                                 .toString()
                         msgId = sykmeldingId
@@ -115,7 +115,7 @@ fun mapOcrFilTilFellesformat(
                                                                     v = "FNR"
                                                                 }
                                                         },
-                                                    ),
+                                                    )
                                                 )
                                             }
                                     }
@@ -152,7 +152,7 @@ fun mapOcrFilTilFellesformat(
                                                             v = "ENH"
                                                         }
                                                 },
-                                            ),
+                                            )
                                         )
                                     }
                             }
@@ -207,7 +207,7 @@ fun mapOcrFilTilFellesformat(
                                                 arbeidsgiver =
                                                     tilArbeidsgiver(
                                                         skanningmetadata.sykemeldinger.arbeidsgiver,
-                                                        loggingMeta
+                                                        loggingMeta,
                                                     )
                                                 medisinskVurdering =
                                                     tilMedisinskVurdering(
@@ -292,7 +292,7 @@ fun mapOcrFilTilFellesformat(
                                                                         skanningmetadata
                                                                             .sykemeldinger
                                                                             .aktivitet
-                                                                    )
+                                                                    ),
                                                                 )
                                                         }
                                                 behandler = tilBehandler(sykmelder)
@@ -309,13 +309,13 @@ fun mapOcrFilTilFellesformat(
                                                             // syfosmsak
                                                         }
                                                 strekkode = "123456789qwerty"
-                                            },
+                                            }
                                         )
                                     }
                             }
-                    },
+                    }
                 )
-            },
+            }
         )
     }
 }
@@ -348,7 +348,7 @@ fun tilBehandler(sykmelder: Sykmelder): HelseOpplysningerArbeidsuforhet.Behandle
                             v = "FNR"
                         }
                 },
-            ),
+            )
         )
         adresse = Address()
         kontaktInfo.add(
@@ -364,7 +364,7 @@ fun tilBehandler(sykmelder: Sykmelder): HelseOpplysningerArbeidsuforhet.Behandle
                             if (sykmelder.telefonnummer != null) "tel:${sykmelder.telefonnummer}"
                             else null
                     }
-            },
+            }
         )
     }
 
@@ -395,11 +395,11 @@ fun tilSpmGruppe(
                             CS().apply {
                                 v = "A"
                                 dn = "Informasjonen skal ikke vises arbeidsgiver"
-                            },
+                            }
                         )
                     }
                 svarTekst = utdypendeOpplysningerType.sykehistorie
-            },
+            }
         )
     }
 
@@ -414,11 +414,11 @@ fun tilSpmGruppe(
                             CS().apply {
                                 v = "A"
                                 dn = "Informasjonen skal ikke vises arbeidsgiver"
-                            },
+                            }
                         )
                     }
                 svarTekst = utdypendeOpplysningerType.arbeidsevne
-            },
+            }
         )
     }
 
@@ -433,11 +433,11 @@ fun tilSpmGruppe(
                             CS().apply {
                                 v = "A"
                                 dn = "Informasjonen skal ikke vises arbeidsgiver"
-                            },
+                            }
                         )
                     }
                 svarTekst = utdypendeOpplysningerType.behandlingsresultat
-            },
+            }
         )
     }
 
@@ -452,11 +452,11 @@ fun tilSpmGruppe(
                             CS().apply {
                                 v = "A"
                                 dn = "Informasjonen skal ikke vises arbeidsgiver"
-                            },
+                            }
                         )
                     }
                 svarTekst = utdypendeOpplysningerType.planlagtBehandling
-            },
+            }
         )
     }
 
@@ -468,7 +468,7 @@ fun tilSpmGruppe(
                 spmGruppeId = "6.2"
                 spmGruppeTekst = "Utdypende opplysninger ved 7/8,17 og 39 uker"
                 spmSvar.addAll(listeDynaSvarType)
-            },
+            }
         )
 
     if (spmGruppe.first().spmSvar.isNotEmpty()) {
@@ -541,7 +541,7 @@ fun tilPeriodeListe(
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = false
-            },
+            }
         )
     }
 
@@ -560,7 +560,7 @@ fun tilPeriodeListe(
                     }
                 behandlingsdager = null
                 isReisetilskudd = false
-            },
+            }
         )
     }
     if (
@@ -579,7 +579,7 @@ fun tilPeriodeListe(
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = false
-            },
+            }
         )
     }
     if (aktivitetType.behandlingsdager != null) {
@@ -596,7 +596,7 @@ fun tilPeriodeListe(
                             aktivitetType.behandlingsdager?.antallBehandlingsdager?.toInt() ?: 1
                     }
                 isReisetilskudd = false
-            },
+            }
         )
     }
     if (aktivitetType.reisetilskudd != null) {
@@ -609,7 +609,7 @@ fun tilPeriodeListe(
                 gradertSykmelding = null
                 behandlingsdager = null
                 isReisetilskudd = true
-            },
+            }
         )
     }
     if (periodeListe.isEmpty()) {
@@ -621,7 +621,7 @@ fun tilPeriodeListe(
 
 fun tilArbeidsgiver(
     arbeidsgiverType: ArbeidsgiverType?,
-    loggingMeta: LoggingMeta
+    loggingMeta: LoggingMeta,
 ): HelseOpplysningerArbeidsuforhet.Arbeidsgiver =
     HelseOpplysningerArbeidsuforhet.Arbeidsgiver().apply {
         harArbeidsgiver =
@@ -656,7 +656,7 @@ fun tilArbeidsgiver(
                         log.warn(
                             "Klarte ikke å mappe {} til riktig harArbeidsgiver-verdi, bruker en arbeidsgiver som standard, {}",
                             arbeidsgiverType?.harArbeidsgiver,
-                            loggingMeta
+                            loggingMeta,
                         )
                         CS().apply {
                             dn = "Ingen arbeidsgiver"
@@ -673,7 +673,7 @@ fun tilArbeidsgiver(
 fun tilMedisinskVurdering(
     medisinskVurderingType: MedisinskVurderingType,
     icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>>,
-    loggingMeta: LoggingMeta
+    loggingMeta: LoggingMeta,
 ): HelseOpplysningerArbeidsuforhet.MedisinskVurdering {
     if (
         medisinskVurderingType.hovedDiagnose.isNullOrEmpty() &&
@@ -690,7 +690,7 @@ fun tilMedisinskVurdering(
                 it.diagnosekodeSystem,
                 it.diagnose,
                 icpc2BDiagnoser = icpc2BDiagnoser,
-                loggingMeta
+                loggingMeta,
             )
         }
 
@@ -704,7 +704,7 @@ fun tilMedisinskVurdering(
                             medisinskVurderingType.hovedDiagnose[0].diagnosekodeSystem,
                             medisinskVurderingType.hovedDiagnose[0].diagnose,
                             icpc2BDiagnoser = icpc2BDiagnoser,
-                            loggingMeta
+                            loggingMeta,
                         )
                 }
         }
@@ -773,7 +773,7 @@ fun toMedisinskVurderingDiagnose(
             Diagnosekoder.icd10.containsKey(diagnosekode) -> {
             log.info(
                 "Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode og kodeverk/diagnosetekst",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             return CV().apply {
                 s = Diagnosekoder.ICD10_CODE
@@ -785,7 +785,7 @@ fun toMedisinskVurderingDiagnose(
             Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
             log.info(
                 "Mappet $originalDiagnosekode til $diagnosekode for ICPC2, {} basert på angitt diagnosekode og kodeverk/diagnosetekst",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             return CV().apply {
                 s = Diagnosekoder.ICPC2_CODE
@@ -798,7 +798,7 @@ fun toMedisinskVurderingDiagnose(
             !Diagnosekoder.icpc2.containsKey(diagnosekode) -> {
             log.info(
                 "Mappet $originalDiagnosekode til $diagnosekode for ICD10, {} basert på angitt diagnosekode (kodeverk ikke angitt)",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             Diagnosekoder.icpc2.values.firstOrNull { it.text == diagnose }?.let {}
             return CV().apply {
@@ -855,7 +855,7 @@ fun toMedisinskVurderingDiagnose(
         else -> {
             log.warn(
                 "Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk, {}",
-                fields(loggingMeta)
+                fields(loggingMeta),
             )
             throw IllegalStateException(
                 "Diagnosekode $originalDiagnosekode tilhører ingen kjente kodeverk"
@@ -866,7 +866,7 @@ fun toMedisinskVurderingDiagnose(
 
 fun velgRiktigKontaktOgSignaturDato(
     behandletDato: LocalDate?,
-    periodeliste: List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>
+    periodeliste: List<HelseOpplysningerArbeidsuforhet.Aktivitet.Periode>,
 ): LocalDateTime {
     behandletDato?.let {
         return LocalDateTime.of(it, LocalTime.NOON)
