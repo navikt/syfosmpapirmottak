@@ -187,8 +187,8 @@ class SykmeldingService(
                             legekontorOrgName = "",
                             legekontorHerId = null,
                             legekontorReshId = null,
-                            mottattDato = (datoOpprettet
-                                    ?: getLocalDateTime(msgHead.msgInfo.genDate)),
+                            mottattDato =
+                                (datoOpprettet ?: getLocalDateTime(msgHead.msgInfo.genDate)),
                             rulesetVersion = healthInformation.regelSettVersjon,
                             fellesformat = fellesformatMarshaller.toString(fellesformat),
                             tssid = tssId ?: "",
@@ -247,7 +247,7 @@ class SykmeldingService(
                         )
                     } else {
                         throw IllegalStateException(
-                            "Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING",
+                            "Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING"
                         )
                     }
 
@@ -340,12 +340,12 @@ class SykmeldingService(
 
         if (ChronoUnit.DAYS.between(minFom, maxTom) > limit) {
             log.info(
-                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og tom er større enn $limit",
+                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og tom er større enn $limit"
             )
             return true
         } else if (ChronoUnit.DAYS.between(minFom, today) > limit) {
             log.info(
-                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og dagens dato er større enn $limit",
+                "Sender oppgave til manuell kontroll fordi avstanden mellom fom og dagens dato er større enn $limit"
             )
             return true
         }
@@ -356,7 +356,7 @@ class SykmeldingService(
     suspend fun hentSykmelder(
         ocrFil: Skanningmetadata,
         sykmeldingId: String,
-        loggingMeta: LoggingMeta
+        loggingMeta: LoggingMeta,
     ): Sykmelder {
         if (ocrFil.sykemeldinger.behandler == null || ocrFil.sykemeldinger.behandler.hpr == null) {
             log.warn("Mangler informasjon om behandler, avbryter.. {}", fields(loggingMeta))
@@ -437,8 +437,7 @@ class SykmeldingService(
                 } else {
                     "annet"
                 }
-            }
-                ?: "null"
+            } ?: "null"
         FEILARSAK.labels(label).inc()
     }
 }
@@ -458,7 +457,7 @@ fun List<Godkjenning>.getHelsepersonellKategori(): String? =
         else -> {
             val verdi = firstOrNull()?.helsepersonellkategori?.verdi
             log.warn(
-                "Signerende behandler har ikke en helsepersonellkategori($verdi) vi kjenner igjen",
+                "Signerende behandler har ikke en helsepersonellkategori($verdi) vi kjenner igjen"
             )
             verdi
         }

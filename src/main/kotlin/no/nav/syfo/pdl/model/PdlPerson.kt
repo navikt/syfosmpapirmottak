@@ -7,8 +7,4 @@ data class PdlPerson(
     val adressebeskyttelse: String?,
 )
 
-data class Navn(
-    val fornavn: String,
-    val mellomnavn: String?,
-    val etternavn: String,
-)
+data class Navn(val fornavn: String, val mellomnavn: String?, val etternavn: String)

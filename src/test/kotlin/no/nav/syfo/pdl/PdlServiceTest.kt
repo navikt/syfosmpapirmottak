@@ -53,11 +53,7 @@ class PdlServiceTest :
                 coEvery { pdlClient.getPerson(any(), any()) } returns
                     GetPersonResponse(
                         ResponseData(
-                            hentPerson =
-                                HentPerson(
-                                    navn = emptyList(),
-                                    adressebeskyttelse = null,
-                                ),
+                            hentPerson = HentPerson(navn = emptyList(), adressebeskyttelse = null),
                             hentIdenter = HentIdenter(emptyList()),
                         ),
                         errors = null,
@@ -71,11 +67,7 @@ class PdlServiceTest :
                 coEvery { pdlClient.getPerson(any(), any()) } returns
                     GetPersonResponse(
                         ResponseData(
-                            hentPerson =
-                                HentPerson(
-                                    navn = null,
-                                    adressebeskyttelse = null,
-                                ),
+                            hentPerson = HentPerson(navn = null, adressebeskyttelse = null),
                             hentIdenter =
                                 HentIdenter(listOf(PdlIdent(ident = "987654321", gruppe = "foo"))),
                         ),

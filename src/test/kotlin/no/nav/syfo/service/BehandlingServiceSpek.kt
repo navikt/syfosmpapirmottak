@@ -38,7 +38,7 @@ class BehandlingServiceSpek :
                 safJournalpostClientMock,
                 sykmeldingServiceMock,
                 utenlandskSykmeldingServiceMock,
-                pdlService
+                pdlService,
             )
 
         beforeTest {
@@ -67,7 +67,7 @@ class BehandlingServiceSpek :
                     any(),
                     any(),
                     any(),
-                    any()
+                    any(),
                 )
             } just Runs
             coEvery {
@@ -77,7 +77,7 @@ class BehandlingServiceSpek :
                     any(),
                     any(),
                     any(),
-                    any()
+                    any(),
                 )
             } just Runs
         }
@@ -107,7 +107,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify(exactly = 0) {
@@ -117,7 +117,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
             }
@@ -145,7 +145,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
                 coVerify(exactly = 0) {
@@ -155,7 +155,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
             }
@@ -194,7 +194,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
             }
@@ -246,7 +246,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
             }
@@ -298,7 +298,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
             }
@@ -350,7 +350,7 @@ class BehandlingServiceSpek :
                         any(),
                         any(),
                         any(),
-                        any()
+                        any(),
                     )
                 }
             }
@@ -379,7 +379,7 @@ class BehandlingServiceSpek :
                     listOf(
                         pdlService,
                         sykmeldingServiceMock,
-                        utenlandskSykmeldingServiceMock
+                        utenlandskSykmeldingServiceMock,
                     ) wasNot Called
                 }
             }
@@ -510,7 +510,7 @@ class BehandlingServiceSpek :
                         Navn("fornavn", "mellomnavn", "etternavn"),
                         null,
                         "aktorId",
-                        adressebeskyttelse = null
+                        adressebeskyttelse = null,
                     )
                 coEvery { pdlService.getPdlPerson(any(), any()) } returns pasient
 
@@ -600,7 +600,7 @@ class BehandlingServiceSpek :
                     listOf(
                         pdlService,
                         sykmeldingServiceMock,
-                        utenlandskSykmeldingServiceMock
+                        utenlandskSykmeldingServiceMock,
                     ) wasNot Called
                 }
             }
@@ -620,7 +620,7 @@ class BehandlingServiceSpek :
                         safJournalpostClientMock,
                         pdlService,
                         sykmeldingServiceMock,
-                        utenlandskSykmeldingServiceMock
+                        utenlandskSykmeldingServiceMock,
                     ) wasNot Called
                 }
             }
@@ -640,7 +640,7 @@ class BehandlingServiceSpek :
                         safJournalpostClientMock,
                         pdlService,
                         sykmeldingServiceMock,
-                        utenlandskSykmeldingServiceMock
+                        utenlandskSykmeldingServiceMock,
                     ) wasNot Called
                 }
             }
@@ -660,7 +660,7 @@ class BehandlingServiceSpek :
                         safJournalpostClientMock,
                         pdlService,
                         sykmeldingServiceMock,
-                        utenlandskSykmeldingServiceMock
+                        utenlandskSykmeldingServiceMock,
                     ) wasNot Called
                 }
             }
@@ -670,7 +670,7 @@ class BehandlingServiceSpek :
 private fun lagJournalfoeringEvent(
     hendelsestype: String,
     tema: String,
-    mottakskanal: String
+    mottakskanal: String,
 ): JournalfoeringHendelseRecord =
     JournalfoeringHendelseRecord(
         "hendelsesId",
@@ -682,5 +682,5 @@ private fun lagJournalfoeringEvent(
         tema,
         mottakskanal,
         "kanalreferanse",
-        "behandlingstema"
+        "behandlingstema",
     )

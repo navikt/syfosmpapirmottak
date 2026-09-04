@@ -56,7 +56,7 @@ class BucketUploadService(
         journalpostId: String,
         dokumentInfoId: String,
         dokumentVariant: DokumentFilInfo,
-        hentetDokument: ByteArray
+        hentetDokument: ByteArray,
     ) {
         val filType = dokumentVariant.filType.lowercase()
         val blobName = "${journalpostId}_${dokumentInfoId}_${dokumentVariant.filUUID}.$filType"

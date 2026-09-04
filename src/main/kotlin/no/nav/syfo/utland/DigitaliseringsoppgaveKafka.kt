@@ -9,7 +9,4 @@ data class DigitaliseringsoppgaveKafka(
     val type: String,
 )
 
-data class DokumentKafka(
-    val tittel: String,
-    val dokumentInfoId: String,
-)
+data class DokumentKafka(val tittel: String, val dokumentInfoId: String)

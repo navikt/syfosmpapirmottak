@@ -21,7 +21,7 @@ val fellesformatMarshaller: Marshaller =
     JAXBContext.newInstance(
             XMLEIFellesformat::class.java,
             XMLMsgHead::class.java,
-            HelseOpplysningerArbeidsuforhet::class.java
+            HelseOpplysningerArbeidsuforhet::class.java,
         )
         .createMarshaller()
         .apply { setProperty(JAXB_ENCODING, "UTF-8") }

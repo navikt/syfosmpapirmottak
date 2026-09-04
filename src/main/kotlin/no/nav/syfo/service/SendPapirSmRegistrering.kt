@@ -11,7 +11,7 @@ fun sendPapirSmRegistreringToKafka(
     kafkaproducerPapirSmRegistering: KafkaProducer<String, PapirSmRegistering>,
     smregistreringTopic: String,
     papirSmRegistering: PapirSmRegistering,
-    loggingMeta: LoggingMeta
+    loggingMeta: LoggingMeta,
 ) {
     try {
         kafkaproducerPapirSmRegistering
@@ -19,19 +19,19 @@ fun sendPapirSmRegistreringToKafka(
                 ProducerRecord(
                     smregistreringTopic,
                     papirSmRegistering.sykmeldingId,
-                    papirSmRegistering
+                    papirSmRegistering,
                 )
             )
             .get()
         log.info(
             "Message send to kafka {}, {}",
             smregistreringTopic,
-            StructuredArguments.fields(loggingMeta)
+            StructuredArguments.fields(loggingMeta),
         )
     } catch (ex: Exception) {
         log.error(
             "Failed to send PapirSmRegistrering to kafka {}",
-            StructuredArguments.fields(loggingMeta)
+            StructuredArguments.fields(loggingMeta),
         )
         throw ex
     }

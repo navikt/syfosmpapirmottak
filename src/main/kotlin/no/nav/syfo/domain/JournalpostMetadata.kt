@@ -15,10 +15,7 @@ data class JournalpostMetadata(
     val alleDokumenter: Map<String, List<DokumentFilInfo>>?,
 )
 
-data class Bruker(
-    val id: String?,
-    val type: String?,
-)
+data class Bruker(val id: String?, val type: String?)
 
 data class DokumentFilInfo(
     val filNamn: String,

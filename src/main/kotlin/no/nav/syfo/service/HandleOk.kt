@@ -23,7 +23,7 @@ suspend fun handleOk(
         fnr = receivedSykmelding.personNrPasient,
         sykmeldingId = sykmeldingId,
         behandler = receivedSykmelding.sykmelding.behandler,
-        loggingMeta = loggingMeta
+        loggingMeta = loggingMeta,
     )
 
     sendReceivedSykmeldingToKafka(
@@ -32,6 +32,6 @@ suspend fun handleOk(
         receivedSykmelding.toReceivedSykmeldingWithValidation(
             ValidationResult(Status.OK, emptyList())
         ),
-        loggingMeta
+        loggingMeta,
     )
 }

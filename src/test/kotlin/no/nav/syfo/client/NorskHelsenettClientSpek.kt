@@ -1,17 +1,12 @@
 package no.nav.syfo.client
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
+import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.jackson
-import io.ktor.server.application.call
+import io.ktor.serialization.jackson3.jackson
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -30,15 +25,8 @@ class NorskHelsenettClientSpek :
     FunSpec({
         val accessTokenClientMock = mockk<AzureAdV2Client>()
         val httpClient =
-            HttpClient(Apache) {
-                install(ContentNegotiation) {
-                    jackson {
-                        registerKotlinModule()
-                        registerModule(JavaTimeModule())
-                        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                    }
-                }
+            HttpClient(Apache5) {
+                install(ContentNegotiation) { jackson {} }
                 install(HttpRequestRetry) {
                     maxRetries = 3
                     delayMillis { retry -> retry * 50L }
@@ -63,21 +51,21 @@ class NorskHelsenettClientSpek :
                                                     Godkjenning(
                                                         helsepersonellkategori =
                                                             Kode(true, 1, "verdi"),
-                                                        autorisasjon = Kode(true, 2, "annenVerdi")
+                                                        autorisasjon = Kode(true, 2, "annenVerdi"),
                                                     )
                                                 ),
                                             fnr = "12345678910",
                                             fornavn = "Fornavn",
                                             mellomnavn = null,
                                             etternavn = "Etternavn",
-                                        ),
+                                        )
                                     )
                                 call.request.headers["hprNummer"] == "0" ->
                                     call.respond(HttpStatusCode.NotFound, "Behandler finnes ikke")
                                 else ->
                                     call.respond(
                                         HttpStatusCode.InternalServerError,
-                                        "Noe gikk galt"
+                                        "Noe gikk galt",
                                     )
                             }
                         }
@@ -90,7 +78,7 @@ class NorskHelsenettClientSpek :
                 "$mockHttpServerUrl/syfohelsenettproxy",
                 accessTokenClientMock,
                 "resourceId",
-                httpClient
+                httpClient,
             )
 
         afterSpec { mockServer.stop(TimeUnit.SECONDS.toMillis(1), TimeUnit.SECONDS.toMillis(1)) }

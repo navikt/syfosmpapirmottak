@@ -11,7 +11,7 @@ This project contains the receiving a paper sykmelding2013 message
 * Jackson
 
 ### Prerequisites
-Make sure you have the Java JDK 21 installed
+Make sure you have the Java JDK 25 installed
 You can check which version you have installed using this command:
 ``` bash
 java -version

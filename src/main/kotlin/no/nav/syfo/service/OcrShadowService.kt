@@ -20,9 +20,7 @@ import no.nav.syfo.log
 import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 
-/**
- * Identifiserer det konkrete PDF-dokumentet en shadow-sammenligning gjelder.
- */
+/** Identifiserer det konkrete PDF-dokumentet en shadow-sammenligning gjelder. */
 data class OcrShadowDokumentInfo(
     val sykmeldingId: String,
     val journalpostId: String,
@@ -34,11 +32,13 @@ data class OcrShadowDokumentInfo(
     /**
      * Opaque correlation token for shadow-service's `X-Document-Reference` header (see
      * navikt/sykmelding-ocr-parser OcrRoutes.kt). Built to be identical to the bucket blob name
-     * BucketUploadService.saveToBucket() generates (`${journalpostId}_${dokumentInfoId}_${filUUID}.${filType}`)
-     * so it can be pasted straight into the bucket to find the document — never the
-     * human-readable filNamn, which must stay in securelog only.
+     * BucketUploadService.saveToBucket() generates
+     * (`${journalpostId}_${dokumentInfoId}_${filUUID}.${filType}`) so it can be pasted straight
+     * into the bucket to find the document — never the human-readable filNamn, which must stay in
+     * securelog only.
      */
-    fun asDocumentReference(): String = "${journalpostId}_${dokumentInfoId}_${filUuid}.${filType.lowercase()}"
+    fun asDocumentReference(): String =
+        "${journalpostId}_${dokumentInfoId}_${filUuid}.${filType.lowercase()}"
 }
 
 /**
@@ -113,7 +113,7 @@ class OcrShadowService(
                         ?: run {
                             log.warn(
                                 "OcrShadow: klarte ikke hente token for sykmeldingId={}, hopper over",
-                                sykmeldingId
+                                sykmeldingId,
                             )
                             return@launch
                         }
@@ -122,7 +122,8 @@ class OcrShadowService(
                     httpClient
                         .post("$ocrServiceUrl/api/parse") {
                             header("Authorization", "Bearer $token")
-                            // Bucket-blob reference for locating the source PDF (see asDocumentReference kdoc).
+                            // Bucket-blob reference for locating the source PDF (see
+                            // asDocumentReference kdoc).
                             header("X-Document-Reference", dokumentInfo.asDocumentReference())
                             header("X-Sykmelding-Id", dokumentInfo.sykmeldingId)
                             contentType(ContentType.Application.OctetStream)
@@ -139,11 +140,7 @@ class OcrShadowService(
                     nyttOcrResultat,
                 )
             } catch (e: Exception) {
-                log.warn(
-                    "OcrShadow feilet for sykmeldingId={}, hopper over",
-                    sykmeldingId,
-                    e,
-                )
+                log.warn("OcrShadow feilet for sykmeldingId={}, hopper over", sykmeldingId, e)
             }
         }
     }

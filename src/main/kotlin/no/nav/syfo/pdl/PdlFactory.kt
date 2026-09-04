@@ -17,7 +17,7 @@ class PdlFactory private constructor() {
             return PdlPersonService(
                 getPdlClient(httpClient, environment),
                 accessTokenClientV2,
-                pdlScope
+                pdlScope,
             )
         }
 

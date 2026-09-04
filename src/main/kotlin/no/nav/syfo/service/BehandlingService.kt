@@ -71,7 +71,7 @@ class BehandlingService(
                         loggingMeta,
                     )
                         ?: throw IllegalStateException(
-                            "Unable to find journalpost with id $journalpostId",
+                            "Unable to find journalpost with id $journalpostId"
                         )
 
                 if (journalpostMetadata.dokumentInfoId == null) {
@@ -157,13 +157,11 @@ class BehandlingService(
             }
 
         log.info(
-            "Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId",
+            "Papirsykmelding gjelder $innlandUtland, $harOcr, hendelsesType ${journalfoeringEvent.hendelsesType} med journalpostId: $journalpostId"
         )
     }
 
-    private fun hentBrukerIdFraJournalpost(
-        journalpost: JournalpostMetadata,
-    ): String? {
+    private fun hentBrukerIdFraJournalpost(journalpost: JournalpostMetadata): String? {
         val bruker = journalpost.bruker
         val brukerId =
             bruker.id

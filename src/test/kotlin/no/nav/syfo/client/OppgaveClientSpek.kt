@@ -1,18 +1,13 @@
 package no.nav.syfo.client
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
+import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.jackson
-import io.ktor.server.application.call
+import io.ktor.serialization.jackson3.jackson
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -38,15 +33,8 @@ class OppgaveClientSpek :
     FunSpec({
         val accessTokenClient = mockk<AzureAdV2Client>()
         val httpClient =
-            HttpClient(Apache) {
-                install(ContentNegotiation) {
-                    jackson {
-                        registerKotlinModule()
-                        registerModule(JavaTimeModule())
-                        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                    }
-                }
+            HttpClient(Apache5) {
+                install(ContentNegotiation) { jackson {} }
                 HttpResponseValidator {
                     handleResponseExceptionWithRequest { exception, _ ->
                         when (exception) {
@@ -86,9 +74,9 @@ class OppgaveClientSpek :
                                                     "SYM",
                                                     "JFR",
                                                     "",
-                                                ),
+                                                )
                                             ),
-                                        ),
+                                        )
                                     )
                                 call.request.queryParameters["oppgavetype"] == "FDR" &&
                                     call.request.queryParameters["journalpostId"] == "123" ->
@@ -96,17 +84,9 @@ class OppgaveClientSpek :
                                         OppgaveResponse(
                                             1,
                                             listOf(
-                                                Oppgave(
-                                                    1,
-                                                    "9999",
-                                                    null,
-                                                    "123",
-                                                    "SYM",
-                                                    "FDR",
-                                                    "",
-                                                ),
+                                                Oppgave(1, "9999", null, "123", "SYM", "FDR", "")
                                             ),
-                                        ),
+                                        )
                                     )
                                 call.request.queryParameters["oppgavetype"] == "JFR" &&
                                     call.request.queryParameters["journalpostId"] == "987" ->
@@ -124,13 +104,13 @@ class OppgaveClientSpek :
                                         HttpStatusCode.BadRequest,
                                         OppgaveFeilrespons(
                                             UUID.randomUUID().toString(),
-                                            "Fant ikke person"
-                                        )
+                                            "Fant ikke person",
+                                        ),
                                     )
                                 else ->
                                     call.respond(
                                         HttpStatusCode.Created,
-                                        OpprettOppgaveResponse(id = 42, versjon = 1)
+                                        OpprettOppgaveResponse(id = 42, versjon = 1),
                                     )
                             }
                         }
@@ -144,7 +124,7 @@ class OppgaveClientSpek :
                 accessTokenClient,
                 httpClient,
                 "scope",
-                "prod-gcp"
+                "prod-gcp",
             )
 
         afterSpec { mockServer.stop(TimeUnit.SECONDS.toMillis(1), TimeUnit.SECONDS.toMillis(1)) }
@@ -161,7 +141,7 @@ class OppgaveClientSpek :
                         "123456789",
                         false,
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 oppgave.oppgaveId shouldBeEqualTo 1
@@ -173,7 +153,7 @@ class OppgaveClientSpek :
                         "123",
                         false,
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 oppgave.oppgaveId shouldBeEqualTo 1
@@ -186,7 +166,7 @@ class OppgaveClientSpek :
                         "123456789",
                         false,
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 oppgave.oppgaveId shouldBeEqualTo 42
@@ -198,7 +178,7 @@ class OppgaveClientSpek :
                         "987",
                         false,
                         "sykmeldingId",
-                        loggingMetadata
+                        loggingMetadata,
                     )
 
                 oppgave.oppgaveId shouldBeEqualTo 42
@@ -211,7 +191,7 @@ class OppgaveClientSpek :
                         "123456789",
                         false,
                         "feiler",
-                        loggingMetadata
+                        loggingMetadata,
                     )
                 }
             }
@@ -244,7 +224,4 @@ class OppgaveClientSpek :
         }
     })
 
-private data class OppgaveFeilrespons(
-    val uuid: String,
-    val feilmelding: String,
-)
+private data class OppgaveFeilrespons(val uuid: String, val feilmelding: String)
