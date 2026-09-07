@@ -50,6 +50,7 @@ import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.BucketUploadService
+import no.nav.syfo.service.OcrParserImCompareService
 import no.nav.syfo.service.OcrShadowService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
@@ -209,6 +210,7 @@ fun Application.module() {
 
     val storage = StorageOptions.newBuilder().build().service
     val bucketUploadService = BucketUploadService(safDokumentClient, storage, env.bucketName)
+    val ocrParserImCompareService = OcrParserImCompareService()
     val ocrShadowService =
         OcrShadowService(
             safDokumentClient = safDokumentClient,
@@ -216,6 +218,7 @@ fun Application.module() {
             ocrServiceUrl = env.ocrServiceUrl,
             ocrServiceScope = env.ocrServiceScope,
             azureAdV2Client = azureAdV2Client,
+            ocrParserImCompareService = ocrParserImCompareService,
         )
 
     val sykmeldingService =

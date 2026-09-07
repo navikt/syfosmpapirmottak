@@ -1,10 +1,10 @@
 package no.nav.syfo.service
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +17,7 @@ import no.nav.syfo.client.DokumentVariantFormat
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.log
+import no.nav.syfo.model.OcrParserSykmelding
 import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 
@@ -55,6 +56,7 @@ class OcrShadowService(
     private val ocrServiceUrl: String,
     private val ocrServiceScope: String,
     private val azureAdV2Client: AzureAdV2Client,
+    private val ocrParserImCompareService: OcrParserImCompareService,
 ) {
     private val shadowScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -129,8 +131,34 @@ class OcrShadowService(
                             contentType(ContentType.Application.OctetStream)
                             setBody(pdfBytes)
                         }
-                        .bodyAsText()
+                        .body<OcrParserSykmelding>()
 
+                // nyttOcrResultat = Sykmelding  = Fra sykmelding-ocr-parser
+                // gammelOcr = SkanningMetadata -> SykmeldingerType  = her ligg det ei sykmelding
+                // Samanlikne Nytt og gammal ocr tolkning.
+                //
+
+                // future stuff -> dit vi skal til slutt.
+                // SykmeldingRecord.Papir = Ønska resultat ved 100% suksessfull parsing.
+
+                // todo map til data klasse og sammenlign med gammelOcr
+                // sjekk kor vi har  Namnet, henting av ocr tolka dokument
+                // 1. sjekke om det finnes ein IM parsa xml for denne pdfen.
+                // 2. hent den ned
+                // 3. Denne skal vi samanlikne mot nyttOcrResultat
+                // 4. resultat av samanlikning skal logges ut. Metrics for ok / ikkje ok. Logges i
+                // teamlogs felt slik at vi kan manuelt samanlikne
+
+                if (gammelOcr != null) {
+                    ocrParserImCompareService.compare(
+                        nyttOcrResultat = nyttOcrResultat,
+                        ironMountainOcrResultat = gammelOcr,
+                        sykmeldingId = sykmeldingId,
+                        journalpostId = journalpostId,
+                    )
+                }
+
+                // TODO fix loggmelding på nyttOcrResultat.
                 securelog.info(
                     "ocr-shadow sykmeldingId={} journalpostId={} dokumentInfoId={} gammelOcr=[{}] nyOcr={}",
                     sykmeldingId,
