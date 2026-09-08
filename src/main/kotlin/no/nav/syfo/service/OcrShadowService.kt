@@ -1,12 +1,5 @@
 package no.nav.syfo.service
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,8 +7,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import no.nav.helse.papirsykemelding.Skanningmetadata
-import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.client.DokumentVariantFormat
+import no.nav.syfo.client.OcrShadowHttpClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.log
@@ -52,12 +45,7 @@ data class OcrShadowDokumentInfo(
  */
 class OcrShadowService(
     private val safDokumentClient: SafDokumentClient,
-    // Dedicated HttpClient with a timeout — the new OCR service can be slower than our
-    // other dependencies, so it must not share the shorter timeout used elsewhere.
-    private val httpClient: HttpClient,
-    private val ocrServiceUrl: String,
-    private val ocrServiceScope: String,
-    private val azureAdV2Client: AzureAdV2Client,
+    private val ocrShadowHttpClient: OcrShadowHttpClient,
     private val ocrParserImCompareService: OcrParserImCompareService,
 ) {
     private val shadowScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -112,28 +100,7 @@ class OcrShadowService(
                         msgId = sykmeldingId,
                     )
 
-                val token: String =
-                    azureAdV2Client.getAccessToken(ocrServiceScope)?.accessToken
-                        ?: run {
-                            log.warn(
-                                "OcrShadow: klarte ikke hente token for sykmeldingId={}, hopper over",
-                                sykmeldingId,
-                            )
-                            return@launch
-                        }
-
-                val responses =
-                    httpClient
-                        .post("$ocrServiceUrl/api/parse") {
-                            header("Authorization", "Bearer $token")
-                            // Bucket-blob reference for locating the source PDF (see
-                            // asDocumentReference kdoc).
-                            header("X-Document-Reference", dokumentInfo.asDocumentReference())
-                            header("X-Sykmelding-Id", dokumentInfo.sykmeldingId)
-                            contentType(ContentType.Application.OctetStream)
-                            setBody(pdfBytes)
-                        }
-                        .body<List<OcrParserParseResponse>>()
+                val responses = ocrShadowHttpClient.hentOcrParser(dokumentInfo, pdfBytes)
 
                 val nyttOcrResultat =
                     (responses.firstOrNull() as? OcrParserParseResponse.Success)?.sykmelding

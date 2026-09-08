@@ -11,7 +11,6 @@ import no.nav.syfo.metrics.PAPIRSM_MOTTATT
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_UTEN_OCR
 import no.nav.syfo.metrics.REQUEST_TIME
 import no.nav.syfo.pdl.service.PdlPersonService
-import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.wrapExceptions
 import no.nav.syfo.utland.UtenlandskSykmeldingService
@@ -33,9 +32,7 @@ class BehandlingService(
             val mottaksKanal = journalfoeringEvent.mottaksKanal.toString()
             val hendelsesType = journalfoeringEvent.hendelsesType.toString()
 
-            log.info(
-                "Journalføring hendelse med journalpostId: $journalpostId og tema: $temaNytt"
-            )
+            log.info("Journalføring hendelse med journalpostId: $journalpostId og tema: $temaNytt")
 
             if (
                 temaNytt == "SYM" &&

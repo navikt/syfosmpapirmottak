@@ -36,6 +36,7 @@ import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
+import no.nav.syfo.client.OcrShadowHttpClient
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
@@ -162,23 +163,24 @@ fun Application.module() {
             }
         }
     }
-    // Dedicated client for the OCR shadow trial: the new OCR service can take longer to
-    // respond than our other dependencies, so it gets its own (longer) timeout instead of
-    // affecting the shared httpClient used by everything else. No retry — OcrShadowService
-    // already swallows failures and just skips the comparison for that sykmelding.
-    // 20 min timeout
-    val ocrShadowHttpClient =
-        HttpClient(Apache5) {
-            install(HttpTimeout) {
-                socketTimeoutMillis = 1_200_000
-                connectTimeoutMillis = 1_200_000
-                requestTimeoutMillis = 1_200_000
-            }
-        }
 
     val httpClient = HttpClient(Apache5, retryConfig)
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
+
+    val ocrHttpClient =
+        httpClient.apply {
+            config {
+                install(HttpTimeout) {
+                    socketTimeoutMillis = 1_200_000
+                    connectTimeoutMillis = 1_200_000
+                    requestTimeoutMillis = 1_200_000
+                }
+            }
+        }
+
+    val ocrShadowHttpClient =
+        OcrShadowHttpClient(azureAdV2Client, env.ocrServiceScope, ocrHttpClient, env.ocrServiceUrl)
 
     val safJournalpostClient =
         SafJournalpostClient(httpClient, "${env.safV1Url}/graphql", azureAdV2Client, env.safScope)
@@ -214,10 +216,7 @@ fun Application.module() {
     val ocrShadowService =
         OcrShadowService(
             safDokumentClient = safDokumentClient,
-            httpClient = ocrShadowHttpClient,
-            ocrServiceUrl = env.ocrServiceUrl,
-            ocrServiceScope = env.ocrServiceScope,
-            azureAdV2Client = azureAdV2Client,
+            ocrShadowHttpClient = ocrShadowHttpClient,
             ocrParserImCompareService = ocrParserImCompareService,
         )
 
@@ -262,7 +261,6 @@ fun Application.module() {
         applicationState.ready = false
         applicationState.alive = false
         httpClient.close()
-        ocrShadowHttpClient.close()
     }
 }
 
