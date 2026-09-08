@@ -33,7 +33,7 @@ class BehandlingService(
             val mottaksKanal = journalfoeringEvent.mottaksKanal.toString()
             val hendelsesType = journalfoeringEvent.hendelsesType.toString()
 
-            securelog.info(
+            log.info(
                 "Journalføring hendelse med journalpostId: $journalpostId og tema: $temaNytt"
             )
 
