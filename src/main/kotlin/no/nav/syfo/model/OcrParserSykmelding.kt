@@ -1,5 +1,6 @@
 package no.nav.syfo.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -16,7 +17,7 @@ import kotlinx.serialization.Serializable
  * sykmelding-ocr-parser
  */
 @Serializable
-public data class OcrParserSykmelding(
+data class OcrParserSykmelding(
     val formType: String,
     val formVersion: String?,
     val vurderingType: OcrParserVurderingType?,
@@ -39,7 +40,7 @@ public data class OcrParserSykmelding(
  * include raw OCR text or extracted field values.
  */
 @Serializable
-public data class OcrParserSykmeldingMeta(
+data class OcrParserSykmeldingMeta(
     val formId: String?,
     val formVersion: String?,
     val parserId: String,
@@ -47,14 +48,14 @@ public data class OcrParserSykmeldingMeta(
 )
 
 @Serializable
-public enum class OcrParserVurderingType {
+enum class OcrParserVurderingType {
     FORSTE_VURDERING,
     PAFOLGENDE_VURDERING,
     PAFOLGENDE_ANNEN_SYKMELDER,
 }
 
 @Serializable
-public enum class OcrParserAktivitetType {
+enum class OcrParserAktivitetType {
     AKTIVITET_IKKE_MULIG,
     GRADERT,
     AVVENTENDE,
@@ -63,7 +64,7 @@ public enum class OcrParserAktivitetType {
 }
 
 @Serializable
-public data class OcrParserPasient(
+data class OcrParserPasient(
     val navn: String? = null,
     val etternavn: String? = null,
     val fornavn: String? = null,
@@ -76,7 +77,7 @@ public data class OcrParserPasient(
 )
 
 @Serializable
-public data class OcrParserArbeidsgiver(
+data class OcrParserArbeidsgiver(
     val navn: String? = null,
     val yrkeStilling: String? = null,
     val stillingsprosent: Int? = null,
@@ -84,7 +85,7 @@ public data class OcrParserArbeidsgiver(
 )
 
 @Serializable
-public data class OcrParserDiagnose(
+data class OcrParserDiagnose(
     val hoveddiagnoseKodesystem: String? = null,
     val hoveddiagnoseKode: String? = null,
     val hoveddiagnoseTekst: String? = null,
@@ -97,21 +98,22 @@ public data class OcrParserDiagnose(
 )
 
 @Serializable
-public data class Bidiagnose(
+data class Bidiagnose(
     val kodesystem: String? = null,
     val kode: String? = null,
     val tekst: String? = null,
 )
 
 @Serializable
-public sealed interface OcrParserAktivitet {
-    public val fom: String?
-    public val tom: String?
-    public val type: OcrParserAktivitetType
+sealed interface OcrParserAktivitet {
+    val fom: String?
+    val tom: String?
+    val type: OcrParserAktivitetType
 
     /** 4.3 100 % sykmelding — pasienten kan ikke være i arbeid. */
     @Serializable
-    public data class IkkeMulig(
+    @SerialName("IkkeMulig")
+    data class IkkeMulig(
         override val fom: String? = null,
         override val tom: String? = null,
         val medisinskArsak: Boolean = false,
@@ -125,7 +127,8 @@ public sealed interface OcrParserAktivitet {
 
     /** 4.2 Gradert sykmelding — pasienten kan være delvis i arbeid. */
     @Serializable
-    public data class Gradert(
+    @SerialName("Gradert")
+    data class Gradert(
         override val fom: String? = null,
         override val tom: String? = null,
         val grad: Int? = null,
@@ -137,7 +140,8 @@ public sealed interface OcrParserAktivitet {
 
     /** 4.1 Avventende sykmelding. */
     @Serializable
-    public data class Avventende(
+    @SerialName("Avventende")
+    data class Avventende(
         override val fom: String? = null,
         override val tom: String? = null,
         val innspillTilArbeidsgiver: String? = null,
@@ -148,7 +152,8 @@ public sealed interface OcrParserAktivitet {
 
     /** 4.5 Behandlingsdager. */
     @Serializable
-    public data class Behandlingsdager(
+    @SerialName("Behandlingsdager")
+    data class Behandlingsdager(
         override val fom: String? = null,
         override val tom: String? = null,
         val antallBehandlingsdager: Int? = null,
@@ -159,27 +164,26 @@ public sealed interface OcrParserAktivitet {
 
     /** Reisetilskudd som selvstendig aktivitet. */
     @Serializable
-    public data class Reisetilskudd(
-        override val fom: String? = null,
-        override val tom: String? = null,
-    ) : OcrParserAktivitet {
+    @SerialName("Reisetilskudd")
+    data class Reisetilskudd(override val fom: String? = null, override val tom: String? = null) :
+        OcrParserAktivitet {
         override val type: OcrParserAktivitetType
             get() = OcrParserAktivitetType.REISETILSKUDD
     }
 }
 
-@Serializable public data class OcrParserPrognose(val arbeidsforEtterPeriode: Boolean = false)
+@Serializable data class OcrParserPrognose(val arbeidsforEtterPeriode: Boolean = false)
 
-@Serializable public data class OcrParserTilleggsinformasjon(val bistandNavOnskes: Boolean = false)
+@Serializable data class OcrParserTilleggsinformasjon(val bistandNavOnskes: Boolean = false)
 
 @Serializable
-public data class OcrParserTilbakedatering(
+data class OcrParserTilbakedatering(
     val kontaktDato: String? = null,
     val beskrivelse: String? = null,
 )
 
 @Serializable
-public data class OcrParserSykmelder(
+data class OcrParserSykmelder(
     val dato: String? = null,
     val navn: String? = null,
     val hprNummer: String? = null,

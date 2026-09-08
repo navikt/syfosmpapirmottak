@@ -11,6 +11,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.client.DokumentVariantFormat
@@ -120,7 +122,7 @@ class OcrShadowService(
                             return@launch
                         }
 
-                val nyttOcrResultat =
+                val responses =
                     httpClient
                         .post("$ocrServiceUrl/api/parse") {
                             header("Authorization", "Bearer $token")
@@ -131,7 +133,13 @@ class OcrShadowService(
                             contentType(ContentType.Application.OctetStream)
                             setBody(pdfBytes)
                         }
-                        .body<OcrParserSykmelding>()
+                        .body<List<OcrParserParseResponse>>()
+
+                val nyttOcrResultat =
+                    (responses.firstOrNull() as? OcrParserParseResponse.Success)?.sykmelding
+                        ?: error(
+                            "OCR-tjenesten returnerte ${responses.firstOrNull()?.let { it::class.simpleName }}"
+                        )
 
                 securelog.info(
                     "ocr-shadow parser result: sykmeldingId={} \n journalpostId={} \n dokumentInfoId={} \n nyOcr={}",
@@ -149,10 +157,24 @@ class OcrShadowService(
                         journalpostId = journalpostId,
                     )
                 }
-
             } catch (e: Exception) {
                 log.warn("OcrShadow feilet for sykmeldingId={}, hopper over", sykmeldingId, e)
             }
         }
     }
+}
+
+@Serializable
+sealed class OcrParserParseResponse {
+    @Serializable
+    @SerialName("Success")
+    data class Success(val sykmelding: OcrParserSykmelding) : OcrParserParseResponse()
+
+    @Serializable
+    @SerialName("Unsupported")
+    data class Unsupported(val reason: String) : OcrParserParseResponse()
+
+    @Serializable
+    @SerialName("Failure")
+    data class Failure(val reason: String) : OcrParserParseResponse()
 }
