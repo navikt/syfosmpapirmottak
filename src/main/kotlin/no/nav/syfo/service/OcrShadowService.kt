@@ -133,21 +133,13 @@ class OcrShadowService(
                         }
                         .body<OcrParserSykmelding>()
 
-                // nyttOcrResultat = Sykmelding  = Fra sykmelding-ocr-parser
-                // gammelOcr = SkanningMetadata -> SykmeldingerType  = her ligg det ei sykmelding
-                // Samanlikne Nytt og gammal ocr tolkning.
-                //
-
-                // future stuff -> dit vi skal til slutt.
-                // SykmeldingRecord.Papir = Ønska resultat ved 100% suksessfull parsing.
-
-                // todo map til data klasse og sammenlign med gammelOcr
-                // sjekk kor vi har  Namnet, henting av ocr tolka dokument
-                // 1. sjekke om det finnes ein IM parsa xml for denne pdfen.
-                // 2. hent den ned
-                // 3. Denne skal vi samanlikne mot nyttOcrResultat
-                // 4. resultat av samanlikning skal logges ut. Metrics for ok / ikkje ok. Logges i
-                // teamlogs felt slik at vi kan manuelt samanlikne
+                securelog.info(
+                    "ocr-shadow parser result: sykmeldingId={} \n journalpostId={} \n dokumentInfoId={} \n nyOcr={}",
+                    sykmeldingId,
+                    journalpostId,
+                    dokumentInfoIdPdf,
+                    nyttOcrResultat,
+                )
 
                 if (gammelOcr != null) {
                     ocrParserImCompareService.compare(
@@ -158,15 +150,6 @@ class OcrShadowService(
                     )
                 }
 
-                // TODO fix loggmelding på nyttOcrResultat.
-                securelog.info(
-                    "ocr-shadow sykmeldingId={} journalpostId={} dokumentInfoId={} gammelOcr=[{}] nyOcr={}",
-                    sykmeldingId,
-                    journalpostId,
-                    dokumentInfoIdPdf,
-                    gammelOcr,
-                    nyttOcrResultat,
-                )
             } catch (e: Exception) {
                 log.warn("OcrShadow feilet for sykmeldingId={}, hopper over", sykmeldingId, e)
             }
