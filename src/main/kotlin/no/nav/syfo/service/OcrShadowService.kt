@@ -1,11 +1,11 @@
 package no.nav.syfo.service
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.DokumentVariantFormat
 import no.nav.syfo.client.OcrShadowHttpClient
@@ -131,17 +131,16 @@ class OcrShadowService(
     }
 }
 
-@Serializable
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(value = OcrParserParseResponse.Success::class, name = "Success"),
+    JsonSubTypes.Type(value = OcrParserParseResponse.Unsupported::class, name = "Unsupported"),
+    JsonSubTypes.Type(value = OcrParserParseResponse.Failure::class, name = "Failure"),
+)
 sealed class OcrParserParseResponse {
-    @Serializable
-    @SerialName("Success")
     data class Success(val sykmelding: OcrParserSykmelding) : OcrParserParseResponse()
 
-    @Serializable
-    @SerialName("Unsupported")
     data class Unsupported(val reason: String) : OcrParserParseResponse()
 
-    @Serializable
-    @SerialName("Failure")
     data class Failure(val reason: String) : OcrParserParseResponse()
 }

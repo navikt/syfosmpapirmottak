@@ -17,20 +17,22 @@ class OcrShadowHttpClient(
     private val client: HttpClient,
     private val ocrServiceUrl: String,
 ) {
-    suspend fun hentOcrParser(dokumentInfo: OcrShadowDokumentInfo, pdfBytes:  ByteArray): List<OcrParserParseResponse> {
-        val accessToken = accessTokenClient.getAccessToken(resourceId)
-        if (accessToken?.accessToken == null) {
-            throw RuntimeException("Klarte ikke hente ut accesstoken for ocrService")
-        }
+    suspend fun hentOcrParser(
+        dokumentInfo: OcrShadowDokumentInfo,
+        pdfBytes: ByteArray,
+    ): List<OcrParserParseResponse> {
+        val token =
+            accessTokenClient.getAccessToken(resourceId)?.accessToken
+                ?: throw RuntimeException("Klarte ikke hente ut accesstoken for ocrService")
 
         return client
-                .post("$ocrServiceUrl/api/parse") {
-                    header("Authorization", "Bearer $accessToken")
-                    header("X-Document-Reference", dokumentInfo.asDocumentReference())
-                    header("X-Sykmelding-Id", dokumentInfo.sykmeldingId)
-                    contentType(ContentType.Application.OctetStream)
-                    setBody(pdfBytes)
-                }
-                .body<List<OcrParserParseResponse>>()
+            .post("$ocrServiceUrl/api/parse") {
+                header("Authorization", "Bearer $token")
+                header("X-Document-Reference", dokumentInfo.asDocumentReference())
+                header("X-Sykmelding-Id", dokumentInfo.sykmeldingId)
+                contentType(ContentType.Application.OctetStream)
+                setBody(pdfBytes)
+            }
+            .body<List<OcrParserParseResponse>>()
     }
 }

@@ -1,5 +1,7 @@
 package no.nav.syfo.model
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -105,6 +107,17 @@ data class Bidiagnose(
 )
 
 @Serializable
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(value = OcrParserAktivitet.IkkeMulig::class, name = "IkkeMulig"),
+    JsonSubTypes.Type(value = OcrParserAktivitet.Gradert::class, name = "Gradert"),
+    JsonSubTypes.Type(value = OcrParserAktivitet.Avventende::class, name = "Avventende"),
+    JsonSubTypes.Type(
+        value = OcrParserAktivitet.Behandlingsdager::class,
+        name = "Behandlingsdager",
+    ),
+    JsonSubTypes.Type(value = OcrParserAktivitet.Reisetilskudd::class, name = "Reisetilskudd"),
+)
 sealed interface OcrParserAktivitet {
     val fom: String?
     val tom: String?
