@@ -32,7 +32,7 @@ class BehandlingService(
             val mottaksKanal = journalfoeringEvent.mottaksKanal.toString()
             val hendelsesType = journalfoeringEvent.hendelsesType.toString()
 
-            log.info("Journalføring hendelse med journalpostId: $journalpostId og tema: $temaNytt")
+//            log.info("Journalføring hendelse med journalpostId: $journalpostId og tema: $temaNytt")
 
             if (
                 temaNytt == "SYM" &&
