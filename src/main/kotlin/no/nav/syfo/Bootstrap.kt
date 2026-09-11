@@ -168,17 +168,14 @@ fun Application.module() {
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
-    val ocrHttpClient =
-        httpClient.apply {
-            config {
-                install(HttpTimeout) {
-                    socketTimeoutMillis = 1_200_000
-                    connectTimeoutMillis = 1_200_000
-                    requestTimeoutMillis = 1_200_000
-                }
-            }
+    val ocrHttpClient = httpClient.config {
+        install(HttpTimeout) {
+            connectTimeoutMillis = 10_000
+            socketTimeoutMillis = 1_200_000
+            requestTimeoutMillis = 1_200_000
         }
-
+        install(HttpRequestRetry) { noRetry() }
+    }
     val ocrShadowHttpClient =
         OcrShadowHttpClient(azureAdV2Client, env.ocrServiceScope, ocrHttpClient, env.ocrServiceUrl)
 
