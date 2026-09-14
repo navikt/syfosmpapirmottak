@@ -28,6 +28,7 @@ val caffeineVersion = "3.2.1"
 val ktfmtVersion = "0.56"
 val diagnosekoderVersion = "1.2026.0"
 val googleCloudStorageVersion = "2.70.0"
+val sykmeldingOcrParserVersion = "1"
 
 val javaVersion = JvmTarget.JVM_25
 
@@ -52,6 +53,16 @@ repositories {
     maven(url = "https://packages.confluent.io/maven/")
     maven {
         url = uri("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
+    }
+    // sykmelding-ocr-parser is published to its own GitHub Packages registry. In CI the
+    // built-in GITHUB_TOKEN (with read:packages) authenticates; locally set GITHUB_USERNAME
+    // and GITHUB_TOKEN (a PAT with read:packages).
+    maven {
+        url = uri("https://maven.pkg.github.com/navikt/sykmelding-ocr-parser")
+        credentials {
+            username = System.getenv("GITHUB_USERNAME") ?: "x-access-token"
+            password = System.getenv("GITHUB_TOKEN")
+        }
     }
 }
 
@@ -88,6 +99,12 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 
     implementation("com.google.cloud:google-cloud-storage:$googleCloudStorageVersion")
+
+    // In-process OCR parsing of scanned papirsykmeldinger. `core` is the pure-JVM public API;
+    // `engine-tesseract` is the Tesseract/OpenCV adapter (needs a native Tesseract runtime +
+    // tessdata in the container — see Dockerfile).
+    implementation("no.nav.sykmelding:core:$sykmeldingOcrParserVersion")
+    implementation("no.nav.sykmelding:engine-tesseract:$sykmeldingOcrParserVersion")
 
     implementation("no.nav.helse:diagnosekoder:$diagnosekoderVersion")
     implementation("javax.xml.bind:jaxb-api:$jaxbApiVersion")
