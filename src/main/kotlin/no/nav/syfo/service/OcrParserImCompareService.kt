@@ -8,7 +8,7 @@ import no.nav.syfo.metrics.OCR_SAMMENLIGNING_DOKUMENT
 import no.nav.syfo.metrics.OCR_SAMMENLIGNING_FELT
 import no.nav.syfo.securelog
 import no.nav.sykmelding.api.Aktivitet
-import no.nav.sykmelding.api.Sykmelding
+import no.nav.sykmelding.api.OcrParsedSykmelding
 
 /** Resultat av å sammenligne ett felt mellom ny og gammel OCR-tolkning. */
 internal data class FeltSammenligning(
@@ -21,7 +21,7 @@ internal data class FeltSammenligning(
 class OcrParserImCompareService {
 
     fun compare(
-        nyttOcrResultat: Sykmelding,
+        nyttOcrResultat: OcrParsedSykmelding,
         ironMountainOcrResultat: Skanningmetadata,
         sykmeldingId: String,
         journalpostId: String,
@@ -39,7 +39,7 @@ class OcrParserImCompareService {
     }
 
     internal fun sammenlignFelter(
-        nyttOcrResultat: Sykmelding,
+        nyttOcrResultat: OcrParsedSykmelding,
         ironMountainOcrResultat: Skanningmetadata,
     ): List<FeltSammenligning> {
         val gammel = ironMountainOcrResultat.sykemeldinger

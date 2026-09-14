@@ -20,10 +20,10 @@ import no.nav.syfo.metrics.OCR_SAMMENLIGNING_FELT
 import no.nav.sykmelding.api.Aktivitet
 import no.nav.sykmelding.api.Arbeidsgiver
 import no.nav.sykmelding.api.Diagnose
+import no.nav.sykmelding.api.OcrParsedSykmelding
 import no.nav.sykmelding.api.Pasient
 import no.nav.sykmelding.api.Prognose
 import no.nav.sykmelding.api.Sykmelder
-import no.nav.sykmelding.api.Sykmelding
 import no.nav.sykmelding.api.SykmeldingMeta
 import no.nav.sykmelding.api.Tilbakedatering
 import no.nav.sykmelding.api.Tilleggsinformasjon
@@ -35,7 +35,7 @@ class OcrParserImCompareServiceSpek :
         val service = OcrParserImCompareService()
 
         fun nyttOcr() =
-            Sykmelding(
+            OcrParsedSykmelding(
                 formType = "NAV 08-07.04",
                 formVersion = "1",
                 vurderingType = null,
