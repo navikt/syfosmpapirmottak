@@ -1,14 +1,11 @@
 package no.nav.syfo.service
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.client.DokumentVariantFormat
-import no.nav.syfo.client.OcrShadowHttpClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.log
@@ -24,18 +21,7 @@ data class OcrShadowDokumentInfo(
     val filUuid: String,
     val filType: String,
     val filNamn: String,
-) {
-    /**
-     * Opaque correlation token for shadow-service's `X-Document-Reference` header (see
-     * navikt/sykmelding-ocr-parser OcrRoutes.kt). Built to be identical to the bucket blob name
-     * BucketUploadService.saveToBucket() generates
-     * (`${journalpostId}_${dokumentInfoId}_${filUUID}.${filType}`) so it can be pasted straight
-     * into the bucket to find the document — never the human-readable filNamn, which must stay in
-     * securelog only.
-     */
-    fun asDocumentReference(): String =
-        "${journalpostId}_${dokumentInfoId}_${filUuid}.${filType.lowercase()}"
-}
+)
 
 /**
  * Kjører ny OCR-tjeneste parallelt med eksisterende OCR-flyt og logger resultater til securelog for
@@ -45,7 +31,7 @@ data class OcrShadowDokumentInfo(
  */
 class OcrShadowService(
     private val safDokumentClient: SafDokumentClient,
-    private val ocrShadowHttpClient: OcrShadowHttpClient,
+    private val ocrParserService: OcrParserService,
     private val ocrParserImCompareService: OcrParserImCompareService,
 ) {
     private val shadowScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -100,7 +86,7 @@ class OcrShadowService(
                         msgId = sykmeldingId,
                     )
 
-                val responses = ocrShadowHttpClient.hentOcrParser(dokumentInfo, pdfBytes)
+                val responses = ocrParserService.parse(pdfBytes)
 
                 val nyttOcrResultat =
                     (responses.firstOrNull() as? OcrParserParseResponse.Success)?.sykmelding
@@ -131,12 +117,6 @@ class OcrShadowService(
     }
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes(
-    JsonSubTypes.Type(value = OcrParserParseResponse.Success::class, name = "Success"),
-    JsonSubTypes.Type(value = OcrParserParseResponse.Unsupported::class, name = "Unsupported"),
-    JsonSubTypes.Type(value = OcrParserParseResponse.Failure::class, name = "Failure"),
-)
 sealed class OcrParserParseResponse {
     data class Success(val sykmelding: OcrParserSykmelding) : OcrParserParseResponse()
 
