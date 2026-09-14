@@ -3,7 +3,6 @@ package no.nav.syfo.service
 import java.io.Closeable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.syfo.model.toOcrParserSykmelding
 import no.nav.sykmelding.api.SykmeldingOcrParser
 import no.nav.sykmelding.api.SykmeldingResult
 
@@ -24,8 +23,7 @@ class OcrParserService(private val parser: SykmeldingOcrParser) : Closeable {
 
     private fun SykmeldingResult.toResponse(): OcrParserParseResponse =
         when (this) {
-            is SykmeldingResult.Success ->
-                OcrParserParseResponse.Success(sykmelding.toOcrParserSykmelding())
+            is SykmeldingResult.Success -> OcrParserParseResponse.Success(sykmelding)
             is SykmeldingResult.Unsupported -> OcrParserParseResponse.Unsupported(reason)
             is SykmeldingResult.Failure -> OcrParserParseResponse.Failure(reason)
         }

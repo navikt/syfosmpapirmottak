@@ -9,9 +9,9 @@ import no.nav.syfo.client.DokumentVariantFormat
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.domain.DokumentFilInfo
 import no.nav.syfo.log
-import no.nav.syfo.model.OcrParserSykmelding
 import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
+import no.nav.sykmelding.api.Sykmelding
 
 /** Identifiserer det konkrete PDF-dokumentet en shadow-sammenligning gjelder. */
 data class OcrShadowDokumentInfo(
@@ -118,7 +118,7 @@ class OcrShadowService(
 }
 
 sealed class OcrParserParseResponse {
-    data class Success(val sykmelding: OcrParserSykmelding) : OcrParserParseResponse()
+    data class Success(val sykmelding: Sykmelding) : OcrParserParseResponse()
 
     data class Unsupported(val reason: String) : OcrParserParseResponse()
 

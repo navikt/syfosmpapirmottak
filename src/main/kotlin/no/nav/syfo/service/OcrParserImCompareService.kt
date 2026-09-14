@@ -6,9 +6,9 @@ import java.time.format.DateTimeParseException
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.metrics.OCR_SAMMENLIGNING_DOKUMENT
 import no.nav.syfo.metrics.OCR_SAMMENLIGNING_FELT
-import no.nav.syfo.model.OcrParserAktivitet
-import no.nav.syfo.model.OcrParserSykmelding
 import no.nav.syfo.securelog
+import no.nav.sykmelding.api.Aktivitet
+import no.nav.sykmelding.api.Sykmelding
 
 /** Resultat av å sammenligne ett felt mellom ny og gammel OCR-tolkning. */
 internal data class FeltSammenligning(
@@ -21,7 +21,7 @@ internal data class FeltSammenligning(
 class OcrParserImCompareService {
 
     fun compare(
-        nyttOcrResultat: OcrParserSykmelding,
+        nyttOcrResultat: Sykmelding,
         ironMountainOcrResultat: Skanningmetadata,
         sykmeldingId: String,
         journalpostId: String,
@@ -39,7 +39,7 @@ class OcrParserImCompareService {
     }
 
     internal fun sammenlignFelter(
-        nyttOcrResultat: OcrParserSykmelding,
+        nyttOcrResultat: Sykmelding,
         ironMountainOcrResultat: Skanningmetadata,
     ): List<FeltSammenligning> {
         val gammel = ironMountainOcrResultat.sykemeldinger
@@ -155,9 +155,7 @@ class OcrParserImCompareService {
 
         // Aktiviteter
         val nyIkkeMulig =
-            nyttOcrResultat.aktiviteter
-                .filterIsInstance<OcrParserAktivitet.IkkeMulig>()
-                .firstOrNull()
+            nyttOcrResultat.aktiviteter.filterIsInstance<Aktivitet.IkkeMulig>().firstOrNull()
         val gammelIkkeMulig = gammel.aktivitet?.aktivitetIkkeMulig
         if (nyIkkeMulig != null || gammelIkkeMulig != null) {
             record(
@@ -194,7 +192,7 @@ class OcrParserImCompareService {
         }
 
         val nyGradert =
-            nyttOcrResultat.aktiviteter.filterIsInstance<OcrParserAktivitet.Gradert>().firstOrNull()
+            nyttOcrResultat.aktiviteter.filterIsInstance<Aktivitet.Gradert>().firstOrNull()
         val gammelGradert = gammel.aktivitet?.gradertSykmelding
         if (nyGradert != null || gammelGradert != null) {
             record("aktivitet.gradert (tilstede)", nyGradert != null, gammelGradert != null)
@@ -225,9 +223,7 @@ class OcrParserImCompareService {
         }
 
         val nyAvventende =
-            nyttOcrResultat.aktiviteter
-                .filterIsInstance<OcrParserAktivitet.Avventende>()
-                .firstOrNull()
+            nyttOcrResultat.aktiviteter.filterIsInstance<Aktivitet.Avventende>().firstOrNull()
         val gammelAvventende = gammel.aktivitet?.avventendeSykmelding
         if (nyAvventende != null || gammelAvventende != null) {
             record(
@@ -256,9 +252,7 @@ class OcrParserImCompareService {
         }
 
         val nyBehandlingsdager =
-            nyttOcrResultat.aktiviteter
-                .filterIsInstance<OcrParserAktivitet.Behandlingsdager>()
-                .firstOrNull()
+            nyttOcrResultat.aktiviteter.filterIsInstance<Aktivitet.Behandlingsdager>().firstOrNull()
         val gammelBehandlingsdager = gammel.aktivitet?.behandlingsdager
         if (nyBehandlingsdager != null || gammelBehandlingsdager != null) {
             record(
@@ -288,9 +282,7 @@ class OcrParserImCompareService {
         }
 
         val nyReisetilskudd =
-            nyttOcrResultat.aktiviteter
-                .filterIsInstance<OcrParserAktivitet.Reisetilskudd>()
-                .firstOrNull()
+            nyttOcrResultat.aktiviteter.filterIsInstance<Aktivitet.Reisetilskudd>().firstOrNull()
         val gammelReisetilskudd = gammel.aktivitet?.reisetilskudd
         if (nyReisetilskudd != null || gammelReisetilskudd != null) {
             record(
