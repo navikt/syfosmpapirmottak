@@ -168,14 +168,20 @@ fun Application.module() {
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
-    val ocrHttpClient = httpClient.config {
-        install(HttpTimeout) {
-            connectTimeoutMillis = 10_000
-            socketTimeoutMillis = 1_200_000
-            requestTimeoutMillis = 1_200_000
+    // OCR-parsing er asynkron: klienten gjør korte kall (POST gir 202 + jobId, deretter polling
+    // av GET /api/parse/{jobId}). Ingen enkelt-request holdes åpen lenge, så en moderat
+    // per-kall-timeout holder. noRetry() hindrer at basisklientens 5xx-retry prøver GET-poll på
+    // nytt når en OCR-jobb faktisk feiler (500). Den totale poll-fristen styres i
+    // OcrShadowHttpClient.
+    val ocrHttpClient =
+        httpClient.config {
+            install(HttpTimeout) {
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 60_000
+                requestTimeoutMillis = 60_000
+            }
+            install(HttpRequestRetry) { noRetry() }
         }
-        install(HttpRequestRetry) { noRetry() }
-    }
     val ocrShadowHttpClient =
         OcrShadowHttpClient(azureAdV2Client, env.ocrServiceScope, ocrHttpClient, env.ocrServiceUrl)
 
@@ -258,6 +264,7 @@ fun Application.module() {
         applicationState.ready = false
         applicationState.alive = false
         httpClient.close()
+        ocrHttpClient.close()
     }
 }
 
