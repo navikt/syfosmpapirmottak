@@ -17,39 +17,39 @@ import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.helse.papirsykemelding.SykemeldingerType
 import no.nav.syfo.metrics.OCR_SAMMENLIGNING_DOKUMENT
 import no.nav.syfo.metrics.OCR_SAMMENLIGNING_FELT
-import no.nav.syfo.model.OcrParserAktivitet
-import no.nav.syfo.model.OcrParserArbeidsgiver
-import no.nav.syfo.model.OcrParserDiagnose
-import no.nav.syfo.model.OcrParserPasient
-import no.nav.syfo.model.OcrParserPrognose
-import no.nav.syfo.model.OcrParserSykmelder
-import no.nav.syfo.model.OcrParserSykmelding
-import no.nav.syfo.model.OcrParserSykmeldingMeta
-import no.nav.syfo.model.OcrParserTilbakedatering
-import no.nav.syfo.model.OcrParserTilleggsinformasjon
+import no.nav.sykmelding.api.Aktivitet
+import no.nav.sykmelding.api.Arbeidsgiver
+import no.nav.sykmelding.api.Diagnose
+import no.nav.sykmelding.api.OcrParsedSykmelding
+import no.nav.sykmelding.api.Pasient
+import no.nav.sykmelding.api.Prognose
+import no.nav.sykmelding.api.Sykmelder
+import no.nav.sykmelding.api.SykmeldingMeta
+import no.nav.sykmelding.api.Tilbakedatering
+import no.nav.sykmelding.api.Tilleggsinformasjon
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldContain
 
 class OcrParserImCompareServiceSpek :
     FunSpec({
-        val service = OcrParserImCompareService()
+        val service = OcrParserImComparisonService()
 
         fun nyttOcr() =
-            OcrParserSykmelding(
+            OcrParsedSykmelding(
                 formType = "NAV 08-07.04",
                 formVersion = "1",
                 vurderingType = null,
                 legemeldtFravaerStart = "01.02.2024",
-                pasient = OcrParserPasient(fnr = "12345678910"),
+                pasient = Pasient(fnr = "12345678910"),
                 arbeidsgiver =
-                    OcrParserArbeidsgiver(
+                    Arbeidsgiver(
                         navn = "Bedrift AS",
                         yrkeStilling = "Snekker",
                         stillingsprosent = 50,
                         flereArbeidsgivere = false,
                     ),
                 diagnose =
-                    OcrParserDiagnose(
+                    Diagnose(
                         hoveddiagnoseKodesystem = "ICD-10",
                         hoveddiagnoseKode = "M79",
                         hoveddiagnoseTekst = "Ryggsmerter",
@@ -58,24 +58,24 @@ class OcrParserImCompareServiceSpek :
                     ),
                 aktiviteter =
                     listOf(
-                        OcrParserAktivitet.Gradert(
+                        Aktivitet.Gradert(
                             fom = "01.02.2024",
                             tom = "15.02.2024",
                             grad = 60,
                             reisetilskudd = false,
                         )
                     ),
-                prognose = OcrParserPrognose(arbeidsforEtterPeriode = true),
-                tilleggsinformasjon = OcrParserTilleggsinformasjon(bistandNavOnskes = false),
-                tilbakedatering = OcrParserTilbakedatering(kontaktDato = "15.01.2024"),
+                prognose = Prognose(arbeidsforEtterPeriode = true),
+                tilleggsinformasjon = Tilleggsinformasjon(bistandNavOnskes = false),
+                tilbakedatering = Tilbakedatering(kontaktDato = "15.01.2024"),
                 sykmelder =
-                    OcrParserSykmelder(
+                    Sykmelder(
                         dato = "15.01.2024",
                         navn = "Lege Legesen",
                         hprNummer = "123456",
                         telefon = "99887766",
                     ),
-                meta = OcrParserSykmeldingMeta(formId = null, formVersion = "1", parserId = "test"),
+                meta = SykmeldingMeta(formId = null, formVersion = "1", parserId = "test"),
             )
 
         fun gammelOcr() =

@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import net.logstash.logback.argument.StructuredArguments
 import no.nav.helse.diagnosekoder.Diagnosekoder
 import no.nav.joarkjournalfoeringhendelser.JournalfoeringHendelseRecord
+import no.nav.ocr.tesseract.withTesseract
 import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.api.registerNaisApi
 import no.nav.syfo.application.createApplicationEngine
@@ -36,7 +37,6 @@ import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
-import no.nav.syfo.client.OcrShadowHttpClient
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
@@ -51,7 +51,8 @@ import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.BucketUploadService
-import no.nav.syfo.service.OcrParserImCompareService
+import no.nav.syfo.service.OcrParserImComparisonService
+import no.nav.syfo.service.OcrParserService
 import no.nav.syfo.service.OcrShadowService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
@@ -61,6 +62,7 @@ import no.nav.syfo.util.TrackableException
 import no.nav.syfo.utland.DigitaliseringsoppgaveKafka
 import no.nav.syfo.utland.SykDigProducer
 import no.nav.syfo.utland.UtenlandskSykmeldingService
+import no.nav.sykmelding.api.SykmeldingOcrParser
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -168,22 +170,10 @@ fun Application.module() {
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
-    // OCR-parsing er asynkron: klienten gjør korte kall (POST gir 202 + jobId, deretter polling
-    // av GET /api/parse/{jobId}). Ingen enkelt-request holdes åpen lenge, så en moderat
-    // per-kall-timeout holder. noRetry() hindrer at basisklientens 5xx-retry prøver GET-poll på
-    // nytt når en OCR-jobb faktisk feiler (500). Den totale poll-fristen styres i
-    // OcrShadowHttpClient.
-    val ocrHttpClient =
-        httpClient.config {
-            install(HttpTimeout) {
-                connectTimeoutMillis = 10_000
-                socketTimeoutMillis = 60_000
-                requestTimeoutMillis = 60_000
-            }
-            install(HttpRequestRetry) { noRetry() }
-        }
-    val ocrShadowHttpClient =
-        OcrShadowHttpClient(azureAdV2Client, env.ocrServiceScope, ocrHttpClient, env.ocrServiceUrl)
+    // OCR-parsing kjøres nå i prosess via biblioteket sykmelding-ocr-parser (engine-tesseract).
+    // Parseren er stateful/Closeable og eies av OcrParserService; den lukkes ved shutdown lenger
+    // nede. Krever Tesseract-runtime + tessdata i containeren (se Dockerfile).
+    val ocrParserService = OcrParserService(SykmeldingOcrParser.withTesseract())
 
     val safJournalpostClient =
         SafJournalpostClient(httpClient, "${env.safV1Url}/graphql", azureAdV2Client, env.safScope)
@@ -215,12 +205,12 @@ fun Application.module() {
 
     val storage = StorageOptions.newBuilder().build().service
     val bucketUploadService = BucketUploadService(safDokumentClient, storage, env.bucketName)
-    val ocrParserImCompareService = OcrParserImCompareService()
+    val ocrParserImComparisonService = OcrParserImComparisonService()
     val ocrShadowService =
         OcrShadowService(
             safDokumentClient = safDokumentClient,
-            ocrShadowHttpClient = ocrShadowHttpClient,
-            ocrParserImCompareService = ocrParserImCompareService,
+            ocrParserService = ocrParserService,
+            ocrParserImComparisonService = ocrParserImComparisonService,
         )
 
     val sykmeldingService =
@@ -264,7 +254,7 @@ fun Application.module() {
         applicationState.ready = false
         applicationState.alive = false
         httpClient.close()
-        ocrHttpClient.close()
+        ocrParserService.close()
     }
 }
 
