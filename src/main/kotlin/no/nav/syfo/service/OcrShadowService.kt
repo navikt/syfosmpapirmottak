@@ -13,7 +13,6 @@ import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 import no.nav.sykmelding.api.OcrParsedSykmelding
 
-/** Identifiserer det konkrete PDF-dokumentet en shadow-sammenligning gjelder. */
 data class OcrShadowDokumentInfo(
     val sykmeldingId: String,
     val journalpostId: String,
@@ -23,16 +22,11 @@ data class OcrShadowDokumentInfo(
     val filNamn: String,
 )
 
-/**
- * Kjører ny OCR-tjeneste parallelt med eksisterende OCR-flyt og logger resultater til securelog for
- * sammenligning. Påvirker aldri produksjonsflyten — alle feil svelges og logges som warn.
- *
- * Fjernes etter at sammenligningstrial er ferdig og ny OCR er tatt i bruk.
- */
+
 class OcrShadowService(
     private val safDokumentClient: SafDokumentClient,
     private val ocrParserService: OcrParserService,
-    private val ocrParserImCompareService: OcrParserImCompareService,
+    private val ocrParserImComparisonService: OcrParserImComparisonService,
 ) {
     private val shadowScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -103,7 +97,7 @@ class OcrShadowService(
                 )
 
                 if (gammelOcr != null) {
-                    ocrParserImCompareService.compare(
+                    ocrParserImComparisonService.compare(
                         nyttOcrResultat = nyttOcrResultat,
                         ironMountainOcrResultat = gammelOcr,
                         sykmeldingId = sykmeldingId,

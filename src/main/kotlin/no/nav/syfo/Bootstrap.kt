@@ -51,7 +51,7 @@ import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.BucketUploadService
-import no.nav.syfo.service.OcrParserImCompareService
+import no.nav.syfo.service.OcrParserImComparisonService
 import no.nav.syfo.service.OcrParserService
 import no.nav.syfo.service.OcrShadowService
 import no.nav.syfo.service.OppgaveService
@@ -205,12 +205,12 @@ fun Application.module() {
 
     val storage = StorageOptions.newBuilder().build().service
     val bucketUploadService = BucketUploadService(safDokumentClient, storage, env.bucketName)
-    val ocrParserImCompareService = OcrParserImCompareService()
+    val ocrParserImComparisonService = OcrParserImComparisonService()
     val ocrShadowService =
         OcrShadowService(
             safDokumentClient = safDokumentClient,
             ocrParserService = ocrParserService,
-            ocrParserImCompareService = ocrParserImCompareService,
+            ocrParserImComparisonService = ocrParserImComparisonService,
         )
 
     val sykmeldingService =

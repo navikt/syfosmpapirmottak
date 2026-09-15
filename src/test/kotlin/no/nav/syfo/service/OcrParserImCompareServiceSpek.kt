@@ -32,7 +32,7 @@ import org.amshove.kluent.shouldContain
 
 class OcrParserImCompareServiceSpek :
     FunSpec({
-        val service = OcrParserImCompareService()
+        val service = OcrParserImComparisonService()
 
         fun nyttOcr() =
             OcrParsedSykmelding(

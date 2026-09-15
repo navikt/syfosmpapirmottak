@@ -18,7 +18,7 @@ internal data class FeltSammenligning(
     val lik: Boolean,
 )
 
-class OcrParserImCompareService {
+class OcrParserImComparisonService {
 
     fun compare(
         nyttOcrResultat: OcrParsedSykmelding,
