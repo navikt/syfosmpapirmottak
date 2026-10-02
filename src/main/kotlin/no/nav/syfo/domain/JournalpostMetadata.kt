@@ -18,7 +18,7 @@ data class JournalpostMetadata(
 data class Bruker(val id: String?, val type: String?)
 
 data class DokumentFilInfo(
-    val filNamn: String,
+    val filNamn: String?,
     val filUUID: String,
     val filType: String,
     val variantFormat: DokumentVariantFormat,

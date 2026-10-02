@@ -23,7 +23,7 @@ data class OcrShadowDokumentInfo(
     val dokumentInfoId: String,
     val filUuid: String,
     val filType: String,
-    val filNamn: String,
+    val filNamn: String?,
 ) {
     /**
      * Opaque correlation token for shadow-service's `X-Document-Reference` header (see
