@@ -46,10 +46,16 @@ To build locally and run the integration tests you can simply run `./gradlew ins
 #### Creating a docker image
 Creating a docker image should be as simple as `docker build -t syfosmpapirmottak .`
 
-### Upgrading the gradle wrapper
-Find the newest version of gradle here: https://gradle.org/releases/ Then run this command:
+### Upgrading the Gradle wrapper version to latest version
 
-```./gradlew wrapper --gradle-version $gradleVersjon```
+```bash
+./gradlew wrapper --gradle-version latest
+```
+
+### Finding new available dependencies
+``` bash
+./gradlew dependencyUpdates
+```
 
 ### Contact
 

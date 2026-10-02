@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 group = "no.nav.syfo"
 version = "1.0.0"
@@ -7,14 +8,14 @@ val coroutinesVersion = "1.11.0"
 val kafkaVersion = "4.3.1"
 val kluentVersion = "1.73"
 val ktorVersion = "3.6.0"
-val logbackVersion = "1.6.3"
+val logbackVersion = "1.6.5"
 val logstashLogbackEncoderVersion = "9.0"
 val prometheusVersion = "0.16.0"
-val kotestVersion = "5.9.1"
+val kotestVersion = "6.2.5"
 val jaxbApiVersion = "2.1"
 val jaxbVersion = "2.3.0.1"
 val javaxActivationVersion = "1.1.1"
-val jacksonVersion = "3.2.2"
+val jacksonVersion = "3.2.3"
 val joarkHendelseVersion = "1.1.6"
 val confluentVersion = "8.1.4"
 val syfoXmlCodegenVersion = "2.0.1"
@@ -23,18 +24,19 @@ val javaxAnnotationApiVersion = "1.3.2"
 val jaxbRuntimeVersion = "2.4.0-b180830.0438"
 val javaTimeAdapterVersion = "1.1.3"
 val ioMockVersion = "1.14.4"
-val kotlinVersion = "2.4.10"
-val caffeineVersion = "3.2.1"
+val kotlinVersion = "2.4.20"
+val caffeineVersion = "3.3.0"
 val ktfmtVersion = "0.56"
 val diagnosekoderVersion = "1.2026.0"
-val googleCloudStorageVersion = "2.70.0"
+val googleCloudStorageVersion = "2.75.0"
 
 val javaVersion = JvmTarget.JVM_25
 
 plugins {
     id("application")
-    kotlin("jvm") version "2.4.10"
-    id("com.diffplug.spotless") version "8.10.1"
+    kotlin("jvm") version "2.4.20"
+    id("com.diffplug.spotless") version "8.10.3"
+    id("io.github.ben-manes.versions") version "0.64.0"
 }
 
 application {
@@ -134,6 +136,19 @@ tasks {
         kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
         check {
             dependsOn("spotlessApply")
+        }
+    }
+
+    named<DependencyUpdatesTask>("dependencyUpdates") {
+        fun String.isNonStable(): Boolean {
+            val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { uppercase().contains(it) }
+            val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+            val isStable = stableKeyword || regex.matches(this)
+            return isStable.not()
+        }
+
+        rejectVersionIf {
+            candidate.version.isNonStable()
         }
     }
 }

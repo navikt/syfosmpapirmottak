@@ -138,16 +138,15 @@ class PapirSmMapperServiceSpek :
                     ?.medisinskArsak
                     ?.beskrivelse!! shouldBeEqualTo
                     "Han kan ikke gå rundt og være stasjonsmester med en pågående lungesykdom, i et miljø med kullfyrte tog"
-                papirSm.perioder
-                    ?.get(0)
-                    ?.aktivitetIkkeMulig
+                papirSm.perioder[0]
+                    .aktivitetIkkeMulig
                     ?.arbeidsrelatertArsak
                     ?.beskrivelse!! shouldBeEqualTo "Ordner seg!"
-                papirSm.perioder?.get(1)?.gradert?.grad shouldBeEqualTo 50
-                papirSm.perioder?.get(2)?.avventendeInnspillTilArbeidsgiver shouldBeEqualTo
+                papirSm.perioder[1].gradert?.grad shouldBeEqualTo 50
+                papirSm.perioder[2].avventendeInnspillTilArbeidsgiver shouldBeEqualTo
                     "Dere burde vurdere å skifte fra kulldrevne lokomotiver til moderne elektriske lokomotiver uten utslipp."
-                papirSm.perioder?.get(3)?.behandlingsdager shouldBeEqualTo 30
-                papirSm.perioder?.get(4)?.reisetilskudd shouldBeEqualTo true
+                papirSm.perioder[3].behandlingsdager shouldBeEqualTo 30
+                papirSm.perioder[4].reisetilskudd shouldBeEqualTo true
 
                 papirSm.prognose?.arbeidsforEtterPeriode shouldBeEqualTo true
                 papirSm.prognose?.hensynArbeidsplassen shouldBeEqualTo
