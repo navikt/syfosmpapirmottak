@@ -3,23 +3,18 @@ package no.nav.syfo
 import com.google.cloud.storage.StorageOptions
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
-import io.ktor.client.HttpClient
-import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.apache5.Apache5
-import io.ktor.client.engine.apache5.Apache5EngineConfig
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpResponseValidator
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.jackson3.jackson
+import io.ktor.client.*
+import io.ktor.client.engine.apache5.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.jackson3.*
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 import io.prometheus.client.hotspot.DefaultExports
 import java.net.SocketTimeoutException
 import java.time.Duration
-import java.util.Properties
-import java.util.UUID
+import java.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +31,6 @@ import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.client.DokArkivClient
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
-import no.nav.syfo.client.OcrShadowHttpClient
 import no.nav.syfo.client.OppgaveClient
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafJournalpostClient
@@ -51,8 +45,6 @@ import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.BucketUploadService
-import no.nav.syfo.service.OcrParserImCompareService
-import no.nav.syfo.service.OcrShadowService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.util.JacksonKafkaSerializer
@@ -168,23 +160,6 @@ fun Application.module() {
 
     val azureAdV2Client = AzureAdV2Client(env, httpClient)
 
-    // OCR-parsing er asynkron: klienten gjør korte kall (POST gir 202 + jobId, deretter polling
-    // av GET /api/parse/{jobId}). Ingen enkelt-request holdes åpen lenge, så en moderat
-    // per-kall-timeout holder. noRetry() hindrer at basisklientens 5xx-retry prøver GET-poll på
-    // nytt når en OCR-jobb faktisk feiler (500). Den totale poll-fristen styres i
-    // OcrShadowHttpClient.
-    val ocrHttpClient =
-        httpClient.config {
-            install(HttpTimeout) {
-                connectTimeoutMillis = 10_000
-                socketTimeoutMillis = 60_000
-                requestTimeoutMillis = 60_000
-            }
-            install(HttpRequestRetry) { noRetry() }
-        }
-    val ocrShadowHttpClient =
-        OcrShadowHttpClient(azureAdV2Client, env.ocrServiceScope, ocrHttpClient, env.ocrServiceUrl)
-
     val safJournalpostClient =
         SafJournalpostClient(httpClient, "${env.safV1Url}/graphql", azureAdV2Client, env.safScope)
     val safDokumentClient =
@@ -215,13 +190,6 @@ fun Application.module() {
 
     val storage = StorageOptions.newBuilder().build().service
     val bucketUploadService = BucketUploadService(safDokumentClient, storage, env.bucketName)
-    val ocrParserImCompareService = OcrParserImCompareService()
-    val ocrShadowService =
-        OcrShadowService(
-            safDokumentClient = safDokumentClient,
-            ocrShadowHttpClient = ocrShadowHttpClient,
-            ocrParserImCompareService = ocrParserImCompareService,
-        )
 
     val sykmeldingService =
         SykmeldingService(
@@ -238,7 +206,6 @@ fun Application.module() {
             smregistreringTopic = env.smregistreringTopic,
             icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
             bucketUploadService = bucketUploadService,
-            ocrShadowService = ocrShadowService,
         )
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
@@ -264,7 +231,6 @@ fun Application.module() {
         applicationState.ready = false
         applicationState.alive = false
         httpClient.close()
-        ocrHttpClient.close()
     }
 }
 

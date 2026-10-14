@@ -58,7 +58,6 @@ class SykmeldingService(
     private val smregistreringTopic: String,
     icpc2BDiagnoserDeffered: Deferred<Map<String, List<Icpc2BDiagnoser>>>,
     private val bucketUploadService: BucketUploadService,
-    private val ocrShadowService: OcrShadowService? = null,
 ) {
 
     private var icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>> = emptyMap()
@@ -120,15 +119,6 @@ class SykmeldingService(
                         sykmeldingId = sykmeldingId,
                     )
                 }
-
-                ocrShadowService?.compareAsync(
-                    journalpostId = journalpostId,
-                    dokumentInfoIdPdf = dokumentInfoIdPdf,
-                    alleDokumenter = alleDokumenter,
-                    gammelOcr = ocrFil,
-                    sykmeldingId = sykmeldingId,
-                    loggingMeta = loggingMeta,
-                )
 
                 ocrFil?.let { ocr ->
                     sykmelder =
