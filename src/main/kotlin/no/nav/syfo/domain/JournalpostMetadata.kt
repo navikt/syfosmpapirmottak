@@ -12,14 +12,15 @@ data class JournalpostMetadata(
     val gjelderUtland: Boolean,
     val datoOpprettet: LocalDateTime?,
     val dokumentInfoIdPdf: String,
-    val alleDokumenter: Map<String, List<DokumentFilInfo>>?,
+    val alleDokumenter: List<DokumentInfo>,
 )
 
 data class Bruker(val id: String?, val type: String?)
 
-data class DokumentFilInfo(
-    val filNamn: String?,
+data class DokumentInfo(
+    val journalpostId: String,
+    val dokumentInfoId: String,
+    val filtype: String,
     val filUUID: String,
-    val filType: String,
     val variantFormat: DokumentVariantFormat,
 )

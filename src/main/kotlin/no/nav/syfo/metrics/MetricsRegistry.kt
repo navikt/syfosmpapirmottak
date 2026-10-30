@@ -127,3 +127,19 @@ val DIAGNOSEKODE_ICPC2B_COUNTER: Counter =
         .help("Antall sykmeldinger som har ICPC2B-diagnosetekst")
         .labelNames("code", "diagnose")
         .register()
+
+val OCR_SAMMENLIGNING: Counter =
+    Counter.build()
+        .namespace(NAMESPACE)
+        .name("ocr_sammenligning_count")
+        .labelNames("resultat")
+        .help("Sammenligning av tsm-ocr mot ocr-fil fra skanning")
+        .register()
+
+val OCR_SAMMENLIGNING_AVVIK_FELT: Counter =
+    Counter.build()
+        .namespace(NAMESPACE)
+        .name("ocr_sammenligning_avvik_felt_count")
+        .labelNames("felt")
+        .help("Felter som avviker mellom tsm-ocr og ocr-fil fra skanning")
+        .register()

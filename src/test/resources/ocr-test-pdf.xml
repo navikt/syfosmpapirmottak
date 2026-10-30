@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<skanningmetadata>
+    <sykemeldinger>
+        <pasient>
+            <fnr>30898098466</fnr>
+        </pasient>
+        <arbeidsgiver>
+            <harArbeidsgiver>En</harArbeidsgiver>
+            <stillingsprosent>100</stillingsprosent>
+        </arbeidsgiver>
+        <medisinskVurdering>
+            <hovedDiagnose>
+                <diagnosekodeSystem>ICPC2</diagnosekodeSystem>
+                <diagnosekode>R74</diagnosekode>
+                <diagnose>Akutt øvre luftveisinfeksjon</diagnose>
+            </hovedDiagnose>
+            <bidiagnose>
+                <diagnosekodeSystem>ICPC2</diagnosekodeSystem>
+                <diagnosekode>R74</diagnosekode>
+                <diagnose>Akutt øvre luftveisinfeksjon</diagnose>
+            </bidiagnose>
+            <svangerskap>true</svangerskap>
+            <yrkesskade>false</yrkesskade>
+            <skjermesForPasient>true</skjermesForPasient>
+        </medisinskVurdering>
+        <aktivitet>
+            <aktivitetIkkeMulig>
+                <periodeFOMDato>2026-01-01</periodeFOMDato>
+                <periodeTOMDato>2026-01-20</periodeTOMDato>
+                <medisinskeArsaker>
+                    <medArsakerHindrer>true</medArsakerHindrer>
+                </medisinskeArsaker>
+            </aktivitetIkkeMulig>
+        </aktivitet>
+        <prognose>
+            <friskmelding>
+                <arbeidsforEtterEndtPeriode>false</arbeidsforEtterEndtPeriode>
+            </friskmelding>
+        </prognose>
+        <utdypendeOpplysninger/>
+        <tiltak/>
+        <meldingTilNAV>
+            <bistandNAVUmiddelbart>true</bistandNAVUmiddelbart>
+            <beskrivBistandNAV>Ønsker bistand</beskrivBistandNAV>
+        </meldingTilNAV>
+        <meldingTilArbeidsgiver>meling til arbeidsgiver</meldingTilArbeidsgiver>
+        <tilbakedatering/>
+        <kontaktMedPasient/>
+        <behandler/>
+    </sykemeldinger>
+</skanningmetadata>

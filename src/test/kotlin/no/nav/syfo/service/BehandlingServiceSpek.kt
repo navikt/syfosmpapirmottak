@@ -55,7 +55,7 @@ class BehandlingServiceSpek :
                     gjelderUtland = false,
                     datoOpprettet = datoOpprettet,
                     dokumentInfoIdPdf = "",
-                    alleDokumenter = null,
+                    alleDokumenter = emptyList(),
                 )
             coEvery {
                 sykmeldingServiceMock.behandleSykmelding(
@@ -213,7 +213,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
 
                 behandlingService.handleJournalpost(
@@ -265,7 +265,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
 
                 behandlingService.handleJournalpost(
@@ -317,7 +317,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = true,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
 
                 behandlingService.handleJournalpost(
@@ -398,7 +398,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
 
                 behandlingService.handleJournalpost(
@@ -437,7 +437,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
 
                 behandlingService.handleJournalpost(
@@ -503,7 +503,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
                 val pasient =
                     PdlPerson(
@@ -550,7 +550,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
                 coEvery { pdlService.getPdlPerson(any(), any()) } throws
                     IllegalStateException("feilmelding")
@@ -584,7 +584,7 @@ class BehandlingServiceSpek :
                         gjelderUtland = false,
                         datoOpprettet = datoOpprettet,
                         dokumentInfoIdPdf = "",
-                        alleDokumenter = null,
+                        alleDokumenter = emptyList(),
                     )
 
                 behandlingService.handleJournalpost(

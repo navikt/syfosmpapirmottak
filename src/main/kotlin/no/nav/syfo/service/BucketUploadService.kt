@@ -9,57 +9,36 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import no.nav.syfo.client.SafDokumentClient
-import no.nav.syfo.domain.DokumentFilInfo
+import no.nav.syfo.domain.DokumentInfo
 import no.nav.syfo.log
-import no.nav.syfo.util.LoggingMeta
 
 class BucketUploadService(
     private val safDokumentClient: SafDokumentClient,
     val storage: Storage,
     val bucketName: String,
 ) {
-    suspend fun uploadDocuments(
-        journalpostId: String,
-        alleDokumenter: Map<String, List<DokumentFilInfo>>,
-        loggingMeta: LoggingMeta,
-        sykmeldingId: String,
-    ) {
+    suspend fun uploadDocuments(alleDokumenter: List<Pair<DokumentInfo, ByteArray>>) {
         coroutineScope {
             val jobs = mutableListOf<Deferred<Unit>>()
+
             alleDokumenter.forEach { dokument ->
-                dokument.value.forEach { dokumentVariant ->
-                    jobs +=
-                        async(Dispatchers.IO) {
-                            val hentetDokument =
-                                safDokumentClient.getDocument(
-                                    journalpostId = journalpostId,
-                                    dokumentInfoId = dokument.key,
-                                    dokumentVariant = dokumentVariant,
-                                    loggingMeta = loggingMeta,
-                                    msgId = sykmeldingId,
-                                )
-                            saveToBucket(
-                                journalpostId = journalpostId,
-                                dokumentInfoId = dokument.key,
-                                dokumentVariant = dokumentVariant,
-                                hentetDokument = hentetDokument,
-                            )
-                        }
-                }
+                jobs +=
+                    async(Dispatchers.IO) {
+                        saveToBucket(
+                            dokumentVariant = dokument.first,
+                            hentetDokument = dokument.second,
+                        )
+                    }
             }
 
             jobs.awaitAll()
         }
     }
 
-    private fun saveToBucket(
-        journalpostId: String,
-        dokumentInfoId: String,
-        dokumentVariant: DokumentFilInfo,
-        hentetDokument: ByteArray,
-    ) {
-        val filType = dokumentVariant.filType.lowercase()
-        val blobName = "${journalpostId}_${dokumentInfoId}_${dokumentVariant.filUUID}.$filType"
+    private fun saveToBucket(dokumentVariant: DokumentInfo, hentetDokument: ByteArray) {
+        val filType = dokumentVariant.filtype.lowercase()
+        val blobName =
+            "${dokumentVariant.journalpostId}_${dokumentVariant.dokumentInfoId}_${dokumentVariant.filUUID}.$filType"
         val existing = storage.get(bucketName, blobName)
         if (existing == null) {
             val blob =
@@ -68,11 +47,11 @@ class BucketUploadService(
                     .build()
             storage.create(blob, hentetDokument)
             log.info(
-                "Lagrer dokument i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}. Namn på dokument er: $blobName"
+                "Lagrer dokument i bucket for journalpostId: ${dokumentVariant.journalpostId}, dokumentInfoId: ${dokumentVariant.dokumentInfoId}, variant: ${dokumentVariant.variantFormat.name}. Namn på dokument er: $blobName"
             )
         } else {
             log.info(
-                "Dokument finnes allerede i bucket for journalpostId: $journalpostId, dokumentInfoId: $dokumentInfoId, variant: ${dokumentVariant.variantFormat.name}"
+                "Dokument finnes allerede i bucket for journalpostId: ${dokumentVariant.journalpostId}, dokumentInfoId: ${dokumentVariant.dokumentInfoId}, variant: ${dokumentVariant.variantFormat.name}"
             )
         }
     }

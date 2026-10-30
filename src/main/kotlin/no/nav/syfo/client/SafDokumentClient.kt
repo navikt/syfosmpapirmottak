@@ -6,22 +6,17 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.NotFound
-import java.io.ByteArrayInputStream
 import java.io.IOException
 import javax.xml.bind.JAXBException
-import javax.xml.parsers.SAXParserFactory
-import javax.xml.transform.Source
-import javax.xml.transform.sax.SAXSource
 import net.logstash.logback.argument.StructuredArguments.fields
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.azure.v2.AzureAdV2Client
 import no.nav.syfo.azure.v2.AzureAdV2Token
-import no.nav.syfo.domain.DokumentFilInfo
+import no.nav.syfo.domain.DokumentInfo
 import no.nav.syfo.log
 import no.nav.syfo.metrics.PAPIRSM_HENTDOK_FEIL
 import no.nav.syfo.util.LoggingMeta
-import no.nav.syfo.util.skanningMetadataUnmarshaller
-import org.xml.sax.InputSource
+import no.nav.syfo.util.safeUnmarshalSkanningmetadata
 
 class SafDokumentClient(
     private val url: String,
@@ -111,12 +106,12 @@ class SafDokumentClient(
     suspend fun getDocument(
         journalpostId: String,
         dokumentInfoId: String,
-        dokumentVariant: DokumentFilInfo,
+        dokumentVariant: DokumentInfo,
         loggingMeta: LoggingMeta,
         msgId: String,
     ): ByteArray {
         val accessToken = getAccessToken()
-        val dokumentFilType = dokumentVariant.filType
+        val dokumentFilType = dokumentVariant.filtype
 
         val httpResponse: HttpResponse =
             httpClient.get(
@@ -167,20 +162,6 @@ class SafDokumentClient(
             "txt" -> ContentType.Text.Plain
             else -> ContentType.Application.OctetStream
         }
-    }
-
-    private fun safeUnmarshalSkanningmetadata(
-        inputMessageText: ByteArrayInputStream
-    ): Skanningmetadata {
-        // Disable XXE
-        val spf: SAXParserFactory = SAXParserFactory.newInstance()
-        spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
-        spf.isNamespaceAware = true
-
-        val xmlSource: Source =
-            SAXSource(spf.newSAXParser().xmlReader, InputSource(inputMessageText))
-
-        return skanningMetadataUnmarshaller.unmarshal(xmlSource) as Skanningmetadata
     }
 }
 
