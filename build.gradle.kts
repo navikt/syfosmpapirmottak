@@ -29,7 +29,7 @@ val caffeineVersion = "3.3.0"
 val ktfmtVersion = "0.56"
 val diagnosekoderVersion = "1.2026.0"
 val googleCloudStorageVersion = "2.75.0"
-val sykmeldingOcrVersion = "0.0.4"
+val sykmeldingOcrVersion = "0.0.5"
 val javaVersion = JvmTarget.JVM_25
 
 plugins {

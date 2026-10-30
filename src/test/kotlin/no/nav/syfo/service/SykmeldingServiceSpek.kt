@@ -591,14 +591,20 @@ class SykmeldingServiceSpek :
 
         context("Sammenligning av tsm-ocr mot ocr-fil") {
             val pdfDokument =
-                DokumentInfo(journalpostId, "pdfDokumentInfoId", "PDF", "pdfUUID", DokumentVariantFormat.ARKIV)
-            val testPdf = SykmeldingServiceSpek::class.java.getResourceAsStream("/test.pdf")!!.readBytes()
+                DokumentInfo(
+                    journalpostId,
+                    "pdfDokumentInfoId",
+                    "PDF",
+                    "pdfUUID",
+                    DokumentVariantFormat.ARKIV,
+                )
+            val testPdf =
+                SykmeldingServiceSpek::class.java.getResourceAsStream("/test.pdf")!!.readBytes()
 
             fun ocrFilForTestPdf(): Skanningmetadata =
-                SykmeldingServiceSpek::class
-                    .java
-                    .getResourceAsStream("/ocr-test-pdf.xml")!!
-                    .use { safeUnmarshalSkanningmetadata(ByteArrayInputStream(it.readBytes())) }
+                SykmeldingServiceSpek::class.java.getResourceAsStream("/ocr-test-pdf.xml")!!.use {
+                    safeUnmarshalSkanningmetadata(ByteArrayInputStream(it.readBytes()))
+                }
 
             suspend fun tsmOcrForTestPdf(): Skanningmetadata =
                 OcrService().tryPapirsykmeldingOcr(mapOf(pdfDokument to testPdf), loggingMetadata)!!
