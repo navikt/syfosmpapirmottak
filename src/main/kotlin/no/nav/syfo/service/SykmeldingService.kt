@@ -20,11 +20,13 @@ import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
 import no.nav.syfo.client.TssException
-import no.nav.syfo.domain.DokumentFilInfo
+import no.nav.syfo.domain.DokumentInfo
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.domain.Sykmelder
 import no.nav.syfo.log
 import no.nav.syfo.metrics.FEILARSAK
+import no.nav.syfo.metrics.OCR_SAMMENLIGNING
+import no.nav.syfo.metrics.OCR_SAMMENLIGNING_AVVIK_FELT
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
@@ -34,13 +36,16 @@ import no.nav.syfo.model.ReceivedSykmeldingWithValidation
 import no.nav.syfo.model.Status
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
+import no.nav.syfo.securelog
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.fellesformatMarshaller
 import no.nav.syfo.util.get
 import no.nav.syfo.util.getLocalDateTime
+import no.nav.syfo.util.safeUnmarshalSkanningmetadata
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.slf4j.LoggerFactory
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SykmeldingService(
@@ -58,7 +63,10 @@ class SykmeldingService(
     private val smregistreringTopic: String,
     icpc2BDiagnoserDeffered: Deferred<Map<String, List<Icpc2BDiagnoser>>>,
     private val bucketUploadService: BucketUploadService,
+    private val ocrService: OcrService,
 ) {
+
+    private val log = LoggerFactory.getLogger(SykmeldingService::class.java)
 
     private var icpc2BDiagnoser: Map<String, List<Icpc2BDiagnoser>> = emptyMap()
 
@@ -81,13 +89,13 @@ class SykmeldingService(
         temaEndret: Boolean,
         loggingMeta: LoggingMeta,
         sykmeldingId: String,
-        alleDokumenter: Map<String, List<DokumentFilInfo>>?,
+        alleDokumenter: List<DokumentInfo>,
     ) {
         log.info("Mottatt norsk papirsykmelding, {}", fields(loggingMeta))
         PAPIRSM_MOTTATT_NORGE.inc()
 
         var sykmelder: Sykmelder? = null
-        var ocrFil: Skanningmetadata? = null
+        var skanningmetadata: Skanningmetadata? = null
         if (pasient?.aktorId == null || pasient.fnr == null) {
             oppgaveService.opprettFordelingsOppgave(
                 journalpostId = journalpostId,
@@ -98,29 +106,48 @@ class SykmeldingService(
             return
         } else {
             try {
-                ocrFil =
-                    if (!dokumentInfoId.isNullOrEmpty()) {
-                        safDokumentClient.getXmlDokument(
-                            journalpostId = journalpostId,
-                            dokumentInfoId = dokumentInfoId,
-                            msgId = sykmeldingId,
-                            loggingMeta = loggingMeta,
-                            dokumentVariant = DokumentVariantFormat.ORIGINAL,
-                        )
-                    } else {
-                        null
-                    }
 
-                if (alleDokumenter != null) {
-                    bucketUploadService.uploadDocuments(
-                        journalpostId = journalpostId,
-                        alleDokumenter = alleDokumenter,
-                        loggingMeta = loggingMeta,
-                        sykmeldingId = sykmeldingId,
-                    )
+                val dokumenter =
+                    alleDokumenter
+                        .filter {
+                            it.variantFormat == DokumentVariantFormat.ARKIV ||
+                                it.variantFormat == DokumentVariantFormat.ORIGINAL
+                        }
+                        .map {
+                            it to
+                                safDokumentClient.getDocument(
+                                    journalpostId,
+                                    it.dokumentInfoId,
+                                    it,
+                                    loggingMeta,
+                                    sykmeldingId,
+                                )
+                        }
+
+                val ocrFilIronMountain =
+                    dokumenter
+                        .singleOrNull { it.first.variantFormat == DokumentVariantFormat.ORIGINAL }
+                        ?.let { safeUnmarshalSkanningmetadata(it.second.inputStream()) }
+
+                bucketUploadService.uploadDocuments(alleDokumenter = dokumenter)
+
+                val tsmSkanningmetadata =
+                    ocrService.tryPapirsykmeldingOcr(dokumenter.toMap(), loggingMeta)
+                if (tsmSkanningmetadata != null) {
+                    log.info("Ocr result received for $journalpostId")
+                    val ocrAvvik =
+                        ocrFilIronMountain?.let {
+                            sammenlignOcr(journalpostId, it, tsmSkanningmetadata, loggingMeta)
+                        }
                 }
 
-                ocrFil?.let { ocr ->
+                val skanningmetadata = tsmSkanningmetadata ?: ocrFilIronMountain
+
+                if (tsmSkanningmetadata == null && ocrFilIronMountain != null) {
+                    log.info("Using OCR from iron mountaint for $journalpostId")
+                }
+
+                skanningmetadata?.let { ocr ->
                     sykmelder =
                         hentSykmelder(
                             ocrFil = ocr,
@@ -221,7 +248,7 @@ class SykmeldingService(
                             loggingMeta = loggingMeta,
                             sykmeldingId = sykmeldingId,
                             sykmelder = sykmelder,
-                            ocrFil = ocrFil,
+                            ocrFil = ocr,
                             kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                             smregistreringTopic = smregistreringTopic,
                         )
@@ -269,7 +296,7 @@ class SykmeldingService(
                 loggingMeta = loggingMeta,
                 sykmeldingId = sykmeldingId,
                 sykmelder = sykmelder,
-                ocrFil = ocrFil,
+                ocrFil = skanningmetadata,
                 kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
                 smregistreringTopic = smregistreringTopic,
             )
@@ -398,6 +425,36 @@ class SykmeldingService(
                 fields(loggingMeta),
             )
             PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD.inc()
+        }
+    }
+
+    internal fun sammenlignOcr(
+        journalpostId: String,
+        ocrFil: Skanningmetadata,
+        tsmSkanningmetadata: Skanningmetadata,
+        loggingMeta: LoggingMeta,
+    ): List<OcrAvvik> {
+        return try {
+            val avvik = sammenlignSkanningmetadata(ocrFil, tsmSkanningmetadata)
+            if (avvik.isEmpty()) {
+                OCR_SAMMENLIGNING.labels("lik").inc()
+                log.info("Tsm-ocr er lik ocr-fil {}", fields(loggingMeta))
+            } else {
+                OCR_SAMMENLIGNING.labels("ulik").inc()
+                val felter = avvik.map { it.felt }.distinct()
+                felter.forEach { OCR_SAMMENLIGNING_AVVIK_FELT.labels(it).inc() }
+                log.info(
+                    "Tsm-ocr avviker fra ocr-fil i ${felter.size} felt(er): {}, {}",
+                    StructuredArguments.keyValue("ocrAvvik", felter.joinToString(", ")),
+                    fields(loggingMeta),
+                )
+                securelog.warn("Ocr avvik fra ocr $avvik")
+            }
+            avvik
+        } catch (e: Exception) {
+            OCR_SAMMENLIGNING.labels("feil").inc()
+            log.warn("Klarte ikke sammenligne tsm-ocr med ocr-fil {}", fields(loggingMeta), e)
+            emptyList()
         }
     }
 

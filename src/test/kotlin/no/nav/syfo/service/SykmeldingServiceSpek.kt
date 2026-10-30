@@ -7,6 +7,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkClass
 import io.mockk.spyk
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.math.BigInteger
 import java.time.LocalDate
@@ -23,6 +25,7 @@ import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.helse.papirsykemelding.SykemeldingerType
 import no.nav.syfo.client.Behandler
 import no.nav.syfo.client.DokArkivClient
+import no.nav.syfo.client.DokumentVariantFormat
 import no.nav.syfo.client.Icpc2BDiagnoser
 import no.nav.syfo.client.NorskHelsenettClient
 import no.nav.syfo.client.NyRegelClient
@@ -30,6 +33,7 @@ import no.nav.syfo.client.OppgaveResponse
 import no.nav.syfo.client.SafDokumentClient
 import no.nav.syfo.client.SafNotFoundException
 import no.nav.syfo.client.SmtssClient
+import no.nav.syfo.domain.DokumentInfo
 import no.nav.syfo.domain.PapirSmRegistering
 import no.nav.syfo.model.ReceivedSykmeldingWithValidation
 import no.nav.syfo.model.Status
@@ -38,6 +42,8 @@ import no.nav.syfo.pdl.model.Navn
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.util.LoggingMeta
+import no.nav.syfo.util.jaxbContext
+import no.nav.syfo.util.safeUnmarshalSkanningmetadata
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -70,6 +76,18 @@ class SykmeldingServiceSpek :
         val icpc2BDiagnoserDeferred =
             CompletableDeferred<Map<String, List<Icpc2BDiagnoser>>>(emptyMap())
         val bucketUploadService = mockk<BucketUploadService>()
+        val originalDokument =
+            DokumentInfo(
+                journalpostId,
+                dokumentInfoId,
+                "XML",
+                "filUUID",
+                DokumentVariantFormat.ORIGINAL,
+            )
+        fun toXml(skanningmetadata: Skanningmetadata): ByteArray =
+            ByteArrayOutputStream()
+                .also { jaxbContext.createMarshaller().marshal(skanningmetadata, it) }
+                .toByteArray()
         val sykmeldingService =
             SykmeldingService(
                 oppgaveserviceMock,
@@ -85,6 +103,7 @@ class SykmeldingServiceSpek :
                 "smregistrering",
                 icpc2BDiagnoserDeferred,
                 bucketUploadService,
+                OcrService(),
             )
 
         beforeTest {
@@ -104,10 +123,9 @@ class SykmeldingServiceSpek :
                     any(),
                 )
             } returns Unit
-            coEvery {
-                safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
-            } returns null
-            coEvery { bucketUploadService.uploadDocuments(any(), any(), any(), any()) } returns Unit
+            coEvery { safDokumentClientMock.getDocument(any(), any(), any(), any(), any()) } returns
+                ByteArray(0)
+            coEvery { bucketUploadService.uploadDocuments(any()) } returns Unit
             coEvery { norskHelsenettClientMock.finnBehandler(any(), any()) } returns
                 Behandler(emptyList(), fnrLege, "Fornavn", "Mellomnavn", "Etternavn")
             coEvery { regelClientMock.valider(any(), any()) } returns
@@ -125,7 +143,7 @@ class SykmeldingServiceSpek :
             test("Send til smregistrering hvis SAF svarer 500 ved henting av skanningMetadata") {
                 val sykmeldingServiceSpy = spyk(sykmeldingService)
                 coEvery {
-                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                    safDokumentClientMock.getDocument(any(), any(), any(), any(), any())
                 } throws IOException()
 
                 sykmeldingServiceSpy.behandleSykmelding(
@@ -137,14 +155,14 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null,
+                    alleDokumenter = listOf(originalDokument),
                 )
 
                 coEvery {
-                    safDokumentClientMock.getXmlDokument(
+                    safDokumentClientMock.getDocument(
                         journalpostId,
                         dokumentInfoId,
-                        any(),
+                        originalDokument,
                         any(),
                         any(),
                     )
@@ -184,11 +202,11 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null,
+                    alleDokumenter = emptyList(),
                 )
 
                 coVerify(exactly = 0) {
-                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                    safDokumentClientMock.getDocument(any(), any(), any(), any(), any())
                 }
                 coVerify(exactly = 0) {
                     oppgaveserviceMock.opprettOppgave(any(), any(), any(), any(), any())
@@ -220,7 +238,7 @@ class SykmeldingServiceSpek :
                 "Send til smregistrering hvis SAF returnerer 404 ved henting av skanningMetadata"
             ) {
                 coEvery {
-                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                    safDokumentClientMock.getDocument(any(), any(), any(), any(), any())
                 } throws SafNotFoundException("Fant ikke dokumentet for msgId 1234 i SAF")
 
                 sykmeldingService.behandleSykmelding(
@@ -232,14 +250,14 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null,
+                    alleDokumenter = listOf(originalDokument),
                 )
 
                 coVerify {
-                    safDokumentClientMock.getXmlDokument(
+                    safDokumentClientMock.getDocument(
                         journalpostId,
                         dokumentInfoId,
-                        any(),
+                        originalDokument,
                         any(),
                         any(),
                     )
@@ -256,36 +274,38 @@ class SykmeldingServiceSpek :
                 "Skanningmetadata mappes riktig til receivedSykmelding (Happy case, ordinær flyt uten feil)"
             ) {
                 coEvery {
-                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                    safDokumentClientMock.getDocument(any(), any(), any(), any(), any())
                 } returns
-                    Skanningmetadata().apply {
-                        sykemeldinger =
-                            SykemeldingerType().apply {
-                                pasient = PasientType().apply { fnr = "fnr" }
-                                behandler =
-                                    BehandlerType().apply {
-                                        hpr = BigInteger("123456")
-                                        aktivitet =
-                                            AktivitetType().apply {
-                                                aktivitetIkkeMulig =
-                                                    AktivitetIkkeMuligType().apply {
-                                                        periodeFOMDato =
-                                                            LocalDate.now().minusDays(2)
-                                                        periodeTOMDato =
-                                                            LocalDate.now().plusDays(10)
-                                                    }
-                                            }
-                                        medisinskVurdering =
-                                            MedisinskVurderingType().apply {
-                                                hovedDiagnose.add(
-                                                    HovedDiagnoseType().apply {
-                                                        diagnosekode = "S52.5"
-                                                    }
-                                                )
-                                            }
-                                    }
-                            }
-                    }
+                    toXml(
+                        Skanningmetadata().apply {
+                            sykemeldinger =
+                                SykemeldingerType().apply {
+                                    pasient = PasientType().apply { fnr = "fnr" }
+                                    behandler =
+                                        BehandlerType().apply {
+                                            hpr = BigInteger("123456")
+                                            aktivitet =
+                                                AktivitetType().apply {
+                                                    aktivitetIkkeMulig =
+                                                        AktivitetIkkeMuligType().apply {
+                                                            periodeFOMDato =
+                                                                LocalDate.now().minusDays(2)
+                                                            periodeTOMDato =
+                                                                LocalDate.now().plusDays(10)
+                                                        }
+                                                }
+                                            medisinskVurdering =
+                                                MedisinskVurderingType().apply {
+                                                    hovedDiagnose.add(
+                                                        HovedDiagnoseType().apply {
+                                                            diagnosekode = "S52.5"
+                                                        }
+                                                    )
+                                                }
+                                        }
+                                }
+                        }
+                    )
 
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId,
@@ -296,14 +316,14 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null,
+                    alleDokumenter = listOf(originalDokument),
                 )
 
                 coVerify {
-                    safDokumentClientMock.getXmlDokument(
+                    safDokumentClientMock.getDocument(
                         journalpostId,
                         dokumentInfoId,
-                        any(),
+                        originalDokument,
                         any(),
                         any(),
                     )
@@ -322,36 +342,38 @@ class SykmeldingServiceSpek :
                 coEvery { regelClientMock.valider(any(), any()) } returns
                     ValidationResult(Status.MANUAL_PROCESSING, emptyList())
                 coEvery {
-                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                    safDokumentClientMock.getDocument(any(), any(), any(), any(), any())
                 } returns
-                    Skanningmetadata().apply {
-                        sykemeldinger =
-                            SykemeldingerType().apply {
-                                pasient = PasientType().apply { fnr = "fnr" }
-                                behandler =
-                                    BehandlerType().apply {
-                                        hpr = BigInteger("123456")
-                                        aktivitet =
-                                            AktivitetType().apply {
-                                                aktivitetIkkeMulig =
-                                                    AktivitetIkkeMuligType().apply {
-                                                        periodeFOMDato =
-                                                            LocalDate.now().minusDays(2)
-                                                        periodeTOMDato =
-                                                            LocalDate.now().plusDays(10)
-                                                    }
-                                            }
-                                        medisinskVurdering =
-                                            MedisinskVurderingType().apply {
-                                                hovedDiagnose.add(
-                                                    HovedDiagnoseType().apply {
-                                                        diagnosekode = "S52.5"
-                                                    }
-                                                )
-                                            }
-                                    }
-                            }
-                    }
+                    toXml(
+                        Skanningmetadata().apply {
+                            sykemeldinger =
+                                SykemeldingerType().apply {
+                                    pasient = PasientType().apply { fnr = "fnr" }
+                                    behandler =
+                                        BehandlerType().apply {
+                                            hpr = BigInteger("123456")
+                                            aktivitet =
+                                                AktivitetType().apply {
+                                                    aktivitetIkkeMulig =
+                                                        AktivitetIkkeMuligType().apply {
+                                                            periodeFOMDato =
+                                                                LocalDate.now().minusDays(2)
+                                                            periodeTOMDato =
+                                                                LocalDate.now().plusDays(10)
+                                                        }
+                                                }
+                                            medisinskVurdering =
+                                                MedisinskVurderingType().apply {
+                                                    hovedDiagnose.add(
+                                                        HovedDiagnoseType().apply {
+                                                            diagnosekode = "S52.5"
+                                                        }
+                                                    )
+                                                }
+                                        }
+                                }
+                        }
+                    )
 
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId,
@@ -362,14 +384,14 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null,
+                    alleDokumenter = listOf(originalDokument),
                 )
 
                 coVerify {
-                    safDokumentClientMock.getXmlDokument(
+                    safDokumentClientMock.getDocument(
                         journalpostId,
                         dokumentInfoId,
-                        any(),
+                        originalDokument,
                         any(),
                         any(),
                     )
@@ -388,35 +410,37 @@ class SykmeldingServiceSpek :
                 coEvery { regelClientMock.valider(any(), any()) } returns
                     ValidationResult(Status.MANUAL_PROCESSING, emptyList())
                 coEvery {
-                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                    safDokumentClientMock.getDocument(any(), any(), any(), any(), any())
                 } returns
-                    Skanningmetadata().apply {
-                        sykemeldinger =
-                            SykemeldingerType().apply {
-                                pasient = PasientType().apply { fnr = "fnr" }
-                                behandler =
-                                    BehandlerType().apply {
-                                        hpr = BigInteger("123456")
-                                        aktivitet =
-                                            AktivitetType().apply {
-                                                aktivitetIkkeMulig =
-                                                    AktivitetIkkeMuligType().apply {
-                                                        periodeFOMDato =
-                                                            LocalDate.now().minusDays(180)
-                                                        periodeTOMDato = LocalDate.now()
-                                                    }
-                                            }
-                                        medisinskVurdering =
-                                            MedisinskVurderingType().apply {
-                                                hovedDiagnose.add(
-                                                    HovedDiagnoseType().apply {
-                                                        diagnosekode = "S52.5"
-                                                    }
-                                                )
-                                            }
-                                    }
-                            }
-                    }
+                    toXml(
+                        Skanningmetadata().apply {
+                            sykemeldinger =
+                                SykemeldingerType().apply {
+                                    pasient = PasientType().apply { fnr = "fnr" }
+                                    behandler =
+                                        BehandlerType().apply {
+                                            hpr = BigInteger("123456")
+                                            aktivitet =
+                                                AktivitetType().apply {
+                                                    aktivitetIkkeMulig =
+                                                        AktivitetIkkeMuligType().apply {
+                                                            periodeFOMDato =
+                                                                LocalDate.now().minusDays(180)
+                                                            periodeTOMDato = LocalDate.now()
+                                                        }
+                                                }
+                                            medisinskVurdering =
+                                                MedisinskVurderingType().apply {
+                                                    hovedDiagnose.add(
+                                                        HovedDiagnoseType().apply {
+                                                            diagnosekode = "S52.5"
+                                                        }
+                                                    )
+                                                }
+                                        }
+                                }
+                        }
+                    )
 
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId,
@@ -427,14 +451,14 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null,
+                    alleDokumenter = listOf(originalDokument),
                 )
 
                 coVerify {
-                    safDokumentClientMock.getXmlDokument(
+                    safDokumentClientMock.getDocument(
                         journalpostId,
                         dokumentInfoId,
-                        any(),
+                        originalDokument,
                         any(),
                         any(),
                     )
@@ -451,15 +475,17 @@ class SykmeldingServiceSpek :
 
             test("Går til smregistrering hvis mapping feiler") {
                 coEvery {
-                    safDokumentClientMock.getXmlDokument(any(), any(), any(), any(), any())
+                    safDokumentClientMock.getDocument(any(), any(), any(), any(), any())
                 } returns
-                    Skanningmetadata().apply {
-                        sykemeldinger =
-                            SykemeldingerType().apply {
-                                pasient = PasientType().apply { fnr = "feilFnr" }
-                                behandler = BehandlerType().apply { hpr = BigInteger("123456") }
-                            }
-                    }
+                    toXml(
+                        Skanningmetadata().apply {
+                            sykemeldinger =
+                                SykemeldingerType().apply {
+                                    pasient = PasientType().apply { fnr = "feilFnr" }
+                                    behandler = BehandlerType().apply { hpr = BigInteger("123456") }
+                                }
+                        }
+                    )
 
                 sykmeldingService.behandleSykmelding(
                     journalpostId = journalpostId,
@@ -470,14 +496,14 @@ class SykmeldingServiceSpek :
                     temaEndret = temaEndret,
                     loggingMeta = loggingMetadata,
                     sykmeldingId = sykmeldingId,
-                    alleDokumenter = null,
+                    alleDokumenter = listOf(originalDokument),
                 )
 
                 coVerify {
-                    safDokumentClientMock.getXmlDokument(
+                    safDokumentClientMock.getDocument(
                         journalpostId,
                         dokumentInfoId,
-                        any(),
+                        originalDokument,
                         any(),
                         any(),
                     )
@@ -560,6 +586,58 @@ class SykmeldingServiceSpek :
                         )
                     }
                 }
+            }
+        }
+
+        context("Sammenligning av tsm-ocr mot ocr-fil") {
+            val pdfDokument =
+                DokumentInfo(journalpostId, "pdfDokumentInfoId", "PDF", "pdfUUID", DokumentVariantFormat.ARKIV)
+            val testPdf = SykmeldingServiceSpek::class.java.getResourceAsStream("/test.pdf")!!.readBytes()
+
+            fun ocrFilForTestPdf(): Skanningmetadata =
+                SykmeldingServiceSpek::class
+                    .java
+                    .getResourceAsStream("/ocr-test-pdf.xml")!!
+                    .use { safeUnmarshalSkanningmetadata(ByteArrayInputStream(it.readBytes())) }
+
+            suspend fun tsmOcrForTestPdf(): Skanningmetadata =
+                OcrService().tryPapirsykmeldingOcr(mapOf(pdfDokument to testPdf), loggingMetadata)!!
+
+            test("Ingen avvik når ocr-fil er lik tsm-ocr av test.pdf") {
+                sykmeldingService.sammenlignOcr(
+                    journalpostId = journalpostId,
+                    ocrFil = ocrFilForTestPdf(),
+                    tsmSkanningmetadata = tsmOcrForTestPdf(),
+                    loggingMeta = loggingMetadata,
+                ) shouldBeEqualTo emptyList()
+            }
+
+            test("Returnerer avvik med verdier når ocr-fil avviker fra tsm-ocr av test.pdf") {
+                val ocrFil =
+                    ocrFilForTestPdf().apply {
+                        sykemeldinger.pasient.fnr = "12345678910"
+                        sykemeldinger.medisinskVurdering.hovedDiagnose.first().diagnosekode = "R80"
+                        sykemeldinger.aktivitet.aktivitetIkkeMulig.periodeTOMDato =
+                            LocalDate.of(2026, 1, 31)
+                        sykemeldinger.behandler.hpr = BigInteger.valueOf(1234567)
+                    }
+
+                sykmeldingService.sammenlignOcr(
+                    journalpostId = journalpostId,
+                    ocrFil = ocrFil,
+                    tsmSkanningmetadata = tsmOcrForTestPdf(),
+                    loggingMeta = loggingMetadata,
+                ) shouldBeEqualTo
+                    listOf(
+                        OcrAvvik("pasient.fnr", "12345678910", "30898098466"),
+                        OcrAvvik("medisinskVurdering.hovedDiagnose.diagnosekode", "R80", "R74"),
+                        OcrAvvik(
+                            "aktivitet.aktivitetIkkeMulig.periodeTOMDato",
+                            "2026-01-31",
+                            "2026-01-20",
+                        ),
+                        OcrAvvik("behandler.hpr", "1234567", null),
+                    )
             }
         }
     })

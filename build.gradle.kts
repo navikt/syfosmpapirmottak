@@ -29,7 +29,7 @@ val caffeineVersion = "3.3.0"
 val ktfmtVersion = "0.56"
 val diagnosekoderVersion = "1.2026.0"
 val googleCloudStorageVersion = "2.75.0"
-
+val sykmeldingOcrVersion = "0.0.4"
 val javaVersion = JvmTarget.JVM_25
 
 plugins {
@@ -79,7 +79,7 @@ dependencies {
     implementation("no.nav.helse.xml:kith-hodemelding:$syfoXmlCodegenVersion")
     implementation("no.nav.helse.xml:papirsykemelding:$syfoXmlCodegenVersion")
     implementation("no.nav.helse.xml:sm2013:$syfoXmlCodegenVersion")
-
+    implementation("no.nav.tsm:sykmelding-ocr:$sykmeldingOcrVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
@@ -97,8 +97,6 @@ dependencies {
     implementation("javax.activation:activation:$javaxActivationVersion")
     implementation("org.apache.commons:commons-text:$commonsTextVersion")
     implementation("javax.annotation:javax.annotation-api:$javaxAnnotationApiVersion")
-
-
     implementation("com.migesok:jaxb-java-time-adapters:$javaTimeAdapterVersion")
 
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")

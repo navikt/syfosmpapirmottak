@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.papirsykemelding.Skanningmetadata
 import no.nav.syfo.azure.v2.AzureAdV2Client
-import no.nav.syfo.domain.DokumentFilInfo
+import no.nav.syfo.domain.DokumentInfo
 import no.nav.syfo.util.LoggingMeta
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
@@ -170,11 +170,12 @@ class SafDokumentClientSpek :
                         journalpostId = "journalpostId",
                         dokumentInfoId = "dokumentInfoIdPdf",
                         dokumentVariant =
-                            DokumentFilInfo(
-                                filNamn = "dok.pdf",
+                            DokumentInfo(
                                 filUUID = "uuid",
-                                filType = "pdf",
+                                filtype = "pdf",
                                 variantFormat = DokumentVariantFormat.ARKIV,
+                                journalpostId = "journalpostId",
+                                dokumentInfoId = "dokumentInfoIdPdf",
                             ),
                         loggingMeta = loggingMetadata,
                         msgId = "sykmeldingId",

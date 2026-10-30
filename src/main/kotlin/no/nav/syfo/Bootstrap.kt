@@ -45,6 +45,7 @@ import no.nav.syfo.opprettsykmelding.startOpprettSykmeldingConsumer
 import no.nav.syfo.pdl.PdlFactory
 import no.nav.syfo.service.BehandlingService
 import no.nav.syfo.service.BucketUploadService
+import no.nav.syfo.service.OcrService
 import no.nav.syfo.service.OppgaveService
 import no.nav.syfo.service.SykmeldingService
 import no.nav.syfo.util.JacksonKafkaSerializer
@@ -206,7 +207,9 @@ fun Application.module() {
             smregistreringTopic = env.smregistreringTopic,
             icpc2BDiagnoserDeffered = getIcpc2Bdiagnoser(this),
             bucketUploadService = bucketUploadService,
+            ocrService = OcrService(),
         )
+
     val utenlandskSykmeldingService =
         UtenlandskSykmeldingService(oppgaveService, sykDigProducer, env.cluster)
     val behandlingService =
