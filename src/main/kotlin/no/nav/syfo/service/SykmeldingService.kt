@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import net.logstash.logback.argument.StructuredArguments
@@ -30,6 +31,7 @@ import no.nav.syfo.metrics.OCR_SAMMENLIGNING_AVVIK_FELT
 import no.nav.syfo.metrics.PAPIRSM_MAPPET
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_MED_OCR_UTEN_INNHOLD
 import no.nav.syfo.metrics.PAPIRSM_MOTTATT_NORGE
+import no.nav.syfo.metrics.SYKMELDING_OCR_RESULT
 import no.nav.syfo.model.Periode
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.syfo.model.ReceivedSykmeldingWithValidation
@@ -37,6 +39,7 @@ import no.nav.syfo.model.Status
 import no.nav.syfo.pdl.model.PdlPerson
 import no.nav.syfo.pdl.service.PdlPersonService
 import no.nav.syfo.securelog
+import no.nav.syfo.service.SykmeldingParseResult.Source
 import no.nav.syfo.util.LoggingMeta
 import no.nav.syfo.util.extractHelseOpplysningerArbeidsuforhet
 import no.nav.syfo.util.fellesformatMarshaller
@@ -46,6 +49,45 @@ import no.nav.syfo.util.safeUnmarshalSkanningmetadata
 import no.nav.syfo.util.toString
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.LoggerFactory
+
+sealed interface SykmeldingParseResult {
+    enum class Source {
+        SCANNING,
+        TSM,
+    }
+
+    enum class Status {
+        NO_RESULT,
+        FAILED,
+        OK,
+    }
+
+    val source: Source
+    val status: Status
+
+    class NoResult(override val source: Source) : SykmeldingParseResult {
+        override val status: Status = Status.NO_RESULT
+    }
+
+    class OK(
+        val skanningmetadata: Skanningmetadata,
+        val receivedSykmelding: ReceivedSykmelding,
+        val sykmelder: Sykmelder,
+        override val source: Source,
+    ) : SykmeldingParseResult {
+        override val status: Status = Status.OK
+    }
+
+    class Failed(
+        val skanningmetadata: Skanningmetadata,
+        val sykmelder: Sykmelder?,
+        val errorMessage: String,
+        val exception: Exception,
+        override val source: Source,
+    ) : SykmeldingParseResult {
+        override val status: Status = Status.FAILED
+    }
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SykmeldingService(
@@ -106,7 +148,6 @@ class SykmeldingService(
             return
         } else {
             try {
-
                 val dokumenter =
                     alleDokumenter
                         .filter {
@@ -124,7 +165,7 @@ class SykmeldingService(
                                 )
                         }
 
-                val ocrFilIronMountain =
+                val scanningOcrFile =
                     dokumenter
                         .singleOrNull { it.first.variantFormat == DokumentVariantFormat.ORIGINAL }
                         ?.let { safeUnmarshalSkanningmetadata(it.second.inputStream()) }
@@ -132,144 +173,132 @@ class SykmeldingService(
                 bucketUploadService.uploadDocuments(alleDokumenter = dokumenter)
 
                 val tsmSkanningmetadata =
-                    ocrService.tryPapirsykmeldingOcr(dokumenter.toMap(), loggingMeta)
-                if (tsmSkanningmetadata != null) {
+                    ocrService.tryPapirsykmeldingOcr(dokumenter.toMap(), loggingMeta)?.let {
+                        toSykmeldingParseResult(
+                            it,
+                            sykmeldingId,
+                            pasient,
+                            datoOpprettet,
+                            journalpostId,
+                            loggingMeta,
+                            pasient.aktorId,
+                            pasient.fnr,
+                            Source.TSM,
+                        )
+                    } ?: SykmeldingParseResult.NoResult(Source.TSM)
+
+                if (tsmSkanningmetadata is SykmeldingParseResult.OK) {
                     log.info("Ocr result received for $journalpostId")
                     val ocrAvvik =
-                        ocrFilIronMountain?.let {
-                            sammenlignOcr(journalpostId, it, tsmSkanningmetadata, loggingMeta)
+                        scanningOcrFile?.let {
+                            sammenlignOcr(
+                                journalpostId,
+                                it,
+                                tsmSkanningmetadata.skanningmetadata,
+                                loggingMeta,
+                            )
                         }
                 }
 
-                val skanningmetadata = tsmSkanningmetadata ?: ocrFilIronMountain
-
-                if (tsmSkanningmetadata == null && ocrFilIronMountain != null) {
-                    log.info("Using OCR from iron mountaint for $journalpostId")
-                }
-
-                skanningmetadata?.let { ocr ->
-                    sykmelder =
-                        hentSykmelder(
-                            ocrFil = ocr,
-                            sykmeldingId = sykmeldingId,
-                            loggingMeta = loggingMeta,
-                        )
-
-                    val tssId =
-                        smtssClient.findBestTssInfotrygdId(
-                            sykmelder.fnr,
-                            "ukjent",
-                            loggingMeta,
+                val scanningResult =
+                    scanningOcrFile?.let {
+                        toSykmeldingParseResult(
+                            it,
                             sykmeldingId,
+                            pasient,
+                            datoOpprettet,
+                            journalpostId,
+                            loggingMeta,
+                            pasient.aktorId,
+                            pasient.fnr,
+                            Source.SCANNING,
+                        )
+                    } ?: SykmeldingParseResult.NoResult(Source.SCANNING)
+
+                logResult(tsmSkanningmetadata, journalpostId)
+                logResult(scanningResult, journalpostId)
+
+                // OK fra TSM > OK fra skanning > feil fra skanning > feil/NoResult fra TSM
+                val result =
+                    tsmSkanningmetadata as? SykmeldingParseResult.OK
+                        ?: scanningResult as? SykmeldingParseResult.OK
+                        ?: scanningResult as? SykmeldingParseResult.Failed
+                        ?: tsmSkanningmetadata
+
+                when (result) {
+                    is SykmeldingParseResult.OK -> {
+                        log.info(
+                            "Sykmelding mappet til internt format uten feil fra ${result.source}",
+                            fields(loggingMeta),
                         )
 
-                    tellOcrInnhold(ocr, loggingMeta)
-
-                    val fellesformat =
-                        mapOcrFilTilFellesformat(
-                            skanningmetadata = ocr,
-                            sykmelder = sykmelder,
-                            sykmeldingId = sykmeldingId,
-                            loggingMeta = loggingMeta,
-                            pdlPerson = pasient,
-                            journalpostId = journalpostId,
-                            icpc2BDiagnoser = icpc2BDiagnoser,
+                        log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
+                        val validationResult =
+                            nyRegelClient.valider(result.receivedSykmelding, sykmeldingId)
+                        log.info(
+                            "Resultat: {}, {}, {}",
+                            StructuredArguments.keyValue(
+                                "ruleStatus",
+                                validationResult.status.name,
+                            ),
+                            StructuredArguments.keyValue(
+                                "ruleHits",
+                                validationResult.ruleHits.joinToString(", ", "(", ")") {
+                                    it.ruleName
+                                },
+                            ),
+                            fields(loggingMeta),
                         )
 
-                    val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
-                    val msgHead = fellesformat.get<XMLMsgHead>()
+                        if (
+                            validationResult.status == Status.MANUAL_PROCESSING ||
+                                requireManuellBehandling(result.receivedSykmelding)
+                        ) {
+                            FEILARSAK.labels("manuell_behandling").inc()
+                            manuellBehandling(
+                                journalpostId = journalpostId,
+                                fnr = pasient.fnr,
+                                aktorId = pasient.aktorId,
+                                dokumentInfoId = dokumentInfoId,
+                                datoOpprettet = datoOpprettet,
+                                temaEndret = temaEndret,
+                                loggingMeta = loggingMeta,
+                                sykmeldingId = sykmeldingId,
+                                sykmelder = result.sykmelder,
+                                ocrFil = result.skanningmetadata,
+                                kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
+                                smregistreringTopic = smregistreringTopic,
+                            )
+                        } else if (validationResult.status == Status.OK) {
+                            handleOk(
+                                kafkaReceivedSykmeldingProducer = kafkaReceivedSykmeldingProducer,
+                                okSykmeldingTopic = okSykmeldingTopic,
+                                receivedSykmelding = result.receivedSykmelding,
+                                sykmeldingId = result.receivedSykmelding.sykmelding.id,
+                                dokArkivClient = dokArkivClient,
+                                journalpostid = journalpostId,
+                                loggingMeta = loggingMeta,
+                            )
+                        } else {
+                            throw IllegalStateException(
+                                "Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING"
+                            )
+                        }
 
-                    val sykmelding =
-                        healthInformation.toSykmelding(
-                            sykmeldingId = sykmeldingId,
-                            pasientAktoerId = pasient.aktorId,
-                            legeAktoerId = sykmelder.aktorId,
-                            msgId = sykmeldingId,
-                            signaturDato = getLocalDateTime(msgHead.msgInfo.genDate),
-                        )
-
-                    val receivedSykmelding =
-                        ReceivedSykmelding(
-                            sykmelding = sykmelding,
-                            personNrPasient = pasient.fnr,
-                            tlfPasient =
-                                healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
-                            personNrLege = sykmelder.fnr,
-                            legeHprNr = sykmelder.hprNummer,
-                            legeHelsepersonellkategori =
-                                sykmelder.godkjenninger.getHelsepersonellKategori(),
-                            navLogId = sykmeldingId,
-                            msgId = sykmeldingId,
-                            legekontorOrgNr = null,
-                            legekontorOrgName = "",
-                            legekontorHerId = null,
-                            legekontorReshId = null,
-                            mottattDato =
-                                (datoOpprettet ?: getLocalDateTime(msgHead.msgInfo.genDate)),
-                            rulesetVersion = healthInformation.regelSettVersjon,
-                            fellesformat = fellesformatMarshaller.toString(fellesformat),
-                            tssid = tssId ?: "",
-                            merknader = null,
-                            partnerreferanse = null,
-                            vedlegg = emptyList(),
-                            utenlandskSykmelding = null,
-                        )
-
-                    log.info(
-                        "Sykmelding mappet til internt format uten feil {}",
-                        fields(loggingMeta),
-                    )
-                    PAPIRSM_MAPPET.labels("ok").inc()
-
-                    log.info("Validerer sykmelding mot regler, {}", fields(loggingMeta))
-                    val validationResult = nyRegelClient.valider(receivedSykmelding, sykmeldingId)
-                    log.info(
-                        "Resultat: {}, {}, {}",
-                        StructuredArguments.keyValue("ruleStatus", validationResult.status.name),
-                        StructuredArguments.keyValue(
-                            "ruleHits",
-                            validationResult.ruleHits.joinToString(", ", "(", ")") { it.ruleName },
-                        ),
-                        fields(loggingMeta),
-                    )
-
-                    if (
-                        validationResult.status == Status.MANUAL_PROCESSING ||
-                            requireManuellBehandling(receivedSykmelding)
-                    ) {
-                        FEILARSAK.labels("manuell_behandling").inc()
-                        manuellBehandling(
-                            journalpostId = journalpostId,
-                            fnr = pasient.fnr,
-                            aktorId = pasient.aktorId,
-                            dokumentInfoId = dokumentInfoId,
-                            datoOpprettet = datoOpprettet,
-                            temaEndret = temaEndret,
-                            loggingMeta = loggingMeta,
-                            sykmeldingId = sykmeldingId,
-                            sykmelder = sykmelder,
-                            ocrFil = ocr,
-                            kafkaproducerPapirSmRegistering = kafkaproducerPapirSmRegistering,
-                            smregistreringTopic = smregistreringTopic,
-                        )
-                    } else if (validationResult.status == Status.OK) {
-                        handleOk(
-                            kafkaReceivedSykmeldingProducer = kafkaReceivedSykmeldingProducer,
-                            okSykmeldingTopic = okSykmeldingTopic,
-                            receivedSykmelding = receivedSykmelding,
-                            sykmeldingId = receivedSykmelding.sykmelding.id,
-                            dokArkivClient = dokArkivClient,
-                            journalpostid = journalpostId,
-                            loggingMeta = loggingMeta,
-                        )
-                    } else {
-                        throw IllegalStateException(
-                            "Ukjent status: ${validationResult.status}. Papirsykmeldinger kan kun ha en av to typer statuser: OK eller MANUAL_PROCESSING"
-                        )
+                        log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
+                        PAPIRSM_MAPPET.labels("ok").inc()
+                        return
                     }
 
-                    log.info("Sykmelding håndtert automatisk {}", fields(loggingMeta))
-                    return
+                    is SykmeldingParseResult.Failed -> {
+                        // Brukes til forhåndsutfylling i smregistrering i fallback under
+                        skanningmetadata = result.skanningmetadata
+                        sykmelder = result.sykmelder
+                        throw result.exception
+                    }
+                    is SykmeldingParseResult.NoResult -> {
+                        log.info("NoResult for journalpostId $journalpostId")
+                    }
                 }
             } catch (e: SafNotFoundException) {
                 log.warn("Noe gikk galt ved uthenting av dokument: ${e.message}")
@@ -284,8 +313,6 @@ class SykmeldingService(
                     e,
                 )
             }
-
-            // Fallback hvis OCR er null ELLER parsing av OCR til sykmeldingformat mislykkes
             manuellBehandling(
                 journalpostId = journalpostId,
                 fnr = pasient.fnr,
@@ -301,6 +328,140 @@ class SykmeldingService(
                 smregistreringTopic = smregistreringTopic,
             )
         }
+    }
+
+    private fun logResult(tsmSkanningmetadata: SykmeldingParseResult, journalpostId: String) {
+        val ocrResult =
+            when (val result = tsmSkanningmetadata) {
+                is SykmeldingParseResult.OK -> {
+                    log.info("Ocr resultfor $journalpostId, from source ${result.source}")
+                    result
+                }
+
+                is SykmeldingParseResult.Failed -> {
+                    log.warn("ocr failed for $journalpostId, from source ${result.source}")
+                    result
+                }
+
+                is SykmeldingParseResult.NoResult -> {
+                    log.info("No ocr result for $journalpostId, from source ${result.source}")
+                    result
+                }
+            }
+
+        SYKMELDING_OCR_RESULT.labels(ocrResult.source.name, ocrResult.status.name).inc()
+    }
+
+    private suspend fun toSykmeldingParseResult(
+        skanningmetadata: Skanningmetadata,
+        sykmeldingId: String,
+        pasient: PdlPerson,
+        datoOpprettet: LocalDateTime?,
+        journalpostId: String,
+        loggingMeta: LoggingMeta,
+        aktorId: String,
+        fnr: String,
+        source: SykmeldingParseResult.Source,
+    ): SykmeldingParseResult {
+        var sykmelder: Sykmelder? = null
+        return try {
+            val hentetSykmelder =
+                hentSykmelder(
+                    ocrFil = skanningmetadata,
+                    sykmeldingId = sykmeldingId,
+                    loggingMeta = loggingMeta,
+                )
+            sykmelder = hentetSykmelder
+            val receivedSykmelding =
+                toReceivedSykmelding(
+                    skanningmetadata,
+                    hentetSykmelder,
+                    sykmeldingId,
+                    pasient = pasient,
+                    datoOpprettet = datoOpprettet,
+                    journalpostId = journalpostId,
+                    loggingMeta = loggingMeta,
+                    pasientAktorId = aktorId,
+                    pasientFnr = fnr,
+                )
+            SykmeldingParseResult.OK(skanningmetadata, receivedSykmelding, hentetSykmelder, source)
+        } catch (e: TssException) {
+            // smtss er nede, kastes videre slik at meldingen prøves på nytt
+            throw e
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            SykmeldingParseResult.Failed(
+                skanningmetadata = skanningmetadata,
+                sykmelder = sykmelder,
+                errorMessage = "could not map to sykmelding from ocr",
+                exception = e,
+                source = source,
+            )
+        }
+    }
+
+    private suspend fun toReceivedSykmelding(
+        ocr: Skanningmetadata,
+        sykmelder: Sykmelder,
+        sykmeldingId: String,
+        loggingMeta: LoggingMeta,
+        pasient: PdlPerson,
+        journalpostId: String,
+        pasientAktorId: String,
+        pasientFnr: String,
+        datoOpprettet: LocalDateTime?,
+    ): ReceivedSykmelding {
+        val tssId =
+            smtssClient.findBestTssInfotrygdId(sykmelder.fnr, "ukjent", loggingMeta, sykmeldingId)
+
+        val fellesformat =
+            mapOcrFilTilFellesformat(
+                skanningmetadata = ocr,
+                sykmelder = sykmelder,
+                sykmeldingId = sykmeldingId,
+                loggingMeta = loggingMeta,
+                pdlPerson = pasient,
+                journalpostId = journalpostId,
+                icpc2BDiagnoser = icpc2BDiagnoser,
+            )
+
+        val healthInformation = extractHelseOpplysningerArbeidsuforhet(fellesformat)
+        val msgHead = fellesformat.get<XMLMsgHead>()
+
+        val sykmelding =
+            healthInformation.toSykmelding(
+                sykmeldingId = sykmeldingId,
+                pasientAktoerId = pasientAktorId,
+                legeAktoerId = sykmelder.aktorId,
+                msgId = sykmeldingId,
+                signaturDato = getLocalDateTime(msgHead.msgInfo.genDate),
+            )
+
+        val receivedSykmelding =
+            ReceivedSykmelding(
+                sykmelding = sykmelding,
+                personNrPasient = pasientFnr,
+                tlfPasient = healthInformation.pasient.kontaktInfo.firstOrNull()?.teleAddress?.v,
+                personNrLege = sykmelder.fnr,
+                legeHprNr = sykmelder.hprNummer,
+                legeHelsepersonellkategori = sykmelder.godkjenninger.getHelsepersonellKategori(),
+                navLogId = sykmeldingId,
+                msgId = sykmeldingId,
+                legekontorOrgNr = null,
+                legekontorOrgName = "",
+                legekontorHerId = null,
+                legekontorReshId = null,
+                mottattDato = (datoOpprettet ?: getLocalDateTime(msgHead.msgInfo.genDate)),
+                rulesetVersion = healthInformation.regelSettVersjon,
+                fellesformat = fellesformatMarshaller.toString(fellesformat),
+                tssid = tssId ?: "",
+                merknader = null,
+                partnerreferanse = null,
+                vedlegg = emptyList(),
+                utenlandskSykmelding = null,
+            )
+        return receivedSykmelding
     }
 
     suspend fun manuellBehandling(
@@ -493,14 +654,19 @@ fun List<Godkjenning>.getHelsepersonellKategori(): String? =
     when {
         find { it.helsepersonellkategori?.verdi == "LE" && it.helsepersonellkategori.aktiv } !=
             null -> "LE"
+
         find { it.helsepersonellkategori?.verdi == "TL" && it.helsepersonellkategori.aktiv } !=
             null -> "TL"
+
         find { it.helsepersonellkategori?.verdi == "MT" && it.helsepersonellkategori.aktiv } !=
             null -> "MT"
+
         find { it.helsepersonellkategori?.verdi == "KI" && it.helsepersonellkategori.aktiv } !=
             null -> "KI"
+
         find { it.helsepersonellkategori?.verdi == "FT" && it.helsepersonellkategori.aktiv } !=
             null -> "FT"
+
         else -> {
             val verdi = firstOrNull()?.helsepersonellkategori?.verdi
             log.warn(

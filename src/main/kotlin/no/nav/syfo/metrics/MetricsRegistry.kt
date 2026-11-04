@@ -143,3 +143,11 @@ val OCR_SAMMENLIGNING_AVVIK_FELT: Counter =
         .labelNames("felt")
         .help("Felter som avviker mellom tsm-ocr og ocr-fil fra skanning")
         .register()
+
+val SYKMELDING_OCR_RESULT: Counter =
+    Counter.build()
+        .namespace(NAMESPACE)
+        .name("ocr_result")
+        .labelNames("source", "status")
+        .help("result of ocr by source")
+        .register()
