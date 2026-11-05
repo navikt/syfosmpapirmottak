@@ -39,7 +39,7 @@ spec:
         - id: loki
   resources:
     limits:
-      memory: 1Gi
+      memory: 3Gi
     requests:
       cpu: 50m
       memory: 256Mi
