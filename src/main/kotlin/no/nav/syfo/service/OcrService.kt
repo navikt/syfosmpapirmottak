@@ -80,6 +80,11 @@ class OcrService(private val papirsykmeldingOcr: ParseSykmeldingOcr = ParseSykme
                     )
                     return null
                 }
+
+                OcrResult.NotYetSupported -> {
+                    log.info("Ocr is not supported yet. for this document", fields(loggingMeta))
+                    return null
+                }
             }
 
         return Skanningmetadata().apply {
